@@ -1,27 +1,179 @@
-body {
-    font-family: Arial, sans-serif;
-    line-height: 1.6;
-    max-width: 800px;
-    margin: 0 auto;
-    padding: 20px;
+/* ------------------------- */
+/* 0. VARIABLES Y RESET BÁSICO */
+/* ------------------------- */
+:root {
+    --color-primary: #0077B6;      /* Azul técnico */
+    --color-secondary: #00B4D8;    /* Azul claro de acento */
+    --color-dark: #202020;         /* Negro o gris oscuro */
+    --color-light: #F4F4F9;        /* Gris muy claro / fondo */
+    --color-text: #444444;         /* Texto principal */
+    
+    --font-heading: 'Montserrat', sans-serif;
+    --font-body: 'Montserrat', sans-serif;
+    --font-mono: 'Roboto Mono', monospace; /* Para datos técnicos */
+    
+    --padding-section: 6rem 0;
 }
 
-header {
-    background: #333;
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: var(--font-body);
+    line-height: 1.6;
+    color: var(--color-text);
+    background-color: #ffffff;
+}
+
+/* Contenedor central */
+.container {
+    width: 90%;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* ------------------------- */
+/* 1. TIPOGRAFÍA */
+/* ------------------------- */
+h1, h2, h3 {
+    font-family: var(--font-heading);
+    color: var(--color-dark);
+    margin-bottom: 1rem;
+    font-weight: 700;
+}
+
+h2 {
+    font-size: 2.5rem;
+    line-height: 1.1;
+}
+
+h3 {
+    font-size: 1.8rem;
+    color: var(--color-primary); /* Destacar títulos de sección */
+    margin-bottom: 2rem;
+}
+
+/* ------------------------- */
+/* 2. BOTONES Y UTILIDADES */
+/* ------------------------- */
+.btn {
+    display: inline-block;
+    padding: 0.8rem 1.5rem;
+    text-decoration: none;
+    border-radius: 4px;
+    font-weight: 600;
+    transition: background-color 0.3s ease;
+    text-transform: uppercase;
+    font-size: 0.9rem;
+}
+
+.btn-primary {
+    background-color: var(--color-primary);
     color: white;
-    padding: 1rem;
+}
+
+.btn-primary:hover {
+    background-color: #005A8D;
+}
+
+.btn-secondary {
+    background-color: var(--color-secondary);
+    color: var(--color-dark);
+}
+
+.btn-secondary:hover {
+    background-color: var(--color-primary);
+    color: white;
+}
+
+.bg-dark {
+    background-color: var(--color-dark);
+    color: white;
+}
+
+.bg-light {
+    background-color: var(--color-light);
+}
+
+/* ------------------------- */
+/* 3. CABECERA (HEADER) */
+/* ------------------------- */
+.header {
+    background-color: white;
+    box-shadow: 0 1px 5px rgba(0, 0, 0, 0.08);
+    padding: 1rem 0;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+.header .container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.logo {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--color-primary);
+}
+
+.nav a {
+    color: var(--color-dark);
+    text-decoration: none;
+    margin-left: 20px;
+    font-weight: 600;
+}
+
+/* ------------------------- */
+/* 4. HERO SECTION */
+/* ------------------------- */
+.hero {
+    background-image: linear-gradient(rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.8)), url('ruta/a/imagen-fondo.jpg'); /* Idealmente una imagen de detalle técnico */
+    background-size: cover;
+    background-position: center;
+    padding: 8rem 0;
     text-align: center;
 }
 
-nav a {
-    color: white;
-    margin: 0 10px;
-    text-decoration: none;
+.hero h2 {
+    color: var(--color-dark);
+    font-size: 3.5rem;
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
 }
 
-section {
-    margin: 2rem 0;
-    padding: 1rem;
-    border: 1px solid #ddd;
-    border-radius: 5px;
+.hero p {
+    font-size: 1.3rem;
+    margin: 1.5rem auto 2.5rem;
+    max-width: 600px;
+}
+
+/* ------------------------- */
+/* 5. SECCIONES GENERALES */
+/* ------------------------- */
+.section {
+    padding: var(--padding-section);
+}
+
+.section h3 {
+    text-align: center;
+}
+
+/* ------------------------- */
+/* 6. FOOTER */
+/* ------------------------- */
+.footer {
+    padding: 3rem 0;
+    text-align: center;
+    font-size: 0.9rem;
+}
+
+.footer p {
+    margin-top: 1rem;
 }
