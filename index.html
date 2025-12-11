@@ -7,7 +7,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Open+Sans:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
-        /* INCLUIR EL CSS COMPLETO AQUÍ TEMPORALMENTE */
         /* ========== VARIABLES DE COLOR ========== */
         :root {
             --color-primary: #FFD700;
@@ -61,7 +60,7 @@
         .mobile-menu-btn { display: none; font-size: 1.5rem; background: none; border: none; color: var(--color-secondary-dark); cursor: pointer; z-index: 1001; }
 
         /* ========== HERO SECTION ========== */
-        .hero { height: 100vh; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; background: linear-gradient(rgba(51, 51, 51, 0.85), rgba(51, 51, 51, 0.8)), url('https://images.unsplash.com/photo-1581094794329-c8112a89af12?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80') no-repeat center center/cover; color: var(--color-white); text-align: center; }
+        .hero { height: 100vh; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; background: linear-gradient(rgba(51, 51, 51, 0.85), rgba(51, 51, 51, 0.8)), url('https://acembrero-droid.github.io/aislantech/images/cabecera') no-repeat center center/cover; color: var(--color-white); text-align: center; }
         .hero-content { max-width: 800px; padding: 0 20px; z-index: 2; }
         .hero h1 { font-size: 3.5rem; margin-bottom: 20px; color: var(--color-white); animation: fadeInDown 1s ease; }
         .hero p { font-size: 1.2rem; margin-bottom: 40px; animation: fadeInUp 1s ease 0.3s both; }
@@ -90,20 +89,6 @@
         .timeline-item:hover .timeline-point { background-color: var(--color-accent); border-color: var(--color-accent); color: var(--color-white); transform: scale(1.1); }
         .timeline-content h4 { margin-bottom: 10px; color: var(--color-secondary-dark); }
         .timeline-content p { font-size: 0.95rem; color: var(--color-gray); }
-
-        /* ========== PROJECTS SECTION ========== */
-        .projects { padding: 100px 0; background-color: var(--color-light); }
-        .project-filters { display: flex; justify-content: center; margin-bottom: 40px; flex-wrap: wrap; gap: 10px; }
-        .filter-btn { background: none; border: 1px solid var(--color-secondary-light); padding: 8px 20px; cursor: pointer; font-weight: 600; color: var(--color-secondary); transition: var(--transition); border-radius: 30px; font-family: 'Montserrat', sans-serif; }
-        .filter-btn.active, .filter-btn:hover { background-color: var(--color-primary); color: var(--color-dark); border-color: var(--color-primary); }
-        .masonry-grid { column-count: 3; column-gap: 20px; }
-        .project-item { break-inside: avoid; margin-bottom: 20px; border-radius: var(--border-radius); overflow: hidden; box-shadow: var(--box-shadow); transition: var(--transition); position: relative; cursor: pointer; }
-        .project-item:hover { transform: translateY(-5px); box-shadow: var(--box-shadow-hover); }
-        .project-img { height: 250px; background-color: var(--color-secondary); display: flex; align-items: center; justify-content: center; color: var(--color-white); font-size: 2.5rem; }
-        .project-overlay { position: absolute; bottom: 0; left: 0; right: 0; background-color: rgba(128, 128, 128, 0.9); color: var(--color-white); padding: 20px; transform: translateY(100%); transition: var(--transition); }
-        .project-overlay h4 { color: var(--color-white); margin-bottom: 5px; }
-        .project-overlay p { font-size: 0.9rem; opacity: 0.9; }
-        .project-item:hover .project-overlay { transform: translateY(0); }
 
         /* ========== SOFTWARE SECTION ========== */
         .software { padding: 100px 0; background-color: var(--color-white); }
@@ -190,8 +175,7 @@
 
         /* ========== RESPONSIVE ========== */
         @media (max-width: 992px) {
-            .masonry-grid { column-count: 2; }
-            . h1 { font-size: 3rem; }
+            .hero h1 { font-size: 3rem; }
         }
         @media (max-width: 768px) {
             .mobile-menu-btn { display: block; }
@@ -199,8 +183,8 @@
             nav ul.active { transform: translateY(0); opacity: 1; }
             nav li { margin: 15px 0; }
             .language-selector { margin-left: 0; margin-top: 10px; }
-            . h1 { font-size: 2.5rem; }
-            . p { font-size: 1.1rem; }
+            .hero h1 { font-size: 2.5rem; }
+            .hero p { font-size: 1.1rem; }
             .timeline { flex-direction: column; }
             .timeline:before { top: 0; left: 40px; width: 3px; height: 100%; }
             .timeline-item { display: flex; text-align: left; margin-bottom: 40px; }
@@ -209,11 +193,10 @@
             .footer-content { flex-direction: column; gap: 30px; }
         }
         @media (max-width: 576px) {
-            .masonry-grid { column-count: 1; }
             .section-title h2 { font-size: 2rem; }
-            . h1 { font-size: 2rem; }
-            .-btns { display: flex; flex-direction: column; gap: 15px; }
-            .-btns .btn { margin-left: 0 !important; width: 100%; }
+            .hero h1 { font-size: 2rem; }
+            .hero-btns { display: flex; flex-direction: column; gap: 15px; }
+            .hero-btns .btn { margin-left: 0 !important; width: 100%; }
             .header-container { flex-wrap: wrap; }
             .logo { order: 1; }
             .mobile-menu-btn { order: 2; }
@@ -239,7 +222,6 @@
                     <li><a href="#inicio">Inicio</a></li>
                     <li><a href="#servicios">Servicios</a></li>
                     <li><a href="#proceso">Proceso</a></li>
-                    <li><a href="#proyectos">Proyectos</a></li>
                     <li><a href="#software">Software</a></li>
                     <li><a href="#contacto">Contacto</a></li>
                     <li class="language-selector">ES | EN</li>
@@ -250,8 +232,8 @@
         </div>
     </header>
 
-    <!--  Section -->
-    <section class="hero" id="inicio" style="background: linear-gradient(rgba(51, 51, 51, 0.85), rgba(51, 51, 51, 0.8)), url('https://acembrero-droid.github.io/aislantech/images/cabecera.jpg') no-repeat center center/cover;">
+    <!-- Hero Section -->
+    <section class="hero" id="inicio">
         <div class="hero-content">
             <h1>Soluciones Técnicas Avanzadas para Industria y Construcción</h1>
             <p>Oficina técnica especializada, consultoría industrial, sistemas de precercos avanzados y soluciones de protección solar integrales.</p>
@@ -403,92 +385,6 @@
                     <div class="timeline-content">
                         <h4>Soporte Continuo</h4>
                         <p>Mantenimiento, seguimiento y optimización post-implementación.</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Projects Section -->
-    <section class="projects" id="proyectos">
-        <div class="container">
-            <div class="section-title">
-                <h2>Proyectos Destacados</h2>
-                <p>Algunos de nuestros trabajos más representativos</p>
-            </div>
-            
-            <div class="project-filters">
-                <button class="filter-btn active" data-filter="all">Todos</button>
-                <button class="filter-btn" data-filter="oficina">Oficina Técnica</button>
-                <button class="filter-btn" data-filter="consultoria">Consultoría</button>
-                <button class="filter-btn" data-filter="precerco">Precerco</button>
-                <button class="filter-btn" data-filter="solar">Protección Solar</button>
-            </div>
-            
-            <div class="masonry-grid">
-                <!-- Proyecto 1 -->
-                <div class="project-item" data-category="oficina">
-                    <div class="project-img" style="background-color: #808080;">
-                        <i class="fas fa-drafting-compass"></i>
-                    </div>
-                    <div class="project-overlay">
-                        <h4>Planos para Complejo Industrial</h4>
-                        <p>Documentación técnica completa para planta industrial de 5,000m²</p>
-                    </div>
-                </div>
-                
-                <!-- Proyecto 2 -->
-                <div class="project-item" data-category="consultoria">
-                    <div class="project-img" style="background-color: #696969;">
-                        <i class="fas fa-industry"></i>
-                    </div>
-                    <div class="project-overlay">
-                        <h4>Optimización Energética</h4>
-                        <p>Reducción del 30% en consumo energético para fábrica textil</p>
-                    </div>
-                </div>
-                
-                <!-- Proyecto 3 -->
-                <div class="project-item" data-category="precerco">
-                    <div class="project-img" style="background-color: #808080;">
-                        <i class="fas fa-cube"></i>
-                    </div>
-                    <div class="project-overlay">
-                        <h4>Sistema Modular Precerco</h4>
-                        <p>Estructura modular para edificio de oficinas de 8 plantas</p>
-                    </div>
-                </div>
-                
-                <!-- Proyecto 4 -->
-                <div class="project-item" data-category="solar">
-                    <div class="project-img" style="background-color: #696969;">
-                        <i class="fas fa-sun"></i>
-                    </div>
-                    <div class="project-overlay">
-                        <h4>Protección Solar Integral</h4>
-                        <p>Sistema de cajones túnel para centro comercial en clima mediterráneo</p>
-                    </div>
-                </div>
-                
-                <!-- Proyecto 5 -->
-                <div class="project-item" data-category="oficina">
-                    <div class="project-img" style="background-color: #808080;">
-                        <i class="fas fa-drafting-compass"></i>
-                    </div>
-                    <div class="project-overlay">
-                        <h4>Modelado 3D Industrial</h4>
-                        <p>Modelado completo de planta de procesamiento para simulación</p>
-                    </div>
-                </div>
-                
-                <!-- Proyecto 6 -->
-                <div class="project-item" data-category="consultoria">
-                    <div class="project-img" style="background-color: #696969;">
-                        <i class="fas fa-chart-line"></i>
-                    </div>
-                    <div class="project-overlay">
-                        <h4>Auditoría de Procesos</h4>
-                        <p>Análisis y optimización de línea de producción automotriz</p>
                     </div>
                 </div>
             </div>
@@ -725,12 +621,12 @@
             </div>
             
             <div class="footer-bottom">
-                <p>&copy; 2023 Aislantech. Todos los derechos reservados. | <a href="https://www.aislantech.es" style="color: var(--color-primary);">www.aislantech.es</a></p>
+                <p>&copy; 2024 Aislantech. Todos los derechos reservados. | <a href="https://www.aislantech.es" style="color: var(--color-primary);">www.aislantech.es</a></p>
             </div>
         </div>
     </footer>
 
-    <!-- Modal para proyectos -->
+    <!-- Modal para proyectos (mantenido por si se necesita) -->
     <div class="modal" id="projectModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -781,31 +677,6 @@
             });
         });
         
-        // Project filtering
-        const filterBtns = document.querySelectorAll('.filter-btn');
-        const projectItems = document.querySelectorAll('.project-item');
-        
-        if (filterBtns.length > 0 && projectItems.length > 0) {
-            filterBtns.forEach(btn => {
-                btn.addEventListener('click', () => {
-                    // Remove active class from all buttons
-                    filterBtns.forEach(b => b.classList.remove('active'));
-                    // Add active class to clicked button
-                    btn.classList.add('active');
-                    
-                    const filterValue = btn.getAttribute('data-filter');
-                    
-                    projectItems.forEach(item => {
-                        if(filterValue === 'all' || item.getAttribute('data-category') === filterValue) {
-                            item.style.display = 'block';
-                        } else {
-                            item.style.display = 'none';
-                        }
-                    });
-                });
-            });
-        }
-        
         // Service selection in contact form
         const serviceOptions = document.querySelectorAll('.service-option');
         if (serviceOptions.length > 0) {
@@ -814,82 +685,6 @@
                     serviceOptions.forEach(opt => opt.classList.remove('selected'));
                     option.classList.add('selected');
                 });
-            });
-        }
-        
-        // Project modal
-        const projectModal = document.getElementById('projectModal');
-        const modalClose = document.getElementById('modalClose');
-        const modalTitle = document.getElementById('modalTitle');
-        const modalBody = document.getElementById('modalBody');
-        
-        // Open modal when project item is clicked
-        if (projectItems.length > 0) {
-            projectItems.forEach(item => {
-                item.addEventListener('click', () => {
-                    const category = item.getAttribute('data-category');
-                    const overlay = item.querySelector('.project-overlay');
-                    const title = overlay.querySelector('h4').textContent;
-                    const description = overlay.querySelector('p').textContent;
-                    
-                    let categoryText = '';
-                    switch(category) {
-                        case 'oficina': categoryText = 'Oficina Técnica'; break;
-                        case 'consultoria': categoryText = 'Consultoría Industrial'; break;
-                        case 'precerco': categoryText = 'Precerco Avanzado'; break;
-                        case 'solar': categoryText = 'Protección Solar'; break;
-                    }
-                    
-                    modalTitle.textContent = title;
-                    modalBody.innerHTML = `
-                        <div style="display: flex; flex-wrap: wrap; gap: 30px;">
-                            <div style="flex: 1; min-width: 300px;">
-                                <h4>Descripción del Proyecto</h4>
-                                <p>${description}</p>
-                                <p><strong>Categoría:</strong> ${categoryText}</p>
-                                <p><strong>Cliente:</strong> Empresa Industrial S.A.</p>
-                                <p><strong>Año:</strong> 2023</p>
-                                <p><strong>Duración:</strong> 4 meses</p>
-                            </div>
-                            <div style="flex: 1; min-width: 300px;">
-                                <h4>Resultados Obtenidos</h4>
-                                <ul style="list-style: none; padding-left: 0;">
-                                    <li><i class="fas fa-check" style="color: var(--color-primary); margin-right: 8px;"></i> Optimización del 25% en tiempos de diseño</li>
-                                    <li><i class="fas fa-check" style="color: var(--color-primary); margin-right: 8px;"></i> Reducción del 15% en materiales empleados</li>
-                                    <li><i class="fas fa-check" style="color: var(--color-primary); margin-right: 8px;"></i> Mejora del 30% en eficiencia energética</li>
-                                    <li><i class="fas fa-check" style="color: var(--color-primary); margin-right: 8px;"></i> Cumplimiento total de normativas</li>
-                                </ul>
-                            </div>
-                        </div>
-                        <div style="margin-top: 30px;">
-                            <h4>Tecnologías Aplicadas</h4>
-                            <div style="display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap;">
-                                <span style="background-color: var(--color-primary); color: var(--color-dark); padding: 5px 10px; border-radius: 4px; font-weight: 600;">Modelado 3D</span>
-                                <span style="background-color: var(--color-secondary); color: white; padding: 5px 10px; border-radius: 4px; font-weight: 600;">Análisis BIM</span>
-                                <span style="background-color: var(--color-primary-light); color: var(--color-dark); padding: 5px 10px; border-radius: 4px; font-weight: 600;">Simulación Solar</span>
-                                <span style="background-color: var(--color-secondary-dark); color: white; padding: 5px 10px; border-radius: 4px; font-weight: 600;">Cálculo Estructural</span>
-                            </div>
-                        </div>
-                    `;
-                    
-                    projectModal.classList.add('active');
-                });
-            });
-        }
-        
-        // Close modal
-        if (modalClose) {
-            modalClose.addEventListener('click', () => {
-                projectModal.classList.remove('active');
-            });
-        }
-        
-        // Close modal when clicking outside
-        if (projectModal) {
-            window.addEventListener('click', (e) => {
-                if(e.target === projectModal) {
-                    projectModal.classList.remove('active');
-                }
             });
         }
         
@@ -942,7 +737,7 @@
             });
         }, observerOptions);
         
-        document.querySelectorAll('.service-card, .timeline-item, .project-item, .feature-item').forEach(el => {
+        document.querySelectorAll('.service-card, .timeline-item, .feature-item').forEach(el => {
             el.style.opacity = '0';
             el.style.transform = 'translateY(20px)';
             el.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
