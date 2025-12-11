@@ -6,847 +6,16 @@
     <title>Aislantech | Soluciones Técnicas Avanzadas</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Open+Sans:wght@300;400;600&display=swap" rel="stylesheet">
-    <style>
-        /* ========== VARIABLES DE COLOR - MODIFICAR AQUÍ ========== */
-        :root {
-            /* COLORES PRINCIPALES - CAMBIAR ESTOS VALORES */
-            --color-primary: #EDD00E;      /* Amarillo principal */
-            --color-primary-dark: #B8860B;  /* Amarillo oscuro */
-            --color-primary-light: #FFF8DC; /* Amarillo claro */
-            
-            --color-secondary: #3E3E3E;     /* Gris principal */
-            --color-secondary-dark: #696969; /* Gris oscuro */
-            --color-secondary-light: #D3D3D3; /* Gris claro */
-            
-            /* COLORES DE ACENTO Y NEUTROS (se derivan de los principales) */
-            --color-accent: #EDD00E;        /* Naranja para CTAs */
-            --color-light: #F5F5F5;         /* Fondo claro */
-            --color-dark: #333333;          /* Texto oscuro */
-            --color-gray: #666666;          /* Texto gris */
-            --color-white: #FFFFFF;         /* Blanco */
-            
-            /* VARIABLES PARA USO INTERNO (no modificar) */
-            --transition: all 0.3s ease;
-            --border-radius: 8px;
-            --box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
-            --box-shadow-hover: 0 15px 30px rgba(0, 0, 0, 0.1);
-        }
-        
-        /* ========== ESTILOS GENERALES ========== */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        html {
-            scroll-behavior: smooth;
-        }
-
-        body {
-            font-family: 'Open Sans', sans-serif;
-            color: var(--color-gray);
-            line-height: 1.6;
-            overflow-x: hidden;
-            background-color: var(--color-white);
-        }
-
-        h1, h2, h3, h4, h5 {
-            font-family: 'Montserrat', sans-serif;
-            font-weight: 600;
-            color: var(--color-dark);
-            line-height: 1.3;
-        }
-
-        .container {
-            width: 100%;
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 20px;
-        }
-
-        .section-title {
-            text-align: center;
-            margin-bottom: 3rem;
-            position: relative;
-        }
-
-        .section-title h2 {
-            font-size: 2.5rem;
-            display: inline-block;
-        }
-
-        .section-title h2:after {
-            content: '';
-            position: absolute;
-            width: 70px;
-            height: 4px;
-            background-color: var(--color-accent);
-            bottom: -10px;
-            left: 50%;
-            transform: translateX(-50%);
-        }
-
-        .btn {
-            display: inline-block;
-            background-color: var(--color-accent);
-            color: var(--color-white);
-            padding: 12px 30px;
-            border-radius: var(--border-radius);
-            text-decoration: none;
-            font-weight: 600;
-            border: none;
-            cursor: pointer;
-            transition: var(--transition);
-            font-family: 'Montserrat', sans-serif;
-        }
-
-        .btn:hover {
-            background-color: #e07b00;
-            transform: translateY(-3px);
-            box-shadow: 0 5px 15px rgba(255, 140, 0, 0.2);
-        }
-
-        .btn-outline {
-            background-color: transparent;
-            border: 2px solid var(--color-accent);
-            color: var(--color-accent);
-        }
-
-        .btn-outline:hover {
-            background-color: var(--color-accent);
-            color: var(--color-white);
-        }
-        
-        .btn-yellow {
-            background-color: var(--color-primary);
-            color: var(--color-dark);
-        }
-        
-        .btn-yellow:hover {
-            background-color: var(--color-primary-dark);
-            color: var(--color-white);
-        }
-
-        /* ========== HEADER ========== */
-        header {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            z-index: 1000;
-            background-color: rgba(255, 255, 255, 0.97);
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-            transition: var(--transition);
-        }
-
-        .header-container {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 20px;
-        }
-
-        .logo {
-            font-family: 'Montserrat', sans-serif;
-            font-size: 1.8rem;
-            font-weight: 700;
-            color: var(--color-secondary-dark);
-            text-decoration: none;
-        }
-
-        .logo span {
-            color: var(--color-primary);
-            font-weight: 800;
-        }
-
-        nav ul {
-            display: flex;
-            list-style: none;
-        }
-
-        nav li {
-            margin-left: 30px;
-        }
-
-        nav a {
-            text-decoration: none;
-            color: var(--color-dark);
-            font-weight: 500;
-            transition: var(--transition);
-            position: relative;
-        }
-
-        nav a:hover {
-            color: var(--color-primary);
-        }
-
-        nav a:after {
-            content: '';
-            position: absolute;
-            width: 0;
-            height: 2px;
-            background-color: var(--color-primary);
-            bottom: -5px;
-            left: 0;
-            transition: var(--transition);
-        }
-
-        nav a:hover:after {
-            width: 100%;
-        }
-
-        .language-selector {
-            margin-left: 20px;
-            font-size: 0.9rem;
-            color: var(--color-secondary);
-        }
-
-        .mobile-menu-btn {
-            display: none;
-            font-size: 1.5rem;
-            background: none;
-            border: none;
-            color: var(--color-secondary-dark);
-            cursor: pointer;
-        }
-
-        /* ========== HERO SECTION ========== */
-        .hero {
-            height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-            overflow: hidden;
-            background: linear-gradient(rgba(51, 51, 51, 0.85), rgba(51, 51, 51, 0.8)), url('https://images.unsplash.com/photo-1581094794329-c8112a89af12?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80') no-repeat center center/cover;
-            color: var(--color-white);
-            text-align: center;
-        }
-
-        .hero-content {
-            max-width: 800px;
-            padding: 0 20px;
-            z-index: 2;
-        }
-
-        .hero h1 {
-            font-size: 3.5rem;
-            margin-bottom: 20px;
-            color: var(--color-white);
-            animation: fadeInDown 1s ease;
-        }
-
-        .hero p {
-            font-size: 1.2rem;
-            margin-bottom: 40px;
-            animation: fadeInUp 1s ease 0.3s both;
-        }
-
-        .hero-btns {
-            animation: fadeIn 1s ease 0.6s both;
-        }
-
-        .scroll-indicator {
-            position: absolute;
-            bottom: 30px;
-            left: 50%;
-            transform: translateX(-50%);
-            animation: bounce 2s infinite;
-        }
-
-        .scroll-indicator i {
-            color: var(--color-primary);
-            font-size: 1.5rem;
-        }
-
-        /* ========== SERVICES SECTION ========== */
-        .services {
-            padding: 100px 0;
-            background-color: var(--color-light);
-        }
-
-        .services-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 30px;
-        }
-
-        .service-card {
-            background-color: var(--color-white);
-            border-radius: var(--border-radius);
-            overflow: hidden;
-            box-shadow: var(--box-shadow);
-            transition: var(--transition);
-            height: 100%;
-            border-top: 4px solid var(--color-primary);
-        }
-
-        .service-card:hover {
-            transform: translateY(-10px);
-            box-shadow: var(--box-shadow-hover);
-            border-top-color: var(--color-accent);
-        }
-
-        .service-img {
-            height: 200px;
-            background-color: var(--color-secondary);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--color-white);
-            font-size: 3rem;
-        }
-
-        .service-content {
-            padding: 25px;
-        }
-
-        .service-content h3 {
-            font-size: 1.5rem;
-            margin-bottom: 15px;
-            color: var(--color-secondary-dark);
-        }
-        
-        .service-icon {
-            color: var(--color-primary);
-            font-size: 1.2rem;
-            margin-right: 8px;
-        }
-
-        /* ========== PROCESS SECTION ========== */
-        .process {
-            padding: 100px 0;
-            background-color: var(--color-white);
-        }
-
-        .timeline {
-            display: flex;
-            justify-content: space-between;
-            position: relative;
-            margin-top: 50px;
-        }
-
-        .timeline:before {
-            content: '';
-            position: absolute;
-            top: 40px;
-            left: 0;
-            width: 100%;
-            height: 3px;
-            background-color: var(--color-secondary-light);
-            z-index: 1;
-        }
-
-        .timeline-item {
-            flex: 1;
-            text-align: center;
-            position: relative;
-            z-index: 2;
-        }
-
-        .timeline-point {
-            width: 40px;
-            height: 40px;
-            background-color: var(--color-white);
-            border: 3px solid var(--color-primary);
-            border-radius: 50%;
-            margin: 0 auto 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-            color: var(--color-primary);
-            transition: var(--transition);
-        }
-
-        .timeline-item:hover .timeline-point {
-            background-color: var(--color-accent);
-            border-color: var(--color-accent);
-            color: var(--color-white);
-            transform: scale(1.1);
-        }
-
-        .timeline-content h4 {
-            margin-bottom: 10px;
-            color: var(--color-secondary-dark);
-        }
-
-        /* ========== PROJECTS SECTION ========== */
-        .projects {
-            padding: 100px 0;
-            background-color: var(--color-light);
-        }
-
-        .project-filters {
-            display: flex;
-            justify-content: center;
-            margin-bottom: 40px;
-            flex-wrap: wrap;
-        }
-
-        .filter-btn {
-            background: none;
-            border: none;
-            padding: 8px 20px;
-            margin: 5px;
-            cursor: pointer;
-            font-weight: 600;
-            color: var(--color-secondary);
-            transition: var(--transition);
-            border-radius: 30px;
-        }
-
-        .filter-btn.active, .filter-btn:hover {
-            background-color: var(--color-primary);
-            color: var(--color-dark);
-        }
-
-        .masonry-grid {
-            column-count: 3;
-            column-gap: 20px;
-        }
-
-        .project-item {
-            break-inside: avoid;
-            margin-bottom: 20px;
-            border-radius: var(--border-radius);
-            overflow: hidden;
-            box-shadow: var(--box-shadow);
-            transition: var(--transition);
-            position: relative;
-            cursor: pointer;
-        }
-
-        .project-item:hover {
-            transform: translateY(-5px);
-            box-shadow: var(--box-shadow-hover);
-        }
-
-        .project-img {
-            height: 250px;
-            background-color: var(--color-secondary);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--color-white);
-            font-size: 2rem;
-        }
-
-        .project-overlay {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background-color: rgba(128, 128, 128, 0.9);
-            color: var(--color-white);
-            padding: 20px;
-            transform: translateY(100%);
-            transition: var(--transition);
-        }
-
-        .project-item:hover .project-overlay {
-            transform: translateY(0);
-        }
-
-        /* ========== SOFTWARE SECTION ========== */
-        .software {
-            padding: 100px 0;
-            background-color: var(--color-white);
-        }
-
-        .software-content {
-            display: flex;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 50px;
-        }
-
-        .software-demo {
-            flex: 1;
-            min-width: 300px;
-            border-radius: var(--border-radius);
-            overflow: hidden;
-            box-shadow: var(--box-shadow-hover);
-            border: 1px solid var(--color-secondary-light);
-        }
-
-        .demo-header {
-            background-color: var(--color-dark);
-            padding: 15px;
-            display: flex;
-            align-items: center;
-        }
-
-        .demo-dot {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            margin-right: 8px;
-        }
-
-        .demo-dot.red { background-color: #FF5F57; }
-        .demo-dot.yellow { background-color: var(--color-primary); }
-        .demo-dot.green { background-color: #28CA42; }
-
-        .demo-screen {
-            height: 300px;
-            background-color: #1E1E1E;
-            color: #D4D4D4;
-            padding: 20px;
-            font-family: 'Consolas', monospace;
-            overflow-y: auto;
-        }
-
-        .software-features {
-            flex: 1;
-            min-width: 300px;
-        }
-
-        .feature-list {
-            margin-top: 30px;
-        }
-
-        .feature-item {
-            display: flex;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-
-        .feature-icon {
-            background-color: var(--color-primary-light);
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-right: 15px;
-            color: var(--color-primary-dark);
-            font-size: 1.2rem;
-        }
-
-        /* ========== CONTACT SECTION ========== */
-        .contact {
-            padding: 100px 0;
-            background-color: var(--color-light);
-        }
-
-        .contact-container {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 50px;
-        }
-
-        .contact-info {
-            flex: 1;
-            min-width: 300px;
-        }
-
-        .contact-form {
-            flex: 1;
-            min-width: 300px;
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-            color: var(--color-secondary-dark);
-        }
-
-        .form-control {
-            width: 100%;
-            padding: 12px 15px;
-            border: 1px solid var(--color-secondary-light);
-            border-radius: 4px;
-            font-family: 'Open Sans', sans-serif;
-            transition: var(--transition);
-            background-color: var(--color-white);
-        }
-
-        .form-control:focus {
-            outline: none;
-            border-color: var(--color-primary);
-            box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.1);
-        }
-
-        .service-select {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-
-        .service-option {
-            padding: 10px;
-            border: 1px solid var(--color-secondary-light);
-            border-radius: 4px;
-            text-align: center;
-            cursor: pointer;
-            transition: var(--transition);
-            background-color: var(--color-white);
-        }
-
-        .service-option.selected {
-            background-color: var(--color-primary);
-            color: var(--color-dark);
-            border-color: var(--color-primary);
-            font-weight: 600;
-        }
-
-        /* ========== FOOTER ========== */
-        footer {
-            background-color: var(--color-dark);
-            color: var(--color-white);
-            padding: 60px 0 30px;
-        }
-
-        .footer-content {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: space-between;
-            margin-bottom: 40px;
-        }
-
-        .footer-logo {
-            font-family: 'Montserrat', sans-serif;
-            font-size: 1.8rem;
-            font-weight: 700;
-            color: var(--color-white);
-            margin-bottom: 15px;
-        }
-
-        .footer-logo span {
-            color: var(--color-primary);
-        }
-
-        .footer-map {
-            height: 200px;
-            background-color: var(--color-secondary);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-top: 20px;
-            border-radius: 4px;
-        }
-
-        .social-links {
-            display: flex;
-            gap: 15px;
-            margin-top: 20px;
-        }
-
-        .social-links a {
-            color: var(--color-white);
-            font-size: 1.2rem;
-            transition: var(--transition);
-            background-color: rgba(255, 255, 255, 0.1);
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .social-links a:hover {
-            color: var(--color-primary);
-            background-color: rgba(255, 255, 255, 0.2);
-            transform: translateY(-3px);
-        }
-
-        .footer-bottom {
-            text-align: center;
-            padding-top: 30px;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-            font-size: 0.9rem;
-            color: rgba(255, 255, 255, 0.7);
-        }
-
-        /* ========== MODAL ========== */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.8);
-            z-index: 2000;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-
-        .modal.active {
-            display: flex;
-        }
-
-        .modal-content {
-            background-color: var(--color-white);
-            border-radius: var(--border-radius);
-            max-width: 800px;
-            width: 100%;
-            max-height: 90vh;
-            overflow-y: auto;
-            position: relative;
-            border-top: 5px solid var(--color-primary);
-        }
-
-        .modal-header {
-            padding: 20px;
-            border-bottom: 1px solid var(--color-secondary-light);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background-color: var(--color-light);
-        }
-
-        .modal-close {
-            background: none;
-            border: none;
-            font-size: 1.5rem;
-            cursor: pointer;
-            color: var(--color-secondary);
-        }
-
-        .modal-body {
-            padding: 20px;
-        }
-
-        /* ========== ANIMATIONS ========== */
-        @keyframes fadeInDown {
-            from {
-                opacity: 0;
-                transform: translateY(-30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        @keyframes bounce {
-            0%, 20%, 50%, 80%, 100% {
-                transform: translateY(0) translateX(-50%);
-            }
-            40% {
-                transform: translateY(-10px) translateX(-50%);
-            }
-            60% {
-                transform: translateY(-5px) translateX(-50%);
-            }
-        }
-
-        /* ========== RESPONSIVE ========== */
-        @media (max-width: 992px) {
-            .masonry-grid {
-                column-count: 2;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .mobile-menu-btn {
-                display: block;
-            }
-
-            nav ul {
-                position: fixed;
-                top: 70px;
-                left: 0;
-                width: 100%;
-                background-color: var(--color-white);
-                flex-direction: column;
-                align-items: center;
-                padding: 20px 0;
-                box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
-                transform: translateY(-100%);
-                opacity: 0;
-                transition: var(--transition);
-                z-index: 999;
-            }
-
-            nav ul.active {
-                transform: translateY(0);
-                opacity: 1;
-            }
-
-            nav li {
-                margin: 15px 0;
-            }
-
-            .hero h1 {
-                font-size: 2.5rem;
-            }
-
-            .timeline {
-                flex-direction: column;
-            }
-
-            .timeline:before {
-                top: 0;
-                left: 40px;
-                width: 3px;
-                height: 100%;
-            }
-
-            .timeline-item {
-                display: flex;
-                text-align: left;
-                margin-bottom: 40px;
-            }
-
-            .timeline-point {
-                margin: 0 20px 0 0;
-                flex-shrink: 0;
-            }
-
-            .service-select {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        @media (max-width: 576px) {
-            .masonry-grid {
-                column-count: 1;
-            }
-
-            .section-title h2 {
-                font-size: 2rem;
-            }
-
-            .hero h1 {
-                font-size: 2rem;
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="icon" type="image/x-icon" href="https://img.icons8.com/color/96/000000/engineering.png">
 </head>
 <body>
     <!-- Header -->
     <header>
         <div class="container header-container">
-            <a href="#" class="logo">AISLA<span>NTECH</span></a>
+            <a href="#" class="logo">
+                <span class="logo-aislan">AISLAN</span><span class="logo-tech">TECH</span>
+            </a>
             
             <button class="mobile-menu-btn" id="mobileMenuBtn">
                 <i class="fas fa-bars"></i>
@@ -900,7 +69,7 @@
                     <div class="service-content">
                         <h3>Oficina Técnica</h3>
                         <p>Documentación técnica, planos detallados y especificaciones precisas para proyectos industriales y de construcción.</p>
-                        <ul style="margin-top: 15px; padding-left: 20px;">
+                        <ul class="service-features">
                             <li><i class="fas fa-check service-icon"></i> Planos 2D y 3D</li>
                             <li><i class="fas fa-check service-icon"></i> Memorias técnicas</li>
                             <li><i class="fas fa-check service-icon"></i> Especificaciones de materiales</li>
@@ -916,7 +85,7 @@
                     <div class="service-content">
                         <h3>Consultoría Industrial</h3>
                         <p>Optimización de procesos, eficiencia energética y soluciones personalizadas para la industria.</p>
-                        <ul style="margin-top: 15px; padding-left: 20px;">
+                        <ul class="service-features">
                             <li><i class="fas fa-check service-icon"></i> Análisis de procesos</li>
                             <li><i class="fas fa-check service-icon"></i> Optimización energética</li>
                             <li><i class="fas fa-check service-icon"></i> Gestión de proyectos</li>
@@ -932,7 +101,7 @@
                     <div class="service-content">
                         <h3>Precerco Avanzado</h3>
                         <p>Sistemas modulares innovadores para estructuras de precercos con máxima eficiencia y calidad.</p>
-                        <ul style="margin-top: 15px; padding-left: 20px;">
+                        <ul class="service-features">
                             <li><i class="fas fa-check service-icon"></i> Diseños modulares</li>
                             <li><i class="fas fa-check service-icon"></i> Materiales especializados</li>
                             <li><i class="fas fa-check service-icon"></i> Instalación optimizada</li>
@@ -948,7 +117,7 @@
                     <div class="service-content">
                         <h3>Cajones Túnel para Protección Solar</h3>
                         <p>Diseños especializados para control solar, optimizando el confort térmico y la eficiencia energética.</p>
-                        <ul style="margin-top: 15px; padding-left: 20px;">
+                        <ul class="service-features">
                             <li><i class="fas fa-check service-icon"></i> Análisis solar</li>
                             <li><i class="fas fa-check service-icon"></i> Diseños personalizados</li>
                             <li><i class="fas fa-check service-icon"></i> Instalación profesional</li>
@@ -964,7 +133,7 @@
                     <div class="service-content">
                         <h3>Software & Proceso Integral</h3>
                         <p>Soluciones digitales para todo el ciclo del proyecto, desde el diseño hasta la implementación.</p>
-                        <ul style="margin-top: 15px; padding-left: 20px;">
+                        <ul class="service-features">
                             <li><i class="fas fa-check service-icon"></i> Software especializado</li>
                             <li><i class="fas fa-check service-icon"></i> Gestión integral</li>
                             <li><i class="fas fa-check service-icon"></i> Soporte continuo</li>
@@ -1210,34 +379,43 @@
                     <h3>Información de Contacto</h3>
                     <p>Estamos aquí para ayudarte con tus proyectos técnicos y soluciones especializadas.</p>
                     
-                    <div style="margin-top: 30px;">
-                        <div style="display: flex; align-items: center; margin-bottom: 15px;">
-                            <i class="fas fa-map-marker-alt" style="color: var(--color-accent); margin-right: 10px;"></i>
+                    <div class="contact-details">
+                        <div class="contact-detail">
+                            <i class="fas fa-map-marker-alt contact-icon"></i>
                             <div>
                                 <strong>Dirección</strong>
-                                <p>Calle Tecnología, 123, 28020 Madrid</p>
+                                <p>Caldes d'Estrac 08393, Barcelona</p>
                             </div>
                         </div>
                         
-                        <div style="display: flex; align-items: center; margin-bottom: 15px;">
-                            <i class="fas fa-phone" style="color: var(--color-accent); margin-right: 10px;"></i>
+                        <div class="contact-detail">
+                            <i class="fas fa-phone contact-icon"></i>
                             <div>
                                 <strong>Teléfono</strong>
-                                <p>+34 91 123 45 67</p>
+                                <p>930 49 47 87</p>
                             </div>
                         </div>
                         
-                        <div style="display: flex; align-items: center; margin-bottom: 15px;">
-                            <i class="fas fa-envelope" style="color: var(--color-accent); margin-right: 10px;"></i>
+                        <div class="contact-detail">
+                            <i class="fas fa-envelope contact-icon"></i>
                             <div>
                                 <strong>Email</strong>
-                                <p>info@aislantech.com</p>
+                                <p>info@aislantech.es</p>
+                            </div>
+                        </div>
+                        
+                        <div class="contact-detail">
+                            <i class="fas fa-globe contact-icon"></i>
+                            <div>
+                                <strong>Sitio Web</strong>
+                                <p>www.aislantech.es</p>
                             </div>
                         </div>
                     </div>
                     
                     <div class="footer-map">
-                        <i class="fas fa-map-marked-alt" style="font-size: 2rem; color: var(--color-primary);"></i>
+                        <i class="fas fa-map-marked-alt map-icon"></i>
+                        <p>Ubicados en Caldes d'Estrac, Barcelona</p>
                     </div>
                 </div>
                 
@@ -1295,42 +473,46 @@
     <footer>
         <div class="container">
             <div class="footer-content">
-                <div>
-                    <div class="footer-logo">AISLA<span>NTECH</span></div>
-                    <p>Soluciones técnicas avanzadas para industria y construcción.</p>
+                <div class="footer-about">
+                    <div class="footer-logo">
+                        <span class="logo-aislan">AISLAN</span><span class="logo-tech">TECH</span>
+                    </div>
+                    <p class="footer-description">Soluciones técnicas avanzadas para industria y construcción.</p>
                     
                     <div class="social-links">
-                        <a href="#"><i class="fab fa-linkedin-in"></i></a>
-                        <a href="#"><i class="fab fa-twitter"></i></a>
-                        <a href="#"><i class="fab fa-youtube"></i></a>
-                        <a href="#"><i class="fab fa-instagram"></i></a>
+                        <a href="#" title="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+                        <a href="#" title="Twitter"><i class="fab fa-twitter"></i></a>
+                        <a href="#" title="Instagram"><i class="fab fa-instagram"></i></a>
+                        <a href="#" title="YouTube"><i class="fab fa-youtube"></i></a>
                     </div>
                 </div>
                 
-                <div>
+                <div class="footer-services">
                     <h4>Servicios</h4>
-                    <ul style="list-style: none; margin-top: 15px;">
-                        <li><a href="#servicios" style="color: rgba(255,255,255,0.8); text-decoration: none;">Oficina Técnica</a></li>
-                        <li><a href="#servicios" style="color: rgba(255,255,255,0.8); text-decoration: none;">Consultoría Industrial</a></li>
-                        <li><a href="#servicios" style="color: rgba(255,255,255,0.8); text-decoration: none;">Precerco Avanzado</a></li>
-                        <li><a href="#servicios" style="color: rgba(255,255,255,0.8); text-decoration: none;">Protección Solar</a></li>
-                        <li><a href="#servicios" style="color: rgba(255,255,255,0.8); text-decoration: none;">Software</a></li>
+                    <ul>
+                        <li><a href="#servicios">Oficina Técnica</a></li>
+                        <li><a href="#servicios">Consultoría Industrial</a></li>
+                        <li><a href="#servicios">Precerco Avanzado</a></li>
+                        <li><a href="#servicios">Protección Solar</a></li>
+                        <li><a href="#servicios">Software</a></li>
                     </ul>
                 </div>
                 
-                <div>
+                <div class="footer-contact">
                     <h4>Contacto Rápido</h4>
-                    <div style="margin-top: 15px;">
-                        <p><i class="fas fa-phone" style="margin-right: 10px; color: var(--color-primary);"></i> +34 91 123 45 67</p>
-                        <p><i class="fas fa-envelope" style="margin-right: 10px; color: var(--color-primary);"></i> info@aislantech.com</p>
+                    <div class="quick-contact">
+                        <p><i class="fas fa-phone"></i> 930 49 47 87</p>
+                        <p><i class="fas fa-envelope"></i> info@aislantech.es</p>
+                        <p><i class="fas fa-map-marker-alt"></i> Caldes d'Estrac, Barcelona</p>
+                        <p><i class="fas fa-globe"></i> www.aislantech.es</p>
                     </div>
                     
-                    <a href="#contacto" class="btn btn-yellow" style="margin-top: 20px;">Solicitar Presupuesto</a>
+                    <a href="#contacto" class="btn btn-yellow">Solicitar Presupuesto</a>
                 </div>
             </div>
             
             <div class="footer-bottom">
-                <p>&copy; 2023 Aislantech. Todos los derechos reservados. | Diseño web moderno y minimalista</p>
+                <p>&copy; 2023 Aislantech. Todos los derechos reservados. | <a href="https://www.aislantech.es" style="color: var(--color-primary);">www.aislantech.es</a></p>
             </div>
         </div>
     </footer>
@@ -1348,195 +530,6 @@
         </div>
     </div>
 
-    <script>
-        // Mobile menu toggle
-        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
-        const mainMenu = document.getElementById('mainMenu');
-        
-        mobileMenuBtn.addEventListener('click', () => {
-            mainMenu.classList.toggle('active');
-            mobileMenuBtn.innerHTML = mainMenu.classList.contains('active') 
-                ? '<i class="fas fa-times"></i>' 
-                : '<i class="fas fa-bars"></i>';
-        });
-        
-        // Smooth scroll for anchor links
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function(e) {
-                e.preventDefault();
-                
-                // Close mobile menu if open
-                if(mainMenu.classList.contains('active')) {
-                    mainMenu.classList.remove('active');
-                    mobileMenuBtn.innerHTML = '<i class="fas fa-bars"></i>';
-                }
-                
-                const targetId = this.getAttribute('href');
-                if(targetId === '#') return;
-                
-                const targetElement = document.querySelector(targetId);
-                if(targetElement) {
-                    window.scrollTo({
-                        top: targetElement.offsetTop - 80,
-                        behavior: 'smooth'
-                    });
-                }
-            });
-        });
-        
-        // Project filtering
-        const filterBtns = document.querySelectorAll('.filter-btn');
-        const projectItems = document.querySelectorAll('.project-item');
-        
-        filterBtns.forEach(btn => {
-            btn.addEventListener('click', () => {
-                // Remove active class from all buttons
-                filterBtns.forEach(b => b.classList.remove('active'));
-                // Add active class to clicked button
-                btn.classList.add('active');
-                
-                const filterValue = btn.getAttribute('data-filter');
-                
-                projectItems.forEach(item => {
-                    if(filterValue === 'all' || item.getAttribute('data-category') === filterValue) {
-                        item.style.display = 'block';
-                    } else {
-                        item.style.display = 'none';
-                    }
-                });
-            });
-        });
-        
-        // Service selection in contact form
-        const serviceOptions = document.querySelectorAll('.service-option');
-        serviceOptions.forEach(option => {
-            option.addEventListener('click', () => {
-                serviceOptions.forEach(opt => opt.classList.remove('selected'));
-                option.classList.add('selected');
-            });
-        });
-        
-        // Project modal
-        const projectModal = document.getElementById('projectModal');
-        const modalClose = document.getElementById('modalClose');
-        const modalTitle = document.getElementById('modalTitle');
-        const modalBody = document.getElementById('modalBody');
-        
-        // Open modal when project item is clicked
-        projectItems.forEach(item => {
-            item.addEventListener('click', () => {
-                const category = item.getAttribute('data-category');
-                const overlay = item.querySelector('.project-overlay');
-                const title = overlay.querySelector('h4').textContent;
-                const description = overlay.querySelector('p').textContent;
-                
-                let categoryText = '';
-                switch(category) {
-                    case 'oficina': categoryText = 'Oficina Técnica'; break;
-                    case 'consultoria': categoryText = 'Consultoría Industrial'; break;
-                    case 'precerco': categoryText = 'Precerco Avanzado'; break;
-                    case 'solar': categoryText = 'Protección Solar'; break;
-                }
-                
-                modalTitle.textContent = title;
-                modalBody.innerHTML = `
-                    <div style="display: flex; flex-wrap: wrap; gap: 30px;">
-                        <div style="flex: 1; min-width: 300px;">
-                            <h4>Descripción del Proyecto</h4>
-                            <p>${description}</p>
-                            <p><strong>Categoría:</strong> ${categoryText}</p>
-                            <p><strong>Cliente:</strong> Empresa Industrial S.A.</p>
-                            <p><strong>Año:</strong> 2023</p>
-                            <p><strong>Duración:</strong> 4 meses</p>
-                        </div>
-                        <div style="flex: 1; min-width: 300px;">
-                            <h4>Resultados Obtenidos</h4>
-                            <ul>
-                                <li><i class="fas fa-check" style="color: var(--color-primary); margin-right: 8px;"></i> Optimización del 25% en tiempos de diseño</li>
-                                <li><i class="fas fa-check" style="color: var(--color-primary); margin-right: 8px;"></i> Reducción del 15% en materiales empleados</li>
-                                <li><i class="fas fa-check" style="color: var(--color-primary); margin-right: 8px;"></i> Mejora del 30% en eficiencia energética</li>
-                                <li><i class="fas fa-check" style="color: var(--color-primary); margin-right: 8px;"></i> Cumplimiento total de normativas</li>
-                            </ul>
-                        </div>
-                    </div>
-                    <div style="margin-top: 30px;">
-                        <h4>Tecnologías Aplicadas</h4>
-                        <div style="display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap;">
-                            <span style="background-color: var(--color-primary); color: var(--color-dark); padding: 5px 10px; border-radius: 4px;">Modelado 3D</span>
-                            <span style="background-color: var(--color-secondary); color: white; padding: 5px 10px; border-radius: 4px;">Análisis BIM</span>
-                            <span style="background-color: var(--color-primary-light); color: var(--color-dark); padding: 5px 10px; border-radius: 4px;">Simulación Solar</span>
-                            <span style="background-color: var(--color-secondary-dark); color: white; padding: 5px 10px; border-radius: 4px;">Cálculo Estructural</span>
-                        </div>
-                    </div>
-                `;
-                
-                projectModal.classList.add('active');
-            });
-        });
-        
-        // Close modal
-        modalClose.addEventListener('click', () => {
-            projectModal.classList.remove('active');
-        });
-        
-        // Close modal when clicking outside
-        window.addEventListener('click', (e) => {
-            if(e.target === projectModal) {
-                projectModal.classList.remove('active');
-            }
-        });
-        
-        // Form submission
-        const contactForm = document.getElementById('contactForm');
-        contactForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            
-            // Get selected service
-            let selectedService = '';
-            serviceOptions.forEach(option => {
-                if(option.classList.contains('selected')) {
-                    selectedService = option.getAttribute('data-service');
-                }
-            });
-            
-            // In a real application, here you would send the form data to a server
-            alert(`Gracias por su consulta sobre ${selectedService}. Nos pondremos en contacto con usted en menos de 24 horas.`);
-            contactForm.reset();
-            serviceOptions.forEach(option => option.classList.remove('selected'));
-        });
-        
-        // Header scroll effect
-        window.addEventListener('scroll', () => {
-            const header = document.querySelector('header');
-            if(window.scrollY > 100) {
-                header.style.boxShadow = '0 5px 20px rgba(0, 0, 0, 0.1)';
-            } else {
-                header.style.boxShadow = '0 2px 10px rgba(0, 0, 0, 0.05)';
-            }
-        });
-        
-        // Animation on scroll (simplified)
-        const observerOptions = {
-            threshold: 0.1,
-            rootMargin: '0px 0px -50px 0px'
-        };
-        
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if(entry.isIntersecting) {
-                    entry.target.style.opacity = '1';
-                    entry.target.style.transform = 'translateY(0)';
-                }
-            });
-        }, observerOptions);
-        
-        // Observe elements for animation
-        document.querySelectorAll('.service-card, .timeline-item, .project-item, .feature-item').forEach(el => {
-            el.style.opacity = '0';
-            el.style.transform = 'translateY(20px)';
-            el.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
-            observer.observe(el);
-        });
-    </script>
+    <script src="script.js"></script>
 </body>
 </html>
