@@ -3,328 +3,1540 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ACELANTECH | Consultoría y Premarcos Térmicos Avanzados</title>
-    
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
-    
+    <title>Aislantech | Soluciones Técnicas Avanzadas</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Open+Sans:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
-        /* ------------------------- */
-        /* 0. VARIABLES Y RESET BÁSICO */
-        /* ------------------------- */
+        /* ========== VARIABLES DE COLOR - MODIFICAR AQUÍ ========== */
         :root {
-            --color-primary: #0077B6;      /* Azul técnico */
-            --color-secondary: #00B4D8;    /* Azul claro de acento */
-            --color-dark: #202020;         /* Negro o gris oscuro */
-            --color-light: #F4F4F9;        /* Gris muy claro / fondo */
-            --color-text: #444444;         /* Texto principal */
+            /* COLORES PRINCIPALES - CAMBIAR ESTOS VALORES */
+            --color-primary: #FFD700;      /* Amarillo principal */
+            --color-primary-dark: #B8860B;  /* Amarillo oscuro */
+            --color-primary-light: #FFF8DC; /* Amarillo claro */
             
-            --font-heading: 'Montserrat', sans-serif;
-            --font-body: 'Montserrat', sans-serif;
-            --font-mono: 'Roboto Mono', monospace; /* Para datos técnicos */
+            --color-secondary: #808080;     /* Gris principal */
+            --color-secondary-dark: #696969; /* Gris oscuro */
+            --color-secondary-light: #D3D3D3; /* Gris claro */
             
-            --padding-section: 6rem 0;
+            /* COLORES DE ACENTO Y NEUTROS (se derivan de los principales) */
+            --color-accent: #FF8C00;        /* Naranja para CTAs */
+            --color-light: #F5F5F5;         /* Fondo claro */
+            --color-dark: #333333;          /* Texto oscuro */
+            --color-gray: #666666;          /* Texto gris */
+            --color-white: #FFFFFF;         /* Blanco */
+            
+            /* VARIABLES PARA USO INTERNO (no modificar) */
+            --transition: all 0.3s ease;
+            --border-radius: 8px;
+            --box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            --box-shadow-hover: 0 15px 30px rgba(0, 0, 0, 0.1);
         }
-
+        
+        /* ========== ESTILOS GENERALES ========== */
         * {
-            box-sizing: border-box;
             margin: 0;
             padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
         }
 
         body {
-            font-family: var(--font-body);
+            font-family: 'Open Sans', sans-serif;
+            color: var(--color-gray);
             line-height: 1.6;
-            color: var(--color-text);
-            background-color: #ffffff;
+            overflow-x: hidden;
+            background-color: var(--color-white);
         }
 
-        /* Contenedor central */
+        h1, h2, h3, h4, h5 {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 600;
+            color: var(--color-dark);
+            line-height: 1.3;
+        }
+
         .container {
-            width: 90%;
+            width: 100%;
             max-width: 1200px;
             margin: 0 auto;
+            padding: 0 20px;
         }
 
-        /* ------------------------- */
-        /* 1. TIPOGRAFÍA */
-        /* ------------------------- */
-        h1, h2, h3 {
-            font-family: var(--font-heading);
-            color: var(--color-dark);
-            margin-bottom: 1rem;
-            font-weight: 700;
+        .section-title {
+            text-align: center;
+            margin-bottom: 3rem;
+            position: relative;
         }
 
-        h2 {
+        .section-title h2 {
             font-size: 2.5rem;
-            line-height: 1.1;
+            display: inline-block;
         }
 
-        h3 {
-            font-size: 1.8rem;
-            color: var(--color-primary); /* Destacar títulos de sección */
-            margin-bottom: 2rem;
+        .section-title h2:after {
+            content: '';
+            position: absolute;
+            width: 70px;
+            height: 4px;
+            background-color: var(--color-accent);
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
         }
 
-        /* ------------------------- */
-        /* 2. BOTONES Y UTILIDADES */
-        /* ------------------------- */
         .btn {
             display: inline-block;
-            padding: 0.8rem 1.5rem;
+            background-color: var(--color-accent);
+            color: var(--color-white);
+            padding: 12px 30px;
+            border-radius: var(--border-radius);
             text-decoration: none;
-            border-radius: 4px;
             font-weight: 600;
-            transition: background-color 0.3s ease;
-            text-transform: uppercase;
-            font-size: 0.9rem;
+            border: none;
+            cursor: pointer;
+            transition: var(--transition);
+            font-family: 'Montserrat', sans-serif;
         }
 
-        .btn-primary {
+        .btn:hover {
+            background-color: #e07b00;
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(255, 140, 0, 0.2);
+        }
+
+        .btn-outline {
+            background-color: transparent;
+            border: 2px solid var(--color-accent);
+            color: var(--color-accent);
+        }
+
+        .btn-outline:hover {
+            background-color: var(--color-accent);
+            color: var(--color-white);
+        }
+        
+        .btn-yellow {
             background-color: var(--color-primary);
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background-color: #005A8D;
-        }
-
-        .btn-secondary {
-            background-color: var(--color-secondary);
             color: var(--color-dark);
         }
-
-        .btn-secondary:hover {
-            background-color: var(--color-primary);
-            color: white;
+        
+        .btn-yellow:hover {
+            background-color: var(--color-primary-dark);
+            color: var(--color-white);
         }
 
-        .bg-dark {
-            background-color: var(--color-dark);
-            color: white;
-        }
-
-        .bg-light {
-            background-color: var(--color-light);
-        }
-
-        /* ------------------------- */
-        /* 3. CABECERA (HEADER) */
-        /* ------------------------- */
-        .header {
-            background-color: white;
-            box-shadow: 0 1px 5px rgba(0, 0, 0, 0.08);
-            padding: 1rem 0;
-            position: sticky;
+        /* ========== HEADER ========== */
+        header {
+            position: fixed;
             top: 0;
+            left: 0;
+            width: 100%;
             z-index: 1000;
+            background-color: rgba(255, 255, 255, 0.97);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            transition: var(--transition);
         }
 
-        .header .container {
+        .header-container {
             display: flex;
             justify-content: space-between;
             align-items: center;
+            padding: 20px;
         }
 
         .logo {
-            font-size: 1.4rem;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 1.8rem;
             font-weight: 700;
+            color: var(--color-secondary-dark);
+            text-decoration: none;
+        }
+
+        .logo span {
+            color: var(--color-primary);
+            font-weight: 800;
+        }
+
+        nav ul {
+            display: flex;
+            list-style: none;
+        }
+
+        nav li {
+            margin-left: 30px;
+        }
+
+        nav a {
+            text-decoration: none;
+            color: var(--color-dark);
+            font-weight: 500;
+            transition: var(--transition);
+            position: relative;
+        }
+
+        nav a:hover {
             color: var(--color-primary);
         }
 
-        .nav a {
-            color: var(--color-dark);
-            text-decoration: none;
-            margin-left: 20px;
-            font-weight: 600;
+        nav a:after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            background-color: var(--color-primary);
+            bottom: -5px;
+            left: 0;
+            transition: var(--transition);
         }
 
-        /* ------------------------- */
-        /* 4. HERO SECTION */
-        /* ------------------------- */
+        nav a:hover:after {
+            width: 100%;
+        }
+
+        .language-selector {
+            margin-left: 20px;
+            font-size: 0.9rem;
+            color: var(--color-secondary);
+        }
+
+        .mobile-menu-btn {
+            display: none;
+            font-size: 1.5rem;
+            background: none;
+            border: none;
+            color: var(--color-secondary-dark);
+            cursor: pointer;
+        }
+
+        /* ========== HERO SECTION ========== */
         .hero {
-            /* Deberás cambiar la URL por una imagen relevante para el sector */
-            background-image: linear-gradient(rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.8)), url('ruta/a/imagen-fondo.jpg'); 
-            background-size: cover;
-            background-position: center;
-            padding: 8rem 0;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+            background: linear-gradient(rgba(51, 51, 51, 0.85), rgba(51, 51, 51, 0.8)), url('https://images.unsplash.com/photo-1581094794329-c8112a89af12?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80') no-repeat center center/cover;
+            color: var(--color-white);
             text-align: center;
         }
 
-        .hero h2 {
-            color: var(--color-dark);
-            font-size: 3.5rem;
+        .hero-content {
             max-width: 800px;
-            margin-left: auto;
-            margin-right: auto;
+            padding: 0 20px;
+            z-index: 2;
+        }
+
+        .hero h1 {
+            font-size: 3.5rem;
+            margin-bottom: 20px;
+            color: var(--color-white);
+            animation: fadeInDown 1s ease;
         }
 
         .hero p {
-            font-size: 1.3rem;
-            margin: 1.5rem auto 2.5rem;
-            max-width: 600px;
+            font-size: 1.2rem;
+            margin-bottom: 40px;
+            animation: fadeInUp 1s ease 0.3s both;
         }
 
-        /* ------------------------- */
-        /* 5. SECCIONES GENERALES */
-        /* ------------------------- */
-        .section {
-            padding: var(--padding-section);
+        .hero-btns {
+            animation: fadeIn 1s ease 0.6s both;
         }
 
-        .section h3 {
-            text-align: center;
+        .scroll-indicator {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            animation: bounce 2s infinite;
         }
 
-        /* ------------------------- */
-        /* 6. FOOTER */
-        /* ------------------------- */
-        .footer {
-            padding: 3rem 0;
-            text-align: center;
-            font-size: 0.9rem;
+        .scroll-indicator i {
+            color: var(--color-primary);
+            font-size: 1.5rem;
         }
 
-        .footer p {
-            margin-top: 1rem;
+        /* ========== SERVICES SECTION ========== */
+        .services {
+            padding: 100px 0;
+            background-color: var(--color-light);
         }
 
-        /* ------------------------- */
-        /* 7. TARJETAS DE SERVICIO (CARD GRID) */
-        /* ------------------------- */
-        .card-grid {
+        .services-grid {
             display: grid;
-            /* 3 columnas iguales en escritorio (mínimo de 300px) */
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
             gap: 30px;
-            margin-top: 3rem;
         }
 
         .service-card {
-            background-color: white;
-            padding: 30px;
-            border-radius: 8px;
-            /* Sombra sutil para darle profundidad y profesionalismo */
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            border-top: 5px solid var(--color-primary); /* Línea de acento */
+            background-color: var(--color-white);
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            box-shadow: var(--box-shadow);
+            transition: var(--transition);
+            height: 100%;
+            border-top: 4px solid var(--color-primary);
         }
 
-        /* Efecto hover profesional */
         .service-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+            transform: translateY(-10px);
+            box-shadow: var(--box-shadow-hover);
+            border-top-color: var(--color-accent);
         }
 
-        .service-card h4 {
-            color: var(--color-dark);
-            font-size: 1.3rem;
-            margin-top: 0.5rem;
-            margin-bottom: 0.8rem;
-            font-weight: 600;
+        .service-img {
+            height: 200px;
+            background-color: var(--color-secondary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--color-white);
+            font-size: 3rem;
         }
 
-        .icon-placeholder {
-            font-size: 2.5rem;
+        .service-content {
+            padding: 25px;
+        }
+
+        .service-content h3 {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            color: var(--color-secondary-dark);
+        }
+        
+        .service-icon {
             color: var(--color-primary);
+            font-size: 1.2rem;
+            margin-right: 8px;
+        }
+
+        /* ========== PROCESS SECTION ========== */
+        .process {
+            padding: 100px 0;
+            background-color: var(--color-white);
+        }
+
+        .timeline {
+            display: flex;
+            justify-content: space-between;
+            position: relative;
+            margin-top: 50px;
+        }
+
+        .timeline:before {
+            content: '';
+            position: absolute;
+            top: 40px;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background-color: var(--color-secondary-light);
+            z-index: 1;
+        }
+
+        .timeline-item {
+            flex: 1;
+            text-align: center;
+            position: relative;
+            z-index: 2;
+        }
+
+        .timeline-point {
+            width: 40px;
+            height: 40px;
+            background-color: var(--color-white);
+            border: 3px solid var(--color-primary);
+            border-radius: 50%;
+            margin: 0 auto 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: var(--color-primary);
+            transition: var(--transition);
+        }
+
+        .timeline-item:hover .timeline-point {
+            background-color: var(--color-accent);
+            border-color: var(--color-accent);
+            color: var(--color-white);
+            transform: scale(1.1);
+        }
+
+        .timeline-content h4 {
             margin-bottom: 10px;
-            /* Estilo para que el ícono parezca un poco más técnico/codificado */
-            font-family: var(--font-mono); 
-            display: block;
+            color: var(--color-secondary-dark);
         }
 
-        .read-more {
-            display: inline-block;
-            color: var(--color-secondary);
-            text-decoration: none;
+        /* ========== PROJECTS SECTION ========== */
+        .projects {
+            padding: 100px 0;
+            background-color: var(--color-light);
+        }
+
+        .project-filters {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 40px;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            background: none;
+            border: none;
+            padding: 8px 20px;
+            margin: 5px;
+            cursor: pointer;
             font-weight: 600;
-            margin-top: 15px;
+            color: var(--color-secondary);
+            transition: var(--transition);
+            border-radius: 30px;
         }
 
-        .read-more:hover {
+        .filter-btn.active, .filter-btn:hover {
+            background-color: var(--color-primary);
+            color: var(--color-dark);
+        }
+
+        .masonry-grid {
+            column-count: 3;
+            column-gap: 20px;
+        }
+
+        .project-item {
+            break-inside: avoid;
+            margin-bottom: 20px;
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            box-shadow: var(--box-shadow);
+            transition: var(--transition);
+            position: relative;
+            cursor: pointer;
+        }
+
+        .project-item:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--box-shadow-hover);
+        }
+
+        .project-img {
+            height: 250px;
+            background-color: var(--color-secondary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--color-white);
+            font-size: 2rem;
+        }
+
+        .project-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background-color: rgba(128, 128, 128, 0.9);
+            color: var(--color-white);
+            padding: 20px;
+            transform: translateY(100%);
+            transition: var(--transition);
+        }
+
+        .project-item:hover .project-overlay {
+            transform: translateY(0);
+        }
+
+        /* ========== SOFTWARE SECTION ========== */
+        .software {
+            padding: 100px 0;
+            background-color: var(--color-white);
+        }
+
+        .software-content {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 50px;
+        }
+
+        .software-demo {
+            flex: 1;
+            min-width: 300px;
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            box-shadow: var(--box-shadow-hover);
+            border: 1px solid var(--color-secondary-light);
+        }
+
+        .demo-header {
+            background-color: var(--color-dark);
+            padding: 15px;
+            display: flex;
+            align-items: center;
+        }
+
+        .demo-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .demo-dot.red { background-color: #FF5F57; }
+        .demo-dot.yellow { background-color: var(--color-primary); }
+        .demo-dot.green { background-color: #28CA42; }
+
+        .demo-screen {
+            height: 300px;
+            background-color: #1E1E1E;
+            color: #D4D4D4;
+            padding: 20px;
+            font-family: 'Consolas', monospace;
+            overflow-y: auto;
+        }
+
+        .software-features {
+            flex: 1;
+            min-width: 300px;
+        }
+
+        .feature-list {
+            margin-top: 30px;
+        }
+
+        .feature-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .feature-icon {
+            background-color: var(--color-primary-light);
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            color: var(--color-primary-dark);
+            font-size: 1.2rem;
+        }
+
+        /* ========== CONTACT SECTION ========== */
+        .contact {
+            padding: 100px 0;
+            background-color: var(--color-light);
+        }
+
+        .contact-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 50px;
+        }
+
+        .contact-info {
+            flex: 1;
+            min-width: 300px;
+        }
+
+        .contact-form {
+            flex: 1;
+            min-width: 300px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--color-secondary-dark);
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid var(--color-secondary-light);
+            border-radius: 4px;
+            font-family: 'Open Sans', sans-serif;
+            transition: var(--transition);
+            background-color: var(--color-white);
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.1);
+        }
+
+        .service-select {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .service-option {
+            padding: 10px;
+            border: 1px solid var(--color-secondary-light);
+            border-radius: 4px;
+            text-align: center;
+            cursor: pointer;
+            transition: var(--transition);
+            background-color: var(--color-white);
+        }
+
+        .service-option.selected {
+            background-color: var(--color-primary);
+            color: var(--color-dark);
+            border-color: var(--color-primary);
+            font-weight: 600;
+        }
+
+        /* ========== FOOTER ========== */
+        footer {
+            background-color: var(--color-dark);
+            color: var(--color-white);
+            padding: 60px 0 30px;
+        }
+
+        .footer-content {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            margin-bottom: 40px;
+        }
+
+        .footer-logo {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--color-white);
+            margin-bottom: 15px;
+        }
+
+        .footer-logo span {
             color: var(--color-primary);
-            text-decoration: underline;
+        }
+
+        .footer-map {
+            height: 200px;
+            background-color: var(--color-secondary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: 20px;
+            border-radius: 4px;
+        }
+
+        .social-links {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .social-links a {
+            color: var(--color-white);
+            font-size: 1.2rem;
+            transition: var(--transition);
+            background-color: rgba(255, 255, 255, 0.1);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .social-links a:hover {
+            color: var(--color-primary);
+            background-color: rgba(255, 255, 255, 0.2);
+            transform: translateY(-3px);
+        }
+
+        .footer-bottom {
+            text-align: center;
+            padding-top: 30px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        /* ========== MODAL ========== */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background-color: var(--color-white);
+            border-radius: var(--border-radius);
+            max-width: 800px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative;
+            border-top: 5px solid var(--color-primary);
+        }
+
+        .modal-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--color-secondary-light);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: var(--color-light);
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--color-secondary);
+        }
+
+        .modal-body {
+            padding: 20px;
+        }
+
+        /* ========== ANIMATIONS ========== */
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% {
+                transform: translateY(0) translateX(-50%);
+            }
+            40% {
+                transform: translateY(-10px) translateX(-50%);
+            }
+            60% {
+                transform: translateY(-5px) translateX(-50%);
+            }
+        }
+
+        /* ========== RESPONSIVE ========== */
+        @media (max-width: 992px) {
+            .masonry-grid {
+                column-count: 2;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .mobile-menu-btn {
+                display: block;
+            }
+
+            nav ul {
+                position: fixed;
+                top: 70px;
+                left: 0;
+                width: 100%;
+                background-color: var(--color-white);
+                flex-direction: column;
+                align-items: center;
+                padding: 20px 0;
+                box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
+                transform: translateY(-100%);
+                opacity: 0;
+                transition: var(--transition);
+                z-index: 999;
+            }
+
+            nav ul.active {
+                transform: translateY(0);
+                opacity: 1;
+            }
+
+            nav li {
+                margin: 15px 0;
+            }
+
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+
+            .timeline {
+                flex-direction: column;
+            }
+
+            .timeline:before {
+                top: 0;
+                left: 40px;
+                width: 3px;
+                height: 100%;
+            }
+
+            .timeline-item {
+                display: flex;
+                text-align: left;
+                margin-bottom: 40px;
+            }
+
+            .timeline-point {
+                margin: 0 20px 0 0;
+                flex-shrink: 0;
+            }
+
+            .service-select {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .masonry-grid {
+                column-count: 1;
+            }
+
+            .section-title h2 {
+                font-size: 2rem;
+            }
+
+            .hero h1 {
+                font-size: 2rem;
+            }
         }
     </style>
 </head>
 <body>
-
-    <header class="header">
-        <div class="container">
-            <h1 class="logo">ACELANTECH</h1>
-            <nav class="nav">
-                <a href="#servicios">Servicios</a>
-                <a href="#soluciones">Soluciones Térmicas</a>
-                <a href="#proyectos">Proyectos</a>
-                <a href="#contacto" class="btn btn-primary">Contacto</a>
+    <!-- Header -->
+    <header>
+        <div class="container header-container">
+            <a href="#" class="logo">AISLA<span>NTECH</span></a>
+            
+            <button class="mobile-menu-btn" id="mobileMenuBtn">
+                <i class="fas fa-bars"></i>
+            </button>
+            
+            <nav>
+                <ul id="mainMenu">
+                    <li><a href="#inicio">Inicio</a></li>
+                    <li><a href="#servicios">Servicios</a></li>
+                    <li><a href="#proceso">Proceso</a></li>
+                    <li><a href="#proyectos">Proyectos</a></li>
+                    <li><a href="#software">Software</a></li>
+                    <li><a href="#contacto">Contacto</a></li>
+                    <li class="language-selector">ES | EN</li>
+                </ul>
             </nav>
+            
+            <a href="#contacto" class="btn btn-yellow">Solicitar Consultoría</a>
         </div>
     </header>
 
-    <main>
-        <section id="hero" class="hero">
-            <div class="container">
-                <h2>Eliminación de Puentes Térmicos Críticos con Ingeniería Avanzada.</h2>
-                <p>Oficina técnica especializada en eficiencia energética y consultoría para soluciones con premarcos aislantes de alto rendimiento.</p>
-                <a href="#contacto" class="btn btn-secondary">Solicitar Estudio Técnico</a>
+    <!-- Hero Section -->
+    <section class="hero" id="inicio">
+        <div class="hero-content">
+            <h1>Soluciones Técnicas Avanzadas para Industria y Construcción</h1>
+            <p>Oficina técnica especializada, consultoría industrial, sistemas de precercos avanzados y soluciones de protección solar integrales.</p>
+            <div class="hero-btns">
+                <a href="#servicios" class="btn btn-yellow">Explora Nuestros Servicios</a>
+                <a href="#contacto" class="btn btn-outline" style="margin-left: 15px;">Contactar Ahora</a>
             </div>
-        </section>
+        </div>
+        <div class="scroll-indicator">
+            <i class="fas fa-chevron-down"></i>
+        </div>
+    </section>
 
-        <section id="servicios" class="section services">
-            <div class="container">
-                <h3>Nuestros Servicios y Áreas de Expertise</h3>
+    <!-- Services Section -->
+    <section class="services" id="servicios">
+        <div class="container">
+            <div class="section-title">
+                <h2>Nuestros Servicios</h2>
+                <p>Soluciones integrales para proyectos técnicos especializados</p>
+            </div>
+            
+            <div class="services-grid">
+                <!-- Oficina Técnica -->
+                <div class="service-card">
+                    <div class="service-img" style="background-color: #808080;">
+                        <i class="fas fa-drafting-compass"></i>
+                    </div>
+                    <div class="service-content">
+                        <h3>Oficina Técnica</h3>
+                        <p>Documentación técnica, planos detallados y especificaciones precisas para proyectos industriales y de construcción.</p>
+                        <ul style="margin-top: 15px; padding-left: 20px;">
+                            <li><i class="fas fa-check service-icon"></i> Planos 2D y 3D</li>
+                            <li><i class="fas fa-check service-icon"></i> Memorias técnicas</li>
+                            <li><i class="fas fa-check service-icon"></i> Especificaciones de materiales</li>
+                        </ul>
+                    </div>
+                </div>
                 
-                <div class="card-grid">
-                    
-                    <div class="service-card">
-                        <div class="icon-placeholder">🔬</div>
-                        <h4>Consultoría Energética Integral</h4>
-                        <p>Análisis de puentes térmicos, cumplimiento normativo (DB HE), optimización de cerramientos y obtención de certificaciones de alta eficiencia.</p>
-                        <a href="#" class="read-more">Ver detalles →</a>
+                <!-- Consultoría Industrial -->
+                <div class="service-card">
+                    <div class="service-img" style="background-color: #696969;">
+                        <i class="fas fa-industry"></i>
                     </div>
-                    
-                    <div class="service-card">
-                        <div class="icon-placeholder">📐</div>
-                        <h4>Oficina Técnica y Diseño BIM</h4>
-                        <p>Elaboración de planos de detalle constructivo, memorias técnicas y asesoramiento en la integración de soluciones pasivas en fase de proyecto.</p>
-                        <a href="#" class="read-more">Ver detalles →</a>
+                    <div class="service-content">
+                        <h3>Consultoría Industrial</h3>
+                        <p>Optimización de procesos, eficiencia energética y soluciones personalizadas para la industria.</p>
+                        <ul style="margin-top: 15px; padding-left: 20px;">
+                            <li><i class="fas fa-check service-icon"></i> Análisis de procesos</li>
+                            <li><i class="fas fa-check service-icon"></i> Optimización energética</li>
+                            <li><i class="fas fa-check service-icon"></i> Gestión de proyectos</li>
+                        </ul>
                     </div>
-                    
-                    <div class="service-card">
-                        <div class="icon-placeholder">🏠</div>
-                        <h4>Suministro y Soluciones de Premarcos</h4>
-                        <p>Diseño e instalación de premarcos aislantes avanzados, garantizando la continuidad del aislamiento y la estanqueidad en huecos de ventana.</p>
-                        <a href="#" class="read-more">Ver detalles →</a>
+                </div>
+                
+                <!-- Precerco Avanzado -->
+                <div class="service-card">
+                    <div class="service-img" style="background-color: #808080;">
+                        <i class="fas fa-cube"></i>
                     </div>
-
+                    <div class="service-content">
+                        <h3>Precerco Avanzado</h3>
+                        <p>Sistemas modulares innovadores para estructuras de precercos con máxima eficiencia y calidad.</p>
+                        <ul style="margin-top: 15px; padding-left: 20px;">
+                            <li><i class="fas fa-check service-icon"></i> Diseños modulares</li>
+                            <li><i class="fas fa-check service-icon"></i> Materiales especializados</li>
+                            <li><i class="fas fa-check service-icon"></i> Instalación optimizada</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <!-- Cajones Túnel -->
+                <div class="service-card">
+                    <div class="service-img" style="background-color: #696969;">
+                        <i class="fas fa-sun"></i>
+                    </div>
+                    <div class="service-content">
+                        <h3>Cajones Túnel para Protección Solar</h3>
+                        <p>Diseños especializados para control solar, optimizando el confort térmico y la eficiencia energética.</p>
+                        <ul style="margin-top: 15px; padding-left: 20px;">
+                            <li><i class="fas fa-check service-icon"></i> Análisis solar</li>
+                            <li><i class="fas fa-check service-icon"></i> Diseños personalizados</li>
+                            <li><i class="fas fa-check service-icon"></i> Instalación profesional</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <!-- Software & Proceso Integral -->
+                <div class="service-card">
+                    <div class="service-img" style="background-color: #808080;">
+                        <i class="fas fa-laptop-code"></i>
+                    </div>
+                    <div class="service-content">
+                        <h3>Software & Proceso Integral</h3>
+                        <p>Soluciones digitales para todo el ciclo del proyecto, desde el diseño hasta la implementación.</p>
+                        <ul style="margin-top: 15px; padding-left: 20px;">
+                            <li><i class="fas fa-check service-icon"></i> Software especializado</li>
+                            <li><i class="fas fa-check service-icon"></i> Gestión integral</li>
+                            <li><i class="fas fa-check service-icon"></i> Soporte continuo</li>
+                        </ul>
+                    </div>
                 </div>
             </div>
-        </section>
+        </div>
+    </section>
 
-        <section id="soluciones" class="section solutions bg-light">
-            <div class="container">
-                <h3>Innovación en Premarcos Térmicos</h3>
-                <p>Aquí irá el contenido técnico y la propuesta de valor única sobre tus premarcos.</p>
-            </div>
-        </section>
-        
-        <section id="proyectos" class="section projects">
-            <div class="container">
-                <h3>Casos de Éxito</h3>
-                <p>Aquí irá la galería de proyectos y los datos de ahorro energético.</p>
-            </div>
-        </section>
-
-    </main>
-
-    <footer id="contacto" class="footer bg-dark">
+    <!-- Process Section -->
+    <section class="process" id="proceso">
         <div class="container">
-            <p>Teléfono | Email | Dirección</p>
-            <p>&copy; 2025 ACELANTECH. Todos los derechos reservados.</p>
+            <div class="section-title">
+                <h2>Nuestro Proceso de Trabajo</h2>
+                <p>Metodología estructurada para garantizar resultados óptimos</p>
+            </div>
+            
+            <div class="timeline">
+                <div class="timeline-item">
+                    <div class="timeline-point">1</div>
+                    <div class="timeline-content">
+                        <h4>Consultoría y Análisis</h4>
+                        <p>Evaluación inicial de necesidades y definición de objetivos del proyecto.</p>
+                    </div>
+                </div>
+                
+                <div class="timeline-item">
+                    <div class="timeline-point">2</div>
+                    <div class="timeline-content">
+                        <h4>Diseño y Modelado</h4>
+                        <p>Desarrollo de soluciones técnicas mediante modelado 2D/3D y simulaciones.</p>
+                    </div>
+                </div>
+                
+                <div class="timeline-item">
+                    <div class="timeline-point">3</div>
+                    <div class="timeline-content">
+                        <h4>Desarrollo de Solución</h4>
+                        <p>Elaboración de documentación técnica y preparación para implementación.</p>
+                    </div>
+                </div>
+                
+                <div class="timeline-item">
+                    <div class="timeline-point">4</div>
+                    <div class="timeline-content">
+                        <h4>Implementación</h4>
+                        <p>Ejecución del proyecto con supervisión técnica y control de calidad.</p>
+                    </div>
+                </div>
+                
+                <div class="timeline-item">
+                    <div class="timeline-point">5</div>
+                    <div class="timeline-content">
+                        <h4>Soporte Continuo</h4>
+                        <p>Mantenimiento, seguimiento y optimización post-implementación.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Projects Section -->
+    <section class="projects" id="proyectos">
+        <div class="container">
+            <div class="section-title">
+                <h2>Proyectos Destacados</h2>
+                <p>Algunos de nuestros trabajos más representativos</p>
+            </div>
+            
+            <div class="project-filters">
+                <button class="filter-btn active" data-filter="all">Todos</button>
+                <button class="filter-btn" data-filter="oficina">Oficina Técnica</button>
+                <button class="filter-btn" data-filter="consultoria">Consultoría</button>
+                <button class="filter-btn" data-filter="precerco">Precerco</button>
+                <button class="filter-btn" data-filter="solar">Protección Solar</button>
+            </div>
+            
+            <div class="masonry-grid">
+                <!-- Proyecto 1 -->
+                <div class="project-item" data-category="oficina">
+                    <div class="project-img" style="background-color: #808080;">
+                        <i class="fas fa-drafting-compass"></i>
+                    </div>
+                    <div class="project-overlay">
+                        <h4>Planos para Complejo Industrial</h4>
+                        <p>Documentación técnica completa para planta industrial de 5,000m²</p>
+                    </div>
+                </div>
+                
+                <!-- Proyecto 2 -->
+                <div class="project-item" data-category="consultoria">
+                    <div class="project-img" style="background-color: #696969;">
+                        <i class="fas fa-industry"></i>
+                    </div>
+                    <div class="project-overlay">
+                        <h4>Optimización Energética</h4>
+                        <p>Reducción del 30% en consumo energético para fábrica textil</p>
+                    </div>
+                </div>
+                
+                <!-- Proyecto 3 -->
+                <div class="project-item" data-category="precerco">
+                    <div class="project-img" style="background-color: #808080;">
+                        <i class="fas fa-cube"></i>
+                    </div>
+                    <div class="project-overlay">
+                        <h4>Sistema Modular Precerco</h4>
+                        <p>Estructura modular para edificio de oficinas de 8 plantas</p>
+                    </div>
+                </div>
+                
+                <!-- Proyecto 4 -->
+                <div class="project-item" data-category="solar">
+                    <div class="project-img" style="background-color: #696969;">
+                        <i class="fas fa-sun"></i>
+                    </div>
+                    <div class="project-overlay">
+                        <h4>Protección Solar Integral</h4>
+                        <p>Sistema de cajones túnel para centro comercial en clima mediterráneo</p>
+                    </div>
+                </div>
+                
+                <!-- Proyecto 5 -->
+                <div class="project-item" data-category="oficina">
+                    <div class="project-img" style="background-color: #808080;">
+                        <i class="fas fa-drafting-compass"></i>
+                    </div>
+                    <div class="project-overlay">
+                        <h4>Modelado 3D Industrial</h4>
+                        <p>Modelado completo de planta de procesamiento para simulación</p>
+                    </div>
+                </div>
+                
+                <!-- Proyecto 6 -->
+                <div class="project-item" data-category="consultoria">
+                    <div class="project-img" style="background-color: #696969;">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <div class="project-overlay">
+                        <h4>Auditoría de Procesos</h4>
+                        <p>Análisis y optimización de línea de producción automotriz</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Software Section -->
+    <section class="software" id="software">
+        <div class="container">
+            <div class="section-title">
+                <h2>Software & Tecnología</h2>
+                <p>Soluciones digitales para optimizar todo el proceso</p>
+            </div>
+            
+            <div class="software-content">
+                <div class="software-demo">
+                    <div class="demo-header">
+                        <div class="demo-dot red"></div>
+                        <div class="demo-dot yellow"></div>
+                        <div class="demo-dot green"></div>
+                    </div>
+                    <div class="demo-screen">
+                        <p><span style="color: #569CD6;">// Aislantech Software v3.2</span></p>
+                        <p><span style="color: #9CDCFE;">function</span> <span style="color: #DCDCAA;">optimizeSolarSolution</span>(buildingData) {</p>
+                        <p>&nbsp;&nbsp;<span style="color: #9CDCFE;">const</span> <span style="color: #4FC1FF;">analysis</span> = <span style="color: #DCDCAA;">analyzeSolarExposure</span>(buildingData);</p>
+                        <p>&nbsp;&nbsp;<span style="color: #9CDCFE;">const</span> <span style="color: #4FC1FF;">design</span> = <span style="color: #DCDCAA;">generateTunnelDrawerDesign</span>(analysis);</p>
+                        <p>&nbsp;&nbsp;<span style="color: #9CDCFE;">const</span> <span style="color: #4FC1FF;">materials</span> = <span style="color: #DCDCAA;">calculateMaterials</span>(design);</p>
+                        <p>&nbsp;&nbsp;<span style="color: #9CDCFE;">const</span> <span style="color: #4FC1FF;">report</span> = <span style="color: #DCDCAA;">generateTechnicalReport</span>(design, materials);</p>
+                        <p>&nbsp;&nbsp;<span style="color: #C586C0;">return</span> { design, materials, report };</p>
+                        <p>}</p>
+                        <br>
+                        <p><span style="color: #569CD6;">// Integración con BIM</span></p>
+                        <p><span style="color: #9CDCFE;">const</span> <span style="color: #4FC1FF;">bimIntegration</span> = <span style="color: #9CDCFE;">new</span> <span style="color: #4EC9B0;">BIMConnector</span>();</p>
+                        <p>bimIntegration.<span style="color: #DCDCAA;">syncWithRevit</span>();</p>
+                        <p>bimIntegration.<span style="color: #DCDCAA;">exportToIFC</span>(projectData);</p>
+                    </div>
+                </div>
+                
+                <div class="software-features">
+                    <h3>Software Especializado Aislantech</h3>
+                    <p>Desarrollamos herramientas digitales para optimizar cada fase de tu proyecto técnico.</p>
+                    
+                    <div class="feature-list">
+                        <div class="feature-item">
+                            <div class="feature-icon">
+                                <i class="fas fa-cube"></i>
+                            </div>
+                            <div>
+                                <h4>Modelado 3D Avanzado</h4>
+                                <p>Integración con herramientas BIM para visualización precisa.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="feature-item">
+                            <div class="feature-icon">
+                                <i class="fas fa-sun"></i>
+                            </div>
+                            <div>
+                                <h4>Análisis Solar Automatizado</h4>
+                                <p>Cálculos precisos para sistemas de protección solar optimizados.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="feature-item">
+                            <div class="feature-icon">
+                                <i class="fas fa-calculator"></i>
+                            </div>
+                            <div>
+                                <h4>Cálculo Estructural</h4>
+                                <p>Análisis de cargas y dimensionamiento para precercos y estructuras.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="feature-item">
+                            <div class="feature-icon">
+                                <i class="fas fa-file-contract"></i>
+                            </div>
+                            <div>
+                                <h4>Generación de Documentación</h4>
+                                <p>Reportes técnicos automáticos y planos listos para fabricación.</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <a href="#contacto" class="btn btn-yellow" style="margin-top: 20px;">Solicitar Demo</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section class="contact" id="contacto">
+        <div class="container">
+            <div class="section-title">
+                <h2>Contacto</h2>
+                <p>¿Tienes un proyecto en mente? Hablemos sobre cómo podemos ayudarte</p>
+            </div>
+            
+            <div class="contact-container">
+                <div class="contact-info">
+                    <h3>Información de Contacto</h3>
+                    <p>Estamos aquí para ayudarte con tus proyectos técnicos y soluciones especializadas.</p>
+                    
+                    <div style="margin-top: 30px;">
+                        <div style="display: flex; align-items: center; margin-bottom: 15px;">
+                            <i class="fas fa-map-marker-alt" style="color: var(--color-accent); margin-right: 10px;"></i>
+                            <div>
+                                <strong>Dirección</strong>
+                                <p>Calle Tecnología, 123, 28020 Madrid</p>
+                            </div>
+                        </div>
+                        
+                        <div style="display: flex; align-items: center; margin-bottom: 15px;">
+                            <i class="fas fa-phone" style="color: var(--color-accent); margin-right: 10px;"></i>
+                            <div>
+                                <strong>Teléfono</strong>
+                                <p>+34 91 123 45 67</p>
+                            </div>
+                        </div>
+                        
+                        <div style="display: flex; align-items: center; margin-bottom: 15px;">
+                            <i class="fas fa-envelope" style="color: var(--color-accent); margin-right: 10px;"></i>
+                            <div>
+                                <strong>Email</strong>
+                                <p>info@aislantech.com</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="footer-map">
+                        <i class="fas fa-map-marked-alt" style="font-size: 2rem; color: var(--color-primary);"></i>
+                    </div>
+                </div>
+                
+                <div class="contact-form">
+                    <h3>Envíanos tu Consulta</h3>
+                    <p>Selecciona el servicio que te interesa y nos pondremos en contacto contigo en menos de 24h.</p>
+                    
+                    <div class="service-select">
+                        <div class="service-option" data-service="oficina">Oficina Técnica</div>
+                        <div class="service-option" data-service="consultoria">Consultoría Industrial</div>
+                        <div class="service-option" data-service="precerco">Precerco Avanzado</div>
+                        <div class="service-option" data-service="solar">Protección Solar</div>
+                    </div>
+                    
+                    <form id="contactForm">
+                        <div class="form-group">
+                            <label for="name">Nombre completo *</label>
+                            <input type="text" id="name" class="form-control" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="email">Email *</label>
+                            <input type="email" id="email" class="form-control" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="phone">Teléfono</label>
+                            <input type="tel" id="phone" class="form-control">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="company">Empresa</label>
+                            <input type="text" id="company" class="form-control">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="message">Mensaje *</label>
+                            <textarea id="message" class="form-control" rows="5" required></textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="file">Adjuntar archivos (opcional)</label>
+                            <input type="file" id="file" class="form-control">
+                            <small>Puedes adjuntar planos, imágenes o documentos relacionados (max. 10MB)</small>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-yellow" style="width: 100%;">Enviar Consulta</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div>
+                    <div class="footer-logo">AISLA<span>NTECH</span></div>
+                    <p>Soluciones técnicas avanzadas para industria y construcción.</p>
+                    
+                    <div class="social-links">
+                        <a href="#"><i class="fab fa-linkedin-in"></i></a>
+                        <a href="#"><i class="fab fa-twitter"></i></a>
+                        <a href="#"><i class="fab fa-youtube"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                    </div>
+                </div>
+                
+                <div>
+                    <h4>Servicios</h4>
+                    <ul style="list-style: none; margin-top: 15px;">
+                        <li><a href="#servicios" style="color: rgba(255,255,255,0.8); text-decoration: none;">Oficina Técnica</a></li>
+                        <li><a href="#servicios" style="color: rgba(255,255,255,0.8); text-decoration: none;">Consultoría Industrial</a></li>
+                        <li><a href="#servicios" style="color: rgba(255,255,255,0.8); text-decoration: none;">Precerco Avanzado</a></li>
+                        <li><a href="#servicios" style="color: rgba(255,255,255,0.8); text-decoration: none;">Protección Solar</a></li>
+                        <li><a href="#servicios" style="color: rgba(255,255,255,0.8); text-decoration: none;">Software</a></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h4>Contacto Rápido</h4>
+                    <div style="margin-top: 15px;">
+                        <p><i class="fas fa-phone" style="margin-right: 10px; color: var(--color-primary);"></i> +34 91 123 45 67</p>
+                        <p><i class="fas fa-envelope" style="margin-right: 10px; color: var(--color-primary);"></i> info@aislantech.com</p>
+                    </div>
+                    
+                    <a href="#contacto" class="btn btn-yellow" style="margin-top: 20px;">Solicitar Presupuesto</a>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p>&copy; 2023 Aislantech. Todos los derechos reservados. | Diseño web moderno y minimalista</p>
+            </div>
         </div>
     </footer>
 
+    <!-- Modal para proyectos -->
+    <div class="modal" id="projectModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">Detalles del Proyecto</h3>
+                <button class="modal-close" id="modalClose">&times;</button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <!-- Contenido dinámico -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Mobile menu toggle
+        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+        const mainMenu = document.getElementById('mainMenu');
+        
+        mobileMenuBtn.addEventListener('click', () => {
+            mainMenu.classList.toggle('active');
+            mobileMenuBtn.innerHTML = mainMenu.classList.contains('active') 
+                ? '<i class="fas fa-times"></i>' 
+                : '<i class="fas fa-bars"></i>';
+        });
+        
+        // Smooth scroll for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                // Close mobile menu if open
+                if(mainMenu.classList.contains('active')) {
+                    mainMenu.classList.remove('active');
+                    mobileMenuBtn.innerHTML = '<i class="fas fa-bars"></i>';
+                }
+                
+                const targetId = this.getAttribute('href');
+                if(targetId === '#') return;
+                
+                const targetElement = document.querySelector(targetId);
+                if(targetElement) {
+                    window.scrollTo({
+                        top: targetElement.offsetTop - 80,
+                        behavior: 'smooth'
+                    });
+                }
+            });
+        });
+        
+        // Project filtering
+        const filterBtns = document.querySelectorAll('.filter-btn');
+        const projectItems = document.querySelectorAll('.project-item');
+        
+        filterBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                // Remove active class from all buttons
+                filterBtns.forEach(b => b.classList.remove('active'));
+                // Add active class to clicked button
+                btn.classList.add('active');
+                
+                const filterValue = btn.getAttribute('data-filter');
+                
+                projectItems.forEach(item => {
+                    if(filterValue === 'all' || item.getAttribute('data-category') === filterValue) {
+                        item.style.display = 'block';
+                    } else {
+                        item.style.display = 'none';
+                    }
+                });
+            });
+        });
+        
+        // Service selection in contact form
+        const serviceOptions = document.querySelectorAll('.service-option');
+        serviceOptions.forEach(option => {
+            option.addEventListener('click', () => {
+                serviceOptions.forEach(opt => opt.classList.remove('selected'));
+                option.classList.add('selected');
+            });
+        });
+        
+        // Project modal
+        const projectModal = document.getElementById('projectModal');
+        const modalClose = document.getElementById('modalClose');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalBody = document.getElementById('modalBody');
+        
+        // Open modal when project item is clicked
+        projectItems.forEach(item => {
+            item.addEventListener('click', () => {
+                const category = item.getAttribute('data-category');
+                const overlay = item.querySelector('.project-overlay');
+                const title = overlay.querySelector('h4').textContent;
+                const description = overlay.querySelector('p').textContent;
+                
+                let categoryText = '';
+                switch(category) {
+                    case 'oficina': categoryText = 'Oficina Técnica'; break;
+                    case 'consultoria': categoryText = 'Consultoría Industrial'; break;
+                    case 'precerco': categoryText = 'Precerco Avanzado'; break;
+                    case 'solar': categoryText = 'Protección Solar'; break;
+                }
+                
+                modalTitle.textContent = title;
+                modalBody.innerHTML = `
+                    <div style="display: flex; flex-wrap: wrap; gap: 30px;">
+                        <div style="flex: 1; min-width: 300px;">
+                            <h4>Descripción del Proyecto</h4>
+                            <p>${description}</p>
+                            <p><strong>Categoría:</strong> ${categoryText}</p>
+                            <p><strong>Cliente:</strong> Empresa Industrial S.A.</p>
+                            <p><strong>Año:</strong> 2023</p>
+                            <p><strong>Duración:</strong> 4 meses</p>
+                        </div>
+                        <div style="flex: 1; min-width: 300px;">
+                            <h4>Resultados Obtenidos</h4>
+                            <ul>
+                                <li><i class="fas fa-check" style="color: var(--color-primary); margin-right: 8px;"></i> Optimización del 25% en tiempos de diseño</li>
+                                <li><i class="fas fa-check" style="color: var(--color-primary); margin-right: 8px;"></i> Reducción del 15% en materiales empleados</li>
+                                <li><i class="fas fa-check" style="color: var(--color-primary); margin-right: 8px;"></i> Mejora del 30% en eficiencia energética</li>
+                                <li><i class="fas fa-check" style="color: var(--color-primary); margin-right: 8px;"></i> Cumplimiento total de normativas</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div style="margin-top: 30px;">
+                        <h4>Tecnologías Aplicadas</h4>
+                        <div style="display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap;">
+                            <span style="background-color: var(--color-primary); color: var(--color-dark); padding: 5px 10px; border-radius: 4px;">Modelado 3D</span>
+                            <span style="background-color: var(--color-secondary); color: white; padding: 5px 10px; border-radius: 4px;">Análisis BIM</span>
+                            <span style="background-color: var(--color-primary-light); color: var(--color-dark); padding: 5px 10px; border-radius: 4px;">Simulación Solar</span>
+                            <span style="background-color: var(--color-secondary-dark); color: white; padding: 5px 10px; border-radius: 4px;">Cálculo Estructural</span>
+                        </div>
+                    </div>
+                `;
+                
+                projectModal.classList.add('active');
+            });
+        });
+        
+        // Close modal
+        modalClose.addEventListener('click', () => {
+            projectModal.classList.remove('active');
+        });
+        
+        // Close modal when clicking outside
+        window.addEventListener('click', (e) => {
+            if(e.target === projectModal) {
+                projectModal.classList.remove('active');
+            }
+        });
+        
+        // Form submission
+        const contactForm = document.getElementById('contactForm');
+        contactForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            // Get selected service
+            let selectedService = '';
+            serviceOptions.forEach(option => {
+                if(option.classList.contains('selected')) {
+                    selectedService = option.getAttribute('data-service');
+                }
+            });
+            
+            // In a real application, here you would send the form data to a server
+            alert(`Gracias por su consulta sobre ${selectedService}. Nos pondremos en contacto con usted en menos de 24 horas.`);
+            contactForm.reset();
+            serviceOptions.forEach(option => option.classList.remove('selected'));
+        });
+        
+        // Header scroll effect
+        window.addEventListener('scroll', () => {
+            const header = document.querySelector('header');
+            if(window.scrollY > 100) {
+                header.style.boxShadow = '0 5px 20px rgba(0, 0, 0, 0.1)';
+            } else {
+                header.style.boxShadow = '0 2px 10px rgba(0, 0, 0, 0.05)';
+            }
+        });
+        
+        // Animation on scroll (simplified)
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+        
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if(entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
+        }, observerOptions);
+        
+        // Observe elements for animation
+        document.querySelectorAll('.service-card, .timeline-item, .project-item, .feature-item').forEach(el => {
+            el.style.opacity = '0';
+            el.style.transform = 'translateY(20px)';
+            el.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+            observer.observe(el);
+        });
+    </script>
 </body>
 </html>
