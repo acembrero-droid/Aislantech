@@ -4,10 +4,250 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ACELANTECH | Consultoría y Premarcos Térmicos Avanzados</title>
-    <link rel="stylesheet" href="assets/css/styles.css">
+    
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* ------------------------- */
+        /* 0. VARIABLES Y RESET BÁSICO */
+        /* ------------------------- */
+        :root {
+            --color-primary: #0077B6;      /* Azul técnico */
+            --color-secondary: #00B4D8;    /* Azul claro de acento */
+            --color-dark: #202020;         /* Negro o gris oscuro */
+            --color-light: #F4F4F9;        /* Gris muy claro / fondo */
+            --color-text: #444444;         /* Texto principal */
+            
+            --font-heading: 'Montserrat', sans-serif;
+            --font-body: 'Montserrat', sans-serif;
+            --font-mono: 'Roboto Mono', monospace; /* Para datos técnicos */
+            
+            --padding-section: 6rem 0;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-body);
+            line-height: 1.6;
+            color: var(--color-text);
+            background-color: #ffffff;
+        }
+
+        /* Contenedor central */
+        .container {
+            width: 90%;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* ------------------------- */
+        /* 1. TIPOGRAFÍA */
+        /* ------------------------- */
+        h1, h2, h3 {
+            font-family: var(--font-heading);
+            color: var(--color-dark);
+            margin-bottom: 1rem;
+            font-weight: 700;
+        }
+
+        h2 {
+            font-size: 2.5rem;
+            line-height: 1.1;
+        }
+
+        h3 {
+            font-size: 1.8rem;
+            color: var(--color-primary); /* Destacar títulos de sección */
+            margin-bottom: 2rem;
+        }
+
+        /* ------------------------- */
+        /* 2. BOTONES Y UTILIDADES */
+        /* ------------------------- */
+        .btn {
+            display: inline-block;
+            padding: 0.8rem 1.5rem;
+            text-decoration: none;
+            border-radius: 4px;
+            font-weight: 600;
+            transition: background-color 0.3s ease;
+            text-transform: uppercase;
+            font-size: 0.9rem;
+        }
+
+        .btn-primary {
+            background-color: var(--color-primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #005A8D;
+        }
+
+        .btn-secondary {
+            background-color: var(--color-secondary);
+            color: var(--color-dark);
+        }
+
+        .btn-secondary:hover {
+            background-color: var(--color-primary);
+            color: white;
+        }
+
+        .bg-dark {
+            background-color: var(--color-dark);
+            color: white;
+        }
+
+        .bg-light {
+            background-color: var(--color-light);
+        }
+
+        /* ------------------------- */
+        /* 3. CABECERA (HEADER) */
+        /* ------------------------- */
+        .header {
+            background-color: white;
+            box-shadow: 0 1px 5px rgba(0, 0, 0, 0.08);
+            padding: 1rem 0;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .header .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--color-primary);
+        }
+
+        .nav a {
+            color: var(--color-dark);
+            text-decoration: none;
+            margin-left: 20px;
+            font-weight: 600;
+        }
+
+        /* ------------------------- */
+        /* 4. HERO SECTION */
+        /* ------------------------- */
+        .hero {
+            /* Deberás cambiar la URL por una imagen relevante para el sector */
+            background-image: linear-gradient(rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.8)), url('ruta/a/imagen-fondo.jpg'); 
+            background-size: cover;
+            background-position: center;
+            padding: 8rem 0;
+            text-align: center;
+        }
+
+        .hero h2 {
+            color: var(--color-dark);
+            font-size: 3.5rem;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .hero p {
+            font-size: 1.3rem;
+            margin: 1.5rem auto 2.5rem;
+            max-width: 600px;
+        }
+
+        /* ------------------------- */
+        /* 5. SECCIONES GENERALES */
+        /* ------------------------- */
+        .section {
+            padding: var(--padding-section);
+        }
+
+        .section h3 {
+            text-align: center;
+        }
+
+        /* ------------------------- */
+        /* 6. FOOTER */
+        /* ------------------------- */
+        .footer {
+            padding: 3rem 0;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+
+        .footer p {
+            margin-top: 1rem;
+        }
+
+        /* ------------------------- */
+        /* 7. TARJETAS DE SERVICIO (CARD GRID) */
+        /* ------------------------- */
+        .card-grid {
+            display: grid;
+            /* 3 columnas iguales en escritorio (mínimo de 300px) */
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-top: 3rem;
+        }
+
+        .service-card {
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            /* Sombra sutil para darle profundidad y profesionalismo */
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border-top: 5px solid var(--color-primary); /* Línea de acento */
+        }
+
+        /* Efecto hover profesional */
+        .service-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .service-card h4 {
+            color: var(--color-dark);
+            font-size: 1.3rem;
+            margin-top: 0.5rem;
+            margin-bottom: 0.8rem;
+            font-weight: 600;
+        }
+
+        .icon-placeholder {
+            font-size: 2.5rem;
+            color: var(--color-primary);
+            margin-bottom: 10px;
+            /* Estilo para que el ícono parezca un poco más técnico/codificado */
+            font-family: var(--font-mono); 
+            display: block;
+        }
+
+        .read-more {
+            display: inline-block;
+            color: var(--color-secondary);
+            text-decoration: none;
+            font-weight: 600;
+            margin-top: 15px;
+        }
+
+        .read-more:hover {
+            color: var(--color-primary);
+            text-decoration: underline;
+        }
+    </style>
 </head>
 <body>
 
@@ -34,19 +274,46 @@
 
         <section id="servicios" class="section services">
             <div class="container">
-                <h3>Nuestros Servicios</h3>
+                <h3>Nuestros Servicios y Áreas de Expertise</h3>
+                
+                <div class="card-grid">
+                    
+                    <div class="service-card">
+                        <div class="icon-placeholder">🔬</div>
+                        <h4>Consultoría Energética Integral</h4>
+                        <p>Análisis de puentes térmicos, cumplimiento normativo (DB HE), optimización de cerramientos y obtención de certificaciones de alta eficiencia.</p>
+                        <a href="#" class="read-more">Ver detalles →</a>
+                    </div>
+                    
+                    <div class="service-card">
+                        <div class="icon-placeholder">📐</div>
+                        <h4>Oficina Técnica y Diseño BIM</h4>
+                        <p>Elaboración de planos de detalle constructivo, memorias técnicas y asesoramiento en la integración de soluciones pasivas en fase de proyecto.</p>
+                        <a href="#" class="read-more">Ver detalles →</a>
+                    </div>
+                    
+                    <div class="service-card">
+                        <div class="icon-placeholder">🏠</div>
+                        <h4>Suministro y Soluciones de Premarcos</h4>
+                        <p>Diseño e instalación de premarcos aislantes avanzados, garantizando la continuidad del aislamiento y la estanqueidad en huecos de ventana.</p>
+                        <a href="#" class="read-more">Ver detalles →</a>
+                    </div>
+
                 </div>
+            </div>
         </section>
 
         <section id="soluciones" class="section solutions bg-light">
             <div class="container">
                 <h3>Innovación en Premarcos Térmicos</h3>
-                </div>
+                <p>Aquí irá el contenido técnico y la propuesta de valor única sobre tus premarcos.</p>
+            </div>
         </section>
         
         <section id="proyectos" class="section projects">
             <div class="container">
                 <h3>Casos de Éxito</h3>
+                <p>Aquí irá la galería de proyectos y los datos de ahorro energético.</p>
             </div>
         </section>
 
@@ -54,6 +321,7 @@
 
     <footer id="contacto" class="footer bg-dark">
         <div class="container">
+            <p>Teléfono | Email | Dirección</p>
             <p>&copy; 2025 ACELANTECH. Todos los derechos reservados.</p>
         </div>
     </footer>
