@@ -37,18 +37,18 @@
         .section-title h2:after { content: ''; position: absolute; width: 70px; height: 4px; background-color: var(--color-accent); bottom: -10px; left: 50%; transform: translateX(-50%); }
         .section-title p { margin-top: 20px; color: var(--color-secondary); }
         
-        .btn { display: inline-block; background-color: var(--color-accent); color: var(--color-white); padding: 12px 30px; border-radius: var(--border-radius); text-decoration: none; font-weight: 600; border: none; cursor: pointer; transition: var(--transition); font-family: 'Montserrat', sans-serif; }
-        .btn:hover { background-color: #e07b00; transform: translateY(-3px); box-shadow: 0 5px 15px rgba(255, 140, 0, 0.2); }
+        .btn { display: inline-block; background-color: var(--color-accent); color: var(--color-dark); padding: 12px 30px; border-radius: var(--border-radius); text-decoration: none; font-weight: 700; border: none; cursor: pointer; transition: var(--transition); font-family: 'Montserrat', sans-serif; }
+        .btn:hover { background-color: var(--color-primary-dark); color: var(--color-white); transform: translateY(-3px); box-shadow: 0 5px 15px rgba(237, 208, 14, 0.3); }
         .btn-outline { background-color: transparent; border: 2px solid var(--color-accent); color: var(--color-accent); }
-        .btn-outline:hover { background-color: var(--color-accent); color: var(--color-white); }
+        .btn-outline:hover { background-color: var(--color-accent); color: var(--color-dark); }
         .btn-yellow { background-color: var(--color-primary); color: var(--color-dark); font-weight: 700; }
-        .btn-yellow:hover { background-color: var(--color-primary-dark); color: var(--color-white); transform: translateY(-3px); box-shadow: 0 5px 15px rgba(255, 215, 0, 0.3); }
+        .btn-yellow:hover { background-color: var(--color-primary-dark); color: var(--color-white); transform: translateY(-3px); box-shadow: 0 5px 15px rgba(237, 208, 14, 0.3); }
 
         /* ========== HEADER ========== */
         header { position: fixed; top: 0; left: 0; width: 100%; z-index: 1000; background-color: rgba(255, 255, 255, 0.97); box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05); transition: var(--transition); }
         .header-container { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; }
         .logo { font-family: 'Montserrat', sans-serif; font-size: 1.8rem; font-weight: 700; text-decoration: none; display: flex; align-items: center; }
-        .logo-aislan { color: var(--color-secondary-dark); font-weight: 700; }
+        .logo-aislan { color: var(--color-secondary); font-weight: 700; }
         .logo-tech { color: var(--color-primary); font-weight: 800; }
         nav ul { display: flex; list-style: none; }
         nav li { margin-left: 30px; }
@@ -56,11 +56,10 @@
         nav a:hover { color: var(--color-primary); }
         nav a:after { content: ''; position: absolute; width: 0; height: 2px; background-color: var(--color-primary); bottom: -5px; left: 0; transition: var(--transition); }
         nav a:hover:after { width: 100%; }
-        .language-selector { margin-left: 20px; font-size: 0.9rem; color: var(--color-secondary); cursor: pointer; }
-        .mobile-menu-btn { display: none; font-size: 1.5rem; background: none; border: none; color: var(--color-secondary-dark); cursor: pointer; z-index: 1001; }
+        .mobile-menu-btn { display: none; font-size: 1.5rem; background: none; border: none; color: var(--color-secondary); cursor: pointer; z-index: 1001; }
 
         /* ========== HERO SECTION ========== */
-        .hero { height: 100vh; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; background: linear-gradient(rgba(51, 51, 51, 0.85), rgba(51, 51, 51, 0.8)), url('https://acembrero-droid.github.io/aislantech/images/cabecera') no-repeat center center/cover; color: var(--color-white); text-align: center; }
+        .hero { height: 100vh; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; background: linear-gradient(rgba(62, 62, 62, 0.85), rgba(62, 62, 62, 0.8)), url('https://acembrero-droid.github.io/aislantech/images/header-image.jpg') no-repeat center center/cover; color: var(--color-white); text-align: center; }
         .hero-content { max-width: 800px; padding: 0 20px; z-index: 2; }
         .hero h1 { font-size: 3.5rem; margin-bottom: 20px; color: var(--color-white); animation: fadeInDown 1s ease; }
         .hero p { font-size: 1.2rem; margin-bottom: 40px; animation: fadeInUp 1s ease 0.3s both; }
@@ -75,7 +74,7 @@
         .service-card:hover { transform: translateY(-10px); box-shadow: var(--box-shadow-hover); border-top-color: var(--color-accent); }
         .service-img { height: 200px; background-color: var(--color-secondary); display: flex; align-items: center; justify-content: center; color: var(--color-white); font-size: 3rem; }
         .service-content { padding: 25px; }
-        .service-content h3 { font-size: 1.5rem; margin-bottom: 15px; color: var(--color-secondary-dark); }
+        .service-content h3 { font-size: 1.5rem; margin-bottom: 15px; color: var(--color-secondary); }
         .service-features { list-style: none; margin-top: 15px; padding-left: 0; }
         .service-features li { margin-bottom: 8px; display: flex; align-items: center; }
         .service-icon { color: var(--color-primary); font-size: 1rem; margin-right: 10px; }
@@ -86,9 +85,23 @@
         .timeline:before { content: ''; position: absolute; top: 40px; left: 0; width: 100%; height: 3px; background-color: var(--color-secondary-light); z-index: 1; }
         .timeline-item { flex: 1; text-align: center; position: relative; z-index: 2; }
         .timeline-point { width: 40px; height: 40px; background-color: var(--color-white); border: 3px solid var(--color-primary); border-radius: 50%; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center; font-weight: 700; color: var(--color-primary); transition: var(--transition); }
-        .timeline-item:hover .timeline-point { background-color: var(--color-accent); border-color: var(--color-accent); color: var(--color-white); transform: scale(1.1); }
-        .timeline-content h4 { margin-bottom: 10px; color: var(--color-secondary-dark); }
+        .timeline-item:hover .timeline-point { background-color: var(--color-primary-dark); border-color: var(--color-primary-dark); color: var(--color-white); transform: scale(1.1); }
+        .timeline-content h4 { margin-bottom: 10px; color: var(--color-secondary); }
         .timeline-content p { font-size: 0.95rem; color: var(--color-gray); }
+
+        /* ========== I+D+i SECTION ========== */
+        .innovation { padding: 100px 0; background-color: var(--color-light); }
+        .innovation-content { display: flex; flex-wrap: wrap; gap: 50px; align-items: center; }
+        .innovation-image { flex: 1; min-width: 300px; border-radius: var(--border-radius); overflow: hidden; box-shadow: var(--box-shadow-hover); }
+        .innovation-image img { width: 100%; height: auto; display: block; }
+        .innovation-features { flex: 1; min-width: 300px; }
+        .innovation-features h3 { color: var(--color-secondary); margin-bottom: 15px; }
+        .innovation-features p { color: var(--color-gray); margin-bottom: 20px; }
+        .innovation-list { margin-top: 30px; }
+        .innovation-item { display: flex; align-items: flex-start; margin-bottom: 25px; }
+        .innovation-icon { background-color: var(--color-primary-light); width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 15px; color: var(--color-primary-dark); font-size: 1.2rem; flex-shrink: 0; }
+        .innovation-item h4 { color: var(--color-secondary); margin-bottom: 5px; }
+        .innovation-item p { font-size: 0.95rem; color: var(--color-gray); margin: 0; }
 
         /* ========== SOFTWARE SECTION ========== */
         .software { padding: 100px 0; background-color: var(--color-white); }
@@ -101,19 +114,19 @@
         .demo-dot.green { background-color: #28CA42; }
         .demo-screen { height: 300px; background-color: #1E1E1E; color: #D4D4D4; padding: 20px; font-family: 'Consolas', monospace; overflow-y: auto; font-size: 0.9rem; line-height: 1.5; }
         .software-features { flex: 1; min-width: 300px; }
-        .software-features h3 { color: var(--color-secondary-dark); margin-bottom: 15px; }
+        .software-features h3 { color: var(--color-secondary); margin-bottom: 15px; }
         .software-features p { color: var(--color-gray); margin-bottom: 20px; }
         .feature-list { margin-top: 30px; }
         .feature-item { display: flex; align-items: flex-start; margin-bottom: 25px; }
         .feature-icon { background-color: var(--color-primary-light); width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 15px; color: var(--color-primary-dark); font-size: 1.2rem; flex-shrink: 0; }
-        .feature-item h4 { color: var(--color-secondary-dark); margin-bottom: 5px; }
+        .feature-item h4 { color: var(--color-secondary); margin-bottom: 5px; }
         .feature-item p { font-size: 0.95rem; color: var(--color-gray); margin: 0; }
 
         /* ========== CONTACT SECTION ========== */
         .contact { padding: 100px 0; background-color: var(--color-light); }
         .contact-container { display: flex; flex-wrap: wrap; gap: 50px; }
         .contact-info { flex: 1; min-width: 300px; }
-        .contact-info h3 { color: var(--color-secondary-dark); margin-bottom: 15px; }
+        .contact-info h3 { color: var(--color-secondary); margin-bottom: 15px; }
         .contact-info > p { color: var(--color-gray); margin-bottom: 30px; }
         .contact-details { margin-top: 30px; }
         .contact-detail { display: flex; align-items: flex-start; margin-bottom: 20px; }
@@ -124,15 +137,15 @@
         .map-icon { color: var(--color-primary); font-size: 2.5rem; margin-bottom: 10px; }
         .footer-map p { margin: 0; font-weight: 500; }
         .contact-form { flex: 1; min-width: 300px; }
-        .contact-form h3 { color: var(--color-secondary-dark); margin-bottom: 15px; }
+        .contact-form h3 { color: var(--color-secondary); margin-bottom: 15px; }
         .contact-form > p { color: var(--color-gray); margin-bottom: 25px; }
         .service-select { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 25px; }
         .service-option { padding: 12px; border: 1px solid var(--color-secondary-light); border-radius: 4px; text-align: center; cursor: pointer; transition: var(--transition); background-color: var(--color-white); font-weight: 500; color: var(--color-secondary-dark); }
         .service-option.selected { background-color: var(--color-primary); color: var(--color-dark); border-color: var(--color-primary); font-weight: 600; }
         .form-group { margin-bottom: 20px; }
-        .form-group label { display: block; margin-bottom: 8px; font-weight: 600; color: var(--color-secondary-dark); }
+        .form-group label { display: block; margin-bottom: 8px; font-weight: 600; color: var(--color-secondary); }
         .form-control { width: 100%; padding: 12px 15px; border: 1px solid var(--color-secondary-light); border-radius: 4px; font-family: 'Open Sans', sans-serif; transition: var(--transition); background-color: var(--color-white); font-size: 0.95rem; }
-        .form-control:focus { outline: none; border-color: var(--color-primary); box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.1); }
+        .form-control:focus { outline: none; border-color: var(--color-primary); box-shadow: 0 0 0 3px rgba(237, 208, 14, 0.1); }
         .form-group small { display: block; margin-top: 5px; color: var(--color-secondary); font-size: 0.85rem; }
 
         /* ========== FOOTER ========== */
@@ -157,16 +170,6 @@
         .footer-bottom a { color: var(--color-primary); text-decoration: none; }
         .footer-bottom a:hover { text-decoration: underline; }
 
-        /* ========== MODAL ========== */
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.8); z-index: 2000; align-items: center; justify-content: center; padding: 20px; }
-        .modal.active { display: flex; }
-        .modal-content { background-color: var(--color-white); border-radius: var(--border-radius); max-width: 800px; width: 100%; max-height: 90vh; overflow-y: auto; position: relative; border-top: 5px solid var(--color-primary); }
-        .modal-header { padding: 20px; border-bottom: 1px solid var(--color-secondary-light); display: flex; justify-content: space-between; align-items: center; background-color: var(--color-light); }
-        .modal-header h3 { color: var(--color-secondary-dark); margin: 0; }
-        .modal-close { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--color-secondary); transition: var(--transition); }
-        .modal-close:hover { color: var(--color-primary); }
-        .modal-body { padding: 25px; }
-
         /* ========== ANIMATIONS ========== */
         @keyframes fadeInDown { from { opacity: 0; transform: translateY(-30px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
@@ -182,7 +185,6 @@
             nav ul { position: fixed; top: 70px; left: 0; width: 100%; background-color: var(--color-white); flex-direction: column; align-items: center; padding: 20px 0; box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1); transform: translateY(-100%); opacity: 0; transition: var(--transition); z-index: 999; }
             nav ul.active { transform: translateY(0); opacity: 1; }
             nav li { margin: 15px 0; }
-            .language-selector { margin-left: 0; margin-top: 10px; }
             .hero h1 { font-size: 2.5rem; }
             .hero p { font-size: 1.1rem; }
             .timeline { flex-direction: column; }
@@ -191,6 +193,7 @@
             .timeline-point { margin: 0 20px 0 0; flex-shrink: 0; }
             .service-select { grid-template-columns: 1fr; }
             .footer-content { flex-direction: column; gap: 30px; }
+            .innovation-content, .software-content { flex-direction: column; }
         }
         @media (max-width: 576px) {
             .section-title h2 { font-size: 2rem; }
@@ -222,9 +225,9 @@
                     <li><a href="#inicio">Inicio</a></li>
                     <li><a href="#servicios">Servicios</a></li>
                     <li><a href="#proceso">Proceso</a></li>
+                    <li><a href="#innovacion">I+D+i</a></li>
                     <li><a href="#software">Software</a></li>
                     <li><a href="#contacto">Contacto</a></li>
-                    <li class="language-selector">ES | EN</li>
                 </ul>
             </nav>
             
@@ -236,7 +239,7 @@
     <section class="hero" id="inicio">
         <div class="hero-content">
             <h1>Soluciones Técnicas Avanzadas para Industria y Construcción</h1>
-            <p>Oficina técnica especializada, consultoría industrial, sistemas de precercos avanzados y soluciones de protección solar integrales.</p>
+            <p>Oficina técnica especializada, consultoría industrial, sistemas de precercos avanzados, soluciones de protección solar integrales e innovación en I+D+i.</p>
             <div class="hero-btns">
                 <a href="#servicios" class="btn btn-yellow">Explora Nuestros Servicios</a>
                 <a href="#contacto" class="btn btn-outline" style="margin-left: 15px;">Contactar Ahora</a>
@@ -258,7 +261,7 @@
             <div class="services-grid">
                 <!-- Oficina Técnica -->
                 <div class="service-card">
-                    <div class="service-img" style="background-color: #808080;">
+                    <div class="service-img" style="background-color: #3E3E3E;">
                         <i class="fas fa-drafting-compass"></i>
                     </div>
                     <div class="service-content">
@@ -290,7 +293,7 @@
                 
                 <!-- Precerco Avanzado -->
                 <div class="service-card">
-                    <div class="service-img" style="background-color: #808080;">
+                    <div class="service-img" style="background-color: #3E3E3E;">
                         <i class="fas fa-cube"></i>
                     </div>
                     <div class="service-content">
@@ -322,7 +325,7 @@
                 
                 <!-- Software & Proceso Integral -->
                 <div class="service-card">
-                    <div class="service-img" style="background-color: #808080;">
+                    <div class="service-img" style="background-color: #3E3E3E;">
                         <i class="fas fa-laptop-code"></i>
                     </div>
                     <div class="service-content">
@@ -386,6 +389,78 @@
                         <h4>Soporte Continuo</h4>
                         <p>Mantenimiento, seguimiento y optimización post-implementación.</p>
                     </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- I+D+i Section -->
+    <section class="innovation" id="innovacion">
+        <div class="container">
+            <div class="section-title">
+                <h2>Investigación, Desarrollo e Innovación</h2>
+                <p>Soluciones tecnológicas avanzadas para la industria del futuro</p>
+            </div>
+            
+            <div class="innovation-content">
+                <div class="innovation-image">
+                    <!-- Imagen de I+D+i - puedes reemplazar con tu propia imagen -->
+                    <div style="height: 400px; background: linear-gradient(135deg, #3E3E3E 0%, #696969 100%); display: flex; align-items: center; justify-content: center; color: white;">
+                        <div style="text-align: center; padding: 30px;">
+                            <i class="fas fa-microscope" style="font-size: 4rem; margin-bottom: 20px; color: #EDD00E;"></i>
+                            <h3 style="color: white;">I+D+i Aislantech</h3>
+                            <p>Innovación en maquinaria y tecnología industrial</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="innovation-features">
+                    <h3>Desarrollo de Tecnología Avanzada</h3>
+                    <p>Investigamos y desarrollamos soluciones innovadoras para optimizar procesos industriales y de construcción.</p>
+                    
+                    <div class="innovation-list">
+                        <div class="innovation-item">
+                            <div class="innovation-icon">
+                                <i class="fas fa-cogs"></i>
+                            </div>
+                            <div>
+                                <h4>Desarrollo de Maquinaria</h4>
+                                <p>Diseño y fabricación de equipos especializados para procesos industriales específicos.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="innovation-item">
+                            <div class="innovation-icon">
+                                <i class="fas fa-tools"></i>
+                            </div>
+                            <div>
+                                <h4>Útiles Específicos</h4>
+                                <p>Creación de herramientas y dispositivos personalizados para optimizar operaciones técnicas.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="innovation-item">
+                            <div class="innovation-icon">
+                                <i class="fas fa-print"></i>
+                            </div>
+                            <div>
+                                <h4>Construcción Aditiva</h4>
+                                <p>Implementación de tecnologías de impresión 3D para prototipado rápido y fabricación avanzada.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="innovation-item">
+                            <div class="innovation-icon">
+                                <i class="fas fa-robot"></i>
+                            </div>
+                            <div>
+                                <h4>Automatización Industrial</h4>
+                                <p>Desarrollo de sistemas automatizados para mejorar la eficiencia y precisión en procesos productivos.</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <a href="#contacto" class="btn btn-yellow" style="margin-top: 20px;">Consultar Proyectos I+D+i</a>
                 </div>
             </div>
         </div>
@@ -534,9 +609,11 @@
                     
                     <div class="service-select">
                         <div class="service-option" data-service="oficina">Oficina Técnica</div>
-                        <div class="service-option" data-service="consultoria">Consultoría Industrial</div>
-                        <div class="service-option" data-service="precerco">Precerco Avanzado</div>
+                        <div class="service-option" data-service="consultoria">Consultoría</div>
+                        <div class="service-option" data-service="precerco">Precerco</div>
                         <div class="service-option" data-service="solar">Protección Solar</div>
+                        <div class="service-option" data-service="software">Software</div>
+                        <div class="service-option" data-service="innovacion">I+D+i</div>
                     </div>
                     
                     <form id="contactForm">
@@ -603,7 +680,8 @@
                         <li><a href="#servicios">Consultoría Industrial</a></li>
                         <li><a href="#servicios">Precerco Avanzado</a></li>
                         <li><a href="#servicios">Protección Solar</a></li>
-                        <li><a href="#servicios">Software</a></li>
+                        <li><a href="#innovacion">I+D+i</a></li>
+                        <li><a href="#software">Software</a></li>
                     </ul>
                 </div>
                 
@@ -625,19 +703,6 @@
             </div>
         </div>
     </footer>
-
-    <!-- Modal para proyectos (mantenido por si se necesita) -->
-    <div class="modal" id="projectModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 id="modalTitle">Detalles del Proyecto</h3>
-                <button class="modal-close" id="modalClose">&times;</button>
-            </div>
-            <div class="modal-body" id="modalBody">
-                <!-- Contenido dinámico -->
-            </div>
-        </div>
-    </div>
 
     <script>
         // Mobile menu toggle
@@ -737,25 +802,12 @@
             });
         }, observerOptions);
         
-        document.querySelectorAll('.service-card, .timeline-item, .feature-item').forEach(el => {
+        document.querySelectorAll('.service-card, .timeline-item, .innovation-item, .feature-item').forEach(el => {
             el.style.opacity = '0';
             el.style.transform = 'translateY(20px)';
             el.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
             observer.observe(el);
         });
-        
-        // Language selector toggle
-        const languageSelector = document.querySelector('.language-selector');
-        if (languageSelector) {
-            languageSelector.addEventListener('click', () => {
-                const currentLang = languageSelector.textContent.trim();
-                if (currentLang === 'ES | EN') {
-                    languageSelector.textContent = 'EN | ES';
-                } else {
-                    languageSelector.textContent = 'ES | EN';
-                }
-            });
-        }
         
         // Initialize the page
         document.addEventListener('DOMContentLoaded', function() {
