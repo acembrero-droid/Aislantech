@@ -215,14 +215,18 @@
         .contact-form { flex: 1; min-width: 300px; }
         .contact-form h3 { color: var(--color-secondary); margin-bottom: 15px; }
         .contact-form > p { color: var(--color-gray); margin-bottom: 25px; }
-        .service-select { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 25px; }
-        .service-option { padding: 12px; border: 1px solid var(--color-secondary-light); border-radius: 4px; text-align: center; cursor: pointer; transition: var(--transition); background-color: var(--color-white); font-weight: 500; color: var(--color-secondary-dark); }
-        .service-option.selected { background-color: var(--color-primary); color: var(--color-dark); border-color: var(--color-primary); font-weight: 600; }
-        .form-group { margin-bottom: 20px; }
-        .form-group label { display: block; margin-bottom: 8px; font-weight: 600; color: var(--color-secondary); }
-        .form-control { width: 100%; padding: 12px 15px; border: 1px solid var(--color-secondary-light); border-radius: 4px; font-family: 'Open Sans', sans-serif; transition: var(--transition); background-color: var(--color-white); font-size: 0.95rem; }
-        .form-control:focus { outline: none; border-color: var(--color-primary); box-shadow: 0 0 0 3px rgba(237, 208, 14, 0.1); }
-        .form-group small { display: block; margin-top: 5px; color: var(--color-secondary); font-size: 0.85rem; }
+        .google-form-container { 
+            width: 100%; 
+            height: 600px; 
+            overflow: hidden; 
+            margin-top: 20px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+        }
+        .google-form-container iframe {
+            border: none;
+            border-radius: var(--border-radius);
+        }
 
         /* ========== FOOTER ========== */
         footer { background-color: var(--color-dark); color: var(--color-white); padding: 60px 0 30px; }
@@ -267,7 +271,7 @@
             .timeline:before { top: 0; left: 40px; width: 3px; height: 100%; }
             .timeline-item { display: flex; text-align: left; margin-bottom: 40px; }
             .timeline-point { margin: 0 20px 0 0; flex-shrink: 0; }
-            .service-select { grid-template-columns: 1fr; }
+            .google-form-container { height: 500px; }
             .footer-content { flex-direction: column; gap: 30px; }
             .innovation-content, .software-content { flex-direction: column; }
         }
@@ -281,6 +285,10 @@
             .mobile-menu-btn { order: 2; }
             nav { order: 3; width: 100%; margin-top: 15px; }
             .btn-yellow { order: 4; margin-top: 15px; width: 100%; text-align: center; }
+            .google-form-container { height: 400px; }
+        }
+        @media (max-width: 400px) {
+            .google-form-container { height: 350px; }
         }
     </style>
 </head>
@@ -678,51 +686,30 @@
                 
                 <div class="contact-form">
                     <h3>Envíanos tu Consulta</h3>
-                    <p>Selecciona el servicio que te interesa y nos pondremos en contacto contigo en menos de 24h.</p>
+                    <p>Completa el formulario a continuación y nos pondremos en contacto contigo en menos de 24h.</p>
                     
-                    <div class="service-select">
-                        <div class="service-option" data-service="oficina">Oficina Técnica</div>
-                        <div class="service-option" data-service="consultoria">Consultoría</div>
-                        <div class="service-option" data-service="precerco">Precerco</div>
-                        <div class="service-option" data-service="solar">Protección Solar</div>
-                        <div class="service-option" data-service="software">Software</div>
-                        <div class="service-option" data-service="innovacion">I+D+i</div>
+                    <!-- Formulario de Google Forms embebido -->
+                    <div class="google-form-container">
+                        <iframe 
+                            src="https://docs.google.com/forms/d/e/1FAIpQLScK6OC_6B-ZkH_T7P94tq5ZpOBhG5bJfzXfY0q8wYWuP2bZcA/viewform?embedded=true" 
+                            width="100%" 
+                            height="600" 
+                            frameborder="0" 
+                            marginheight="0" 
+                            marginwidth="0"
+                            style="border: none;"
+                            title="Formulario de Contacto Aislantech">
+                            Cargando formulario...
+                        </iframe>
                     </div>
                     
-                    <form id="contactForm">
-                        <div class="form-group">
-                            <label for="name">Nombre completo *</label>
-                            <input type="text" id="name" class="form-control" required>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="email">Email *</label>
-                            <input type="email" id="email" class="form-control" required>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="phone">Teléfono</label>
-                            <input type="tel" id="phone" class="form-control">
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="company">Empresa</label>
-                            <input type="text" id="company" class="form-control">
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="message">Mensaje *</label>
-                            <textarea id="message" class="form-control" rows="5" required></textarea>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="file">Adjuntar archivos (opcional)</label>
-                            <input type="file" id="file" class="form-control">
-                            <small>Puedes adjuntar planos, imágenes o documentos relacionados (max. 10MB)</small>
-                        </div>
-                        
-                        <button type="submit" class="btn btn-yellow" style="width: 100%;">Enviar Consulta</button>
-                    </form>
+                    <p style="margin-top: 15px; font-size: 0.9rem; color: var(--color-gray);">
+                        <i class="fas fa-info-circle" style="color: var(--color-primary); margin-right: 5px;"></i>
+                        Si tienes problemas con el formulario, contacta directamente a 
+                        <a href="mailto:info@aislantech.es" style="color: var(--color-primary); text-decoration: none;">
+                            info@aislantech.es
+                        </a>
+                    </p>
                 </div>
             </div>
         </div>
@@ -815,43 +802,6 @@
             });
         });
         
-        // Service selection in contact form
-        const serviceOptions = document.querySelectorAll('.service-option');
-        if (serviceOptions.length > 0) {
-            serviceOptions.forEach(option => {
-                option.addEventListener('click', () => {
-                    serviceOptions.forEach(opt => opt.classList.remove('selected'));
-                    option.classList.add('selected');
-                });
-            });
-        }
-        
-        // Form submission
-        const contactForm = document.getElementById('contactForm');
-        if (contactForm) {
-            contactForm.addEventListener('submit', (e) => {
-                e.preventDefault();
-                
-                // Get selected service
-                let selectedService = '';
-                serviceOptions.forEach(option => {
-                    if(option.classList.contains('selected')) {
-                        selectedService = option.getAttribute('data-service');
-                    }
-                });
-                
-                if (!selectedService) {
-                    alert('Por favor, selecciona un servicio antes de enviar el formulario.');
-                    return;
-                }
-                
-                // In a real application, here you would send the form data to a server
-                alert(`Gracias por su consulta sobre ${selectedService}. Nos pondremos en contacto con usted en menos de 24 horas.`);
-                contactForm.reset();
-                serviceOptions.forEach(option => option.classList.remove('selected'));
-            });
-        }
-        
         // Header scroll effect
         window.addEventListener('scroll', () => {
             const header = document.querySelector('header');
@@ -882,9 +832,10 @@
             observer.observe(el);
         });
         
-        // Verificar si la imagen de cabecera se cargó correctamente
+        // Carga de la página
         document.addEventListener('DOMContentLoaded', function() {
             console.log('Página de Aislantech cargada correctamente');
+            console.log('Formulario de Google Forms integrado en la sección de contacto');
             
             // Verificar imagen de cabecera
             const img = new Image();
@@ -896,7 +847,9 @@
             
             img.onerror = function() {
                 console.log('Imagen de cabecera no encontrada');
-                // Aquí podrías añadir lógica para mostrar un mensaje o usar imagen alternativa
+                // Fondo alternativo si la imagen falla
+                document.querySelector('.hero').style.background = 
+                    'linear-gradient(135deg, #3E3E3E 0%, #696969 100%)';
             };
         });
     </script>
