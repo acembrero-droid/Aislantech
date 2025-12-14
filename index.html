@@ -59,7 +59,20 @@
         .mobile-menu-btn { display: none; font-size: 1.5rem; background: none; border: none; color: var(--color-secondary); cursor: pointer; z-index: 1001; }
 
         /* ========== HERO SECTION ========== */
-        .hero { height: 100vh; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; background: linear-gradient(rgba(62, 62, 62, 0.85), rgba(62, 62, 62, 0.8)), url('https://acembrero-droid.github.io/aislantech/images/header-image.jpg') no-repeat center center/cover; color: var(--color-white); text-align: center; }
+        .hero { 
+            height: 100vh; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            position: relative; 
+            overflow: hidden; 
+            background: 
+                linear-gradient(rgba(62, 62, 62, 0.85), rgba(62, 62, 62, 0.8)), 
+                url('https://acembrero-droid.github.io/Aislantech/images/cabecera.JPG') no-repeat center center/cover;
+            color: var(--color-white); 
+            text-align: center; 
+        }
+        
         .hero-content { max-width: 800px; padding: 0 20px; z-index: 2; }
         .hero h1 { font-size: 3.5rem; margin-bottom: 20px; color: var(--color-white); animation: fadeInDown 1s ease; }
         .hero p { font-size: 1.2rem; margin-bottom: 40px; animation: fadeInUp 1s ease 0.3s both; }
@@ -72,7 +85,34 @@
         .services-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; }
         .service-card { background-color: var(--color-white); border-radius: var(--border-radius); overflow: hidden; box-shadow: var(--box-shadow); transition: var(--transition); height: 100%; border-top: 4px solid var(--color-primary); }
         .service-card:hover { transform: translateY(-10px); box-shadow: var(--box-shadow-hover); border-top-color: var(--color-accent); }
-        .service-img { height: 200px; background-color: var(--color-secondary); display: flex; align-items: center; justify-content: center; color: var(--color-white); font-size: 3rem; }
+        .service-img { 
+            height: 200px; 
+            background-color: var(--color-secondary); 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            color: var(--color-white); 
+            font-size: 3rem; 
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .service-img i {
+            z-index: 2;
+            position: relative;
+        }
+        
+        .service-img::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(62, 62, 62, 0.9) 0%, rgba(105, 105, 105, 0.9) 100%);
+            z-index: 1;
+        }
+        
         .service-content { padding: 25px; }
         .service-content h3 { font-size: 1.5rem; margin-bottom: 15px; color: var(--color-secondary); }
         .service-features { list-style: none; margin-top: 15px; padding-left: 0; }
@@ -92,8 +132,32 @@
         /* ========== I+D+i SECTION ========== */
         .innovation { padding: 100px 0; background-color: var(--color-light); }
         .innovation-content { display: flex; flex-wrap: wrap; gap: 50px; align-items: center; }
-        .innovation-image { flex: 1; min-width: 300px; border-radius: var(--border-radius); overflow: hidden; box-shadow: var(--box-shadow-hover); }
-        .innovation-image img { width: 100%; height: auto; display: block; }
+        .innovation-image { 
+            flex: 1; 
+            min-width: 300px; 
+            border-radius: var(--border-radius); 
+            overflow: hidden; 
+            box-shadow: var(--box-shadow-hover);
+            height: 400px;
+            background: linear-gradient(135deg, #3E3E3E 0%, #696969 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+        
+        .innovation-image-content {
+            text-align: center;
+            padding: 30px;
+            width: 100%;
+        }
+        
+        .innovation-image i { 
+            font-size: 4rem; 
+            margin-bottom: 20px; 
+            color: #EDD00E; 
+        }
+        
         .innovation-features { flex: 1; min-width: 300px; }
         .innovation-features h3 { color: var(--color-secondary); margin-bottom: 15px; }
         .innovation-features p { color: var(--color-gray); margin-bottom: 20px; }
@@ -133,7 +197,19 @@
         .contact-icon { color: var(--color-accent); margin-right: 15px; font-size: 1.2rem; margin-top: 3px; width: 20px; text-align: center; }
         .contact-detail strong { color: var(--color-dark); display: block; margin-bottom: 2px; }
         .contact-detail p { color: var(--color-gray); margin: 0; }
-        .footer-map { height: 200px; background-color: var(--color-secondary-light); display: flex; flex-direction: column; align-items: center; justify-content: center; margin-top: 30px; border-radius: 4px; color: var(--color-secondary-dark); text-align: center; padding: 20px; }
+        .footer-map { 
+            height: 200px; 
+            background: linear-gradient(135deg, #3E3E3E 0%, #696969 100%);
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            margin-top: 30px; 
+            border-radius: 4px; 
+            color: var(--color-white); 
+            text-align: center; 
+            padding: 20px; 
+        }
         .map-icon { color: var(--color-primary); font-size: 2.5rem; margin-bottom: 10px; }
         .footer-map p { margin: 0; font-weight: 500; }
         .contact-form { flex: 1; min-width: 300px; }
@@ -261,7 +337,7 @@
             <div class="services-grid">
                 <!-- Oficina Técnica -->
                 <div class="service-card">
-                    <div class="service-img" style="background-color: #3E3E3E;">
+                    <div class="service-img">
                         <i class="fas fa-drafting-compass"></i>
                     </div>
                     <div class="service-content">
@@ -277,7 +353,7 @@
                 
                 <!-- Consultoría Industrial -->
                 <div class="service-card">
-                    <div class="service-img" style="background-color: #696969;">
+                    <div class="service-img">
                         <i class="fas fa-industry"></i>
                     </div>
                     <div class="service-content">
@@ -293,7 +369,7 @@
                 
                 <!-- Precerco Avanzado -->
                 <div class="service-card">
-                    <div class="service-img" style="background-color: #3E3E3E;">
+                    <div class="service-img">
                         <i class="fas fa-cube"></i>
                     </div>
                     <div class="service-content">
@@ -309,7 +385,7 @@
                 
                 <!-- Cajones Túnel -->
                 <div class="service-card">
-                    <div class="service-img" style="background-color: #696969;">
+                    <div class="service-img">
                         <i class="fas fa-sun"></i>
                     </div>
                     <div class="service-content">
@@ -325,7 +401,7 @@
                 
                 <!-- Software & Proceso Integral -->
                 <div class="service-card">
-                    <div class="service-img" style="background-color: #3E3E3E;">
+                    <div class="service-img">
                         <i class="fas fa-laptop-code"></i>
                     </div>
                     <div class="service-content">
@@ -404,13 +480,10 @@
             
             <div class="innovation-content">
                 <div class="innovation-image">
-                    <!-- Imagen de I+D+i - puedes reemplazar con tu propia imagen -->
-                    <div style="height: 400px; background: linear-gradient(135deg, #3E3E3E 0%, #696969 100%); display: flex; align-items: center; justify-content: center; color: white;">
-                        <div style="text-align: center; padding: 30px;">
-                            <i class="fas fa-microscope" style="font-size: 4rem; margin-bottom: 20px; color: #EDD00E;"></i>
-                            <h3 style="color: white;">I+D+i Aislantech</h3>
-                            <p>Innovación en maquinaria y tecnología industrial</p>
-                        </div>
+                    <div class="innovation-image-content">
+                        <i class="fas fa-microscope"></i>
+                        <h3>I+D+i Aislantech</h3>
+                        <p>Innovación en maquinaria y tecnología industrial</p>
                     </div>
                 </div>
                 
@@ -809,9 +882,22 @@
             observer.observe(el);
         });
         
-        // Initialize the page
+        // Verificar si la imagen de cabecera se cargó correctamente
         document.addEventListener('DOMContentLoaded', function() {
             console.log('Página de Aislantech cargada correctamente');
+            
+            // Verificar imagen de cabecera
+            const img = new Image();
+            img.src = 'https://acembrero-droid.github.io/Aislantech/images/cabecera.JPG';
+            
+            img.onload = function() {
+                console.log('Imagen de cabecera cargada correctamente');
+            };
+            
+            img.onerror = function() {
+                console.log('Imagen de cabecera no encontrada');
+                // Aquí podrías añadir lógica para mostrar un mensaje o usar imagen alternativa
+            };
         });
     </script>
 </body>
