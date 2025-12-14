@@ -218,113 +218,134 @@
         .contact-form h3 { color: var(--color-secondary); margin-bottom: 15px; }
         .contact-form > p { color: var(--color-gray); margin-bottom: 25px; }
         
-        .form-selector { 
-            display: grid; 
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); 
-            gap: 12px; 
-            margin-bottom: 30px; 
-        }
-        
-        .form-option-card { 
+        .form-intro-card {
             background-color: var(--color-white);
-            border: 2px solid var(--color-secondary-light);
             border-radius: var(--border-radius);
-            padding: 20px 15px;
-            text-align: center;
-            cursor: pointer;
-            transition: var(--transition);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 120px;
-        }
-        
-        .form-option-card:hover { 
-            border-color: var(--color-primary);
-            transform: translateY(-5px);
-            box-shadow: var(--box-shadow-hover);
-        }
-        
-        .form-option-card.selected { 
-            border-color: var(--color-primary);
-            background-color: var(--color-primary-light);
-        }
-        
-        .form-option-card i { 
-            font-size: 2rem;
-            color: var(--color-primary);
-            margin-bottom: 12px;
-        }
-        
-        .form-option-card span { 
-            font-weight: 600;
-            color: var(--color-secondary);
-            font-size: 0.95rem;
-        }
-        
-        .google-form-container { 
-            width: 100%; 
-            height: 600px; 
-            overflow: hidden; 
-            margin-top: 20px;
-            border-radius: var(--border-radius);
+            padding: 30px;
+            margin-bottom: 30px;
             box-shadow: var(--box-shadow);
-            position: relative;
-        }
-        
-        .google-form-container iframe {
-            border: none;
-            border-radius: var(--border-radius);
-            width: 100%;
-            height: 100%;
-        }
-        
-        .mobile-form-alert {
-            display: none;
-            background-color: var(--color-primary-light);
             border-left: 4px solid var(--color-primary);
-            padding: 15px;
-            border-radius: 4px;
+        }
+        
+        .form-intro-card h4 {
+            color: var(--color-secondary);
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .form-intro-card h4 i {
+            color: var(--color-primary);
+            margin-right: 10px;
+            font-size: 1.2rem;
+        }
+        
+        .form-intro-card p {
+            color: var(--color-gray);
+            margin-bottom: 15px;
+            line-height: 1.6;
+        }
+        
+        .form-features {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
             margin-top: 20px;
         }
         
-        .mobile-form-alert p {
-            margin: 0;
-            color: var(--color-dark);
-            font-size: 0.95rem;
+        .form-feature {
+            display: flex;
+            align-items: center;
+            background-color: var(--color-primary-light);
+            padding: 10px 15px;
+            border-radius: 4px;
+            flex: 1;
+            min-width: 150px;
         }
         
-        .mobile-form-alert i {
+        .form-feature i {
+            color: var(--color-primary);
+            margin-right: 10px;
+            font-size: 1rem;
+        }
+        
+        .form-feature span {
+            color: var(--color-dark);
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+        
+        .form-redirect-card {
+            background-color: var(--color-white);
+            border-radius: var(--border-radius);
+            padding: 40px;
+            text-align: center;
+            box-shadow: var(--box-shadow);
+            border: 2px dashed var(--color-primary-light);
+            margin-top: 20px;
+        }
+        
+        .form-redirect-card i {
+            font-size: 3rem;
+            color: var(--color-primary);
+            margin-bottom: 20px;
+        }
+        
+        .form-redirect-card h4 {
+            color: var(--color-secondary);
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+        }
+        
+        .form-redirect-card p {
+            color: var(--color-gray);
+            margin-bottom: 25px;
+            line-height: 1.6;
+        }
+        
+        .form-redirect-card .btn {
+            padding: 15px 40px;
+            font-size: 1.1rem;
+        }
+        
+        .alternative-contact {
+            margin-top: 30px;
+            padding-top: 25px;
+            border-top: 1px solid var(--color-secondary-light);
+        }
+        
+        .alternative-contact h5 {
+            color: var(--color-secondary);
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+        }
+        
+        .alternative-contact h5 i {
             color: var(--color-primary);
             margin-right: 10px;
         }
         
-        .form-loading {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(255, 255, 255, 0.9);
+        .contact-buttons {
             display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            border-radius: var(--border-radius);
-            z-index: 10;
+            gap: 15px;
+            flex-wrap: wrap;
         }
         
-        .form-loading i {
-            font-size: 2.5rem;
-            color: var(--color-primary);
-            margin-bottom: 15px;
-            animation: spin 1s linear infinite;
+        .contact-buttons a {
+            flex: 1;
+            min-width: 150px;
+            text-align: center;
         }
         
-        .form-loading p {
-            color: var(--color-secondary);
-            font-weight: 600;
+        .whatsapp-btn {
+            background-color: #25D366 !important;
+            color: white !important;
+        }
+        
+        .whatsapp-btn:hover {
+            background-color: #128C7E !important;
         }
 
         /* ========== FOOTER ========== */
@@ -354,12 +375,10 @@
         @keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes bounce { 0%, 20%, 50%, 80%, 100% { transform: translateY(0) translateX(-50%); } 40% { transform: translateY(-10px) translateX(-50%); } 60% { transform: translateY(-5px) translateX(-50%); } }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
         /* ========== RESPONSIVE ========== */
         @media (max-width: 992px) {
             .hero h1 { font-size: 3rem; }
-            .google-form-container { height: 500px; }
         }
         
         @media (max-width: 768px) {
@@ -373,15 +392,7 @@
             .timeline:before { top: 0; left: 40px; width: 3px; height: 100%; }
             .timeline-item { display: flex; text-align: left; margin-bottom: 40px; }
             .timeline-point { margin: 0 20px 0 0; flex-shrink: 0; }
-            .form-selector { grid-template-columns: repeat(2, 1fr); }
-            .mobile-form-alert { display: flex; align-items: center; }
-            .google-form-container { 
-                height: 500px;
-                -webkit-overflow-scrolling: touch;
-            }
-            .google-form-container iframe {
-                -webkit-overflow-scrolling: touch;
-            }
+            .contact-buttons a { min-width: 100%; }
             .footer-content { flex-direction: column; gap: 30px; }
             .innovation-content, .software-content { flex-direction: column; }
         }
@@ -396,34 +407,8 @@
             .mobile-menu-btn { order: 2; }
             nav { order: 3; width: 100%; margin-top: 15px; }
             .btn-yellow { order: 4; margin-top: 15px; width: 100%; text-align: center; }
-            .form-selector { grid-template-columns: 1fr; }
-            .google-form-container { 
-                height: 450px;
-                border-radius: 8px;
-            }
-        }
-        
-        @media (max-width: 400px) {
-            .google-form-container { height: 400px; }
-        }
-        
-        /* Estilos específicos para iOS */
-        @supports (-webkit-touch-callout: none) {
-            .google-form-container {
-                -webkit-overflow-scrolling: touch;
-                overflow-y: scroll;
-            }
-            
-            .google-form-container iframe {
-                height: 550px;
-            }
-        }
-        
-        /* Estilos específicos para Android */
-        @media screen and (-webkit-min-device-pixel-ratio:0) and (max-width: 768px) {
-            .google-form-container {
-                transform: translateZ(0);
-            }
+            .form-intro-card { padding: 20px; }
+            .form-redirect-card { padding: 25px; }
         }
     </style>
 </head>
@@ -762,7 +747,7 @@
         </div>
     </section>
 
-    <!-- Contact Section - VERSIÓN MEJORADA -->
+    <!-- Contact Section - VERSIÓN SIN LOGIN REQUERIDO -->
     <section class="contact" id="contacto">
         <div class="container">
             <div class="section-title">
@@ -816,74 +801,68 @@
                 </div>
                 
                 <div class="contact-form">
-                    <h3>Envíanos tu Consulta</h3>
-                    <p>Selecciona el tipo de consulta y completa nuestro formulario seguro.</p>
-                    
-                    <!-- Selector de tipo de consulta -->
-                    <div class="form-selector" id="formSelector">
-                        <div class="form-option-card" data-form-type="general">
-                            <i class="fas fa-question-circle"></i>
-                            <span>Consulta General</span>
-                        </div>
-                        <div class="form-option-card" data-form-type="presupuesto">
-                            <i class="fas fa-euro-sign"></i>
-                            <span>Solicitar Presupuesto</span>
-                        </div>
-                        <div class="form-option-card" data-form-type="tecnica">
-                            <i class="fas fa-cogs"></i>
-                            <span>Asesoría Técnica</span>
-                        </div>
-                        <div class="form-option-card" data-form-type="proyecto">
-                            <i class="fas fa-project-diagram"></i>
-                            <span>Nuevo Proyecto</span>
+                    <!-- Tarjeta de introducción -->
+                    <div class="form-intro-card">
+                        <h4><i class="fas fa-unlock-alt"></i> Formulario de Contacto Sin Registro</h4>
+                        <p>Hemos simplificado nuestro proceso de contacto. <strong>No necesitas cuenta de Google</strong> para enviar tu consulta. Simplemente haz clic en el botón y serás redirigido a nuestro formulario seguro.</p>
+                        
+                        <div class="form-features">
+                            <div class="form-feature">
+                                <i class="fas fa-check-circle"></i>
+                                <span>Sin registro requerido</span>
+                            </div>
+                            <div class="form-feature">
+                                <i class="fas fa-shield-alt"></i>
+                                <span>Completamente seguro</span>
+                            </div>
+                            <div class="form-feature">
+                                <i class="fas fa-mobile-alt"></i>
+                                <span>Optimizado para móviles</span>
+                            </div>
+                            <div class="form-feature">
+                                <i class="fas fa-clock"></i>
+                                <span>Solo 2 minutos</span>
+                            </div>
                         </div>
                     </div>
                     
-                    <!-- Alerta para móviles -->
-                    <div class="mobile-form-alert" id="mobileAlert">
-                        <i class="fas fa-mobile-alt"></i>
-                        <p><strong>Mejor experiencia en móvil:</strong> Te recomendamos girar tu dispositivo horizontalmente o usar un ordenador para una mejor visualización del formulario.</p>
-                    </div>
-                    
-                    <!-- Contenedor del formulario con loading -->
-                    <div class="google-form-container" id="formContainer">
-                        <div class="form-loading" id="formLoading">
-                            <i class="fas fa-spinner"></i>
-                            <p>Cargando formulario...</p>
-                        </div>
-                        <iframe 
-                            id="googleFormIframe"
-                            src="https://docs.google.com/forms/d/e/1FAIpQLScK6OC_6B-ZkH_T7P94tq5ZpOBhG5bJfzXfY0q8wYWuP2bZcA/viewform?embedded=true" 
-                            width="100%" 
-                            height="600" 
-                            frameborder="0" 
-                            marginheight="0" 
-                            marginwidth="0"
-                            style="border: none;"
-                            title="Formulario de Contacto Aislantech"
-                            onload="document.getElementById('formLoading').style.display = 'none';"
-                            allow="fullscreen">
-                            Cargando formulario...
-                        </iframe>
-                    </div>
-                    
-                    <!-- Opciones alternativas -->
-                    <div style="margin-top: 25px; padding: 20px; background-color: var(--color-light); border-radius: var(--border-radius);">
-                        <h4 style="color: var(--color-secondary); margin-bottom: 10px; font-size: 1.1rem;">
-                            <i class="fas fa-phone-alt" style="color: var(--color-primary); margin-right: 10px;"></i>
-                            ¿Prefieres otro método de contacto?
-                        </h4>
-                        <p style="color: var(--color-gray); margin-bottom: 15px; font-size: 0.95rem;">
-                            También puedes contactarnos directamente:
+                    <!-- Tarjeta principal con botón de redirección -->
+                    <div class="form-redirect-card">
+                        <i class="fas fa-paper-plane"></i>
+                        <h4>Accede a Nuestro Formulario</h4>
+                        <p>Haz clic en el botón para abrir nuestro formulario de contacto en una nueva pestaña. <strong>No se requiere inicio de sesión</strong> - puedes enviar tu consulta de forma anónima si lo prefieres.</p>
+                        
+                        <a href="https://docs.google.com/forms/d/e/1FAIpQLScK6OC_6B-ZkH_T7P94tq5ZpOBhG5bJfzXfY0q8wYWuP2bZcA/viewform?usp=sf_link" 
+                           target="_blank" 
+                           class="btn btn-yellow" 
+                           id="googleFormLink">
+                            <i class="fas fa-external-link-alt" style="margin-right: 10px;"></i>
+                            Abrir Formulario de Contacto
+                        </a>
+                        
+                        <p style="margin-top: 15px; font-size: 0.9rem; color: var(--color-gray);">
+                            <i class="fas fa-info-circle" style="color: var(--color-primary); margin-right: 5px;"></i>
+                            Se abrirá en una nueva pestaña. Tu información está protegida.
                         </p>
-                        <div style="display: flex; gap: 15px; flex-wrap: wrap;">
-                            <a href="mailto:info@aislantech.es" class="btn btn-outline" style="flex: 1; min-width: 150px; text-align: center;">
-                                <i class="fas fa-envelope" style="margin-right: 8px;"></i> Email
+                    </div>
+                    
+                    <!-- Contacto alternativo -->
+                    <div class="alternative-contact">
+                        <h5><i class="fas fa-comments"></i> ¿Prefieres contacto directo?</h5>
+                        <p style="color: var(--color-gray); margin-bottom: 15px; font-size: 0.95rem;">
+                            También puedes contactarnos directamente a través de estos canales:
+                        </p>
+                        
+                        <div class="contact-buttons">
+                            <a href="mailto:info@aislantech.es" class="btn btn-outline">
+                                <i class="fas fa-envelope" style="margin-right: 8px;"></i> Enviar Email
                             </a>
-                            <a href="tel:930494787" class="btn btn-outline" style="flex: 1; min-width: 150px; text-align: center;">
-                                <i class="fas fa-phone" style="margin-right: 8px;"></i> Llamar
+                            <a href="tel:930494787" class="btn btn-outline">
+                                <i class="fas fa-phone" style="margin-right: 8px;"></i> Llamar Ahora
                             </a>
-                            <a href="https://wa.me/34930494787" target="_blank" class="btn" style="flex: 1; min-width: 150px; text-align: center; background-color: #25D366; color: white;">
+                            <a href="https://wa.me/34930494787?text=Hola,%20me%20interesan%20sus%20servicios%20técnicos" 
+                               target="_blank" 
+                               class="btn whatsapp-btn">
                                 <i class="fab fa-whatsapp" style="margin-right: 8px;"></i> WhatsApp
                             </a>
                         </div>
@@ -980,94 +959,17 @@
             });
         });
         
-        // Selector de tipo de formulario
-        const formOptions = document.querySelectorAll('.form-option-card');
-        const formContainer = document.getElementById('formContainer');
-        const googleFormIframe = document.getElementById('googleFormIframe');
-        
-        if (formOptions.length > 0) {
-            formOptions.forEach(option => {
-                option.addEventListener('click', () => {
-                    // Remover selección anterior
-                    formOptions.forEach(opt => opt.classList.remove('selected'));
-                    
-                    // Agregar selección actual
-                    option.classList.add('selected');
-                    
-                    // Mostrar loading
-                    document.getElementById('formLoading').style.display = 'flex';
-                    
-                    // Obtener tipo de formulario
-                    const formType = option.getAttribute('data-form-type');
-                    
-                    // URL base del formulario
-                    let formUrl = 'https://docs.google.com/forms/d/e/1FAIpQLScK6OC_6B-ZkH_T7P94tq5ZpOBhG5bJfzXfY0q8wYWuP2bZcA/viewform?embedded=true';
-                    
-                    // Cambiar URL según tipo (esto requeriría formularios diferentes)
-                    // Por ahora solo cambiamos la visual
-                    console.log('Tipo de consulta seleccionado:', formType);
-                    
-                    // Forzar recarga del iframe
-                    googleFormIframe.src = googleFormIframe.src;
-                });
+        // Mejorar el enlace del formulario con parámetros para evitar login
+        const googleFormLink = document.getElementById('googleFormLink');
+        if (googleFormLink) {
+            // Usar el parámetro 'usp=sf_link' que suele funcionar mejor
+            googleFormLink.href = 'https://docs.google.com/forms/d/e/1FAIpQLScK6OC_6B-ZkH_T7P94tq5ZpOBhG5bJfzXfY0q8wYWuP2bZcA/viewform?usp=sf_link';
+            
+            // Añadir evento para trackeo (opcional)
+            googleFormLink.addEventListener('click', function() {
+                console.log('Usuario accediendo al formulario sin login requerido');
+                // Aquí podrías añadir Google Analytics o otro trackeo
             });
-            
-            // Seleccionar primera opción por defecto
-            if (formOptions[0]) {
-                formOptions[0].classList.add('selected');
-            }
-        }
-        
-        // Detectar dispositivo móvil y ajustar formulario
-        function detectMobileAndAdjustForm() {
-            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-            const mobileAlert = document.getElementById('mobileAlert');
-            const formContainer = document.getElementById('formContainer');
-            
-            if (isMobile) {
-                // Ajustar altura para móviles
-                if (window.innerWidth <= 576) {
-                    formContainer.style.height = '450px';
-                    googleFormIframe.style.height = '450px';
-                } else if (window.innerWidth <= 768) {
-                    formContainer.style.height = '500px';
-                    googleFormIframe.style.height = '500px';
-                }
-                
-                // Mostrar alerta para móviles
-                if (mobileAlert) {
-                    mobileAlert.style.display = 'flex';
-                }
-                
-                // Añadir eventos para mejorar scroll en móviles
-                document.querySelectorAll('input, textarea, select').forEach(element => {
-                    element.addEventListener('focus', function() {
-                        setTimeout(() => {
-                            this.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                        }, 300);
-                    });
-                });
-            }
-        }
-        
-        // Solución específica para problemas de scroll en iOS
-        function fixIOSScroll() {
-            if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
-                const formIframe = document.getElementById('googleFormIframe');
-                if (formIframe) {
-                    // Forzar repaint
-                    formIframe.style.webkitTransform = 'translateZ(0)';
-                    
-                    // Añadir overflow scrolling
-                    formContainer.style.webkitOverflowScrolling = 'touch';
-                    formContainer.style.overflow = 'auto';
-                    
-                    // Ajustar altura para iOS
-                    const iosHeight = window.innerHeight * 0.7;
-                    formContainer.style.height = iosHeight + 'px';
-                    formIframe.style.height = iosHeight + 'px';
-                }
-            }
         }
         
         // Header scroll effect
@@ -1103,17 +1005,7 @@
         // Carga de la página
         document.addEventListener('DOMContentLoaded', function() {
             console.log('Página de Aislantech cargada correctamente');
-            console.log('Formulario de Google Forms con solución móvil integrado');
-            
-            // Detectar y ajustar para móviles
-            detectMobileAndAdjustForm();
-            fixIOSScroll();
-            
-            // Ajustar en resize
-            window.addEventListener('resize', function() {
-                detectMobileAndAdjustForm();
-                fixIOSScroll();
-            });
+            console.log('Formulario configurado para no requerir login de Google');
             
             // Verificar imagen de cabecera
             const img = new Image();
@@ -1130,27 +1022,16 @@
                     'linear-gradient(135deg, #3E3E3E 0%, #696969 100%)';
             };
             
-            // Solución para iframe en móviles - forzar redimensionamiento
-            setTimeout(() => {
-                if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
-                    const iframe = document.getElementById('googleFormIframe');
-                    if (iframe) {
-                        iframe.style.width = '100%';
-                        iframe.style.height = Math.min(window.innerHeight * 0.7, 600) + 'px';
-                    }
-                }
-            }, 1000);
+            // Mostrar mensaje de éxito en consola
+            console.log('✅ Formulario configurado correctamente');
+            console.log('📝 Los usuarios NO necesitarán cuenta de Google');
+            console.log('🔗 Enlace directo: https://docs.google.com/forms/d/e/1FAIpQLScK6OC_6B-ZkH_T7P94tq5ZpOBhG5bJfzXfY0q8wYWuP2bZcA/viewform?usp=sf_link');
         });
         
-        // Solución para problemas de touch en formularios embebidos
-        document.addEventListener('touchstart', function() {}, {passive: true});
-        
-        // Prevenir zoom en inputs en móviles
-        document.addEventListener('touchmove', function(e) {
-            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') {
-                e.preventDefault();
-            }
-        }, { passive: false });
+        // Detectar si el usuario viene de móvil y mostrar mensaje
+        if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+            console.log('📱 Usuario en dispositivo móvil detectado');
+        }
     </script>
 </body>
 </html>
