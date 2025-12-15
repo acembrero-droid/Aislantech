@@ -80,14 +80,19 @@
         .scroll-indicator { position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); animation: bounce 2s infinite; }
         .scroll-indicator i { color: var(--color-primary); font-size: 1.5rem; }
 
-        /* ========== SERVICES SECTION ========== */
+        /* ========== SERVICES SECTION CON IMÁGENES PERSONALIZADAS ========== */
         .services { padding: 100px 0; background-color: var(--color-light); }
         .services-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; }
         .service-card { background-color: var(--color-white); border-radius: var(--border-radius); overflow: hidden; box-shadow: var(--box-shadow); transition: var(--transition); height: 100%; border-top: 4px solid var(--color-primary); }
         .service-card:hover { transform: translateY(-10px); box-shadow: var(--box-shadow-hover); border-top-color: var(--color-accent); }
+        
+        /* Contenedor de imagen del servicio */
         .service-img { 
             height: 200px; 
             background-color: var(--color-secondary); 
+            background-position: center center;
+            background-size: cover;
+            background-repeat: no-repeat;
             display: flex; 
             align-items: center; 
             justify-content: center; 
@@ -97,11 +102,7 @@
             overflow: hidden;
         }
         
-        .service-img i {
-            z-index: 2;
-            position: relative;
-        }
-        
+        /* Superposición para mejorar legibilidad */
         .service-img::before {
             content: '';
             position: absolute;
@@ -109,8 +110,26 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: linear-gradient(135deg, rgba(62, 62, 62, 0.9) 0%, rgba(105, 105, 105, 0.9) 100%);
+            background: linear-gradient(135deg, rgba(62, 62, 62, 0.7) 0%, rgba(105, 105, 105, 0.7) 100%);
             z-index: 1;
+        }
+        
+        /* Icono sobre la imagen */
+        .service-img i {
+            z-index: 2;
+            position: relative;
+            text-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+        }
+        
+        /* Texto alternativo para cuando no cargue la imagen */
+        .service-img .img-alt {
+            z-index: 2;
+            position: relative;
+            font-size: 2.5rem;
+            font-weight: 700;
+            text-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+            padding: 0 20px;
+            text-align: center;
         }
         
         .service-content { padding: 25px; }
@@ -186,170 +205,12 @@
         .feature-item h4 { color: var(--color-secondary); margin-bottom: 5px; }
         .feature-item p { font-size: 0.95rem; color: var(--color-gray); margin: 0; }
 
-        /* ========== CONTACT SECTION ========== */
-        .contact { padding: 100px 0; background-color: var(--color-light); }
-        .contact-container { display: flex; flex-wrap: wrap; gap: 50px; }
-        .contact-info { flex: 1; min-width: 300px; }
-        .contact-info h3 { color: var(--color-secondary); margin-bottom: 15px; }
-        .contact-info > p { color: var(--color-gray); margin-bottom: 30px; }
-        .contact-details { margin-top: 30px; }
-        .contact-detail { display: flex; align-items: flex-start; margin-bottom: 20px; }
-        .contact-icon { color: var(--color-accent); margin-right: 15px; font-size: 1.2rem; margin-top: 3px; width: 20px; text-align: center; }
-        .contact-detail strong { color: var(--color-dark); display: block; margin-bottom: 2px; }
-        .contact-detail p { color: var(--color-gray); margin: 0; }
-        .footer-map { 
-            height: 200px; 
-            background: linear-gradient(135deg, #3E3E3E 0%, #696969 100%);
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            justify-content: center; 
-            margin-top: 30px; 
-            border-radius: 4px; 
-            color: var(--color-white); 
-            text-align: center; 
-            padding: 20px; 
-        }
-        .map-icon { color: var(--color-primary); font-size: 2.5rem; margin-bottom: 10px; }
-        .footer-map p { margin: 0; font-weight: 500; }
-        
-        /* ========== FORMULARIO MEJORADO ========== */
-        .contact-form { flex: 1; min-width: 300px; }
-        .contact-form h3 { color: var(--color-secondary); margin-bottom: 15px; }
-        .contact-form > p { color: var(--color-gray); margin-bottom: 25px; }
-        
-        .form-intro-card {
-            background-color: var(--color-white);
-            border-radius: var(--border-radius);
-            padding: 30px;
-            margin-bottom: 30px;
-            box-shadow: var(--box-shadow);
-            border-left: 4px solid var(--color-primary);
-        }
-        
-        .form-intro-card h4 {
-            color: var(--color-secondary);
-            margin-bottom: 15px;
-            display: flex;
-            align-items: center;
-        }
-        
-        .form-intro-card h4 i {
-            color: var(--color-primary);
-            margin-right: 10px;
-            font-size: 1.2rem;
-        }
-        
-        .form-intro-card p {
-            color: var(--color-gray);
-            margin-bottom: 15px;
-            line-height: 1.6;
-        }
-        
-        .form-features {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 15px;
-            margin-top: 20px;
-        }
-        
-        .form-feature {
-            display: flex;
-            align-items: center;
-            background-color: var(--color-primary-light);
-            padding: 10px 15px;
-            border-radius: 4px;
-            flex: 1;
-            min-width: 150px;
-        }
-        
-        .form-feature i {
-            color: var(--color-primary);
-            margin-right: 10px;
-            font-size: 1rem;
-        }
-        
-        .form-feature span {
-            color: var(--color-dark);
-            font-size: 0.9rem;
-            font-weight: 500;
-        }
-        
-        .form-redirect-card {
-            background-color: var(--color-white);
-            border-radius: var(--border-radius);
-            padding: 40px;
-            text-align: center;
-            box-shadow: var(--box-shadow);
-            border: 2px dashed var(--color-primary-light);
-            margin-top: 20px;
-        }
-        
-        .form-redirect-card i {
-            font-size: 3rem;
-            color: var(--color-primary);
-            margin-bottom: 20px;
-        }
-        
-        .form-redirect-card h4 {
-            color: var(--color-secondary);
-            margin-bottom: 15px;
-            font-size: 1.3rem;
-        }
-        
-        .form-redirect-card p {
-            color: var(--color-gray);
-            margin-bottom: 25px;
-            line-height: 1.6;
-        }
-        
-        .form-redirect-card .btn {
-            padding: 15px 40px;
-            font-size: 1.1rem;
-        }
-        
-        .alternative-contact {
-            margin-top: 30px;
-            padding-top: 25px;
-            border-top: 1px solid var(--color-secondary-light);
-        }
-        
-        .alternative-contact h5 {
-            color: var(--color-secondary);
-            margin-bottom: 15px;
-            font-size: 1.1rem;
-            display: flex;
-            align-items: center;
-        }
-        
-        .alternative-contact h5 i {
-            color: var(--color-primary);
-            margin-right: 10px;
-        }
-        
-        .contact-buttons {
-            display: flex;
-            gap: 15px;
-            flex-wrap: wrap;
-        }
-        
-        .contact-buttons a {
-            flex: 1;
-            min-width: 150px;
-            text-align: center;
-        }
-        
-        .whatsapp-btn {
-            background-color: #25D366 !important;
-            color: white !important;
-        }
-        
-        .whatsapp-btn:hover {
-            background-color: #128C7E !important;
-        }
-
         /* ========== FOOTER ========== */
-        footer { background-color: var(--color-dark); color: var(--color-white); padding: 60px 0 30px; }
+        footer { 
+            background-color: var(--color-dark); 
+            color: var(--color-white); 
+            padding: 100px 0 30px;
+        }
         .footer-content { display: flex; flex-wrap: wrap; justify-content: space-between; margin-bottom: 40px; gap: 40px; }
         .footer-about { flex: 1; min-width: 250px; }
         .footer-logo { font-family: 'Montserrat', sans-serif; font-size: 1.8rem; font-weight: 700; color: var(--color-white); margin-bottom: 15px; }
@@ -392,7 +253,6 @@
             .timeline:before { top: 0; left: 40px; width: 3px; height: 100%; }
             .timeline-item { display: flex; text-align: left; margin-bottom: 40px; }
             .timeline-point { margin: 0 20px 0 0; flex-shrink: 0; }
-            .contact-buttons a { min-width: 100%; }
             .footer-content { flex-direction: column; gap: 30px; }
             .innovation-content, .software-content { flex-direction: column; }
         }
@@ -407,8 +267,6 @@
             .mobile-menu-btn { order: 2; }
             nav { order: 3; width: 100%; margin-top: 15px; }
             .btn-yellow { order: 4; margin-top: 15px; width: 100%; text-align: center; }
-            .form-intro-card { padding: 20px; }
-            .form-redirect-card { padding: 25px; }
         }
     </style>
 </head>
@@ -431,11 +289,10 @@
                     <li><a href="#proceso">Proceso</a></li>
                     <li><a href="#innovacion">I+D+i</a></li>
                     <li><a href="#software">Software</a></li>
-                    <li><a href="#contacto">Contacto</a></li>
                 </ul>
             </nav>
             
-            <a href="#contacto" class="btn btn-yellow">Solicitar Consultoría</a>
+            <a href="#footer" class="btn btn-yellow">Información de Contacto</a>
         </div>
     </header>
 
@@ -443,10 +300,9 @@
     <section class="hero" id="inicio">
         <div class="hero-content">
             <h1>Soluciones Técnicas Avanzadas para Industria y Construcción</h1>
-            <p>Oficina técnica especializada, consultoría industrial, sistemas de precercos avanzados, soluciones de protección solar integrales e innovación en I+D+i.</p>
+            <p>Oficina técnica especializada, consultoría industrial, sistemas de precercos avanzados, soluciones de cajón túnel integrales e innovación en I+D+i.</p>
             <div class="hero-btns">
                 <a href="#servicios" class="btn btn-yellow">Explora Nuestros Servicios</a>
-                <a href="#contacto" class="btn btn-outline" style="margin-left: 15px;">Contactar Ahora</a>
             </div>
         </div>
         <div class="scroll-indicator">
@@ -454,7 +310,7 @@
         </div>
     </section>
 
-    <!-- Services Section -->
+    <!-- Services Section CON IMÁGENES PERSONALIZADAS -->
     <section class="services" id="servicios">
         <div class="container">
             <div class="section-title">
@@ -463,9 +319,10 @@
             </div>
             
             <div class="services-grid">
-                <!-- Servicios... (mantener igual que antes) -->
+                <!-- Oficina Técnica -->
                 <div class="service-card">
-                    <div class="service-img">
+                    <div class="service-img" id="oficina-tecnica-img">
+                        <!-- La imagen se carga por CSS -->
                         <i class="fas fa-drafting-compass"></i>
                     </div>
                     <div class="service-content">
@@ -479,8 +336,10 @@
                     </div>
                 </div>
                 
+                <!-- Consultoría Industrial -->
                 <div class="service-card">
-                    <div class="service-img">
+                    <div class="service-img" id="consultoria-industrial-img">
+                        <!-- La imagen se carga por CSS -->
                         <i class="fas fa-industry"></i>
                     </div>
                     <div class="service-content">
@@ -494,8 +353,10 @@
                     </div>
                 </div>
                 
+                <!-- Precerco Avanzado -->
                 <div class="service-card">
-                    <div class="service-img">
+                    <div class="service-img" id="precerco-avanzado-img">
+                        <!-- La imagen se carga por CSS -->
                         <i class="fas fa-cube"></i>
                     </div>
                     <div class="service-content">
@@ -509,12 +370,14 @@
                     </div>
                 </div>
                 
+                <!-- Soluciones de Cajón Túnel -->
                 <div class="service-card">
-                    <div class="service-img">
+                    <div class="service-img" id="cajon-tunel-img">
+                        <!-- La imagen se carga por CSS -->
                         <i class="fas fa-sun"></i>
                     </div>
                     <div class="service-content">
-                        <h3>Cajones Túnel para Protección Solar</h3>
+                        <h3>Soluciones de Cajón Túnel</h3>
                         <p>Diseños especializados para control solar, optimizando el confort térmico y la eficiencia energética.</p>
                         <ul class="service-features">
                             <li><i class="fas fa-check service-icon"></i> Análisis solar</li>
@@ -524,8 +387,10 @@
                     </div>
                 </div>
                 
+                <!-- Software & Proceso Integral -->
                 <div class="service-card">
-                    <div class="service-img">
+                    <div class="service-img" id="software-proceso-img">
+                        <!-- La imagen se carga por CSS -->
                         <i class="fas fa-laptop-code"></i>
                     </div>
                     <div class="service-content">
@@ -657,7 +522,7 @@
                         </div>
                     </div>
                     
-                    <a href="#contacto" class="btn btn-yellow" style="margin-top: 20px;">Consultar Proyectos I+D+i</a>
+                    <a href="#footer" class="btn btn-yellow" style="margin-top: 20px;">Información de Contacto</a>
                 </div>
             </div>
         </div>
@@ -741,152 +606,34 @@
                         </div>
                     </div>
                     
-                    <a href="#contacto" class="btn btn-yellow" style="margin-top: 20px;">Solicitar Demo</a>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Contact Section - VERSIÓN SIN LOGIN REQUERIDO -->
-    <section class="contact" id="contacto">
-        <div class="container">
-            <div class="section-title">
-                <h2>Contacto</h2>
-                <p>¿Tienes un proyecto en mente? Hablemos sobre cómo podemos ayudarte</p>
-            </div>
-            
-            <div class="contact-container">
-                <div class="contact-info">
-                    <h3>Información de Contacto</h3>
-                    <p>Estamos aquí para ayudarte con tus proyectos técnicos y soluciones especializadas.</p>
-                    
-                    <div class="contact-details">
-                        <div class="contact-detail">
-                            <i class="fas fa-map-marker-alt contact-icon"></i>
-                            <div>
-                                <strong>Dirección</strong>
-                                <p>Caldes d'Estrac 08393, Barcelona</p>
-                            </div>
-                        </div>
-                        
-                        <div class="contact-detail">
-                            <i class="fas fa-phone contact-icon"></i>
-                            <div>
-                                <strong>Teléfono</strong>
-                                <p>930 49 47 87</p>
-                            </div>
-                        </div>
-                        
-                        <div class="contact-detail">
-                            <i class="fas fa-envelope contact-icon"></i>
-                            <div>
-                                <strong>Email</strong>
-                                <p>info@aislantech.es</p>
-                            </div>
-                        </div>
-                        
-                        <div class="contact-detail">
-                            <i class="fas fa-globe contact-icon"></i>
-                            <div>
-                                <strong>Sitio Web</strong>
-                                <p>www.aislantech.es</p>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="footer-map">
-                        <i class="fas fa-map-marked-alt map-icon"></i>
-                        <p>Ubicados en Caldes d'Estrac, Barcelona</p>
-                    </div>
-                </div>
-                
-                <div class="contact-form">
-                    <!-- Tarjeta de introducción -->
-                    <div class="form-intro-card">
-                        <h4><i class="fas fa-unlock-alt"></i> Formulario de Contacto Sin Registro</h4>
-                        <p>Hemos simplificado nuestro proceso de contacto. <strong>No necesitas cuenta de Google</strong> para enviar tu consulta. Simplemente haz clic en el botón y serás redirigido a nuestro formulario seguro.</p>
-                        
-                        <div class="form-features">
-                            <div class="form-feature">
-                                <i class="fas fa-check-circle"></i>
-                                <span>Sin registro requerido</span>
-                            </div>
-                            <div class="form-feature">
-                                <i class="fas fa-shield-alt"></i>
-                                <span>Completamente seguro</span>
-                            </div>
-                            <div class="form-feature">
-                                <i class="fas fa-mobile-alt"></i>
-                                <span>Optimizado para móviles</span>
-                            </div>
-                            <div class="form-feature">
-                                <i class="fas fa-clock"></i>
-                                <span>Solo 2 minutos</span>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Tarjeta principal con botón de redirección -->
-                    <div class="form-redirect-card">
-                        <i class="fas fa-paper-plane"></i>
-                        <h4>Accede a Nuestro Formulario</h4>
-                        <p>Haz clic en el botón para abrir nuestro formulario de contacto en una nueva pestaña. <strong>No se requiere inicio de sesión</strong> - puedes enviar tu consulta de forma anónima si lo prefieres.</p>
-                        
-                        <a href="https://docs.google.com/forms/d/e/1FAIpQLScK6OC_6B-ZkH_T7P94tq5ZpOBhG5bJfzXfY0q8wYWuP2bZcA/viewform?usp=sf_link" 
-                           target="_blank" 
-                           class="btn btn-yellow" 
-                           id="googleFormLink">
-                            <i class="fas fa-external-link-alt" style="margin-right: 10px;"></i>
-                            Abrir Formulario de Contacto
-                        </a>
-                        
-                        <p style="margin-top: 15px; font-size: 0.9rem; color: var(--color-gray);">
-                            <i class="fas fa-info-circle" style="color: var(--color-primary); margin-right: 5px;"></i>
-                            Se abrirá en una nueva pestaña. Tu información está protegida.
-                        </p>
-                    </div>
-                    
-                    <!-- Contacto alternativo -->
-                    <div class="alternative-contact">
-                        <h5><i class="fas fa-comments"></i> ¿Prefieres contacto directo?</h5>
-                        <p style="color: var(--color-gray); margin-bottom: 15px; font-size: 0.95rem;">
-                            También puedes contactarnos directamente a través de estos canales:
-                        </p>
-                        
-                        <div class="contact-buttons">
-                            <a href="mailto:info@aislantech.es" class="btn btn-outline">
-                                <i class="fas fa-envelope" style="margin-right: 8px;"></i> Enviar Email
-                            </a>
-                            <a href="tel:930494787" class="btn btn-outline">
-                                <i class="fas fa-phone" style="margin-right: 8px;"></i> Llamar Ahora
-                            </a>
-                            <a href="https://wa.me/34930494787?text=Hola,%20me%20interesan%20sus%20servicios%20técnicos" 
-                               target="_blank" 
-                               class="btn whatsapp-btn">
-                                <i class="fab fa-whatsapp" style="margin-right: 8px;"></i> WhatsApp
-                            </a>
-                        </div>
-                    </div>
+                    <a href="#footer" class="btn btn-yellow" style="margin-top: 20px;">Información de Contacto</a>
                 </div>
             </div>
         </div>
     </section>
 
     <!-- Footer -->
-    <footer>
+    <footer id="footer">
         <div class="container">
+            <div class="section-title" style="margin-bottom: 40px;">
+                <h2 style="color: var(--color-white);">Contacto</h2>
+                <p style="color: rgba(255, 255, 255, 0.8);">¿Tienes un proyecto en mente? Ponte en contacto con nosotros</p>
+            </div>
+            
             <div class="footer-content">
                 <div class="footer-about">
                     <div class="footer-logo">
                         <span class="logo-aislan">AISLAN</span><span class="logo-tech">TECH</span>
                     </div>
-                    <p class="footer-description">Soluciones técnicas avanzadas para industria y construcción.</p>
+                    <p class="footer-description">Soluciones técnicas avanzadas para industria y construcción. Especialistas en consultoría industrial, sistemas de precercos avanzados y soluciones de cajón túnel.</p>
                     
                     <div class="social-links">
-                        <a href="#" title="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
-                        <a href="#" title="Twitter"><i class="fab fa-twitter"></i></a>
-                        <a href="#" title="Instagram"><i class="fab fa-instagram"></i></a>
-                        <a href="#" title="YouTube"><i class="fab fa-youtube"></i></a>
+                        <a href="https://www.linkedin.com/company/aislantech/" target="_blank" title="LinkedIn Aislantech">
+                            <i class="fab fa-linkedin-in"></i>
+                        </a>
+                        <a href="#" title="YouTube Aislantech">
+                            <i class="fab fa-youtube"></i>
+                        </a>
                     </div>
                 </div>
                 
@@ -896,22 +643,38 @@
                         <li><a href="#servicios">Oficina Técnica</a></li>
                         <li><a href="#servicios">Consultoría Industrial</a></li>
                         <li><a href="#servicios">Precerco Avanzado</a></li>
-                        <li><a href="#servicios">Protección Solar</a></li>
+                        <li><a href="#servicios">Soluciones de Cajón Túnel</a></li>
                         <li><a href="#innovacion">I+D+i</a></li>
                         <li><a href="#software">Software</a></li>
                     </ul>
                 </div>
                 
                 <div class="footer-contact">
-                    <h4>Contacto Rápido</h4>
+                    <h4>Contacto Directo</h4>
                     <div class="quick-contact">
+                        <p><i class="fas fa-map-marker-alt"></i> Caldes d'Estrac 08393, Barcelona</p>
                         <p><i class="fas fa-phone"></i> 930 49 47 87</p>
                         <p><i class="fas fa-envelope"></i> info@aislantech.es</p>
-                        <p><i class="fas fa-map-marker-alt"></i> Caldes d'Estrac, Barcelona</p>
                         <p><i class="fas fa-globe"></i> www.aislantech.es</p>
                     </div>
                     
-                    <a href="#contacto" class="btn btn-yellow">Solicitar Presupuesto</a>
+                    <div style="margin-top: 25px;">
+                        <p style="color: rgba(255, 255, 255, 0.8); margin-bottom: 15px; font-size: 0.95rem;">
+                            <i class="fas fa-clock" style="color: var(--color-primary); margin-right: 10px;"></i>
+                            Horario:<br>
+                            Lunes a Jueves: 9:00 - 14:00 y 16:00 - 19:00<br>
+                            Viernes: 9:00 - 14:00
+                        </p>
+                        
+                        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                            <a href="mailto:info@aislantech.es" class="btn" style="background-color: var(--color-primary); color: var(--color-dark); flex: 1; min-width: 120px; text-align: center;">
+                                <i class="fas fa-envelope" style="margin-right: 8px;"></i> Email
+                            </a>
+                            <a href="tel:930494787" class="btn btn-outline" style="border-color: var(--color-primary); color: var(--color-primary); flex: 1; min-width: 120px; text-align: center;">
+                                <i class="fas fa-phone" style="margin-right: 8px;"></i> Llamar
+                            </a>
+                        </div>
+                    </div>
                 </div>
             </div>
             
@@ -959,19 +722,6 @@
             });
         });
         
-        // Mejorar el enlace del formulario con parámetros para evitar login
-        const googleFormLink = document.getElementById('googleFormLink');
-        if (googleFormLink) {
-            // Usar el parámetro 'usp=sf_link' que suele funcionar mejor
-            googleFormLink.href = 'https://docs.google.com/forms/d/e/1FAIpQLScK6OC_6B-ZkH_T7P94tq5ZpOBhG5bJfzXfY0q8wYWuP2bZcA/viewform?usp=sf_link';
-            
-            // Añadir evento para trackeo (opcional)
-            googleFormLink.addEventListener('click', function() {
-                console.log('Usuario accediendo al formulario sin login requerido');
-                // Aquí podrías añadir Google Analytics o otro trackeo
-            });
-        }
-        
         // Header scroll effect
         window.addEventListener('scroll', () => {
             const header = document.querySelector('header');
@@ -983,6 +733,55 @@
                 }
             }
         });
+        
+        // ============================================
+        // CARGAR IMÁGENES DE SERVICIOS PERSONALIZADAS
+        // ============================================
+        
+        // Función para cargar imágenes de servicios
+        function cargarImagenesServicios() {
+            console.log('🖼️ Cargando imágenes personalizadas de servicios...');
+            
+            // RUTAS DE LAS IMÁGENES - ¡AJUSTA ESTAS RUTAS!
+            const rutasImagenes = {
+                'oficina-tecnica': 'images/oficina-tecnica.jpg',
+                'consultoria-industrial': 'images/consultoria-industrial.jpg',
+                'precerco-avanzado': 'images/precerco-avanzado.jpg',
+                'cajon-tunel': 'images/cajon-tunel.jpg',
+                'software-proceso': 'images/software-proceso.jpg'
+            };
+            
+            // Cargar cada imagen
+            Object.keys(rutasImagenes).forEach(servicioId => {
+                const imgElement = document.getElementById(`${servicioId}-img`);
+                const rutaImagen = rutasImagenes[servicioId];
+                
+                if (imgElement) {
+                    // Crear imagen para pre-cargar
+                    const img = new Image();
+                    
+                    img.onload = function() {
+                        console.log(`✅ Imagen cargada: ${rutaImagen}`);
+                        // Aplicar imagen al fondo
+                        imgElement.style.backgroundImage = `url('${rutaImagen}')`;
+                    };
+                    
+                    img.onerror = function() {
+                        console.log(`❌ No se pudo cargar: ${rutaImagen}`);
+                        console.log(`📁 Verifica que el archivo existe en: ${rutaImagen}`);
+                        
+                        // Mostrar icono alternativo
+                        const icon = imgElement.querySelector('i');
+                        if (icon) {
+                            icon.style.display = 'flex';
+                        }
+                    };
+                    
+                    // Intentar cargar la imagen
+                    img.src = rutaImagen;
+                }
+            });
+        }
         
         // Animation on scroll
         const observerOptions = { threshold: 0.1, rootMargin: '0px 0px -50px 0px' };
@@ -1004,34 +803,56 @@
         
         // Carga de la página
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('Página de Aislantech cargada correctamente');
-            console.log('Formulario configurado para no requerir login de Google');
+            console.log('✅ Página de Aislantech cargada correctamente');
+            
+            // Cargar imágenes de servicios
+            cargarImagenesServicios();
             
             // Verificar imagen de cabecera
-            const img = new Image();
-            img.src = 'https://acembrero-droid.github.io/Aislantech/images/cabecera.JPG';
+            const imgCabecera = new Image();
+            imgCabecera.src = 'https://acembrero-droid.github.io/Aislantech/images/cabecera.JPG';
             
-            img.onload = function() {
-                console.log('Imagen de cabecera cargada correctamente');
+            imgCabecera.onload = function() {
+                console.log('🏞️ Imagen de cabecera cargada correctamente');
             };
             
-            img.onerror = function() {
-                console.log('Imagen de cabecera no encontrada');
-                // Fondo alternativo si la imagen falla
+            imgCabecera.onerror = function() {
+                console.log('⚠️ Imagen de cabecera no encontrada');
+                // Fondo alternativo
                 document.querySelector('.hero').style.background = 
                     'linear-gradient(135deg, #3E3E3E 0%, #696969 100%)';
             };
             
-            // Mostrar mensaje de éxito en consola
-            console.log('✅ Formulario configurado correctamente');
-            console.log('📝 Los usuarios NO necesitarán cuenta de Google');
-            console.log('🔗 Enlace directo: https://docs.google.com/forms/d/e/1FAIpQLScK6OC_6B-ZkH_T7P94tq5ZpOBhG5bJfzXfY0q8wYWuP2bZcA/viewform?usp=sf_link');
+            // Configurar enlace de LinkedIn
+            const linkedinLink = document.querySelector('a[href*="linkedin"]');
+            if (linkedinLink) {
+                linkedinLink.href = 'https://www.linkedin.com/company/aislantech/';
+                linkedinLink.target = '_blank';
+                console.log('🔗 LinkedIn configurado correctamente');
+            }
+            
+            // Configurar enlace de YouTube
+            const youtubeLink = document.querySelector('a[title*="YouTube"]');
+            if (youtubeLink) {
+                youtubeLink.href = '#';
+                youtubeLink.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    alert('Canal de YouTube pendiente de configuración');
+                });
+                console.log('🎥 YouTube configurado (pendiente)');
+            }
+            
+            // Instrucciones para el usuario
+            console.log('\n📋 INSTRUCCIONES PARA LAS IMÁGENES:');
+            console.log('1. Asegúrate de tener estas imágenes en la carpeta /images/:');
+            console.log('   - oficina-tecnica.jpg');
+            console.log('   - consultoria-industrial.jpg');
+            console.log('   - precerco-avanzado.jpg');
+            console.log('   - cajon-tunel.jpg');
+            console.log('   - software-proceso.jpg');
+            console.log('\n2. Si las imágenes tienen nombres diferentes, modifica las rutas en:');
+            console.log('   función cargarImagenesServicios() en el código JavaScript');
         });
-        
-        // Detectar si el usuario viene de móvil y mostrar mensaje
-        if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
-            console.log('📱 Usuario en dispositivo móvil detectado');
-        }
     </script>
 </body>
 </html>
