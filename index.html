@@ -4,8 +4,38 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Aislantech | Soluciones Técnicas Avanzadas</title>
+    
+    <!-- Favicon tradicional -->
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    
+    <!-- Favicon moderno - múltiples tamaños -->
+    <link rel="icon" type="image/png" sizes="16x16" href="images/favicon-16x16.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="images/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="64x64" href="images/favicon-64x64.png">
+    <link rel="icon" type="image/png" sizes="96x96" href="images/favicon-96x96.png">
+    <link rel="icon" type="image/png" sizes="128x128" href="images/favicon-128x128.png">
+    
+    <!-- Apple Touch Icon (iOS) -->
+    <link rel="apple-touch-icon" sizes="180x180" href="images/apple-touch-icon.png">
+    
+    <!-- Android/Chrome -->
+    <link rel="icon" type="image/png" sizes="192x192" href="images/favicon-192x192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="images/favicon-512x512.png">
+    
+    <!-- Manifest para PWA (opcional) -->
+    <link rel="manifest" href="site.webmanifest">
+    
+    <!-- Meta tags para redes sociales -->
+    <meta property="og:title" content="Aislantech | Soluciones Técnicas Avanzadas">
+    <meta property="og:description" content="Oficina técnica especializada, consultoría industrial, sistemas de precercos avanzados">
+    <meta property="og:image" content="images/og-image.png">
+    <meta property="og:url" content="https://www.aislantech.es">
+    <meta name="twitter:card" content="summary_large_image">
+    
+    <!-- CSS y fuentes -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Open+Sans:wght@300;400;600&display=swap" rel="stylesheet">
+    
     <style>
         /* ========== VARIABLES DE COLOR ========== */
         :root {
@@ -44,12 +74,55 @@
         .btn-yellow { background-color: var(--color-primary); color: var(--color-dark); font-weight: 700; }
         .btn-yellow:hover { background-color: var(--color-primary-dark); color: var(--color-white); transform: translateY(-3px); box-shadow: 0 5px 15px rgba(237, 208, 14, 0.3); }
 
-        /* ========== HEADER ========== */
+        /* ========== HEADER CON LOGO ========== */
         header { position: fixed; top: 0; left: 0; width: 100%; z-index: 1000; background-color: rgba(255, 255, 255, 0.97); box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05); transition: var(--transition); }
         .header-container { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; }
-        .logo { font-family: 'Montserrat', sans-serif; font-size: 1.8rem; font-weight: 700; text-decoration: none; display: flex; align-items: center; }
-        .logo-aislan { color: var(--color-secondary); font-weight: 700; }
-        .logo-tech { color: var(--color-primary); font-weight: 800; }
+        
+        .logo-container { 
+            display: flex; 
+            align-items: center; 
+            text-decoration: none; 
+        }
+        
+        .logo-img { 
+            height: 40px; 
+            width: auto; 
+            margin-right: 12px; 
+            transition: var(--transition); 
+        }
+        
+        .logo-img:hover {
+            transform: scale(1.05);
+        }
+        
+        .logo-text { 
+            font-family: 'Montserrat', sans-serif; 
+            font-weight: 700; 
+            display: flex; 
+            flex-direction: column; 
+            line-height: 1.1; 
+        }
+        
+        .logo-aislan { 
+            color: var(--color-secondary); 
+            font-size: 1.5rem; 
+            font-weight: 700; 
+        }
+        
+        .logo-tech { 
+            color: var(--color-primary); 
+            font-size: 1.5rem; 
+            font-weight: 800; 
+        }
+        
+        .logo-tagline {
+            font-size: 0.7rem;
+            color: var(--color-gray);
+            font-weight: 400;
+            margin-top: 2px;
+            font-family: 'Open Sans', sans-serif;
+        }
+        
         nav ul { display: flex; list-style: none; }
         nav li { margin-left: 30px; }
         nav a { text-decoration: none; color: var(--color-dark); font-weight: 500; transition: var(--transition); position: relative; font-size: 0.95rem; }
@@ -68,7 +141,7 @@
             overflow: hidden; 
             background: 
                 linear-gradient(rgba(62, 62, 62, 0.85), rgba(62, 62, 62, 0.8)), 
-                url('images/cabecera.JPG') no-repeat center center/cover;
+                url('images/cabecera.PNG') no-repeat center center/cover;
             color: var(--color-white); 
             text-align: center; 
         }
@@ -275,6 +348,21 @@
             .timeline-point { margin: 0 20px 0 0; flex-shrink: 0; }
             .footer-content { flex-direction: column; gap: 30px; }
             .innovation-content, .software-content { flex-direction: column; }
+            
+            /* Responsive para logo */
+            .logo-img { 
+                height: 35px; 
+                margin-right: 10px; 
+            }
+            
+            .logo-aislan, 
+            .logo-tech { 
+                font-size: 1.3rem; 
+            }
+            
+            .logo-tagline {
+                font-size: 0.65rem;
+            }
         }
         
         @media (max-width: 576px) {
@@ -283,19 +371,45 @@
             .hero-btns { display: flex; flex-direction: column; gap: 15px; }
             .hero-btns .btn { margin-left: 0 !important; width: 100%; }
             .header-container { flex-wrap: wrap; }
-            .logo { order: 1; }
+            .logo-container { order: 1; }
             .mobile-menu-btn { order: 2; }
             nav { order: 3; width: 100%; margin-top: 15px; }
             .btn-yellow { order: 4; margin-top: 15px; width: 100%; text-align: center; }
+            
+            /* Responsive para logo en móviles pequeños */
+            .logo-img { 
+                height: 30px; 
+                margin-right: 8px; 
+            }
+            
+            .logo-aislan, 
+            .logo-tech { 
+                font-size: 1.1rem; 
+            }
+            
+            .logo-tagline {
+                display: none; /* Ocultar tagline en móviles muy pequeños */
+            }
+            
+            .header-container {
+                flex-wrap: wrap;
+                padding: 10px 15px;
+            }
         }
     </style>
 </head>
 <body>
-    <!-- Header -->
+    <!-- Header con Logo -->
     <header>
         <div class="container header-container">
-            <a href="#" class="logo">
-                <span class="logo-aislan">AISLAN</span><span class="logo-tech">TECH</span>
+            <a href="#" class="logo-container">
+                <img src="images/logo.png" alt="Aislantech Logo" class="logo-img" id="header-logo">
+                <div class="logo-text">
+                    <div>
+                        <span class="logo-aislan">AISLAN</span><span class="logo-tech">TECH</span>
+                    </div>
+                    <div class="logo-tagline">Soluciones Técnicas Avanzadas</div>
+                </div>
             </a>
             
             <button class="mobile-menu-btn" id="mobileMenuBtn">
@@ -815,8 +929,9 @@
             
             // Lista de imágenes adicionales del sitio
             const imagenesAdicionales = [
-                { id: 'hero-bg', ruta: 'images/cabecera.JPG' },
-                { id: 'innovation-img', ruta: 'images/innovacion.png' }
+                { id: 'hero-bg', ruta: 'images/cabecera.PNG' },
+                { id: 'innovation-img', ruta: 'images/innovacion.png' },
+                { id: 'header-logo', ruta: 'images/logo.png', elemento: 'img' }
             ];
             
             imagenesAdicionales.forEach(imgData => {
@@ -829,6 +944,9 @@
                     if (imgData.id === 'hero-bg') {
                         document.querySelector('.hero').style.backgroundImage = 
                             `linear-gradient(rgba(62, 62, 62, 0.85), rgba(62, 62, 62, 0.8)), url('${imgData.ruta}')`;
+                    } else if (imgData.id === 'header-logo') {
+                        // El logo ya está cargado por el src del img
+                        console.log('✅ Logo de cabecera cargado');
                     }
                 };
                 
@@ -839,6 +957,14 @@
                     if (imgData.id === 'hero-bg') {
                         document.querySelector('.hero').style.background = 
                             'linear-gradient(135deg, #3E3E3E 0%, #696969 100%)';
+                    } else if (imgData.id === 'header-logo') {
+                        // Si no hay logo, mostrar solo texto
+                        const logoContainer = document.querySelector('.logo-container');
+                        const logoImg = document.getElementById('header-logo');
+                        if (logoImg) {
+                            logoImg.style.display = 'none';
+                        }
+                        console.log('ℹ️ Mostrando solo texto del logo (imagen no encontrada)');
                     }
                 };
                 
@@ -871,7 +997,7 @@
             // Cargar imágenes de servicios
             cargarImagenesServicios();
             
-            // Cargar imágenes adicionales
+            // Cargar imágenes adicionales (incluye logo)
             cargarImagenesAdicionales();
             
             // Configurar enlace de LinkedIn
@@ -896,15 +1022,31 @@
             // Instrucciones para el usuario
             console.log('\n📋 INSTRUCCIONES PARA LAS IMÁGENES:');
             console.log('1. Asegúrate de tener estas imágenes en la carpeta /images/:');
+            console.log('   - logo.png (200x60 px aproximadamente, PNG con transparencia)');
+            console.log('   - favicon-16x16.png (16x16 px)');
+            console.log('   - favicon-32x32.png (32x32 px)');
+            console.log('   - favicon-64x64.png (64x64 px)');
+            console.log('   - apple-touch-icon.png (180x180 px)');
+            console.log('   - favicon-192x192.png (192x192 px)');
+            console.log('   - favicon-512x512.png (512x512 px)');
+            console.log('   - favicon.ico (formato tradicional, en raíz del proyecto)');
+            console.log('   - cabecera.PNG (imagen hero)');
             console.log('   - oficina-tecnica.png');
             console.log('   - consultoria-industrial.png');
             console.log('   - precerco-avanzado.png');
             console.log('   - cajon-tunel.png');
             console.log('   - software-proceso.png');
-            console.log('   - cabecera.JPG (para la sección hero)');
-            console.log('   - innovacion.png (opcional, para sección I+D+i)');
-            console.log('\n2. Verifica que todas las extensiones sean .png (minúsculas)');
-            console.log('\n3. Si no tienes todas las imágenes, se mostrarán iconos alternativos');
+            console.log('   - innovacion.png (opcional)');
+            console.log('\n2. Para crear favicon.ico desde PNG:');
+            console.log('   - Usa convertidores online como: https://icoconvert.com/');
+            console.log('   - Sube tu logo en alta resolución (512x512 px)');
+            console.log('   - Selecciona tamaños: 16x16, 32x32, 48x48');
+            console.log('   - Descarga el archivo .ico resultante y colócalo en la raíz del proyecto');
+            console.log('\n3. Para generar todos los favicons automáticamente:');
+            console.log('   - Ve a: https://realfavicongenerator.net/');
+            console.log('   - Sube tu logo');
+            console.log('   - Descarga el paquete completo');
+            console.log('   - Copia los archivos a la carpeta correspondiente');
             console.log('\n4. Las imágenes se cargarán automáticamente cuando la página cargue');
             console.log('\n5. Abre la consola del navegador (F12) para ver mensajes de carga');
         });
