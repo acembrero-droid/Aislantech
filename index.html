@@ -68,7 +68,7 @@
             overflow: hidden; 
             background: 
                 linear-gradient(rgba(62, 62, 62, 0.85), rgba(62, 62, 62, 0.8)), 
-                url('https://acembrero-droid.github.io/Aislantech/images/cabecera.JPG') no-repeat center center/cover;
+                url('images/cabecera.JPG') no-repeat center center/cover;
             color: var(--color-white); 
             text-align: center; 
         }
@@ -100,6 +100,11 @@
             font-size: 3rem; 
             position: relative;
             overflow: hidden;
+            transition: transform 0.5s ease;
+        }
+        
+        .service-card:hover .service-img {
+            transform: scale(1.05);
         }
         
         /* Superposición para mejorar legibilidad */
@@ -110,8 +115,13 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: linear-gradient(135deg, rgba(62, 62, 62, 0.7) 0%, rgba(105, 105, 105, 0.7) 100%);
+            background: linear-gradient(135deg, rgba(62, 62, 62, 0.3) 0%, rgba(105, 105, 105, 0.3) 100%);
             z-index: 1;
+            transition: opacity 0.3s ease;
+        }
+        
+        .service-card:hover .service-img::before {
+            opacity: 0.1;
         }
         
         /* Icono sobre la imagen */
@@ -119,17 +129,14 @@
             z-index: 2;
             position: relative;
             text-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
-        }
-        
-        /* Texto alternativo para cuando no cargue la imagen */
-        .service-img .img-alt {
-            z-index: 2;
-            position: relative;
-            font-size: 2.5rem;
-            font-weight: 700;
-            text-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
-            padding: 0 20px;
-            text-align: center;
+            background-color: rgba(62, 62, 62, 0.7);
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 3px solid var(--color-primary);
         }
         
         .service-content { padding: 25px; }
@@ -158,17 +165,30 @@
             overflow: hidden; 
             box-shadow: var(--box-shadow-hover);
             height: 400px;
-            background: linear-gradient(135deg, #3E3E3E 0%, #696969 100%);
+            background: url('images/innovacion.png') center center/cover;
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
+            position: relative;
+        }
+        
+        .innovation-image::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(62, 62, 62, 0.7) 0%, rgba(105, 105, 105, 0.7) 100%);
         }
         
         .innovation-image-content {
             text-align: center;
             padding: 30px;
             width: 100%;
+            z-index: 2;
+            position: relative;
         }
         
         .innovation-image i { 
@@ -322,7 +342,6 @@
                 <!-- Oficina Técnica -->
                 <div class="service-card">
                     <div class="service-img" id="oficina-tecnica-img">
-                        <!-- La imagen se carga por CSS -->
                         <i class="fas fa-drafting-compass"></i>
                     </div>
                     <div class="service-content">
@@ -339,7 +358,6 @@
                 <!-- Consultoría Industrial -->
                 <div class="service-card">
                     <div class="service-img" id="consultoria-industrial-img">
-                        <!-- La imagen se carga por CSS -->
                         <i class="fas fa-industry"></i>
                     </div>
                     <div class="service-content">
@@ -356,7 +374,6 @@
                 <!-- Precerco Avanzado -->
                 <div class="service-card">
                     <div class="service-img" id="precerco-avanzado-img">
-                        <!-- La imagen se carga por CSS -->
                         <i class="fas fa-cube"></i>
                     </div>
                     <div class="service-content">
@@ -373,7 +390,6 @@
                 <!-- Soluciones de Cajón Túnel -->
                 <div class="service-card">
                     <div class="service-img" id="cajon-tunel-img">
-                        <!-- La imagen se carga por CSS -->
                         <i class="fas fa-sun"></i>
                     </div>
                     <div class="service-content">
@@ -390,7 +406,6 @@
                 <!-- Software & Proceso Integral -->
                 <div class="service-card">
                     <div class="service-img" id="software-proceso-img">
-                        <!-- La imagen se carga por CSS -->
                         <i class="fas fa-laptop-code"></i>
                     </div>
                     <div class="service-content">
@@ -742,13 +757,13 @@
         function cargarImagenesServicios() {
             console.log('🖼️ Cargando imágenes personalizadas de servicios...');
             
-            // RUTAS DE LAS IMÁGENES - ¡AJUSTA ESTAS RUTAS!
+            // RUTAS DE LAS IMÁGENES - AHORA CON EXTENSIÓN .png EN MINÚSCULAS
             const rutasImagenes = {
-                'oficina-tecnica': 'images/oficina-tecnica.jpg',
-                'consultoria-industrial': 'images/consultoria-industrial.jpg',
-                'precerco-avanzado': 'images/precerco-avanzado.jpg',
-                'cajon-tunel': 'images/cajon-tunel.jpg',
-                'software-proceso': 'images/software-proceso.jpg'
+                'oficina-tecnica': 'images/oficina-tecnica.png',
+                'consultoria-industrial': 'images/consultoria-industrial.png',
+                'precerco-avanzado': 'images/precerco-avanzado.png',
+                'cajon-tunel': 'images/cajon-tunel.png',
+                'software-proceso': 'images/software-proceso.png'
             };
             
             // Cargar cada imagen
@@ -764,22 +779,70 @@
                         console.log(`✅ Imagen cargada: ${rutaImagen}`);
                         // Aplicar imagen al fondo
                         imgElement.style.backgroundImage = `url('${rutaImagen}')`;
+                        // Ocultar icono cuando la imagen carga
+                        const icon = imgElement.querySelector('i');
+                        if (icon) {
+                            icon.style.display = 'none';
+                        }
                     };
                     
                     img.onerror = function() {
                         console.log(`❌ No se pudo cargar: ${rutaImagen}`);
                         console.log(`📁 Verifica que el archivo existe en: ${rutaImagen}`);
+                        console.log(`📁 Ruta actual: ${window.location.href + rutaImagen}`);
                         
-                        // Mostrar icono alternativo
+                        // Mostrar icono alternativo si no carga la imagen
                         const icon = imgElement.querySelector('i');
                         if (icon) {
                             icon.style.display = 'flex';
+                            icon.style.color = '#EDD00E';
+                            icon.style.fontSize = '3rem';
                         }
+                        
+                        // Aplicar fondo de color si no hay imagen
+                        imgElement.style.background = 'linear-gradient(135deg, #3E3E3E 0%, #696969 100%)';
                     };
                     
                     // Intentar cargar la imagen
                     img.src = rutaImagen;
                 }
+            });
+        }
+        
+        // Función para cargar otras imágenes del sitio
+        function cargarImagenesAdicionales() {
+            console.log('🌄 Cargando imágenes adicionales...');
+            
+            // Lista de imágenes adicionales del sitio
+            const imagenesAdicionales = [
+                { id: 'hero-bg', ruta: 'images/cabecera.JPG' },
+                { id: 'innovation-img', ruta: 'images/innovacion.png' }
+            ];
+            
+            imagenesAdicionales.forEach(imgData => {
+                const img = new Image();
+                
+                img.onload = function() {
+                    console.log(`✅ ${imgData.id} cargada: ${imgData.ruta}`);
+                    
+                    // Aplicar según el elemento
+                    if (imgData.id === 'hero-bg') {
+                        document.querySelector('.hero').style.backgroundImage = 
+                            `linear-gradient(rgba(62, 62, 62, 0.85), rgba(62, 62, 62, 0.8)), url('${imgData.ruta}')`;
+                    }
+                };
+                
+                img.onerror = function() {
+                    console.log(`❌ ${imgData.id} no encontrada: ${imgData.ruta}`);
+                    console.log(`📁 Usando alternativa para: ${imgData.id}`);
+                    
+                    if (imgData.id === 'hero-bg') {
+                        document.querySelector('.hero').style.background = 
+                            'linear-gradient(135deg, #3E3E3E 0%, #696969 100%)';
+                    }
+                };
+                
+                img.src = imgData.ruta;
             });
         }
         
@@ -808,20 +871,8 @@
             // Cargar imágenes de servicios
             cargarImagenesServicios();
             
-            // Verificar imagen de cabecera
-            const imgCabecera = new Image();
-            imgCabecera.src = 'https://acembrero-droid.github.io/Aislantech/images/cabecera.JPG';
-            
-            imgCabecera.onload = function() {
-                console.log('🏞️ Imagen de cabecera cargada correctamente');
-            };
-            
-            imgCabecera.onerror = function() {
-                console.log('⚠️ Imagen de cabecera no encontrada');
-                // Fondo alternativo
-                document.querySelector('.hero').style.background = 
-                    'linear-gradient(135deg, #3E3E3E 0%, #696969 100%)';
-            };
+            // Cargar imágenes adicionales
+            cargarImagenesAdicionales();
             
             // Configurar enlace de LinkedIn
             const linkedinLink = document.querySelector('a[href*="linkedin"]');
@@ -845,13 +896,17 @@
             // Instrucciones para el usuario
             console.log('\n📋 INSTRUCCIONES PARA LAS IMÁGENES:');
             console.log('1. Asegúrate de tener estas imágenes en la carpeta /images/:');
-            console.log('   - oficina-tecnica.jpg');
-            console.log('   - consultoria-industrial.jpg');
-            console.log('   - precerco-avanzado.jpg');
-            console.log('   - cajon-tunel.jpg');
-            console.log('   - software-proceso.jpg');
-            console.log('\n2. Si las imágenes tienen nombres diferentes, modifica las rutas en:');
-            console.log('   función cargarImagenesServicios() en el código JavaScript');
+            console.log('   - oficina-tecnica.png');
+            console.log('   - consultoria-industrial.png');
+            console.log('   - precerco-avanzado.png');
+            console.log('   - cajon-tunel.png');
+            console.log('   - software-proceso.png');
+            console.log('   - cabecera.JPG (para la sección hero)');
+            console.log('   - innovacion.png (opcional, para sección I+D+i)');
+            console.log('\n2. Verifica que todas las extensiones sean .png (minúsculas)');
+            console.log('\n3. Si no tienes todas las imágenes, se mostrarán iconos alternativos');
+            console.log('\n4. Las imágenes se cargarán automáticamente cuando la página cargue');
+            console.log('\n5. Abre la consola del navegador (F12) para ver mensajes de carga');
         });
     </script>
 </body>
