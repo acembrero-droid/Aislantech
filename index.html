@@ -5,92 +5,210 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Aislantech | Soluciones Técnicas Avanzadas</title>
     
-    <!-- Meta Description optimizada para SEO -->
-    <meta name="description" content="Oficina técnica especializada en consultoría industrial, sistemas de precercos avanzados, soluciones de cajón túnel y desarrollo I+D+i para industria y construcción">
+    <!-- Favicon tradicional -->
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
     
-    <!-- Canonical URL -->
-    <link rel="canonical" href="https://www.aislantech.es">
-    
-    <!-- Favicon moderno -->
-    <link rel="icon" href="favicon.ico" type="image/x-icon">
+    <!-- Favicon moderno - múltiples tamaños -->
+    <link rel="icon" type="image/png" sizes="16x16" href="images/favicon-16x16.png">
     <link rel="icon" type="image/png" sizes="32x32" href="images/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="64x64" href="images/favicon-64x64.png">
+    <link rel="icon" type="image/png" sizes="96x96" href="images/favicon-96x96.png">
+    <link rel="icon" type="image/png" sizes="128x128" href="images/favicon-128x128.png">
+    
+    <!-- Apple Touch Icon (iOS) -->
     <link rel="apple-touch-icon" sizes="180x180" href="images/apple-touch-icon.png">
     
-    <!-- Open Graph / Social Media -->
+    <!-- Android/Chrome -->
+    <link rel="icon" type="image/png" sizes="192x192" href="images/favicon-192x192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="images/favicon-512x512.png">
+    
+    <!-- Manifest para PWA (opcional) -->
+    <link rel="manifest" href="site.webmanifest">
+    
+    <!-- Meta tags para redes sociales -->
     <meta property="og:title" content="Aislantech | Soluciones Técnicas Avanzadas">
     <meta property="og:description" content="Oficina técnica especializada, consultoría industrial, sistemas de precercos avanzados">
-    <meta property="og:image" content="https://www.aislantech.es/images/og-image.png">
+    <meta property="og:image" content="images/og-image.png">
     <meta property="og:url" content="https://www.aislantech.es">
-    <meta property="og:type" content="website">
-    <meta property="og:locale" content="es_ES">
-    
-    <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Aislantech | Soluciones Técnicas Avanzadas">
-    <meta name="twitter:description" content="Oficina técnica especializada en consultoría industrial">
     
-    <!-- Preconnect para recursos externos -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+    <!-- CSS y fuentes -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Open+Sans:wght@300;400;600&display=swap" rel="stylesheet">
     
-    <!-- CSS optimizado - crítico primero -->
-    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"></noscript>
+    <!-- Google Analytics con consentimiento -->
+    <script>
+        // Configuración inicial sin cookies
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        
+        // Configurar con consentimiento denegado por defecto
+        gtag('config', 'G-100G9QWNGY', {
+            'anonymize_ip': true,
+            'allow_google_signals': false,
+            'allow_ad_personalization_signals': false
+        });
+    </script>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-100G9QWNGY"></script>
     
-    <!-- Fonts con font-display swap -->
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Open+Sans:wght@300;400;600&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
-    
-    <!-- CSS crítico inline -->
     <style>
-        /* ========== VARIABLES CSS ========== */
+        /* ========== VARIABLES DE COLOR ========== */
         :root {
             --color-primary: #EDD00E;
             --color-primary-dark: #B8860B;
+            --color-primary-light: #FFF8DC;
             --color-secondary: #3E3E3E;
             --color-secondary-dark: #696969;
+            --color-secondary-light: #D3D3D3;
+            --color-accent: #EDD00E;
             --color-light: #F5F5F5;
             --color-dark: #333333;
-            --color-white: #FFFFFF;
             --color-gray: #666666;
+            --color-white: #FFFFFF;
             --transition: all 0.3s ease;
             --border-radius: 8px;
-            --box-shadow: 0 5px 15px rgba(0,0,0,0.05);
-            --box-shadow-hover: 0 15px 30px rgba(0,0,0,0.1);
+            --box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            --box-shadow-hover: 0 15px 30px rgba(0, 0, 0, 0.1);
         }
 
-        /* ========== ESTILOS CRÍTICOS ========== */
+        /* ========== BANNER DE COOKIES ========== */
+        .cookie-banner {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background-color: var(--color-dark);
+            color: var(--color-white);
+            padding: 20px;
+            z-index: 9999;
+            box-shadow: 0 -2px 20px rgba(0, 0, 0, 0.3);
+            transform: translateY(100%);
+            transition: transform 0.5s ease;
+        }
+        
+        .cookie-banner.show {
+            transform: translateY(0);
+        }
+        
+        .cookie-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        
+        .cookie-text {
+            flex: 1;
+            min-width: 300px;
+        }
+        
+        .cookie-text h3 {
+            color: var(--color-primary);
+            margin-bottom: 8px;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 1.2rem;
+        }
+        
+        .cookie-text p {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+        
+        .cookie-text a {
+            color: var(--color-primary);
+            text-decoration: underline;
+        }
+        
+        .cookie-text a:hover {
+            color: #ffffff;
+        }
+        
+        .cookie-buttons {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .cookie-btn {
+            padding: 10px 25px;
+            border-radius: var(--border-radius);
+            border: none;
+            cursor: pointer;
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: var(--transition);
+            white-space: nowrap;
+        }
+        
+        .cookie-btn-accept {
+            background-color: var(--color-primary);
+            color: var(--color-dark);
+        }
+        
+        .cookie-btn-accept:hover {
+            background-color: #ffffff;
+            transform: translateY(-2px);
+        }
+        
+        .cookie-btn-reject {
+            background-color: transparent;
+            color: var(--color-white);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .cookie-btn-reject:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-color: var(--color-white);
+        }
+
+        /* ========== ENLACES EN FOOTER PARA POLÍTICAS ========== */
+        .footer-legal {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .footer-legal a {
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+            font-size: 0.85rem;
+            transition: var(--transition);
+        }
+        
+        .footer-legal a:hover {
+            color: var(--color-primary);
+            text-decoration: underline;
+        }
+
+        /* ========== ESTILOS GENERALES (MANTENIDOS) ========== */
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        
         html { scroll-behavior: smooth; }
+        body { font-family: 'Open Sans', sans-serif; color: var(--color-gray); line-height: 1.6; overflow-x: hidden; background-color: var(--color-white); }
+        h1, h2, h3, h4, h5 { font-family: 'Montserrat', sans-serif; font-weight: 600; color: var(--color-dark); line-height: 1.3; }
+        .container { width: 100%; max-width: 1200px; margin: 0 auto; padding: 0 20px; }
+        .section-title { text-align: center; margin-bottom: 3rem; position: relative; }
+        .section-title h2 { font-size: 2.5rem; display: inline-block; }
+        .section-title h2:after { content: ''; position: absolute; width: 70px; height: 4px; background-color: var(--color-accent); bottom: -10px; left: 50%; transform: translateX(-50%); }
+        .section-title p { margin-top: 20px; color: var(--color-secondary); }
         
-        body { 
-            font-family: 'Open Sans', sans-serif; 
-            color: var(--color-gray); 
-            line-height: 1.6; 
-            background-color: var(--color-white); 
-            overflow-x: hidden;
-        }
-        
-        /* Layout del Header crítico */
-        header { 
-            position: fixed; 
-            top: 0; 
-            left: 0; 
-            width: 100%; 
-            z-index: 1000; 
-            background-color: rgba(255, 255, 255, 0.97); 
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05); 
-            transition: var(--transition); 
-        }
-        
-        .header-container { 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            padding: 15px 20px; 
-            max-width: 1200px; 
-            margin: 0 auto; 
-        }
+        .btn { display: inline-block; background-color: var(--color-accent); color: var(--color-dark); padding: 12px 30px; border-radius: var(--border-radius); text-decoration: none; font-weight: 700; border: none; cursor: pointer; transition: var(--transition); font-family: 'Montserrat', sans-serif; }
+        .btn:hover { background-color: var(--color-primary-dark); color: var(--color-white); transform: translateY(-3px); box-shadow: 0 5px 15px rgba(237, 208, 14, 0.3); }
+        .btn-outline { background-color: transparent; border: 2px solid var(--color-accent); color: var(--color-accent); }
+        .btn-outline:hover { background-color: var(--color-accent); color: var(--color-dark); }
+        .btn-yellow { background-color: var(--color-primary); color: var(--color-dark); font-weight: 700; }
+        .btn-yellow:hover { background-color: var(--color-primary-dark); color: var(--color-white); transform: translateY(-3px); box-shadow: 0 5px 15px rgba(237, 208, 14, 0.3); }
+
+        /* ========== HEADER CON LOGO ========== */
+        header { position: fixed; top: 0; left: 0; width: 100%; z-index: 1000; background-color: rgba(255, 255, 255, 0.97); box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05); transition: var(--transition); }
+        .header-container { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; }
         
         .logo-container { 
             display: flex; 
@@ -102,279 +220,702 @@
             height: 40px; 
             width: auto; 
             margin-right: 12px; 
+            transition: var(--transition); 
         }
         
-        /* Hero section crítica */
+        .logo-img:hover {
+            transform: scale(1.05);
+        }
+        
+        .logo-text { 
+            font-family: 'Montserrat', sans-serif; 
+            font-weight: 700; 
+            display: flex; 
+            flex-direction: column; 
+            line-height: 1.1; 
+        }
+        
+        .logo-aislan { 
+            color: var(--color-secondary); 
+            font-size: 1.5rem; 
+            font-weight: 700; 
+        }
+        
+        .logo-tech { 
+            color: var(--color-primary); 
+            font-size: 1.5rem; 
+            font-weight: 800; 
+        }
+        
+        .logo-tagline {
+            font-size: 0.7rem;
+            color: var(--color-gray);
+            font-weight: 400;
+            margin-top: 2px;
+            font-family: 'Open Sans', sans-serif;
+        }
+        
+        nav ul { display: flex; list-style: none; }
+        nav li { margin-left: 30px; }
+        nav a { text-decoration: none; color: var(--color-dark); font-weight: 500; transition: var(--transition); position: relative; font-size: 0.95rem; }
+        nav a:hover { color: var(--color-primary); }
+        nav a:after { content: ''; position: absolute; width: 0; height: 2px; background-color: var(--color-primary); bottom: -5px; left: 0; transition: var(--transition); }
+        nav a:hover:after { width: 100%; }
+        .mobile-menu-btn { display: none; font-size: 1.5rem; background: none; border: none; color: var(--color-secondary); cursor: pointer; z-index: 1001; }
+
+        /* ========== HERO SECTION ========== */
         .hero { 
-            min-height: 100vh; 
+            height: 100vh; 
             display: flex; 
             align-items: center; 
             justify-content: center; 
             position: relative; 
-            background: linear-gradient(rgba(62, 62, 62, 0.85), rgba(62, 62, 62, 0.8)), 
-                        var(--hero-image, #3E3E3E);
+            overflow: hidden; 
+            background: 
+                linear-gradient(rgba(62, 62, 62, 0.85), rgba(62, 62, 62, 0.8)), 
+                url('images/cabecera.JPG') no-repeat center center/cover;
             color: var(--color-white); 
             text-align: center; 
-            padding: 80px 20px 40px;
+        }
+        
+        .hero-content { max-width: 800px; padding: 0 20px; z-index: 2; }
+        .hero h1 { font-size: 3.5rem; margin-bottom: 20px; color: var(--color-white); animation: fadeInDown 1s ease; }
+        .hero p { font-size: 1.2rem; margin-bottom: 40px; animation: fadeInUp 1s ease 0.3s both; }
+        .hero-btns { animation: fadeIn 1s ease 0.6s both; }
+        .scroll-indicator { position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); animation: bounce 2s infinite; }
+        .scroll-indicator i { color: var(--color-primary); font-size: 1.5rem; }
+
+        /* ========== SERVICES SECTION CON IMÁGENES PERSONALIZADAS ========== */
+        .services { padding: 100px 0; background-color: var(--color-light); }
+        .services-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; }
+        .service-card { background-color: var(--color-white); border-radius: var(--border-radius); overflow: hidden; box-shadow: var(--box-shadow); transition: var(--transition); height: 100%; border-top: 4px solid var(--color-primary); }
+        .service-card:hover { transform: translateY(-10px); box-shadow: var(--box-shadow-hover); border-top-color: var(--color-accent); }
+        
+        /* Contenedor de imagen del servicio */
+        .service-img { 
+            height: 200px; 
+            background-color: var(--color-secondary); 
+            background-position: center center;
+            background-size: cover;
+            background-repeat: no-repeat;
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            color: var(--color-white); 
+            font-size: 3rem; 
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.5s ease;
+        }
+        
+        .service-card:hover .service-img {
+            transform: scale(1.05);
+        }
+        
+        /* Superposición para mejorar legibilidad */
+        .service-img::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(62, 62, 62, 0.3) 0%, rgba(105, 105, 105, 0.3) 100%);
+            z-index: 1;
+            transition: opacity 0.3s ease;
+        }
+        
+        .service-card:hover .service-img::before {
+            opacity: 0.1;
+        }
+        
+        /* Icono sobre la imagen */
+        .service-img i {
+            z-index: 2;
+            position: relative;
+            text-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+            background-color: rgba(62, 62, 62, 0.7);
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 3px solid var(--color-primary);
+        }
+        
+        .service-content { padding: 25px; }
+        .service-content h3 { font-size: 1.5rem; margin-bottom: 15px; color: var(--color-secondary); }
+        .service-features { list-style: none; margin-top: 15px; padding-left: 0; }
+        .service-features li { margin-bottom: 8px; display: flex; align-items: center; }
+        .service-icon { color: var(--color-primary); font-size: 1rem; margin-right: 10px; }
+
+        /* ========== PROCESS SECTION ========== */
+        .process { padding: 100px 0; background-color: var(--color-white); }
+        .timeline { display: flex; justify-content: space-between; position: relative; margin-top: 50px; }
+        .timeline:before { content: ''; position: absolute; top: 40px; left: 0; width: 100%; height: 3px; background-color: var(--color-secondary-light); z-index: 1; }
+        .timeline-item { flex: 1; text-align: center; position: relative; z-index: 2; }
+        .timeline-point { width: 40px; height: 40px; background-color: var(--color-white); border: 3px solid var(--color-primary); border-radius: 50%; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center; font-weight: 700; color: var(--color-primary); transition: var(--transition); }
+        .timeline-item:hover .timeline-point { background-color: var(--color-primary-dark); border-color: var(--color-primary-dark); color: var(--color-white); transform: scale(1.1); }
+        .timeline-content h4 { margin-bottom: 10px; color: var(--color-secondary); }
+        .timeline-content p { font-size: 0.95rem; color: var(--color-gray); }
+
+        /* ========== I+D+i SECTION ========== */
+        .innovation { padding: 100px 0; background-color: var(--color-light); }
+        .innovation-content { display: flex; flex-wrap: wrap; gap: 50px; align-items: center; }
+        .innovation-image { 
+            flex: 1; 
+            min-width: 300px; 
+            border-radius: var(--border-radius); 
+            overflow: hidden; 
+            box-shadow: var(--box-shadow-hover);
+            height: 400px;
+            background: url('images/innovacion.png') center center/cover;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            position: relative;
+        }
+        
+        .innovation-image::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(62, 62, 62, 0.7) 0%, rgba(105, 105, 105, 0.7) 100%);
+        }
+        
+        .innovation-image-content {
+            text-align: center;
+            padding: 30px;
+            width: 100%;
+            z-index: 2;
+            position: relative;
+        }
+        
+        .innovation-image i { 
+            font-size: 4rem; 
+            margin-bottom: 20px; 
+            color: #EDD00E; 
+        }
+        
+        .innovation-features { flex: 1; min-width: 300px; }
+        .innovation-features h3 { color: var(--color-secondary); margin-bottom: 15px; }
+        .innovation-features p { color: var(--color-gray); margin-bottom: 20px; }
+        .innovation-list { margin-top: 30px; }
+        .innovation-item { display: flex; align-items: flex-start; margin-bottom: 25px; }
+        .innovation-icon { background-color: var(--color-primary-light); width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 15px; color: var(--color-primary-dark); font-size: 1.2rem; flex-shrink: 0; }
+        .innovation-item h4 { color: var(--color-secondary); margin-bottom: 5px; }
+        .innovation-item p { font-size: 0.95rem; color: var(--color-gray); margin: 0; }
+
+        /* ========== SOFTWARE SECTION ========== */
+        .software { padding: 100px 0; background-color: var(--color-white); }
+        .software-content { display: flex; align-items: center; flex-wrap: wrap; gap: 50px; }
+        .software-demo { flex: 1; min-width: 300px; border-radius: var(--border-radius); overflow: hidden; box-shadow: var(--box-shadow-hover); border: 1px solid var(--color-secondary-light); }
+        .demo-header { background-color: var(--color-dark); padding: 15px; display: flex; align-items: center; }
+        .demo-dot { width: 12px; height: 12px; border-radius: 50%; margin-right: 8px; }
+        .demo-dot.red { background-color: #FF5F57; }
+        .demo-dot.yellow { background-color: var(--color-primary); }
+        .demo-dot.green { background-color: #28CA42; }
+        .demo-screen { height: 300px; background-color: #1E1E1E; color: #D4D4D4; padding: 20px; font-family: 'Consolas', monospace; overflow-y: auto; font-size: 0.9rem; line-height: 1.5; }
+        .software-features { flex: 1; min-width: 300px; }
+        .software-features h3 { color: var(--color-secondary); margin-bottom: 15px; }
+        .software-features p { color: var(--color-gray); margin-bottom: 20px; }
+        .feature-list { margin-top: 30px; }
+        .feature-item { display: flex; align-items: flex-start; margin-bottom: 25px; }
+        .feature-icon { background-color: var(--color-primary-light); width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 15px; color: var(--color-primary-dark); font-size: 1.2rem; flex-shrink: 0; }
+        .feature-item h4 { color: var(--color-secondary); margin-bottom: 5px; }
+        .feature-item p { font-size: 0.95rem; color: var(--color-gray); margin: 0; }
+
+        /* ========== FOOTER ========== */
+        footer { 
+            background-color: var(--color-dark); 
+            color: var(--color-white); 
+            padding: 100px 0 30px;
+        }
+        .footer-content { display: flex; flex-wrap: wrap; justify-content: space-between; margin-bottom: 40px; gap: 40px; }
+        .footer-about { flex: 1; min-width: 250px; }
+        .footer-logo { font-family: 'Montserrat', sans-serif; font-size: 1.8rem; font-weight: 700; color: var(--color-white); margin-bottom: 15px; }
+        .footer-description { color: rgba(255, 255, 255, 0.8); margin-bottom: 20px; line-height: 1.6; }
+        .social-links { display: flex; gap: 15px; margin-top: 20px; }
+        .social-links a { color: var(--color-white); font-size: 1.2rem; transition: var(--transition); background-color: rgba(255, 255, 255, 0.1); width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+        .social-links a:hover { color: var(--color-primary); background-color: rgba(255, 255, 255, 0.2); transform: translateY(-3px); }
+        .footer-services, .footer-contact { flex: 1; min-width: 200px; }
+        .footer-services h4, .footer-contact h4 { color: var(--color-white); margin-bottom: 20px; font-size: 1.2rem; }
+        .footer-services ul { list-style: none; padding-left: 0; }
+        .footer-services li { margin-bottom: 10px; }
+        .footer-services a { color: rgba(255, 255, 255, 0.8); text-decoration: none; transition: var(--transition); font-size: 0.95rem; }
+        .footer-services a:hover { color: var(--color-primary); padding-left: 5px; }
+        .quick-contact { margin-bottom: 25px; }
+        .quick-contact p { display: flex; align-items: center; margin-bottom: 12px; color: rgba(255, 255, 255, 0.8); font-size: 0.95rem; }
+        .quick-contact i { color: var(--color-primary); margin-right: 10px; width: 20px; text-align: center; }
+        .footer-bottom { text-align: center; padding-top: 30px; border-top: 1px solid rgba(255, 255, 255, 0.1); font-size: 0.9rem; color: rgba(255, 255, 255, 0.7); }
+        .footer-bottom a { color: var(--color-primary); text-decoration: none; }
+        .footer-bottom a:hover { text-decoration: underline; }
+
+        /* ========== ANIMATIONS ========== */
+        @keyframes fadeInDown { from { opacity: 0; transform: translateY(-30px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes bounce { 0%, 20%, 50%, 80%, 100% { transform: translateY(0) translateX(-50%); } 40% { transform: translateY(-10px) translateX(-50%); } 60% { transform: translateY(-5px) translateX(-50%); } }
+
+        /* ========== RESPONSIVE ========== */
+        @media (max-width: 992px) {
+            .hero h1 { font-size: 3rem; }
+        }
+        
+        @media (max-width: 768px) {
+            .mobile-menu-btn { display: block; }
+            nav ul { position: fixed; top: 70px; left: 0; width: 100%; background-color: var(--color-white); flex-direction: column; align-items: center; padding: 20px 0; box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1); transform: translateY(-100%); opacity: 0; transition: var(--transition); z-index: 999; }
+            nav ul.active { transform: translateY(0); opacity: 1; }
+            nav li { margin: 15px 0; }
+            .hero h1 { font-size: 2.5rem; }
+            .hero p { font-size: 1.1rem; }
+            .timeline { flex-direction: column; }
+            .timeline:before { top: 0; left: 40px; width: 3px; height: 100%; }
+            .timeline-item { display: flex; text-align: left; margin-bottom: 40px; }
+            .timeline-point { margin: 0 20px 0 0; flex-shrink: 0; }
+            .footer-content { flex-direction: column; gap: 30px; }
+            .innovation-content, .software-content { flex-direction: column; }
+            
+            /* Responsive para logo */
+            .logo-img { 
+                height: 35px; 
+                margin-right: 10px; 
+            }
+            
+            .logo-aislan, 
+            .logo-tech { 
+                font-size: 1.3rem; 
+            }
+            
+            .logo-tagline {
+                font-size: 0.65rem;
+            }
+            
+            /* Responsive para banner de cookies */
+            .cookie-content {
+                flex-direction: column;
+                text-align: center;
+                gap: 15px;
+            }
+            
+            .cookie-buttons {
+                justify-content: center;
+            }
+        }
+        
+        @media (max-width: 576px) {
+            .section-title h2 { font-size: 2rem; }
+            .hero h1 { font-size: 2rem; }
+            .hero-btns { display: flex; flex-direction: column; gap: 15px; }
+            .hero-btns .btn { margin-left: 0 !important; width: 100%; }
+            .header-container { flex-wrap: wrap; }
+            .logo-container { order: 1; }
+            .mobile-menu-btn { order: 2; }
+            nav { order: 3; width: 100%; margin-top: 15px; }
+            .btn-yellow { order: 4; margin-top: 15px; width: 100%; text-align: center; }
+            
+            /* Responsive para logo en móviles pequeños */
+            .logo-img { 
+                height: 30px; 
+                margin-right: 8px; 
+            }
+            
+            .logo-aislan, 
+            .logo-tech { 
+                font-size: 1.1rem; 
+            }
+            
+            .logo-tagline {
+                display: none;
+            }
+            
+            .header-container {
+                flex-wrap: wrap;
+                padding: 10px 15px;
+            }
+            
+            /* Responsive para banner de cookies */
+            .cookie-buttons {
+                flex-direction: column;
+                width: 100%;
+            }
+            
+            .cookie-btn {
+                width: 100%;
+            }
         }
     </style>
-    
-    <!-- Google Analytics optimizado (no crítico) -->
-    <script>
-        // Configuración inicial de consentimiento
-        window.dataLayer = window.dataLayer || [];
-        window.gtag = function(){dataLayer.push(arguments);}
-        gtag('js', new Date());
-        
-        // Configuración inicial sin cookies
-        gtag('config', 'G-100G9QWNGY', {
-            'anonymize_ip': true,
-            'allow_google_signals': false,
-            'allow_ad_personalization_signals': false
-        });
-    </script>
-    
-    <!-- Carga diferida del script de Analytics -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-100G9QWNGY"></script>
 </head>
 <body>
-    <!-- Banner de Cookies RGPD (solo se muestra si no hay consentimiento) -->
-    <div id="cookieConsent" class="cookie-banner" role="dialog" aria-label="Consentimiento de cookies" aria-live="polite">
+    <!-- Banner de Cookies -->
+    <div id="cookieConsent" class="cookie-banner">
         <div class="cookie-content">
             <div class="cookie-text">
                 <h3>🍪 Uso de Cookies</h3>
-                <p>Utilizamos cookies propias y de terceros para analizar el tráfico web. Puedes aceptar todas, configurar o rechazar. <a href="politica-cookies.html" target="_blank">Más información</a></p>
+                <p>Utilizamos cookies propias y de Google Analytics para analizar el tráfico web y mejorar tu experiencia. Puedes aceptar todas, configurar o rechazar las no necesarias. <a href="politica-cookies.html" target="_blank">Más información</a></p>
             </div>
             <div class="cookie-buttons">
-                <button id="rejectCookies" class="cookie-btn cookie-btn-reject" aria-label="Rechazar todas las cookies excepto las necesarias">Solo necesarias</button>
-                <button id="settingsCookies" class="cookie-btn cookie-btn-settings" aria-label="Configurar preferencias de cookies">Configurar</button>
-                <button id="acceptCookies" class="cookie-btn cookie-btn-accept" aria-label="Aceptar todas las cookies">Aceptar todas</button>
+                <button id="rejectCookies" class="cookie-btn cookie-btn-reject">Solo necesarias</button>
+                <button id="acceptCookies" class="cookie-btn cookie-btn-accept">Aceptar todas</button>
             </div>
         </div>
     </div>
 
-    <!-- Panel de configuración de cookies (oculto por defecto) -->
-    <div id="cookieSettings" class="cookie-settings" role="dialog" aria-label="Configuración de cookies" aria-hidden="true">
-        <div class="settings-content">
-            <h3>Configuración de Cookies</h3>
-            <div class="setting-option">
-                <label class="switch">
-                    <input type="checkbox" id="analyticsCookies" checked>
-                    <span class="slider"></span>
-                </label>
-                <div class="setting-text">
-                    <strong>Cookies de análisis</strong>
-                    <p>Google Analytics para entender cómo usas nuestra web</p>
-                </div>
-            </div>
-            <div class="setting-option">
-                <label class="switch">
-                    <input type="checkbox" id="marketingCookies" disabled>
-                    <span class="slider"></span>
-                </label>
-                <div class="setting-text">
-                    <strong>Cookies de marketing</strong>
-                    <p>Actualmente no utilizamos cookies de marketing</p>
-                </div>
-            </div>
-            <div class="settings-buttons">
-                <button id="saveCookieSettings" class="cookie-btn cookie-btn-accept">Guardar preferencias</button>
-                <button id="closeSettings" class="cookie-btn cookie-btn-reject">Cancelar</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Header -->
+    <!-- Header con Logo -->
     <header>
-        <div class="header-container">
-            <a href="#inicio" class="logo-container" aria-label="Aislantech - Ir a inicio">
-                <img src="images/logo.png" alt="Logo Aislantech" class="logo-img" width="150" height="40">
+        <div class="container header-container">
+            <a href="#" class="logo-container">
+                <img src="images/logo.png" alt="Aislantech Logo" class="logo-img" id="header-logo">
                 <div class="logo-text">
-                    <div><span class="logo-aislan">AISLAN</span><span class="logo-tech">TECH</span></div>
+                    <div>
+                        <span class="logo-aislan">AISLAN</span><span class="logo-tech">TECH</span>
+                    </div>
                     <div class="logo-tagline">Soluciones Técnicas Avanzadas</div>
                 </div>
             </a>
             
-            <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Menú móvil" aria-expanded="false">
-                <span class="menu-icon"></span>
+            <button class="mobile-menu-btn" id="mobileMenuBtn">
+                <i class="fas fa-bars"></i>
             </button>
             
-            <nav aria-label="Navegación principal">
+            <nav>
                 <ul id="mainMenu">
-                    <li><a href="#inicio" aria-current="page">Inicio</a></li>
+                    <li><a href="#inicio">Inicio</a></li>
                     <li><a href="#servicios">Servicios</a></li>
                     <li><a href="#proceso">Proceso</a></li>
                     <li><a href="#innovacion">I+D+i</a></li>
                     <li><a href="#software">Software</a></li>
-                    <li><a href="#contacto">Contacto</a></li>
                 </ul>
             </nav>
             
-            <a href="#contacto" class="btn btn-yellow" aria-label="Ir a información de contacto">Contacto</a>
+            <a href="#footer" class="btn btn-yellow">Información de Contacto</a>
         </div>
     </header>
 
-    <!-- Main Content -->
-    <main>
-        <!-- Hero Section -->
-        <section class="hero" id="inicio">
-            <div class="hero-content">
-                <h1>Soluciones Técnicas Avanzadas para Industria y Construcción</h1>
-                <p>Oficina técnica especializada en consultoría industrial, sistemas de precercos avanzados, soluciones de cajón túnel integrales e innovación en I+D+i.</p>
-                <div class="hero-btns">
-                    <a href="#servicios" class="btn btn-yellow">Explora Nuestros Servicios</a>
-                    <a href="#contacto" class="btn btn-outline">Contactar Ahora</a>
-                </div>
+    <!-- Hero Section -->
+    <section class="hero" id="inicio">
+        <div class="hero-content">
+            <h1>Soluciones Técnicas Avanzadas para Industria y Construcción</h1>
+            <p>Oficina técnica especializada, consultoría industrial, sistemas de precercos avanzados, soluciones de cajón túnel integrales e innovación en I+D+i.</p>
+            <div class="hero-btns">
+                <a href="#servicios" class="btn btn-yellow">Explora Nuestros Servicios</a>
             </div>
-            <a href="#servicios" class="scroll-indicator" aria-label="Desplazarse hacia abajo">
-                <i class="fas fa-chevron-down"></i>
-            </a>
-        </section>
+        </div>
+        <div class="scroll-indicator">
+            <i class="fas fa-chevron-down"></i>
+        </div>
+    </section>
 
-        <!-- Services Section -->
-        <section class="services" id="servicios" aria-labelledby="services-title">
-            <div class="container">
-                <div class="section-title">
-                    <h2 id="services-title">Nuestros Servicios</h2>
-                    <p>Soluciones integrales para proyectos técnicos especializados</p>
+    <!-- Services Section CON IMÁGENES PERSONALIZADAS -->
+    <section class="services" id="servicios">
+        <div class="container">
+            <div class="section-title">
+                <h2>Nuestros Servicios</h2>
+                <p>Soluciones integrales para proyectos técnicos especializados</p>
+            </div>
+            
+            <div class="services-grid">
+                <!-- Oficina Técnica -->
+                <div class="service-card">
+                    <div class="service-img" id="oficina-tecnica-img">
+                        <i class="fas fa-drafting-compass"></i>
+                    </div>
+                    <div class="service-content">
+                        <h3>Oficina Técnica</h3>
+                        <p>Documentación técnica, planos detallados y especificaciones precisas para proyectos industriales y de construcción.</p>
+                        <ul class="service-features">
+                            <li><i class="fas fa-check service-icon"></i> Planos 2D y 3D</li>
+                            <li><i class="fas fa-check service-icon"></i> Memorias técnicas</li>
+                            <li><i class="fas fa-check service-icon"></i> Especificaciones de materiales</li>
+                        </ul>
+                    </div>
                 </div>
                 
-                <div class="services-grid">
-                    <!-- Servicio 1 -->
-                    <article class="service-card">
-                        <div class="service-img" style="background-color: var(--color-secondary);">
-                            <i class="fas fa-drafting-compass" aria-hidden="true"></i>
-                        </div>
-                        <div class="service-content">
-                            <h3>Oficina Técnica</h3>
-                            <p>Documentación técnica, planos detallados y especificaciones precisas para proyectos industriales y de construcción.</p>
-                            <ul class="service-features" aria-label="Características de oficina técnica">
-                                <li><i class="fas fa-check service-icon" aria-hidden="true"></i> Planos 2D y 3D</li>
-                                <li><i class="fas fa-check service-icon" aria-hidden="true"></i> Memorias técnicas</li>
-                                <li><i class="fas fa-check service-icon" aria-hidden="true"></i> Especificaciones de materiales</li>
-                            </ul>
-                        </div>
-                    </article>
-                    
-                    <!-- Servicio 2 -->
-                    <article class="service-card">
-                        <div class="service-img" style="background-color: var(--color-secondary);">
-                            <i class="fas fa-industry" aria-hidden="true"></i>
-                        </div>
-                        <div class="service-content">
-                            <h3>Consultoría Industrial</h3>
-                            <p>Optimización de procesos, eficiencia energética y soluciones personalizadas para la industria.</p>
-                            <ul class="service-features" aria-label="Características de consultoría industrial">
-                                <li><i class="fas fa-check service-icon" aria-hidden="true"></i> Análisis de procesos</li>
-                                <li><i class="fas fa-check service-icon" aria-hidden="true"></i> Optimización energética</li>
-                                <li><i class="fas fa-check service-icon" aria-hidden="true"></i> Gestión de proyectos</li>
-                            </ul>
-                        </div>
-                    </article>
-                    
-                    <!-- Servicios 3-5 similares -->
-                </div>
-            </div>
-        </section>
-
-        <!-- Process Section -->
-        <section class="process" id="proceso" aria-labelledby="process-title">
-            <!-- Contenido similar optimizado -->
-        </section>
-
-        <!-- Innovation Section -->
-        <section class="innovation" id="innovacion" aria-labelledby="innovation-title">
-            <!-- Contenido similar optimizado -->
-        </section>
-
-        <!-- Software Section -->
-        <section class="software" id="software" aria-labelledby="software-title">
-            <!-- Contenido similar optimizado -->
-        </section>
-
-        <!-- Contact Section -->
-        <section class="contact" id="contacto" aria-labelledby="contact-title">
-            <div class="container">
-                <div class="section-title">
-                    <h2 id="contact-title">Contacto</h2>
-                    <p>¿Tienes un proyecto en mente? Ponte en contacto con nosotros</p>
+                <!-- Consultoría Industrial -->
+                <div class="service-card">
+                    <div class="service-img" id="consultoria-industrial-img">
+                        <i class="fas fa-industry"></i>
+                    </div>
+                    <div class="service-content">
+                        <h3>Consultoría Industrial</h3>
+                        <p>Optimización de procesos, eficiencia energética y soluciones personalizadas para la industria.</p>
+                        <ul class="service-features">
+                            <li><i class="fas fa-check service-icon"></i> Análisis de procesos</li>
+                            <li><i class="fas fa-check service-icon"></i> Optimización energética</li>
+                            <li><i class="fas fa-check service-icon"></i> Gestión de proyectos</li>
+                        </ul>
+                    </div>
                 </div>
                 
-                <div class="contact-content">
-                    <div class="contact-info">
-                        <div class="contact-item">
-                            <i class="fas fa-map-marker-alt" aria-hidden="true"></i>
+                <!-- Precerco Avanzado -->
+                <div class="service-card">
+                    <div class="service-img" id="precerco-avanzado-img">
+                        <i class="fas fa-cube"></i>
+                    </div>
+                    <div class="service-content">
+                        <h3>Precerco Avanzado</h3>
+                        <p>Sistemas modulares innovadores para estructuras de precercos con máxima eficiencia y calidad.</p>
+                        <ul class="service-features">
+                            <li><i class="fas fa-check service-icon"></i> Diseños modulares</li>
+                            <li><i class="fas fa-check service-icon"></i> Materiales especializados</li>
+                            <li><i class="fas fa-check service-icon"></i> Instalación optimizada</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <!-- Soluciones de Cajón Túnel -->
+                <div class="service-card">
+                    <div class="service-img" id="cajon-tunel-img">
+                        <i class="fas fa-sun"></i>
+                    </div>
+                    <div class="service-content">
+                        <h3>Soluciones de Cajón Túnel</h3>
+                        <p>Diseños especializados para control solar, optimizando el confort térmico y la eficiencia energética.</p>
+                        <ul class="service-features">
+                            <li><i class="fas fa-check service-icon"></i> Análisis solar</li>
+                            <li><i class="fas fa-check service-icon"></i> Diseños personalizados</li>
+                            <li><i class="fas fa-check service-icon"></i> Instalación profesional</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <!-- Software & Proceso Integral -->
+                <div class="service-card">
+                    <div class="service-img" id="software-proceso-img">
+                        <i class="fas fa-laptop-code"></i>
+                    </div>
+                    <div class="service-content">
+                        <h3>Software & Proceso Integral</h3>
+                        <p>Soluciones digitales para todo el ciclo del proyecto, desde el diseño hasta la implementación.</p>
+                        <ul class="service-features">
+                            <li><i class="fas fa-check service-icon"></i> Software especializado</li>
+                            <li><i class="fas fa-check service-icon"></i> Gestión integral</li>
+                            <li><i class="fas fa-check service-icon"></i> Soporte continuo</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Process Section -->
+    <section class="process" id="proceso">
+        <div class="container">
+            <div class="section-title">
+                <h2>Nuestro Proceso de Trabajo</h2>
+                <p>Metodología estructurada para garantizar resultados óptimos</p>
+            </div>
+            
+            <div class="timeline">
+                <div class="timeline-item">
+                    <div class="timeline-point">1</div>
+                    <div class="timeline-content">
+                        <h4>Consultoría y Análisis</h4>
+                        <p>Evaluación inicial de necesidades y definición de objetivos del proyecto.</p>
+                    </div>
+                </div>
+                
+                <div class="timeline-item">
+                    <div class="timeline-point">2</div>
+                    <div class="timeline-content">
+                        <h4>Diseño y Modelado</h4>
+                        <p>Desarrollo de soluciones técnicas mediante modelado 2D/3D y simulaciones.</p>
+                    </div>
+                </div>
+                
+                <div class="timeline-item">
+                    <div class="timeline-point">3</div>
+                    <div class="timeline-content">
+                        <h4>Desarrollo de Solución</h4>
+                        <p>Elaboración de documentación técnica y preparación para implementación.</p>
+                    </div>
+                </div>
+                
+                <div class="timeline-item">
+                    <div class="timeline-point">4</div>
+                    <div class="timeline-content">
+                        <h4>Implementación</h4>
+                        <p>Ejecución del proyecto con supervisión técnica y control de calidad.</p>
+                    </div>
+                </div>
+                
+                <div class="timeline-item">
+                    <div class="timeline-point">5</div>
+                    <div class="timeline-content">
+                        <h4>Soporte Continuo</h4>
+                        <p>Mantenimiento, seguimiento y optimización post-implementación.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- I+D+i Section -->
+    <section class="innovation" id="innovacion">
+        <div class="container">
+            <div class="section-title">
+                <h2>Investigación, Desarrollo e Innovación</h2>
+                <p>Soluciones tecnológicas avanzadas para la industria del futuro</p>
+            </div>
+            
+            <div class="innovation-content">
+                <div class="innovation-image">
+                    <div class="innovation-image-content">
+                        <i class="fas fa-microscope"></i>
+                        <h3>I+D+i Aislantech</h3>
+                        <p>Innovación en maquinaria y tecnología industrial</p>
+                    </div>
+                </div>
+                
+                <div class="innovation-features">
+                    <h3>Desarrollo de Tecnología Avanzada</h3>
+                    <p>Investigamos y desarrollamos soluciones innovadoras para optimizar procesos industriales y de construcción.</p>
+                    
+                    <div class="innovation-list">
+                        <div class="innovation-item">
+                            <div class="innovation-icon">
+                                <i class="fas fa-cogs"></i>
+                            </div>
                             <div>
-                                <h3>Ubicación</h3>
-                                <p>Caldes d'Estrac 08393, Barcelona</p>
+                                <h4>Desarrollo de Maquinaria</h4>
+                                <p>Diseño y fabricación de equipos especializados para procesos industriales específicos.</p>
                             </div>
                         </div>
-                        <div class="contact-item">
-                            <i class="fas fa-phone" aria-hidden="true"></i>
+                        
+                        <div class="innovation-item">
+                            <div class="innovation-icon">
+                                <i class="fas fa-tools"></i>
+                            </div>
                             <div>
-                                <h3>Teléfono</h3>
-                                <p><a href="tel:930494787">930 49 47 87</a></p>
+                                <h4>Útiles Específicos</h4>
+                                <p>Creación de herramientas y dispositivos personalizados para optimizar operaciones técnicas.</p>
                             </div>
                         </div>
-                        <div class="contact-item">
-                            <i class="fas fa-envelope" aria-hidden="true"></i>
+                        
+                        <div class="innovation-item">
+                            <div class="innovation-icon">
+                                <i class="fas fa-print"></i>
+                            </div>
                             <div>
-                                <h3>Email</h3>
-                                <p><a href="mailto:info@aislantech.es">info@aislantech.es</a></p>
+                                <h4>Construcción Aditiva</h4>
+                                <p>Implementación de tecnologías de impresión 3D para prototipado rápido y fabricación avanzada.</p>
                             </div>
                         </div>
-                        <div class="contact-item">
-                            <i class="fas fa-clock" aria-hidden="true"></i>
+                        
+                        <div class="innovation-item">
+                            <div class="innovation-icon">
+                                <i class="fas fa-robot"></i>
+                            </div>
                             <div>
-                                <h3>Horario</h3>
-                                <p>L-J: 9:00-14:00 y 16:00-19:00<br>V: 9:00-14:00</p>
+                                <h4>Automatización Industrial</h4>
+                                <p>Desarrollo de sistemas automatizados para mejorar la eficiencia y precisión en procesos productivos.</p>
                             </div>
                         </div>
                     </div>
                     
-                    <div class="contact-form">
-                        <form id="contactForm" aria-label="Formulario de contacto">
-                            <div class="form-group">
-                                <label for="name">Nombre *</label>
-                                <input type="text" id="name" name="name" required aria-required="true">
-                            </div>
-                            <div class="form-group">
-                                <label for="email">Email *</label>
-                                <input type="email" id="email" name="email" required aria-required="true">
-                            </div>
-                            <div class="form-group">
-                                <label for="service">Servicio de interés</label>
-                                <select id="service" name="service">
-                                    <option value="">Seleccionar servicio</option>
-                                    <option value="oficina">Oficina Técnica</option>
-                                    <option value="consultoria">Consultoría Industrial</option>
-                                    <option value="precerco">Precerco Avanzado</option>
-                                    <option value="cajon">Cajón Túnel</option>
-                                    <option value="software">Software</option>
-                                    <option value="innovacion">I+D+i</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label for="message">Mensaje *</label>
-                                <textarea id="message" name="message" rows="5" required aria-required="true"></textarea>
-                            </div>
-                            <div class="form-group">
-                                <label class="checkbox-label">
-                                    <input type="checkbox" name="privacy" required aria-required="true">
-                                    <span>Acepto la <a href="politica-privacidad.html" target="_blank">Política de Privacidad</a> *</span>
-                                </label>
-                            </div>
-                            <button type="submit" class="btn btn-yellow">Enviar Mensaje</button>
-                        </form>
-                    </div>
+                    <a href="#footer" class="btn btn-yellow" style="margin-top: 20px;">Información de Contacto</a>
                 </div>
             </div>
-        </section>
-    </main>
+        </div>
+    </section>
+
+    <!-- Software Section -->
+    <section class="software" id="software">
+        <div class="container">
+            <div class="section-title">
+                <h2>Software & Tecnología</h2>
+                <p>Soluciones digitales para optimizar todo el proceso</p>
+            </div>
+            
+            <div class="software-content">
+                <div class="software-demo">
+                    <div class="demo-header">
+                        <div class="demo-dot red"></div>
+                        <div class="demo-dot yellow"></div>
+                        <div class="demo-dot green"></div>
+                    </div>
+                    <div class="demo-screen">
+                        <p><span style="color: #569CD6;">// Aislantech Software v3.2</span></p>
+                        <p><span style="color: #9CDCFE;">function</span> <span style="color: #DCDCAA;">optimizeSolarSolution</span>(buildingData) {</p>
+                        <p>&nbsp;&nbsp;<span style="color: #9CDCFE;">const</span> <span style="color: #4FC1FF;">analysis</span> = <span style="color: #DCDCAA;">analyzeSolarExposure</span>(buildingData);</p>
+                        <p>&nbsp;&nbsp;<span style="color: #9CDCFE;">const</span> <span style="color: #4FC1FF;">design</span> = <span style="color: #DCDCAA;">generateTunnelDrawerDesign</span>(analysis);</p>
+                        <p>&nbsp;&nbsp;<span style="color: #9CDCFE;">const</span> <span style="color: #4FC1FF;">materials</span> = <span style="color: #DCDCAA;">calculateMaterials</span>(design);</p>
+                        <p>&nbsp;&nbsp;<span style="color: #9CDCFE;">const</span> <span style="color: #4FC1FF;">report</span> = <span style="color: #DCDCAA;">generateTechnicalReport</span>(design, materials);</p>
+                        <p>&nbsp;&nbsp;<span style="color: #C586C0;">return</span> { design, materials, report };</p>
+                        <p>}</p>
+                        <br>
+                        <p><span style="color: #569CD6;">// Integración con BIM</span></p>
+                        <p><span style="color: #9CDCFE;">const</span> <span style="color: #4FC1FF;">bimIntegration</span> = <span style="color: #9CDCFE;">new</span> <span style="color: #4EC9B0;">BIMConnector</span>();</p>
+                        <p>bimIntegration.<span style="color: #DCDCAA;">syncWithRevit</span>();</p>
+                        <p>bimIntegration.<span style="color: #DCDCAA;">exportToIFC</span>(projectData);</p>
+                    </div>
+                </div>
+                
+                <div class="software-features">
+                    <h3>Software Especializado Aislantech</h3>
+                    <p>Desarrollamos herramientas digitales para optimizar cada fase de tu proyecto técnico.</p>
+                    
+                    <div class="feature-list">
+                        <div class="feature-item">
+                            <div class="feature-icon">
+                                <i class="fas fa-cube"></i>
+                            </div>
+                            <div>
+                                <h4>Modelado 3D Avanzado</h4>
+                                <p>Integración con herramientas BIM para visualización precisa.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="feature-item">
+                            <div class="feature-icon">
+                                <i class="fas fa-sun"></i>
+                            </div>
+                            <div>
+                                <h4>Análisis Solar Automatizado</h4>
+                                <p>Cálculos precisos para sistemas de protección solar optimizados.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="feature-item">
+                            <div class="feature-icon">
+                                <i class="fas fa-calculator"></i>
+                            </div>
+                            <div>
+                                <h4>Cálculo Estructural</h4>
+                                <p>Análisis de cargas y dimensionamiento para precercos y estructuras.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="feature-item">
+                            <div class="feature-icon">
+                                <i class="fas fa-file-contract"></i>
+                            </div>
+                            <div>
+                                <h4>Generación de Documentación</h4>
+                                <p>Reportes técnicos automáticos y planos listos para fabricación.</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <a href="#footer" class="btn btn-yellow" style="margin-top: 20px;">Información de Contacto</a>
+                </div>
+            </div>
+        </div>
+    </section>
 
     <!-- Footer -->
-    <footer>
+    <footer id="footer">
         <div class="container">
+            <div class="section-title" style="margin-bottom: 40px;">
+                <h2 style="color: var(--color-white);">Contacto</h2>
+                <p style="color: rgba(255, 255, 255, 0.8);">¿Tienes un proyecto en mente? Ponte en contacto con nosotros</p>
+            </div>
+            
             <div class="footer-content">
                 <div class="footer-about">
                     <div class="footer-logo">
@@ -383,427 +924,303 @@
                     <p class="footer-description">Soluciones técnicas avanzadas para industria y construcción. Especialistas en consultoría industrial, sistemas de precercos avanzados y soluciones de cajón túnel.</p>
                     
                     <div class="social-links">
-                        <a href="https://www.linkedin.com/company/aislantech/" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn Aislantech">
+                        <a href="https://www.linkedin.com/company/aislantech/" target="_blank" title="LinkedIn Aislantech">
                             <i class="fab fa-linkedin-in"></i>
                         </a>
-                        <a href="#" aria-label="YouTube Aislantech">
+                        <a href="#" title="YouTube Aislantech">
                             <i class="fab fa-youtube"></i>
                         </a>
                     </div>
                 </div>
                 
-                <div class="footer-links">
-                    <h4>Enlaces rápidos</h4>
+                <div class="footer-services">
+                    <h4>Servicios</h4>
                     <ul>
-                        <li><a href="politica-privacidad.html">Política de Privacidad</a></li>
-                        <li><a href="politica-cookies.html">Política de Cookies</a></li>
-                        <li><a href="aviso-legal.html">Aviso Legal</a></li>
-                        <li><a href="#contacto">Contacto</a></li>
+                        <li><a href="#servicios">Oficina Técnica</a></li>
+                        <li><a href="#servicios">Consultoría Industrial</a></li>
+                        <li><a href="#servicios">Precerco Avanzado</a></li>
+                        <li><a href="#servicios">Soluciones de Cajón Túnel</a></li>
+                        <li><a href="#innovacion">I+D+i</a></li>
+                        <li><a href="#software">Software</a></li>
                     </ul>
+                </div>
+                
+                <div class="footer-contact">
+                    <h4>Contacto Directo</h4>
+                    <div class="quick-contact">
+                        <p><i class="fas fa-map-marker-alt"></i> Caldes d'Estrac 08393, Barcelona</p>
+                        <p><i class="fas fa-phone"></i> 930 49 47 87</p>
+                        <p><i class="fas fa-envelope"></i> info@aislantech.es</p>
+                        <p><i class="fas fa-globe"></i> www.aislantech.es</p>
+                    </div>
+                    
+                    <div style="margin-top: 25px;">
+                        <p style="color: rgba(255, 255, 255, 0.8); margin-bottom: 15px; font-size: 0.95rem;">
+                            <i class="fas fa-clock" style="color: var(--color-primary); margin-right: 10px;"></i>
+                            Horario:<br>
+                            Lunes a Jueves: 9:00 - 14:00 y 16:00 - 19:00<br>
+                            Viernes: 9:00 - 14:00
+                        </p>
+                        
+                        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                            <a href="mailto:info@aislantech.es" class="btn" style="background-color: var(--color-primary); color: var(--color-dark); flex: 1; min-width: 120px; text-align: center;">
+                                <i class="fas fa-envelope" style="margin-right: 8px;"></i> Email
+                            </a>
+                            <a href="tel:930494787" class="btn btn-outline" style="border-color: var(--color-primary); color: var(--color-primary); flex: 1; min-width: 120px; text-align: center;">
+                                <i class="fas fa-phone" style="margin-right: 8px;"></i> Llamar
+                            </a>
+                        </div>
+                    </div>
                 </div>
             </div>
             
+            <!-- Enlaces legales añadidos -->
+            <div class="footer-legal">
+                <a href="politica-privacidad.html" target="_blank">Política de Privacidad</a>
+                <a href="politica-cookies.html" target="_blank">Política de Cookies</a>
+                <a href="aviso-legal.html" target="_blank">Aviso Legal</a>
+            </div>
+            
             <div class="footer-bottom">
-                <p>&copy; <span id="currentYear">2025</span> Aislantech. Todos los derechos reservados.</p>
+                <p>&copy; 2025 Aislantech. Todos los derechos reservados. | <a href="https://www.aislantech.es" style="color: var(--color-primary);">www.aislantech.es</a></p>
             </div>
         </div>
     </footer>
 
-    <!-- CSS no crítico diferido -->
-    <style>
-        /* ========== ESTILOS NO CRÍTICOS ========== */
-        .container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
-        
-        /* Estilos de botones */
-        .btn { 
-            display: inline-block; 
-            background-color: var(--color-primary); 
-            color: var(--color-dark); 
-            padding: 12px 30px; 
-            border-radius: var(--border-radius); 
-            text-decoration: none; 
-            font-weight: 700; 
-            border: none; 
-            cursor: pointer; 
-            transition: var(--transition); 
-            font-family: 'Montserrat', sans-serif; 
-            font-size: 1rem;
-        }
-        
-        .btn:hover { 
-            background-color: var(--color-primary-dark); 
-            color: var(--color-white); 
-            transform: translateY(-3px); 
-            box-shadow: 0 5px 15px rgba(237, 208, 14, 0.3); 
-        }
-        
-        /* Estilos de tarjetas de servicios */
-        .services-grid { 
-            display: grid; 
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); 
-            gap: 30px; 
-            margin-top: 40px;
-        }
-        
-        .service-card { 
-            background: var(--color-white); 
-            border-radius: var(--border-radius); 
-            overflow: hidden; 
-            box-shadow: var(--box-shadow); 
-            transition: var(--transition);
-            height: 100%;
-        }
-        
-        /* Banner de cookies */
-        .cookie-banner {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: var(--color-dark);
-            color: var(--color-white);
-            padding: 20px;
-            z-index: 9999;
-            box-shadow: 0 -2px 10px rgba(0,0,0,0.2);
-            transform: translateY(100%);
-            transition: transform 0.3s ease;
-        }
-        
-        .cookie-banner.show {
-            transform: translateY(0);
-        }
-        
-        .cookie-content {
-            max-width: 1200px;
-            margin: 0 auto;
-            display: flex;
-            flex-wrap: wrap;
-            align-items: center;
-            justify-content: space-between;
-            gap: 20px;
-        }
-        
-        /* Responsive */
-        @media (max-width: 768px) {
-            .header-container { padding: 10px 15px; }
-            .services-grid { grid-template-columns: 1fr; }
-            .cookie-content { flex-direction: column; text-align: center; }
-        }
-        
-        @media (max-width: 480px) {
-            .hero h1 { font-size: 1.8rem; }
-            .btn { padding: 10px 20px; font-size: 0.9rem; }
-        }
-    </style>
-    
-    <!-- JavaScript optimizado -->
     <script>
-        // Manejo del consentimiento de cookies
-        class CookieConsent {
-            constructor() {
-                this.banner = document.getElementById('cookieConsent');
-                this.settingsPanel = document.getElementById('cookieSettings');
-                this.init();
-            }
+        // ========== GESTIÓN DE COOKIES ==========
+        document.addEventListener('DOMContentLoaded', function() {
+            const cookieBanner = document.getElementById('cookieConsent');
+            const acceptBtn = document.getElementById('acceptCookies');
+            const rejectBtn = document.getElementById('rejectCookies');
             
-            init() {
-                // Verificar si ya existe consentimiento
-                const consent = localStorage.getItem('cookieConsent');
-                
-                if (!consent) {
-                    this.showBanner();
-                } else if (consent === 'accepted') {
-                    this.enableAnalytics();
-                }
-                
-                this.setupEventListeners();
-                this.updateYear();
-            }
+            // Verificar si ya hay consentimiento
+            const hasConsent = localStorage.getItem('cookieConsentAislantech');
             
-            showBanner() {
+            if (!hasConsent) {
+                // Mostrar banner después de 1 segundo
                 setTimeout(() => {
-                    this.banner.classList.add('show');
+                    cookieBanner.classList.add('show');
                 }, 1000);
+            } else if (hasConsent === 'accepted') {
+                // Si ya aceptó, habilitar Analytics
+                enableGoogleAnalytics();
             }
             
-            setupEventListeners() {
-                // Aceptar todas
-                document.getElementById('acceptCookies').addEventListener('click', () => {
-                    this.saveConsent('accepted');
-                    this.enableAnalytics();
-                    this.hideBanner();
-                });
-                
-                // Rechazar
-                document.getElementById('rejectCookies').addEventListener('click', () => {
-                    this.saveConsent('rejected');
-                    this.disableAnalytics();
-                    this.hideBanner();
-                });
-                
-                // Configurar
-                document.getElementById('settingsCookies').addEventListener('click', () => {
-                    this.showSettings();
-                });
-                
-                // Guardar configuración
-                document.getElementById('saveCookieSettings').addEventListener('click', () => {
-                    const analytics = document.getElementById('analyticsCookies').checked;
-                    this.saveConsent(analytics ? 'accepted' : 'rejected');
-                    
-                    if (analytics) {
-                        this.enableAnalytics();
-                    } else {
-                        this.disableAnalytics();
-                    }
-                    
-                    this.hideSettings();
-                    this.hideBanner();
-                });
-                
-                // Cerrar configuración
-                document.getElementById('closeSettings').addEventListener('click', () => {
-                    this.hideSettings();
-                });
-            }
-            
-            saveConsent(consent) {
-                localStorage.setItem('cookieConsent', consent);
+            // Botón aceptar
+            acceptBtn.addEventListener('click', function() {
+                localStorage.setItem('cookieConsentAislantech', 'accepted');
                 localStorage.setItem('cookieConsentDate', new Date().toISOString());
+                cookieBanner.classList.remove('show');
+                enableGoogleAnalytics();
                 
                 // Evento para Analytics
-                if (window.dataLayer) {
-                    window.dataLayer.push({
-                        'event': 'cookie_consent',
-                        'consent_type': consent
-                    });
-                }
-            }
+                gtag('event', 'cookie_consent_accepted', {
+                    'event_category': 'engagement'
+                });
+            });
             
-            enableAnalytics() {
-                // Actualizar configuración de Google Analytics
+            // Botón rechazar
+            rejectBtn.addEventListener('click', function() {
+                localStorage.setItem('cookieConsentAislantech', 'rejected');
+                localStorage.setItem('cookieConsentDate', new Date().toISOString());
+                cookieBanner.classList.remove('show');
+                disableGoogleAnalytics();
+                
+                // Evento para Analytics
+                gtag('event', 'cookie_consent_rejected', {
+                    'event_category': 'engagement'
+                });
+            });
+            
+            // Función para habilitar Google Analytics
+            function enableGoogleAnalytics() {
                 gtag('consent', 'update', {
                     'analytics_storage': 'granted'
                 });
-                
-                // Evento de conversión
-                gtag('event', 'consent_accepted', {
-                    'event_category': 'engagement'
-                });
+                console.log('✅ Google Analytics habilitado con consentimiento');
             }
             
-            disableAnalytics() {
+            // Función para deshabilitar Google Analytics
+            function disableGoogleAnalytics() {
                 gtag('consent', 'update', {
                     'analytics_storage': 'denied'
                 });
+                console.log('🚫 Google Analytics deshabilitado');
             }
             
-            hideBanner() {
-                this.banner.classList.remove('show');
+            // ========== CÓDIGO ORIGINAL DE TU PÁGINA ==========
+            
+            // Mobile menu toggle
+            const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+            const mainMenu = document.getElementById('mainMenu');
+            
+            if (mobileMenuBtn && mainMenu) {
+                mobileMenuBtn.addEventListener('click', () => {
+                    mainMenu.classList.toggle('active');
+                    mobileMenuBtn.innerHTML = mainMenu.classList.contains('active') 
+                        ? '<i class="fas fa-times"></i>' 
+                        : '<i class="fas fa-bars"></i>';
+                });
             }
             
-            showSettings() {
-                this.settingsPanel.setAttribute('aria-hidden', 'false');
-                this.settingsPanel.style.display = 'block';
-            }
-            
-            hideSettings() {
-                this.settingsPanel.setAttribute('aria-hidden', 'true');
-                this.settingsPanel.style.display = 'none';
-            }
-            
-            updateYear() {
-                document.getElementById('currentYear').textContent = new Date().getFullYear();
-            }
-        }
-        
-        // Navegación móvil
-        class MobileNavigation {
-            constructor() {
-                this.menuBtn = document.getElementById('mobileMenuBtn');
-                this.mainMenu = document.getElementById('mainMenu');
-                this.init();
-            }
-            
-            init() {
-                if (this.menuBtn && this.mainMenu) {
-                    this.menuBtn.addEventListener('click', () => this.toggleMenu());
+            // Smooth scroll for anchor links
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function(e) {
+                    e.preventDefault();
                     
-                    // Cerrar menú al hacer clic en enlace
-                    document.querySelectorAll('#mainMenu a').forEach(link => {
-                        link.addEventListener('click', () => this.closeMenu());
-                    });
-                }
-            }
-            
-            toggleMenu() {
-                const isExpanded = this.menuBtn.getAttribute('aria-expanded') === 'true';
-                this.menuBtn.setAttribute('aria-expanded', !isExpanded);
-                this.mainMenu.classList.toggle('active');
-            }
-            
-            closeMenu() {
-                this.menuBtn.setAttribute('aria-expanded', 'false');
-                this.mainMenu.classList.remove('active');
-            }
-        }
-        
-        // Formulario de contacto
-        class ContactForm {
-            constructor() {
-                this.form = document.getElementById('contactForm');
-                if (this.form) this.init();
-            }
-            
-            init() {
-                this.form.addEventListener('submit', (e) => this.handleSubmit(e));
-            }
-            
-            async handleSubmit(e) {
-                e.preventDefault();
-                
-                // Validación básica
-                if (!this.validateForm()) return;
-                
-                const formData = new FormData(this.form);
-                
-                try {
-                    // Simular envío (reemplazar con tu endpoint)
-                    await this.sendFormData(formData);
-                    this.showSuccess();
-                    this.form.reset();
+                    // Close mobile menu if open
+                    if(mainMenu && mainMenu.classList.contains('active')) {
+                        mainMenu.classList.remove('active');
+                        mobileMenuBtn.innerHTML = '<i class="fas fa-bars"></i>';
+                    }
                     
-                    // Evento para Analytics
-                    if (window.gtag) {
-                        gtag('event', 'contact_form_submit', {
-                            'event_category': 'lead',
-                            'event_label': 'formulario_contacto'
+                    const targetId = this.getAttribute('href');
+                    if(targetId === '#') return;
+                    
+                    const targetElement = document.querySelector(targetId);
+                    if(targetElement) {
+                        window.scrollTo({
+                            top: targetElement.offsetTop - 80,
+                            behavior: 'smooth'
                         });
                     }
-                } catch (error) {
-                    this.showError();
-                }
-            }
-            
-            validateForm() {
-                let isValid = true;
-                
-                // Validar campos requeridos
-                const requiredFields = this.form.querySelectorAll('[required]');
-                requiredFields.forEach(field => {
-                    if (!field.value.trim()) {
-                        field.classList.add('error');
-                        isValid = false;
-                    } else {
-                        field.classList.remove('error');
-                    }
                 });
-                
-                return isValid;
-            }
-            
-            async sendFormData(formData) {
-                // Reemplazar con tu lógica de envío real
-                return new Promise(resolve => {
-                    setTimeout(() => resolve({ success: true }), 1000);
-                });
-            }
-            
-            showSuccess() {
-                alert('¡Mensaje enviado correctamente! Nos pondremos en contacto contigo pronto.');
-            }
-            
-            showError() {
-                alert('Error al enviar el mensaje. Por favor, inténtalo de nuevo.');
-            }
-        }
-        
-        // Lazy loading de imágenes
-        class LazyLoader {
-            constructor() {
-                this.images = document.querySelectorAll('img[data-src]');
-                this.observer = null;
-                this.init();
-            }
-            
-            init() {
-                if ('IntersectionObserver' in window) {
-                    this.setupObserver();
-                } else {
-                    this.loadImagesImmediately();
-                }
-            }
-            
-            setupObserver() {
-                this.observer = new IntersectionObserver((entries) => {
-                    entries.forEach(entry => {
-                        if (entry.isIntersecting) {
-                            this.loadImage(entry.target);
-                            this.observer.unobserve(entry.target);
-                        }
-                    });
-                });
-                
-                this.images.forEach(img => this.observer.observe(img));
-            }
-            
-            loadImage(img) {
-                const src = img.getAttribute('data-src');
-                if (src) {
-                    img.src = src;
-                    img.removeAttribute('data-src');
-                }
-            }
-            
-            loadImagesImmediately() {
-                this.images.forEach(img => this.loadImage(img));
-            }
-        }
-        
-        // Inicialización cuando el DOM esté listo
-        document.addEventListener('DOMContentLoaded', () => {
-            // Iniciar sistemas
-            new CookieConsent();
-            new MobileNavigation();
-            new ContactForm();
-            new LazyLoader();
+            });
             
             // Header scroll effect
             window.addEventListener('scroll', () => {
                 const header = document.querySelector('header');
-                if (header) {
-                    header.style.boxShadow = window.scrollY > 100 
-                        ? '0 5px 20px rgba(0, 0, 0, 0.1)' 
-                        : '0 2px 10px rgba(0, 0, 0, 0.05)';
+                if(header) {
+                    if(window.scrollY > 100) {
+                        header.style.boxShadow = '0 5px 20px rgba(0, 0, 0, 0.1)';
+                    } else {
+                        header.style.boxShadow = '0 2px 10px rgba(0, 0, 0, 0.05)';
+                    }
                 }
             });
+            
+            // Función para cargar imágenes de servicios
+            function cargarImagenesServicios() {
+                console.log('🖼️ Cargando imágenes personalizadas de servicios...');
+                
+                // RUTAS DE LAS IMÁGENES
+                const rutasImagenes = {
+                    'oficina-tecnica': 'images/oficina-tecnica.png',
+                    'consultoria-industrial': 'images/consultoria-industrial.png',
+                    'precerco-avanzado': 'images/precerco-avanzado.png',
+                    'cajon-tunel': 'images/cajon-tunel.png',
+                    'software-proceso': 'images/software-proceso.png'
+                };
+                
+                // Cargar cada imagen
+                Object.keys(rutasImagenes).forEach(servicioId => {
+                    const imgElement = document.getElementById(`${servicioId}-img`);
+                    const rutaImagen = rutasImagenes[servicioId];
+                    
+                    if (imgElement) {
+                        const img = new Image();
+                        
+                        img.onload = function() {
+                            console.log(`✅ Imagen cargada: ${rutaImagen}`);
+                            imgElement.style.backgroundImage = `url('${rutaImagen}')`;
+                            const icon = imgElement.querySelector('i');
+                            if (icon) {
+                                icon.style.display = 'none';
+                            }
+                        };
+                        
+                        img.onerror = function() {
+                            console.log(`❌ No se pudo cargar: ${rutaImagen}`);
+                            const icon = imgElement.querySelector('i');
+                            if (icon) {
+                                icon.style.display = 'flex';
+                                icon.style.color = '#EDD00E';
+                                icon.style.fontSize = '3rem';
+                            }
+                            imgElement.style.background = 'linear-gradient(135deg, #3E3E3E 0%, #696969 100%)';
+                        };
+                        
+                        img.src = rutaImagen;
+                    }
+                });
+            }
+            
+            // Función para cargar otras imágenes del sitio
+            function cargarImagenesAdicionales() {
+                console.log('🌄 Cargando imágenes adicionales...');
+                
+                const imagenesAdicionales = [
+                    { id: 'hero-bg', ruta: 'images/cabecera.JPG' },
+                    { id: 'innovation-img', ruta: 'images/innovacion.png' },
+                    { id: 'header-logo', ruta: 'images/logo.png', elemento: 'img' }
+                ];
+                
+                imagenesAdicionales.forEach(imgData => {
+                    const img = new Image();
+                    
+                    img.onload = function() {
+                        console.log(`✅ ${imgData.id} cargada: ${imgData.ruta}`);
+                        
+                        if (imgData.id === 'hero-bg') {
+                            document.querySelector('.hero').style.backgroundImage = 
+                                `linear-gradient(rgba(62, 62, 62, 0.85), rgba(62, 62, 62, 0.8)), url('${imgData.ruta}')`;
+                        }
+                    };
+                    
+                    img.onerror = function() {
+                        console.log(`❌ ${imgData.id} no encontrada: ${imgData.ruta}`);
+                        
+                        if (imgData.id === 'hero-bg') {
+                            document.querySelector('.hero').style.background = 
+                                'linear-gradient(135deg, #3E3E3E 0%, #696969 100%)';
+                        } else if (imgData.id === 'header-logo') {
+                            const logoImg = document.getElementById('header-logo');
+                            if (logoImg) {
+                                logoImg.style.display = 'none';
+                            }
+                        }
+                    };
+                    
+                    img.src = imgData.ruta;
+                });
+            }
+            
+            // Animation on scroll
+            const observerOptions = { threshold: 0.1, rootMargin: '0px 0px -50px 0px' };
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if(entry.isIntersecting) {
+                        entry.target.style.opacity = '1';
+                        entry.target.style.transform = 'translateY(0)';
+                    }
+                });
+            }, observerOptions);
+            
+            document.querySelectorAll('.service-card, .timeline-item, .innovation-item, .feature-item').forEach(el => {
+                el.style.opacity = '0';
+                el.style.transform = 'translateY(20px)';
+                el.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+                observer.observe(el);
+            });
+            
+            // Carga de la página
+            console.log('✅ Página de Aislantech cargada correctamente');
             
             // Cargar imágenes de servicios
-            this.loadServiceImages();
-        });
-        
-        // Función para cargar imágenes de servicios
-        function loadServiceImages() {
-            const serviceImages = {
-                'oficina-tecnica': 'images/oficina-tecnica.jpg',
-                'consultoria-industrial': 'images/consultoria-industrial.jpg',
-                'precerco-avanzado': 'images/precerco-avanzado.jpg',
-                'cajon-tunel': 'images/cajon-tunel.jpg',
-                'software-proceso': 'images/software-proceso.jpg'
-            };
+            cargarImagenesServicios();
             
-            Object.entries(serviceImages).forEach(([id, src]) => {
-                const element = document.getElementById(`${id}-img`);
-                if (element) {
-                    const img = new Image();
-                    img.onload = () => {
-                        element.style.backgroundImage = `url('${src}')`;
-                        element.querySelector('i')?.style.display = 'none';
-                    };
-                    img.src = src;
-                }
-            });
-        }
+            // Cargar imágenes adicionales
+            cargarImagenesAdicionales();
+            
+            // Configurar enlace de LinkedIn
+            const linkedinLink = document.querySelector('a[href*="linkedin"]');
+            if (linkedinLink) {
+                linkedinLink.href = 'https://www.linkedin.com/company/aislantech/';
+                linkedinLink.target = '_blank';
+                console.log('🔗 LinkedIn configurado correctamente');
+            }
+        });
     </script>
 </body>
 </html>
