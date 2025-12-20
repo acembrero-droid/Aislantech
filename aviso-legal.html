@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aviso Legal - Aislantech</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="images/favicon-32x32.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="images/apple-touch-icon.png">
+    
+    <!-- CSS y fuentes -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Open+Sans:wght@300;400;600&display=swap" rel="stylesheet">
+    
+    <style>
+        /* ========== VARIABLES DE COLOR (MISMA QUE TU SITIO) ========== */
+        :root {
+            --color-primary: #EDD00E;
+            --color-primary-dark: #B8860B;
+            --color-primary-light: #FFF8DC;
+            --color-secondary: #3E3E3E;
+            --color-secondary-dark: #696969;
+            --color-secondary-light: #D3D3D3;
+            --color-accent: #EDD00E;
+            --color-light: #F5F5F5;
+            --color-dark: #333333;
+            --color-gray: #666666;
+            --color-white: #FFFFFF;
+            --transition: all 0.3s ease;
+            --border-radius: 8px;
+            --box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            --box-shadow-hover: 0 15px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        /* ========== ESTILOS GENERALES ========== */
+        * { 
+            margin: 0; 
+            padding: 0; 
+            box-sizing: border-box; 
+        }
+        
+        html { 
+            scroll-behavior: smooth; 
+        }
+        
+        body { 
+            font-family: 'Open Sans', sans-serif; 
+            color: var(--color-gray); 
+            line-height: 1.6; 
+            background-color: var(--color-white);
+        }
+        
+        h1, h2, h3, h4, h5 { 
+            font-family: 'Montserrat', sans-serif; 
+            font-weight: 600; 
+            color: var(--color-dark); 
+            line-height: 1.3; 
+            margin-bottom: 20px;
+        }
+        
+        .container { 
+            width: 100%; 
+            max-width: 1200px; 
+            margin: 0 auto; 
+            padding: 0 20px; 
+        }
+
+        /* ========== HEADER ========== */
+        .legal-header {
+            background: linear-gradient(rgba(62, 62, 62, 0.9), rgba(62, 62, 62, 0.95)), 
+                        url('images/cabecera.JPG') no-repeat center center/cover;
+            color: var(--color-white);
+            padding: 120px 0 60px;
+            text-align: center;
+            position: relative;
+            margin-bottom: 40px;
+        }
+        
+        .legal-header::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 4px;
+            background-color: var(--color-primary);
+        }
+        
+        .legal-header h1 {
+            font-size: 2.8rem;
+            color: var(--color-white);
+            margin-bottom: 15px;
+        }
+        
+        .legal-subtitle {
+            font-size: 1.2rem;
+            color: rgba(255, 255, 255, 0.9);
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        /* ========== LOGO ========== */
+        .legal-logo {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+        }
+        
+        .legal-logo-text {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 700;
+            font-size: 1.8rem;
+            line-height: 1;
+        }
+        
+        .logo-aislan { 
+            color: var(--color-white); 
+        }
+        
+        .logo-tech { 
+            color: var(--color-primary); 
+        }
+
+        /* ========== CONTENIDO LEGAL ========== */
+        .legal-content {
+            padding: 60px 0;
+            background-color: var(--color-white);
+        }
+        
+        .legal-section {
+            margin-bottom: 50px;
+            padding: 30px;
+            background-color: var(--color-light);
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            border-left: 4px solid var(--color-primary);
+            transition: var(--transition);
+        }
+        
+        .legal-section:hover {
+            box-shadow: var(--box-shadow-hover);
+            transform: translateY(-5px);
+        }
+        
+        .legal-section h2 {
+            color: var(--color-secondary);
+            font-size: 1.8rem;
+            display: flex;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+        
+        .legal-section h2 i {
+            color: var(--color-primary);
+            margin-right: 15px;
+            font-size: 1.5rem;
+        }
+        
+        .legal-section p {
+            margin-bottom: 15px;
+            color: var(--color-gray);
+        }
+        
+        .legal-section ul, .legal-section ol {
+            margin: 15px 0 15px 25px;
+            color: var(--color-gray);
+        }
+        
+        .legal-section li {
+            margin-bottom: 10px;
+        }
+        
+        .highlight-box {
+            background-color: var(--color-primary-light);
+            border: 2px solid var(--color-primary);
+            border-radius: var(--border-radius);
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        .highlight-box h3 {
+            color: var(--color-primary-dark);
+            font-size: 1.3rem;
+            margin-bottom: 10px;
+        }
+        
+        .contact-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin: 15px 0;
+            padding: 15px;
+            background-color: rgba(237, 208, 14, 0.1);
+            border-radius: var(--border-radius);
+        }
+        
+        .contact-info i {
+            color: var(--color-primary);
+            font-size: 1.2rem;
+            min-width: 30px;
+        }
+
+        /* ========== TABLAS ========== */
+        .legal-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background-color: var(--color-white);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            border-radius: var(--border-radius);
+            overflow: hidden;
+        }
+        
+        .legal-table th {
+            background-color: var(--color-secondary);
+            color: var(--color-white);
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+        }
+        
+        .legal-table td {
+            padding: 15px;
+            border-bottom: 1px solid var(--color-secondary-light);
+        }
+        
+        .legal-table tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .legal-table tr:hover {
+            background-color: rgba(237, 208, 14, 0.05);
+        }
+
+        /* ========== BOTONES ========== */
+        .btn { 
+            display: inline-block; 
+            background-color: var(--color-accent); 
+            color: var(--color-dark); 
+            padding: 12px 30px; 
+            border-radius: var(--border-radius); 
+            text-decoration: none; 
+            font-weight: 700; 
+            border: none; 
+            cursor: pointer; 
+            transition: var(--transition); 
+            font-family: 'Montserrat', sans-serif; 
+            font-size: 1rem;
+            margin-top: 10px;
+        }
+        
+        .btn:hover { 
+            background-color: var(--color-primary-dark); 
+            color: var(--color-white); 
+            transform: translateY(-3px); 
+            box-shadow: 0 5px 15px rgba(237, 208, 14, 0.3); 
+        }
+        
+        .btn-outline { 
+            background-color: transparent; 
+            border: 2px solid var(--color-accent); 
+            color: var(--color-accent); 
+        }
+        
+        .btn-outline:hover { 
+            background-color: var(--color-accent); 
+            color: var(--color-dark); 
+        }
+
+        /* ========== FOOTER ========== */
+        .legal-footer {
+            background-color: var(--color-dark);
+            color: var(--color-white);
+            padding: 50px 0 30px;
+            margin-top: 60px;
+        }
+        
+        .footer-content {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            gap: 40px;
+            margin-bottom: 40px;
+        }
+        
+        .footer-links {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 40px;
+        }
+        
+        .footer-links-column h3 {
+            color: var(--color-white);
+            margin-bottom: 20px;
+            font-size: 1.2rem;
+        }
+        
+        .footer-links-column ul {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .footer-links-column li {
+            margin-bottom: 10px;
+        }
+        
+        .footer-links-column a {
+            color: rgba(255, 255, 255, 0.8);
+            text-decoration: none;
+            transition: var(--transition);
+            font-size: 0.95rem;
+        }
+        
+        .footer-links-column a:hover {
+            color: var(--color-primary);
+            padding-left: 5px;
+        }
+        
+        .footer-bottom {
+            text-align: center;
+            padding-top: 30px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.7);
+        }
+        
+        .footer-bottom a {
+            color: var(--color-primary);
+            text-decoration: none;
+        }
+        
+        .footer-bottom a:hover {
+            text-decoration: underline;
+        }
+        
+        .back-home {
+            text-align: center;
+            margin-top: 40px;
+        }
+
+        /* ========== RESPONSIVE ========== */
+        @media (max-width: 768px) {
+            .legal-header {
+                padding: 100px 0 50px;
+            }
+            
+            .legal-header h1 {
+                font-size: 2.2rem;
+            }
+            
+            .legal-subtitle {
+                font-size: 1.1rem;
+                padding: 0 20px;
+            }
+            
+            .legal-section {
+                padding: 20px;
+            }
+            
+            .legal-section h2 {
+                font-size: 1.5rem;
+            }
+            
+            .footer-content {
+                flex-direction: column;
+                gap: 30px;
+            }
+            
+            .footer-links {
+                gap: 30px;
+            }
+        }
+        
+        @media (max-width: 576px) {
+            .legal-header h1 {
+                font-size: 1.8rem;
+            }
+            
+            .legal-logo-text {
+                font-size: 1.5rem;
+            }
+            
+            .legal-section {
+                padding: 15px;
+            }
+            
+            .contact-info {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+            
+            .footer-links {
+                flex-direction: column;
+                gap: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header Legal -->
+    <header class="legal-header">
+        <a href="index.html" class="legal-logo">
+            <div class="legal-logo-text">
+                <span class="logo-aislan">AISLAN</span><span class="logo-tech">TECH</span>
+            </div>
+        </a>
+        
+        <div class="container">
+            <h1>Aviso Legal</h1>
+            <p class="legal-subtitle">Información legal sobre las condiciones de uso de nuestro sitio web y servicios</p>
+        </div>
+    </header>
+
+    <!-- Contenido Principal -->
+    <main class="legal-content">
+        <div class="container">
+            <!-- Identificación de la empresa -->
+            <section class="legal-section">
+                <h2><i class="fas fa-building"></i> Identificación del Responsable</h2>
+                <div class="highlight-box">
+                    <h3>Datos de la Empresa</h3>
+                    <div class="contact-info">
+                        <i class="fas fa-building"></i>
+                        <div>
+                            <p><strong>AISLANTECH SOLUCIONES TÉCNICAS AVANZADAS S.L.</strong></p>
+                            <p>NIF: [Incluir NIF de la empresa]</p>
+                        </div>
+                    </div>
+                    <div class="contact-info">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <div>
+                            <p><strong>Domicilio Social:</strong></p>
+                            <p>Caldes d'Estrac 08393, Barcelona, España</p>
+                        </div>
+                    </div>
+                    <div class="contact-info">
+                        <i class="fas fa-envelope"></i>
+                        <div>
+                            <p><strong>Email:</strong> info@aislantech.es</p>
+                        </div>
+                    </div>
+                    <div class="contact-info">
+                        <i class="fas fa-phone"></i>
+                        <div>
+                            <p><strong>Teléfono:</strong> 930 49 47 87</p>
+                        </div>
+                    </div>
+                    <div class="contact-info">
+                        <i class="fas fa-globe"></i>
+                        <div>
+                            <p><strong>Sitio Web:</strong> www.aislantech.es</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <p>Inscrita en el Registro Mercantil de Barcelona, Tomo [número], Folio [número], Hoja [número], Inscripción [número].</p>
+            </section>
+
+            <!-- Condiciones de uso -->
+            <section class="legal-section">
+                <h2><i class="fas fa-file-contract"></i> Condiciones Generales de Uso</h2>
+                <p>El acceso y uso de este sitio web atribuye la condición de USUARIO, que acepta, desde dicho acceso y/o uso, las presentes condiciones de uso.</p>
+                
+                <h3 style="margin-top: 25px; font-size: 1.4rem;">Obligaciones del Usuario</h3>
+                <ul>
+                    <li>Utilizar el sitio web de conformidad con la ley, la moral, el orden público y las presentes condiciones</li>
+                    <li>No realizar actividades publicitarias o de explotación comercial remitiendo comunicaciones que utilicen identidad falsa</li>
+                    <li>No acceder a secciones restringidas del sitio web ni a los sistemas informáticos de Aislantech</li>
+                    <li>No introducir virus, código malicioso u otros programas dañinos</li>
+                    <li>No recopilar datos con fines publicitarios ni enviar publicidad no solicitada</li>
+                </ul>
+                
+                <h3 style="margin-top: 25px; font-size: 1.4rem;">Derechos de Propiedad Intelectual</h3>
+                <p>Todos los contenidos de este sitio web (textos, fotografías, gráficos, imágenes, tecnología, software, etc.) son propiedad de Aislantech o de terceros, estando protegidos por derechos de propiedad intelectual e industrial.</p>
+                
+                <div class="highlight-box">
+                    <p><strong>⚠️ Advertencia:</strong> Cualquier uso no autorizado de estos contenidos será considerado un incumplimiento grave de los derechos de propiedad intelectual y podrá ser perseguido conforme a la legislación aplicable.</p>
+                </div>
+            </section>
+
+            <!-- Exclusión de responsabilidades -->
+            <section class="legal-section">
+                <h2><i class="fas fa-exclamation-triangle"></i> Limitación de Responsabilidad</h2>
+                
+                <table class="legal-table">
+                    <thead>
+                        <tr>
+                            <th>Ámbito</th>
+                            <th>Limitación de Responsabilidad</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Contenidos</strong></td>
+                            <td>No nos responsabilizamos de errores u omisiones en los contenidos ni de su actualización</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Enlaces externos</strong></td>
+                            <td>No garantizamos el acceso continuado ni la correcta visualización de los enlaces a sitios externos</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Virus y seguridad</strong></td>
+                            <td>No garantizamos la ausencia de virus u otros elementos lesivos introducidos por terceros</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Uso indebido</strong></td>
+                            <td>No nos responsabilizamos del uso indebido que terceros puedan hacer del sitio web</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Fuerza mayor</strong></td>
+                            <td>Queda excluida la responsabilidad por casos de fuerza mayor o situaciones imprevistas</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <!-- Protección de datos -->
+            <section class="legal-section">
+                <h2><i class="fas fa-shield-alt"></i> Protección de Datos Personales</h2>
+                <p>En cumplimiento del Reglamento General de Protección de Datos (RGPD) y la Ley Orgánica 3/2018, le informamos:</p>
+                
+                <h3 style="margin-top: 25px; font-size: 1.4rem;">Finalidades del Tratamiento</h3>
+                <ul>
+                    <li>Gestión de consultas y solicitudes de información</li>
+                    <li>Prestación de servicios contratados</li>
+                    <li>Envío de comunicaciones comerciales (con consentimiento expreso)</li>
+                    <li>Gestión de currículums y procesos de selección</li>
+                </ul>
+                
+                <h3 style="margin-top: 25px; font-size: 1.4rem;">Derechos del Interesado</h3>
+                <p>Usted puede ejercer sus derechos de acceso, rectificación, supresión, oposición, limitación y portabilidad dirigiendo comunicación escrita a nuestra dirección o email.</p>
+                
+                <div class="highlight-box">
+                    <p>Para más información, consulte nuestra <a href="politica-privacidad.html" style="color: var(--color-primary-dark); font-weight: 600;">Política de Privacidad</a> completa.</p>
+                </div>
+            </section>
+
+            <!-- Legislación aplicable -->
+            <section class="legal-section">
+                <h2><i class="fas fa-balance-scale"></i> Legislación Aplicable y Jurisdicción</h2>
+                <p>Las presentes condiciones se rigen por la legislación española. Para la resolución de cualquier controversia que pudiera surgir, las partes se someten a los Juzgados y Tribunales de Barcelona, con renuncia expresa a cualquier otro fuero que pudiera corresponderles.</p>
+                
+                <div class="highlight-box">
+                    <h3>Información Adicional</h3>
+                    <p>Este aviso legal ha sido actualizado por última vez en diciembre de 2024. Aislantech se reserva el derecho a modificar en cualquier momento las presentes condiciones, comprometiéndose a publicar los cambios realizados.</p>
+                </div>
+            </section>
+
+            <!-- Enlaces a otras políticas -->
+            <section class="legal-section" style="text-align: center; background-color: rgba(237, 208, 14, 0.1);">
+                <h2><i class="fas fa-link"></i> Documentación Relacionada</h2>
+                <p style="margin-bottom: 25px;">Consulta nuestra documentación legal completa:</p>
+                
+                <div style="display: flex; flex-wrap: wrap; gap: 20px; justify-content: center;">
+                    <a href="politica-privacidad.html" class="btn">
+                        <i class="fas fa-user-shield" style="margin-right: 8px;"></i> Política de Privacidad
+                    </a>
+                    <a href="politica-cookies.html" class="btn">
+                        <i class="fas fa-cookie-bite" style="margin-right: 8px;"></i> Política de Cookies
+                    </a>
+                    <a href="index.html" class="btn btn-outline">
+                        <i class="fas fa-home" style="margin-right: 8px;"></i> Volver al Inicio
+                    </a>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="legal-footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-links">
+                    <div class="footer-links-column">
+                        <h3>Legal</h3>
+                        <ul>
+                            <li><a href="aviso-legal.html">Aviso Legal</a></li>
+                            <li><a href="politica-privacidad.html">Política de Privacidad</a></li>
+                            <li><a href="politica-cookies.html">Política de Cookies</a></li>
+                        </ul>
+                    </div>
+                    
+                    <div class="footer-links-column">
+                        <h3>Contacto</h3>
+                        <ul>
+                            <li><a href="mailto:info@aislantech.es">info@aislantech.es</a></li>
+                            <li><a href="tel:930494787">930 49 47 87</a></li>
+                            <li><a href="https://maps.google.com/?q=Caldes+d'Estrac+08393+Barcelona" target="_blank">Cómo llegar</a></li>
+                        </ul>
+                    </div>
+                    
+                    <div class="footer-links-column">
+                        <h3>Empresa</h3>
+                        <ul>
+                            <li><a href="index.html#servicios">Servicios</a></li>
+                            <li><a href="index.html#innovacion">I+D+i</a></li>
+                            <li><a href="index.html#software">Software</a></li>
+                            <li><a href="index.html#contacto">Contacto</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p>&copy; 2025 AISLANTECH SOLUCIONES TÉCNICAS AVANZADAS S.L. - Todos los derechos reservados</p>
+                <p style="margin-top: 10px;">Caldas d'Estrac 08393, Barcelona | NIF: [Incluir NIF] | Registro Mercantil de Barcelona</p>
+            </div>
+            
+            <div class="back-home">
+                <a href="index.html" class="btn" style="background-color: var(--color-primary); color: var(--color-dark);">
+                    <i class="fas fa-arrow-left" style="margin-right: 10px;"></i> Volver a la Página Principal
+                </a>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Script para mejorar la experiencia de usuario
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('✅ Página de Aviso Legal cargada correctamente');
+            
+            // Efecto de aparición para las secciones
+            const sections = document.querySelectorAll('.legal-section');
+            const observerOptions = {
+                threshold: 0.1,
+                rootMargin: '0px 0px -50px 0px'
+            };
+            
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.style.opacity = '1';
+                        entry.target.style.transform = 'translateY(0)';
+                    }
+                });
+            }, observerOptions);
+            
+            sections.forEach(section => {
+                section.style.opacity = '0';
+                section.style.transform = 'translateY(20px)';
+                section.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+                observer.observe(section);
+            });
+            
+            // Añadir año actual al footer
+            const currentYear = new Date().getFullYear();
+            const yearElements = document.querySelectorAll('.footer-bottom p');
+            yearElements.forEach(element => {
+                element.innerHTML = element.innerHTML.replace('2025', currentYear);
+            });
+            
+            // Smooth scroll para enlaces internos
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const targetId = this.getAttribute('href');
+                    if(targetId === '#') return;
+                    
+                    const targetElement = document.querySelector(targetId);
+                    if(targetElement) {
+                        window.scrollTo({
+                            top: targetElement.offsetTop - 100,
+                            behavior: 'smooth'
+                        });
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
