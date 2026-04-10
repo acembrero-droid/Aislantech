@@ -17,7 +17,7 @@
     .container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
     header { background-color: var(--color-white); box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05); position: sticky; top: 0; z-index: 1000; }
     .header-container { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; max-width: 1200px; margin: 0 auto; }
-    .logo-text { font-family: 'Montserrat', sans-serif; font-weight: 700; display: flex; flex-direction: column; line-height: 1.1; }
+    .logo-text { font-family: 'Montserrat', sans-serif; font-weight: 700; display: flex; flex-direction: column; line-height: 1.1; text-decoration: none; color: inherit; }
     .logo-aislan { color: var(--color-secondary); font-size: 1.5rem; font-weight: 700; }
     .logo-tech { color: var(--color-primary); font-size: 1.5rem; font-weight: 800; }
     .logo-tagline { font-size: 0.7rem; color: var(--color-gray); font-weight: 400; margin-top: 2px; }
@@ -83,7 +83,10 @@
 <body>
 <header>
     <div class="header-container">
-        <div class="logo-text"><div><span class="logo-aislan">AISLAN</span><span class="logo-tech">TECH</span></div><div class="logo-tagline">Cálculo estructural · Precercos Técnicos</div></div>
+        <a href="indice.html" class="logo-text" style="text-decoration: none;">
+            <div><span class="logo-aislan">AISLAN</span><span class="logo-tech">TECH</span></div>
+            <div class="logo-tagline">Ingeniería estructural · Fachadas ventiladas</div>
+        </a>
         <nav><ul><li><a href="#">Herramientas</a></li><li><a href="#">Análisis DXF</a></li><li><a href="#">Contacto</a></li></ul></nav>
     </div>
 </header>
@@ -116,7 +119,7 @@
             <span>Método de cálculo: <span id="methodLabel">Automático (CTE con ce analítico)</span></span>
         </div>
         <div id="autoBlock">
-            <div class="form-grid"><div class="form-group"><label>Zona eólica CTE</label><select id="zonaSelect"><option value="A">Zona A – 26 m/s</option><option value="B">Zona B – 27 m/s</option><option value="C" selected>Zona C – 28 m/s</option><option value="custom">Personalizada</option></select></div><div class="form-group"><label>Velocidad básica v<sub>b</sub> (km/h)</label><div class="input-group"><input type="number" id="viento_kmh" value="100.8"><span class="input-unit">km/h</span></div><span id="vbHint" style="font-size:0.7rem;">CTE Zona C · 28 m/s</span></div></div>
+            <div class="form-grid"><div class="form-group"><label>Zona eólica CTE</label><select id="zonaSelect"><option value="A">Zona A – 26 m/s</option><option value="B">Zona B – 27 m/s</option><option value="C" selected>Zona C – 29 m/s</option><option value="custom">Personalizada</option></select></div><div class="form-group"><label>Velocidad básica v<sub>b</sub> (km/h)</label><div class="input-group"><input type="number" id="viento_kmh" value="104.4"><span class="input-unit">km/h</span></div><span id="vbHint" style="font-size:0.7rem;">CTE Zona C · 29 m/s</span></div></div>
             <div class="chip-row" id="zonaChips"><button class="chip" data-zona="A">Zona A</button><button class="chip" data-zona="B">Zona B</button><button class="chip active" data-zona="C">Zona C</button><button class="chip" data-zona="custom">Personalizada</button></div>
             <div class="form-grid" style="margin-top:1rem;"><div class="form-group"><label>Altura del edificio z (m)</label><div class="input-group"><input type="number" id="alturaEdificio" value="6" step="1" min="0"><span class="input-unit">m</span></div></div><div class="form-group"><label>Grado de aspereza del entorno</label><select id="gradoAspereza"><option value="I">I - Mar o costa expuesta</option><option value="II">II - Campo abierto sin obstáculos</option><option value="III">III - Zona rural con obstáculos aislados</option><option value="IV" selected>IV - Zona urbana / industrial</option><option value="V">V - Centro urbano denso</option></select><div style="display:flex; gap:0.5rem; margin-top:0.3rem;"><button type="button" class="small-btn" id="btnEstimarGrado" style="background:var(--color-primary);">🔍 Estimar desde ubicación</button></div></div></div>
             <div class="wind-card" style="margin-top:0.5rem;"><div style="font-weight:700; margin-bottom:0.3rem;">📐 Coeficiente de exposición c<sub>e</sub> (CTE fórmula analítica)</div><div id="ceFormula" style="font-size:0.75rem;"></div><div class="wind-result-badge" id="ceValor" style="margin-top:0.3rem; background:#B8860B;">—</div></div>
@@ -172,11 +175,14 @@
         <div class="result-card"><div class="result-header">Gráficas de flecha y rigidez</div><div class="card-body"><div class="charts-grid"><div class="chart-box"><canvas id="chartFlecha"></canvas></div><div class="chart-box"><canvas id="chartBar"></canvas></div><div class="chart-box"><canvas id="chartLmax"></canvas></div><div class="chart-box"><canvas id="chartEI"></canvas></div></div></div></div>
     </div>
 </div>
-<footer><p>Aislantech · CTE DB-SE-AE (Anejo D.1 y DB-SE-A) · Datos ERA5 (Open-Meteo) · Geocodificación OSM/Nominatim</p><p><a href="politica-privacidad.html" target="_blank">Política de Privacidad</a> | <a href="aviso-legal.html" target="_blank">Aviso Legal</a>
+<footer>
+    <p>Aislantech · CTE DB-SE-AE (Anejo D.1 y DB-SE-A) · Datos ERA5 (Open-Meteo) · Geocodificación OSM/Nominatim</p>
+    <p><a href="politica-privacidad.html">Política de privacidad</a> | <a href="aviso-legal.html">Aviso legal</a></p>
+</footer>
 <script>
-    // ================= CONSTANTES Y UTILIDADES =================
+    // ================= CONSTANTES Y UTILIDADES (CORREGIDO ZONA C = 29 m/s) =================
     const MATS = { pvc_upvc:{E:3000,rho:1450}, aluminio:{E:70000,rho:2700}, acero:{E:210000,rho:7850}, fenolico:{E:8000,rho:750}, madera:{E:12000,rho:600}, custom:{E:null,rho:null} };
-    const CTE_ZONAS = { A:{vb:26,qb:0.42}, B:{vb:27,qb:0.45}, C:{vb:28,qb:0.52} };
+    const CTE_ZONAS = { A:{vb:26,qb:0.42}, B:{vb:27,qb:0.45}, C:{vb:29,qb:0.52} };
     const FACTORES_CE = { I: 1.70, II: 1.40, III: 1.15, IV: 0.95, V: 0.80 };
     let geoCoords = null, dxfContent = null;
     let activeCharts = {};
@@ -292,7 +298,7 @@
         let anchuraUsada = (windMethod === 'auto') ? parseFloat(document.getElementById('anchura').value) : parseFloat(document.getElementById('anchura_manual').value);
         let pViento = (qWind / anchuraUsada) * 1000;
         let anchuraSeleccionada = ((L / lim) * EIx) / (coeff * Math.pow(L, 4));
-        let anchuraMax = Math.round(anchuraSeleccionada / (pViento / 1000)) * 2; // Multiplicar por 2 para anchura de ventana
+        let anchuraMax = Math.round(anchuraSeleccionada / (pViento / 1000)) * 2;
         activeCharts.ei = new Chart(document.getElementById('chartEI'), { type: 'bar', data: { labels: [`L/${lim}`], datasets: [{ label: 'Anchura máx (mm)', data: [anchuraMax], backgroundColor: '#B8860B' }] }, options: { plugins: { title: { display: true, text: 'Anchura máxima de ventana (mm)' }, legend: { display: false } } } });
     }
 
@@ -482,7 +488,7 @@
             doc.setPage(i);
             doc.setFontSize(8);
             doc.setTextColor(150);
-            doc.text(`Aislantech Informe generado automáticamente · Página ${i} de ${totalPages}`, pageWidth / 2, 285, { align: 'center' });
+            doc.text(`Aislantech Ingeniería · Informe generado automáticamente · Página ${i} de ${totalPages}`, pageWidth / 2, 285, { align: 'center' });
         }
 
         doc.save(`Informe_Tecnico_Aislantech_${window._lastResults.projectName || 'Perfil'}.pdf`);
