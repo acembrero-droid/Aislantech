@@ -83,7 +83,7 @@
 <body>
 <header>
     <div class="header-container">
-        <a href="../" class="logo-text" style="text-decoration: none;">
+        <a href="indice.html" class="logo-text" style="text-decoration: none;">
             <div><span class="logo-aislan">AISLAN</span><span class="logo-tech">TECH</span></div>
             <div class="logo-tagline">Ingeniería estructural · Fachadas ventiladas</div>
         </a>
@@ -100,7 +100,7 @@
         <div><button id="btnPDF" disabled style="background: var(--color-primary); color:var(--color-dark); border:none; border-radius: var(--border-radius); padding: 0.6rem 1.2rem; font-weight:600; display: flex; gap:6px; align-items:center; opacity:0.5;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>Informe PDF</button></div>
     </div>
     <!-- STEP 1 DXF -->
-    <div class="card"><div class="card-header"><div class="step-badge">1</div><div class="card-title">Cargar perfil DXF (montante)</div></div><div class="card-body"><div class="drop-zone" id="dropZone"><input type="file" id="dxfInput" accept=".dxf" style="display:none;"><div style="font-size:2rem;">⬡</div><p>Arrastra tu archivo <strong>.dxf</strong> aquí · o haz clic para seleccionar</p><p style="font-size:0.7rem;">Soporta LWPOLYLINE · POLYLINE+VERTEX · LINE (bulges incluidos)</p><p id="dropFilename" style="margin-top:0.5rem; color:var(--color-primary); font-weight:500; display:none;"></p></div></div></div>
+    <div class="card"><div class="card-header"><div class="step-badge">1</div><div class="card-title">Cargar perfil DXF (montante)</div></div><div class="card-body"><div class="drop-zone" id="dropZone"><input type="file" id="dxfInput" accept=".dxf" style="display:none;"><div style="font-size:2rem;">⬡</div><p>Arrastra tu archivo <strong>.dxf</strong> aquí · o haz clic para seleccionar</p><p style="font-size:0.7rem;">Soporta LWPOLYLINE · POLYLINE+VERTEX · LINE (bulges incluidos). <strong>Nuevo:</strong> detecta automáticamente contornos exteriores e interiores (perfiles tubulares).</p><p id="dropFilename" style="margin-top:0.5rem; color:var(--color-primary); font-weight:500; display:none;"></p></div></div></div>
     <!-- STEP 2 MATERIAL -->
     <div class="card"><div class="card-header"><div class="step-badge">2</div><div class="card-title">Material del perfil</div></div><div class="card-body"><div class="form-grid"><div class="form-group"><label>Material predefinido</label><select id="matSelect"><option value="pvc_upvc">PVC uPVC</option><option value="aluminio">Aluminio</option><option value="acero">Acero</option><option value="fenolico">Fenólico</option><option value="madera">Madera</option><option value="custom">Personalizado</option></select><div class="chip-row" id="materialChips"><button class="chip active" data-mat="pvc_upvc">PVC</button><button class="chip" data-mat="aluminio">Aluminio</button><button class="chip" data-mat="acero">Acero</button><button class="chip" data-mat="fenolico">Fenólico</button><button class="chip" data-mat="madera">Madera</button><button class="chip" data-mat="custom">Custom</button></div></div><div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;"><div class="form-group"><label>Módulo E (MPa)</label><div class="input-group"><input type="number" id="modE" value="3000"><span class="input-unit">MPa</span></div></div><div class="form-group"><label>Densidad ρ (kg/m³)</label><div class="input-group"><input type="number" id="density" value="1450"><span class="input-unit">kg/m³</span></div></div></div></div></div></div>
     <!-- STEP 3 VIENTO Y LOCALIZACIÓN (con ce analítico) -->
@@ -180,7 +180,7 @@
     <p><a href="politica-privacidad.html">Política de privacidad</a> | <a href="aviso-legal.html">Aviso legal</a></p>
 </footer>
 <script>
-    // ================= CONSTANTES Y UTILIDADES (CORREGIDO ZONA C = 29 m/s) =================
+    // ================= CONSTANTES Y UTILIDADES =================
     const MATS = { pvc_upvc:{E:3000,rho:1450}, aluminio:{E:70000,rho:2700}, acero:{E:210000,rho:7850}, fenolico:{E:8000,rho:750}, madera:{E:12000,rho:600}, custom:{E:null,rho:null} };
     const CTE_ZONAS = { A:{vb:26,qb:0.42}, B:{vb:27,qb:0.45}, C:{vb:29,qb:0.52} };
     const FACTORES_CE = { I: 1.70, II: 1.40, III: 1.15, IV: 0.95, V: 0.80 };
@@ -221,7 +221,7 @@
         return qLineal; 
     }
 
-    // ================= GEOLOCALIZACIÓN Y VIENTO HISTÓRICO =================
+    // ================= GEOLOCALIZACIÓN Y VIENTO HISTÓRICO (sin cambios) =================
     function inferZonaByCoords(lat, lon) { if (lat < 30) return 'C'; if (lon < -7.5 && lat > 42) return 'C'; if (lon < -6.5 && lat > 37 && lat < 42) return 'C'; if (lat < 37 && lon < -5) return 'C'; if (lon > -0.5 && lat >= 36 && lat <= 43) return 'C'; if (lon > -1.5 && lat < 39) return 'B'; if (lon > 0 && lat > 41) return 'B'; if (lat > 41.5 && lon > -3.5) return 'A'; if (lat > 40 && lon > -2) return 'A'; if (lat > 39 && lat < 42 && lon > -5 && lon < -1.5) return 'A'; return 'B'; }
     async function estimarGradoDesdeUbicacion() { if (!geoCoords) { setGeoStatus('Primero localiza una dirección con el botón "Localizar"', 'err'); return; } setGeoStatus('Estimando grado de aspereza según ubicación...', ''); try { const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${geoCoords.lat}&lon=${geoCoords.lon}&format=json&accept-language=es`); const data = await res.json(); const address = data.address || {}; const cityType = address.city || address.town || address.village || address.hamlet || ''; const grandesCiudades = ['madrid', 'barcelona', 'valencia', 'sevilla', 'zaragoza', 'málaga', 'bilbao', 'palma']; let grado = 'IV'; if (grandesCiudades.some(c => cityType.toLowerCase().includes(c))) grado = 'V'; else if (cityType && (cityType.includes('ciudad') || cityType.includes('city'))) grado = 'IV'; else if (cityType && (cityType.includes('pueblo') || cityType.includes('village'))) grado = 'III'; else if (cityType === '') grado = 'II'; const isCoastal = (geoCoords.lon < -6 && geoCoords.lat < 43) || (geoCoords.lon > -1 && geoCoords.lat < 43 && geoCoords.lat > 36); if (isCoastal && grado !== 'V') grado = 'II'; document.getElementById('gradoAspereza').value = grado; actualizarCe(); recalcViento(); setGeoStatus(`Grado estimado: ${grado} (${grado==='I'?'costa abierta':grado==='II'?'campo abierto':grado==='III'?'rural':grado==='IV'?'urbano':'centro urbano denso'})`, 'ok'); } catch(e) { setGeoStatus('No se pudo estimar grado automáticamente. Seleccione manualmente.', 'err'); } }
     async function geolocateNow() { let addr = document.getElementById('addressInput').value.trim(); if (!addr) { if (!navigator.geolocation) { setGeoStatus('GPS no disponible.', 'err'); return; } navigator.geolocation.getCurrentPosition(pos => { geoCoords = { lat: pos.coords.latitude, lon: pos.coords.longitude, address: 'Ubicación GPS' }; let zona = inferZonaByCoords(geoCoords.lat, geoCoords.lon); applyZona(zona); setGeoStatus(`✓ GPS: ${geoCoords.lat.toFixed(4)}°, ${geoCoords.lon.toFixed(4)}° → Zona ${zona}`, 'ok'); }, () => setGeoStatus('Error GPS', 'err')); return; } setGeoStatus('⏳ Geocodificando...'); try { let res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(addr)}&countrycodes=es&format=json&limit=1&accept-language=es`, { signal: AbortSignal.timeout(8000) }); let data = await res.json(); if (!data.length) throw new Error(); let lat = parseFloat(data[0].lat), lon = parseFloat(data[0].lon), display = data[0].display_name; geoCoords = { lat, lon, address: display.split(',').slice(0,3).join(',') }; let zona = inferZonaByCoords(lat, lon); applyZona(zona); document.getElementById('addressInput').value = geoCoords.address; setGeoStatus(`✓ ${geoCoords.address} → Zona CTE ${zona}`, 'ok'); } catch(e) { setGeoStatus('❌ No se pudo localizar', 'err'); } }
@@ -263,10 +263,247 @@
     function toggleTorsionMode() { torsionAutoMode = !torsionAutoMode; const btn = document.getElementById('toggleTorsionModeBtn'); const manualBlock = document.getElementById('torsionManualBlock'); const autoBlock = document.getElementById('torsionAutoBlock'); const labelSpan = document.getElementById('torsionModeLabel'); if (torsionAutoMode) { btn.classList.add('on'); labelSpan.innerText = 'Automático (desde DXF)'; manualBlock.style.display = 'none'; autoBlock.style.display = 'block'; } else { btn.classList.remove('on'); labelSpan.innerText = 'Manual (introducir datos)'; manualBlock.style.display = 'block'; autoBlock.style.display = 'none'; } }
     function autoCalculateTorsion() { if (lastSectionWidth === 0 || lastSectionHeight === 0) { alert('Primero realiza el análisis de la sección (pulsa "Calcular flecha...")'); return; } const t = parseFloat(document.getElementById('wallThickness').value); if (t <= 0) { alert('Introduce un espesor de pared válido (>0)'); return; } const width = lastSectionWidth; const height = lastSectionHeight; const Am = (width - t) * (height - t); const Pm = 2 * ((width - t) + (height - t)); const It = 4 * Am * Am / (Pm / t); const loadPos = document.getElementById('loadPosition').value; let e = (loadPos === 'face') ? width / 2 : 0; const E = parseFloat(document.getElementById('modE').value); const nu = parseFloat(document.getElementById('poisson').value); const G = E / (2 * (1 + nu)); document.getElementById('eccentricity').value = e.toFixed(1); document.getElementById('G_torsion').value = G.toFixed(0); document.getElementById('It').value = It.toFixed(0); document.getElementById('autoTorsionInfo').innerHTML = `Dimensiones extraídas: ${width.toFixed(1)} × ${height.toFixed(1)} mm<br>t = ${t} mm → Am = ${Am.toFixed(0)} mm², Pm = ${Pm.toFixed(0)} mm<br>It = ${It.toFixed(0)} mm⁴, e = ${e.toFixed(1)} mm<br>G = ${G.toFixed(0)} MPa`; alert(`Valores calculados:\n- It = ${It.toFixed(0)} mm⁴\n- e = ${e.toFixed(1)} mm\n- G = ${G.toFixed(0)} MPa\n\nSe han actualizado los campos internos.`); }
     
-    // ================= DXF PARSER (robusto) =================
-    function bulgeToArc(x1,y1,x2,y2,bulge,N=10){ if(Math.abs(bulge)<1e-10) return [[x2,y2]]; const theta=4*Math.atan(bulge); const dx=x2-x1, dy=y2-y1, chord=Math.hypot(dx,dy); if(chord<1e-10) return [[x2,y2]]; const R=chord/(2*Math.sin(Math.abs(theta)/2)); const mx=(x1+x2)/2, my=(y1+y2)/2; const px=-dy/chord, py=dx/chord; const cDist=(chord/2)/Math.tan(Math.abs(theta)/2); const sign=bulge>0?1:-1; const cx=mx+sign*px*cDist, cy=my+sign*py*cDist; const a1=Math.atan2(y1-cy,x1-cx); const pts=[]; for(let k=1;k<=N;k++) pts.push([cx+R*Math.cos(a1+theta*k/N), cy+R*Math.sin(a1+theta*k/N)]); return pts; }
-    function parseDXF(text){ const T=text.split(/\r\n|\r|\n/).map(t=>t.trim()).filter(t=>t!==''); const SR={}; let i=0; while(i<T.length-3){ if(T[i]==='0'&&T[i+1]==='SECTION'&&T[i+2]==='2'){ const name=T[i+3],cs=i+4;let j=cs; while(j<T.length-1){if(T[j]==='0'&&T[j+1]==='ENDSEC')break;j++;} SR[name]={start:cs,end:j};i=j+2;continue;} i++; } function xp(s,e){ const out=[];let i=s; while(i<e-1){ if(T[i]!=='0'){i++;continue;} const et=T[i+1]; if(et==='LWPOLYLINE'){ i+=2; let closed=false, verts=[]; while(i<e){ if(T[i]==='0') break; const c=T[i],v=T[i+1]; if(c==='70') closed=(parseInt(v)&1)===1; if(c==='10'){ const x=parseFloat(v); if(i+2<e&&T[i+2]==='20'){ const y=parseFloat(T[i+3]); let bulge=0; if(i+4<e&&T[i+4]==='42'){ bulge=parseFloat(T[i+5]); i+=6; } else i+=4; verts.push({x,y,bulge}); continue; } } i+=2; } if(verts.length>=3){ const pts=[]; for(let k=0;k<verts.length;k++){ const {x:x1,y:y1,bulge}=verts[k]; const {x:x2,y:y2}=verts[(k+1)%verts.length]; pts.push([x1,y1]); if(Math.abs(bulge)>1e-10){ const arc=bulgeToArc(x1,y1,x2,y2,bulge,10); for(let m=0;m<arc.length-1;m++) pts.push(arc[m]); } } out.push({pts,closed}); } continue; } if(et==='POLYLINE'){ const p={pts:[],closed:false};i+=2; while(i<e-1){if(T[i]==='0')break;if(T[i]==='70')p.closed=(parseInt(T[i+1])&1)===1;i+=2;} while(i<e-1){ if(T[i]==='0'&&T[i+1]==='VERTEX'){ i+=2;let vx=null,vy=null; while(i<e-1){if(T[i]==='0')break;if(T[i]==='10')vx=parseFloat(T[i+1]);if(T[i]==='20')vy=parseFloat(T[i+1]);i+=2;} if(vx!==null&&vy!==null)p.pts.push([vx,vy]); } else if(T[i]==='0'&&T[i+1]==='SEQEND'){i+=2;break;} else i++; } if(p.pts.length>=3)out.push(p);continue; } i++; } return out; } let polys=[]; if(SR['ENTITIES'])polys.push(...xp(SR['ENTITIES'].start,SR['ENTITIES'].end)); if(SR['BLOCKS']){ let i=SR['BLOCKS'].start,e=SR['BLOCKS'].end; while(i<e-1){ if(T[i]==='0'&&T[i+1]==='BLOCK'){ const bs=i+2;let j=bs; while(j<e-1){if(T[j]==='0'&&T[j+1]==='ENDBLK')break;j++;} polys.push(...xp(bs,j));i=j+2;continue; } i++; } } if(polys.length===0){ const segs=[]; for(const sn of ['ENTITIES','BLOCKS']){ if(!SR[sn])continue; let{start,end}=SR[sn],i=start; while(i<end-1){ if(T[i]==='0'&&T[i+1]==='LINE'){ i+=2;let x1=null,y1=null,x2=null,y2=null; while(i<end-1){if(T[i]==='0')break;if(T[i]==='10')x1=parseFloat(T[i+1]);if(T[i]==='20')y1=parseFloat(T[i+1]);if(T[i]==='11')x2=parseFloat(T[i+1]);if(T[i]==='21')y2=parseFloat(T[i+1]);i+=2;} if(x1!==null&&y1!==null&&x2!==null&&y2!==null)segs.push([[x1,y1],[x2,y2]]);continue; } i++; } } if(segs.length>0){ const EPS=1e-3,eq=(a,b)=>Math.abs(a[0]-b[0])<EPS&&Math.abs(a[1]-b[1])<EPS,used=new Array(segs.length).fill(false); for(let s=0;s<segs.length;s++){ if(used[s])continue;const ch=[...segs[s]];used[s]=true;let go=true; while(go){go=false;for(let t=0;t<segs.length;t++){if(used[t])continue;const tail=ch[ch.length-1],[a,b]=segs[t];if(eq(tail,a)){ch.push(b);used[t]=true;go=true;}else if(eq(tail,b)){ch.push(a);used[t]=true;go=true;}}if(eq(ch[0],ch[ch.length-1]))break;} if(eq(ch[0],ch[ch.length-1])&&ch.length>=4)polys.push({pts:ch.slice(0,-1),closed:true}); } } } if(polys.length>0){ const ax=polys.flatMap(p=>p.pts.map(pt=>pt[0])),ay=polys.flatMap(p=>p.pts.map(pt=>pt[1])); const ox=Math.min(...ax),oy=Math.min(...ay); if(Math.abs(ox)>.5||Math.abs(oy)>.5) polys.forEach(p=>{p.pts=p.pts.map(([x,y])=>[x-ox,y-oy]);}); } return polys; }
-    function computeProps(polys){ let area=0, cx=0, cy=0; for(let p of polys){ let A=0, Cx=0, Cy=0, pts=p.pts; for(let i=0;i<pts.length;i++){ let x1=pts[i][0], y1=pts[i][1], x2=pts[(i+1)%pts.length][0], y2=pts[(i+1)%pts.length][1]; let cross=x1*y2 - x2*y1; A+=cross; Cx+=(x1+x2)*cross; Cy+=(y1+y2)*cross; } A/=2; area+=Math.abs(A); cx+=Math.abs(A)*(Cx/(6*A)); cy+=Math.abs(A)*(Cy/(6*A)); } cx/=area; cy/=area; let Ix=0, Iy=0; for(let p of polys){ let pts=p.pts; for(let i=0;i<pts.length;i++){ let x1=pts[i][0]-cx, y1=pts[i][1]-cy, x2=pts[(i+1)%pts.length][0]-cx, y2=pts[(i+1)%pts.length][1]-cy; let cross=x1*y2 - x2*y1; Ix+=cross*(y1*y1 + y1*y2 + y2*y2); Iy+=cross*(x1*x1 + x1*x2 + x2*x2); } } Ix=Math.abs(Ix/12); Iy=Math.abs(Iy/12); let xs=polys.flatMap(p=>p.pts.map(pt=>pt[0])), ys=polys.flatMap(p=>p.pts.map(pt=>pt[1])); let W=Math.max(...xs)-Math.min(...xs), H=Math.max(...ys)-Math.min(...ys); let ymax=Math.max(...ys), ymin=Math.min(...ys); let Wx=Ix/Math.max(ymax-cy, cy-ymin); return {A:area, Ix, Iy, cx, cy, Wx, W, H, loops:polys, xmin:Math.min(...xs), ymin:Math.min(...ys)}; }
+    // ================= PARSEADOR DXF MEJORADO (con detección de contornos cerrados y bulges) =================
+    function bulgeToArc(x1,y1,x2,y2,bulge,N=10){
+        if(Math.abs(bulge)<1e-10) return [[x2,y2]];
+        const theta=4*Math.atan(bulge);
+        const dx=x2-x1, dy=y2-y1, chord=Math.hypot(dx,dy);
+        if(chord<1e-10) return [[x2,y2]];
+        const R=chord/(2*Math.sin(Math.abs(theta)/2));
+        const mx=(x1+x2)/2, my=(y1+y2)/2;
+        const px=-dy/chord, py=dx/chord;
+        const cDist=(chord/2)/Math.tan(Math.abs(theta)/2);
+        const sign=bulge>0?1:-1;
+        const cx=mx+sign*px*cDist, cy=my+sign*py*cDist;
+        const a1=Math.atan2(y1-cy,x1-cx);
+        const pts=[];
+        for(let k=1;k<=N;k++) pts.push([cx+R*Math.cos(a1+theta*k/N), cy+R*Math.sin(a1+theta*k/N)]);
+        return pts;
+    }
+    function parseDXF(text){
+        const T=text.split(/\r\n|\r|\n/).map(t=>t.trim()).filter(t=>t!=='');
+        // Buscar secciones ENTITIES y BLOCKS
+        const SR={};
+        let i=0;
+        while(i<T.length-3){
+            if(T[i]==='0'&&T[i+1]==='SECTION'&&T[i+2]==='2'){
+                const name=T[i+3],cs=i+4;let j=cs;
+                while(j<T.length-1){if(T[j]==='0'&&T[j+1]==='ENDSEC')break;j++;}
+                SR[name]={start:cs,end:j};i=j+2;continue;
+            }
+            i++;
+        }
+        function xp(s,e){
+            const out=[];let i=s;
+            while(i<e-1){
+                if(T[i]!=='0'){i++;continue;}
+                const et=T[i+1];
+                if(et==='LWPOLYLINE'){
+                    i+=2;
+                    let closed=false;
+                    const verts=[];
+                    while(i<e){
+                        if(T[i]==='0') break;
+                        const c=T[i],v=T[i+1];
+                        if(c==='70') closed=(parseInt(v)&1)===1;
+                        if(c==='10'){
+                            const x=parseFloat(v);
+                            if(i+2<e&&T[i+2]==='20'){
+                                const y=parseFloat(T[i+3]);
+                                let bulge=0;
+                                if(i+4<e&&T[i+4]==='42'){ bulge=parseFloat(T[i+5]); i+=6; }
+                                else i+=4;
+                                verts.push({x,y,bulge});
+                                continue;
+                            }
+                        }
+                        i+=2;
+                    }
+                    if(verts.length>=3){
+                        const pts=[];
+                        for(let k=0;k<verts.length;k++){
+                            const {x:x1,y:y1,bulge}=verts[k];
+                            const {x:x2,y:y2}=verts[(k+1)%verts.length];
+                            pts.push([x1,y1]);
+                            if(Math.abs(bulge)>1e-10){
+                                const arc=bulgeToArc(x1,y1,x2,y2,bulge,10);
+                                for(let m=0;m<arc.length-1;m++) pts.push(arc[m]);
+                            }
+                        }
+                        out.push({pts,closed});
+                    }
+                    continue;
+                }
+                if(et==='POLYLINE'){
+                    const p={pts:[],closed:false};i+=2;
+                    while(i<e-1){if(T[i]==='0')break;if(T[i]==='70')p.closed=(parseInt(T[i+1])&1)===1;i+=2;}
+                    while(i<e-1){
+                        if(T[i]==='0'&&T[i+1]==='VERTEX'){
+                            i+=2;let vx=null,vy=null;
+                            while(i<e-1){if(T[i]==='0')break;if(T[i]==='10')vx=parseFloat(T[i+1]);if(T[i]==='20')vy=parseFloat(T[i+1]);i+=2;}
+                            if(vx!==null&&vy!==null)p.pts.push([vx,vy]);
+                        } else if(T[i]==='0'&&T[i+1]==='SEQEND'){i+=2;break;} else i++;
+                    }
+                    if(p.pts.length>=3)out.push(p);continue;
+                }
+                i++;
+            }
+            return out;
+        }
+        let polys=[];
+        if(SR['ENTITIES'])polys.push(...xp(SR['ENTITIES'].start,SR['ENTITIES'].end));
+        if(SR['BLOCKS']){
+            let i=SR['BLOCKS'].start,e=SR['BLOCKS'].end;
+            while(i<e-1){
+                if(T[i]==='0'&&T[i+1]==='BLOCK'){
+                    const bs=i+2;let j=bs;
+                    while(j<e-1){if(T[j]==='0'&&T[j+1]==='ENDBLK')break;j++;}
+                    polys.push(...xp(bs,j));i=j+2;continue;
+                }
+                i++;
+            }
+        }
+        // Si no se encontraron polilíneas, intentar unir segmentos LINE
+        if(polys.length===0){
+            const segs=[];
+            for(const sn of ['ENTITIES','BLOCKS']){
+                if(!SR[sn])continue;
+                let{start,end}=SR[sn],i=start;
+                while(i<end-1){
+                    if(T[i]==='0'&&T[i+1]==='LINE'){
+                        i+=2;let x1=null,y1=null,x2=null,y2=null;
+                        while(i<end-1){if(T[i]==='0')break;if(T[i]==='10')x1=parseFloat(T[i+1]);if(T[i]==='20')y1=parseFloat(T[i+1]);if(T[i]==='11')x2=parseFloat(T[i+1]);if(T[i]==='21')y2=parseFloat(T[i+1]);i+=2;}
+                        if(x1!==null&&y1!==null&&x2!==null&&y2!==null)segs.push([[x1,y1],[x2,y2]]);continue;
+                    }
+                    i++;
+                }
+            }
+            if(segs.length>0){
+                const EPS=1e-3,eq=(a,b)=>Math.abs(a[0]-b[0])<EPS&&Math.abs(a[1]-b[1])<EPS,used=new Array(segs.length).fill(false);
+                for(let s=0;s<segs.length;s++){
+                    if(used[s])continue;const ch=[...segs[s]];used[s]=true;let go=true;
+                    while(go){go=false;for(let t=0;t<segs.length;t++){if(used[t])continue;const tail=ch[ch.length-1],[a,b]=segs[t];if(eq(tail,a)){ch.push(b);used[t]=true;go=true;}else if(eq(tail,b)){ch.push(a);used[t]=true;go=true;}}if(eq(ch[0],ch[ch.length-1]))break;}
+                    if(eq(ch[0],ch[ch.length-1])&&ch.length>=4)polys.push({pts:ch.slice(0,-1),closed:true});
+                }
+            }
+        }
+        // Normalizar coordenadas trasladando al origen
+        if(polys.length>0){
+            const ax=polys.flatMap(p=>p.pts.map(pt=>pt[0])),ay=polys.flatMap(p=>p.pts.map(pt=>pt[1]));
+            const ox=Math.min(...ax),oy=Math.min(...ay);
+            if(Math.abs(ox)>.5||Math.abs(oy)>.5) polys.forEach(p=>{p.pts=p.pts.map(([x,y])=>[x-ox,y-oy]);});
+        }
+        // Asegurar que los polígonos estén cerrados (añadir primer punto al final si es necesario)
+        polys.forEach(poly => {
+            if(poly.pts.length >= 3){
+                const first = poly.pts[0];
+                const last = poly.pts[poly.pts.length-1];
+                if(Math.hypot(first[0]-last[0], first[1]-last[1]) > 1e-6){
+                    poly.pts.push([first[0], first[1]]);
+                }
+            }
+        });
+        return polys;
+    }
+    
+    // ================= CÁLCULO DE PROPIEDADES CON HUECOS =================
+    function computeProps(polys){
+        let regions = polys.map(poly => {
+            let pts = poly.pts;
+            let A = 0, Cx = 0, Cy = 0;
+            for(let i=0; i<pts.length-1; i++){
+                let x1 = pts[i][0], y1 = pts[i][1];
+                let x2 = pts[i+1][0], y2 = pts[i+1][1];
+                let cross = x1*y2 - x2*y1;
+                A += cross;
+                Cx += (x1 + x2) * cross;
+                Cy += (y1 + y2) * cross;
+            }
+            A /= 2;
+            let area = Math.abs(A);
+            if(area < 1e-6) return null;
+            let sign = Math.sign(A);
+            let cx = Cx / (6*A);
+            let cy = Cy / (6*A);
+            return { pts, area, cx, cy, sign: sign };
+        }).filter(r => r !== null);
+        if(regions.length === 0) throw new Error("No se encontraron contornos cerrados con área válida.");
+        // Ordenar por área descendente: el primero será el contorno exterior
+        regions.sort((a,b) => b.area - a.area);
+        let outer = regions[0];
+        let holes = regions.slice(1).filter(h => {
+            // Verificar si el polígono está dentro del exterior usando un punto del primer vértice
+            let px = h.pts[0][0], py = h.pts[0][1];
+            let cnt = 0;
+            for(let i=0; i<outer.pts.length-1; i++){
+                let x1=outer.pts[i][0], y1=outer.pts[i][1];
+                let x2=outer.pts[i+1][0], y2=outer.pts[i+1][1];
+                if(((y1 > py) != (y2 > py)) && (px < (x2-x1)*(py-y1)/(y2-y1)+x1)) cnt++;
+            }
+            return (cnt%2===1);
+        });
+        let area = outer.area;
+        for(let h of holes) area -= h.area;
+        let cx_num = outer.area * outer.cx;
+        let cy_num = outer.area * outer.cy;
+        for(let h of holes){
+            cx_num -= h.area * h.cx;
+            cy_num -= h.area * h.cy;
+        }
+        let cx = cx_num / area;
+        let cy = cy_num / area;
+        function computeMoments(region, refX, refY){
+            let Ix=0, Iy=0;
+            let pts = region.pts;
+            for(let i=0; i<pts.length-1; i++){
+                let x1 = pts[i][0], y1 = pts[i][1];
+                let x2 = pts[i+1][0], y2 = pts[i+1][1];
+                let cross = x1*y2 - x2*y1;
+                let xi = x1 - region.cx, yi = y1 - region.cy;
+                let xj = x2 - region.cx, yj = y2 - region.cy;
+                Ix += cross * (yi*yi + yi*yj + yj*yj);
+                Iy += cross * (xi*xi + xi*xj + xj*xj);
+            }
+            Ix = Math.abs(Ix/12);
+            Iy = Math.abs(Iy/12);
+            let dx = region.cx - refX;
+            let dy = region.cy - refY;
+            let Ix_net = Ix + region.area * dy*dy;
+            let Iy_net = Iy + region.area * dx*dx;
+            return { Ix: Ix_net, Iy: Iy_net };
+        }
+        let Ix_total = 0, Iy_total = 0;
+        let extMom = computeMoments(outer, cx, cy);
+        Ix_total += extMom.Ix;
+        Iy_total += extMom.Iy;
+        for(let h of holes){
+            let holeMom = computeMoments(h, cx, cy);
+            Ix_total -= holeMom.Ix;
+            Iy_total -= holeMom.Iy;
+        }
+        let allPts = polys.flatMap(p => p.pts);
+        let xs = allPts.map(p=>p[0]), ys = allPts.map(p=>p[1]);
+        let W = Math.max(...xs) - Math.min(...xs);
+        let H = Math.max(...ys) - Math.min(...ys);
+        let ymax = Math.max(...ys), ymin = Math.min(...ys);
+        let Wx = Ix_total / Math.max(ymax - cy, cy - ymin);
+        let loops = [outer, ...holes];
+        return {
+            A: area,
+            Ix: Ix_total,
+            Iy: Iy_total,
+            cx: cx,
+            cy: cy,
+            Wx: Wx,
+            W: W,
+            H: H,
+            loops: loops,
+            xmin: Math.min(...xs),
+            ymin: Math.min(...ys)
+        };
+    }
+    
+    // ================= CARGA DE DXF =================
     function loadDXF(file){ let r=new FileReader(); r.onload=e=>{ dxfContent=e.target.result; document.getElementById('dropFilename').textContent='✓ '+file.name; document.getElementById('dropFilename').style.display='block'; document.getElementById('btnAnalyze').disabled=false; setStatus('Archivo DXF cargado', 'ok'); }; r.readAsText(file,'latin-1'); }
     document.getElementById('dxfInput').addEventListener('change',e=>{ if(e.target.files[0]) loadDXF(e.target.files[0]); });
     let dropZone=document.getElementById('dropZone'); dropZone.addEventListener('click',()=>document.getElementById('dxfInput').click()); dropZone.addEventListener('dragover',e=>e.preventDefault()); dropZone.addEventListener('drop',e=>{ e.preventDefault(); let f=e.dataTransfer.files[0]; if(f && f.name.endsWith('.dxf')) loadDXF(f); else setStatus('Solo .dxf', 'err'); });
@@ -275,7 +512,7 @@
     function getDeflectionCoefficient(support){ switch(support){ case 'simply': return 5/384; case 'fixed-fixed': return 1/384; case 'fixed-pinned': return 0.005416; default: return 1/384; } }
     function getHorizontalReactions(support, q, L){ if (support === 'simply') { let R = q * L / 2; return { top: R, bottom: R, description: "Reacción igual en ambos apoyos: R = q·L/2" }; } else if (support === 'fixed-fixed') { let R = q * L / 2; return { top: R, bottom: R, description: "Reacción igual en ambos apoyos (empotramiento): R = q·L/2" }; } else if (support === 'fixed-pinned') { let R_top = (5/8) * q * L; let R_bottom = (3/8) * q * L; return { top: R_top, bottom: R_bottom, description: "Reacción mayor en el empotramiento (superior): R_sup = 5/8·q·L, R_inf = 3/8·q·L" }; } return { top: 0, bottom: 0, description: "" }; }
     
-    // ================= GRÁFICOS (con líneas de CTE y anchura seleccionada) =================
+    // ================= GRÁFICOS =================
     function buildCharts(EIx, qWind, L, lim, support) {
         destroyCharts();
         let coeff = getDeflectionCoefficient(support);
@@ -299,22 +536,20 @@
         let pViento = (qWind / anchuraUsada) * 1000;
         let anchuraSeleccionada = ((L / lim) * EIx) / (coeff * Math.pow(L, 4));
         let anchuraMax = Math.round(anchuraSeleccionada / (pViento / 1000)) * 2;
-        activeCharts.ei = new Chart(document.getElementById('chartEI'), { type: 'bar', data: { labels: [`L/${lim}`], datasets: [{ label: 'Anchura máx (mm)', data: [anchuraMax], backgroundColor: '#B8860B' }] }, options: { plugins: { title: { display: true, text: 'Anchura máxima de ventana (mm)' }, legend: { display: false } } } });
+        activeCharts.ei = new Chart(document.getElementById('chartEI'), { type: 'bar', data: { labels: [`L/${lim}`], datasets: [{ label: 'Anchura máx (mm)', data: [anchuraMax], backgroundColor: '#B8860B' }] }, options: { plugins: { title: { display: true, text: 'Anchura máxima de fachada / ventana (mm)' }, legend: { display: false } } } });
     }
 
-    // ================= INFORME PDF OPTIMIZADO CON JUSTIFICACIÓN Y 4 GRÁFICOS =================
+    // ================= INFORME PDF (con corrección de velocidad) =================
     async function generatePDF() {
         if (!window._lastResults) { alert('Primero realiza un análisis.'); return; }
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
         
-        // Configuración de márgenes y áreas de impresión
         const pageWidth = 210;
         const leftMargin = 20;
-        const contentWidth = 170; // 210 - 20 - 20
+        const contentWidth = 170;
         let y = 25;
 
-        // Función auxiliar para escribir texto con control de ancho y salto de página
         const write = (txt, size = 10, style = 'normal', color = [51, 51, 51]) => {
             doc.setFont('helvetica', style);
             doc.setFontSize(size);
@@ -327,7 +562,6 @@
             }
         };
 
-        // Encabezado Corporativo
         doc.setFillColor(62, 62, 62);
         doc.rect(0, 0, 210, 18, 'F');
         doc.setTextColor(237, 208, 14);
@@ -342,14 +576,12 @@
         doc.line(leftMargin, y, 100, y);
         y += 8;
 
-        // Información General
         write(`Proyecto: ${window._lastResults.projectName || 'Sin nombre'}`, 11, 'bold');
         write(`Redactado por: ${window._lastResults.projectAuthor || 'Departamento Técnico'}`, 10);
         write(`Archivo DXF: ${window._lastResults.dxfFile}`, 10);
         write(`Fecha: ${window._lastResults.date}`, 10);
         y += 5;
 
-        // 1. GEOMETRÍA DEL PERFIL (Imagen Central)
         write('1. GEOMETRÍA DE LA SECCIÓN TRANSVERSAL', 12, 'bold');
         y += 2;
         try {
@@ -359,14 +591,10 @@
                 const canvas = document.createElement('canvas');
                 const ctx = canvas.getContext('2d');
                 const img = new Image();
-                
-                // Aumentamos resolución para el PDF
                 canvas.width = 800;
                 canvas.height = 400;
-                
                 const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
                 const url = URL.createObjectURL(svgBlob);
-                
                 await new Promise((resolve) => {
                     img.onload = () => {
                         ctx.fillStyle = "#FFFFFF";
@@ -376,11 +604,8 @@
                     };
                     img.src = url;
                 });
-
                 const imgData = canvas.toDataURL('image/png');
                 doc.addImage(imgData, 'PNG', leftMargin, y, 80, 45);
-                
-                // Datos al lado de la imagen
                 doc.setFontSize(9);
                 doc.setTextColor(60);
                 let infoX = leftMargin + 85;
@@ -388,15 +613,14 @@
                 doc.text(`Alto total: ${window._lastResults.H.toFixed(1)} mm`, infoX, y + 15);
                 doc.text(`Área: ${window._lastResults.A.toFixed(1)} mm²`, infoX, y + 20);
                 doc.text(`Inercia Ix: ${(window._lastResults.Ix/10000).toFixed(2)} cm⁴`, infoX, y + 25);
-                
                 y += 50;
                 URL.revokeObjectURL(url);
             }
         } catch(e) { write('(Error al procesar imagen del perfil)', 9); y += 10; }
 
-        // 2. PARÁMETROS Y CARGAS
         write('2. PARÁMETROS DE DISEÑO Y CARGAS (CTE DB-SE-AE)', 12, 'bold');
         y += 2;
+        let vkmhValue = window._lastResults.vkmh ? window._lastResults.vkmh : (window._lastResults.windParams?.vb ? (window._lastResults.windParams.vb * 3.6).toFixed(1) : '104.4');
         doc.autoTable({
             startY: y,
             margin: { left: leftMargin },
@@ -406,40 +630,33 @@
                 ['Material', window._lastResults.mat, `${window._lastResults.E} MPa`],
                 ['Luz (L)', 'Distancia entre apoyos', `${window._lastResults.L} mm`],
                 ['Ancho Trib.', 'Ancho de influencia de carga', `${window._lastResults.windParams.anchura || '—'} mm`],
-                ['Zona Eólica', `Zona ${window._lastResults.zona || 'C'}`, `${window._lastResults.vkmh} km/h`],
+                ['Zona Eólica', `Zona ${window._lastResults.zona || 'C'}`, `${vkmhValue} km/h`],
                 ['Presión Neta', 'Carga de viento calculada', `${(window._lastResults.qWind / (window._lastResults.windParams.anchura/1000)).toFixed(3)} kN/m²`]
             ],
             theme: 'grid',
             headStyles: { fillColor: [62, 62, 62] },
             styles: { fontSize: 9 }
         });
-        
         y = doc.lastAutoTable.finalY + 10;
 
-        // 3. RESULTADOS DE FLECHA
         write('3. ESTADO LÍMITE DE SERVICIO (DEFORMACIÓN)', 12, 'bold');
         y += 2;
         const statusColor = window._lastResults.cls === 'ok' ? [46, 125, 50] : [198, 40, 40];
-        
         doc.setFillColor(245, 245, 245);
         doc.rect(leftMargin, y, contentWidth, 20, 'F');
         doc.setDrawColor(statusColor[0], statusColor[1], statusColor[2]);
         doc.rect(leftMargin, y, contentWidth, 20, 'S');
-
         doc.setFontSize(10);
         doc.setTextColor(33);
         doc.text(`Flecha máxima calculada: ${window._lastResults.dt.toFixed(2)} mm`, leftMargin + 5, y + 8);
         doc.text(`Límite admisible (L/${window._lastResults.lim}): ${window._lastResults.ll.toFixed(2)} mm`, leftMargin + 5, y + 14);
-        
         doc.setFontSize(12);
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(statusColor[0], statusColor[1], statusColor[2]);
         const resultText = window._lastResults.cls === 'ok' ? 'CUMPLE' : 'NO CUMPLE';
         doc.text(resultText, leftMargin + 130, y + 12);
-        
         y += 28;
 
-        // 4. REACCIONES EN ANCLAJES
         write('4. REACCIONES EN APOYOS (VALORES CARACTERÍSTICOS)', 12, 'bold');
         y += 2;
         doc.autoTable({
@@ -456,17 +673,15 @@
         });
         y = doc.lastAutoTable.finalY + 10;
 
-        // 5. JUSTIFICACIÓN NORMATIVA (nueva sección)
         if (y > 220) { doc.addPage(); y = 25; }
         write('5. JUSTIFICACIÓN SEGÚN CTE DB-SE-AE', 12, 'bold');
         y += 2;
-        const justText = `La acción del viento se determina según el Anejo D.1 del CTE DB-SE-AE. La presión estática se calcula como q_e = q_b · c_e · c_p, donde q_b es la presión dinámica básica (dependiente de la zona eólica y la velocidad básica del viento), c_e es el coeficiente de exposición (obtenido mediante la expresión analítica en función de la altura y el grado de aspereza del terreno) y c_p es el coeficiente de presión neta (diferencia entre presión exterior e interior). La carga lineal resultante se aplica sobre el montante vertical, y la flecha se verifica con la expresión de viga biapoyada o empotrada según la condición de apoyo. Los valores de racha máxima histórica proceden del reanálisis ERA5 (Open-Meteo).`;
+        const justText = `La acción del viento se determina según el Anejo D.1 del CTE DB-SE-AE. La presión estática se calcula como q_e = q_b · c_e · c_p, donde q_b es la presión dinámica básica (dependiente de la zona eólica y la velocidad básica del viento), c_e es el coeficiente de exposición (obtenido mediante la expresión analítica en función de la altura y el grado de aspereza del terreno) y c_p es el coeficiente de presión neta (diferencia entre presión exterior e interior). La carga lineal resultante se aplica sobre el montante vertical, y la flecha se verifica con la expresión de viga biapoyada o empotrada según la condición de apoyo. Los valores de racha máxima histórica proceden del reanálisis ERA5 (Open-Meteo).\n\nNota: El límite de deformación L/300 es adecuado para elementos estructurales que no soportan elementos frágiles. En caso de particiones o acristalamientos, se debe adoptar un criterio más restrictivo (L/500).`;
         write(justText, 9, 'normal', [80,80,80]);
         y += 5;
         write('Referencias: CTE DB-SE-AE (Documento Básico Seguridad Estructural - Acciones en la edificación), DB-SE-A (Acero/Aluminio/Madera).', 9, 'italic', [100,100,100]);
         y += 8;
 
-        // 6. GRÁFICOS DE ANÁLISIS (los 4)
         if (y > 200) { doc.addPage(); y = 25; }
         write('6. GRÁFICOS DE ANÁLISIS ESTRUCTURAL', 12, 'bold');
         y += 4;
@@ -482,7 +697,6 @@
             }
         }
 
-        // Pie de página en todas las hojas
         const totalPages = doc.internal.getNumberOfPages();
         for (let i = 1; i <= totalPages; i++) {
             doc.setPage(i);
@@ -490,12 +704,11 @@
             doc.setTextColor(150);
             doc.text(`Aislantech Ingeniería · Informe generado automáticamente · Página ${i} de ${totalPages}`, pageWidth / 2, 285, { align: 'center' });
         }
-
         doc.save(`Informe_Tecnico_Aislantech_${window._lastResults.projectName || 'Perfil'}.pdf`);
     }
 
     // ================= ANÁLISIS PRINCIPAL (botón Calcular) =================
-    document.getElementById('btnAnalyze').addEventListener('click',()=>{ if(!dxfContent) return; try{ let polys=parseDXF(dxfContent); if(polys.length===0) throw new Error('No se encontraron contornos cerrados'); let props=computeProps(polys); lastSectionWidth = props.W; lastSectionHeight = props.H; let E=parseFloat(document.getElementById('modE').value), rho=parseFloat(document.getElementById('density').value); let qWind = recalcViento(); let L=parseFloat(document.getElementById('Lspan').value), lim=parseInt(document.getElementById('limSelect').value); let support = document.getElementById('supportSelect').value; let EIx=E*props.Ix; let wkg=props.A*1e-6*rho; let pesoTotal_N = wkg * (L/1000) * 9.81; let coeff = getDeflectionCoefficient(support); let dt = coeff * qWind * L**4 / EIx; let ll = L/lim; let Lmax = (EIx/(coeff * qWind * lim))**(1/3); let cls = dt/ll <= 1 ? 'ok' : dt/ll <= 2 ? 'warn' : 'fail'; let svg=document.getElementById('sectionSvg'); svg.innerHTML=''; let maxX=Math.max(...props.loops.flatMap(p=>p.pts.map(pt=>pt[0]))), maxY=Math.max(...props.loops.flatMap(p=>p.pts.map(pt=>pt[1]))); let scale=Math.min(150/maxX, 90/maxY), offX=20, offY=15; props.loops.forEach(p=>{ let d=p.pts.map((pt,i)=>`${i===0?'M':'L'} ${offX+pt[0]*scale} ${offY+pt[1]*scale}`).join(' ')+'Z'; let path=document.createElementNS('http://www.w3.org/2000/svg','path'); path.setAttribute('d',d); path.setAttribute('fill','#FFF8DC'); path.setAttribute('stroke','#EDD00E'); path.setAttribute('stroke-width','1.2'); svg.appendChild(path); }); document.getElementById('sectionDims').innerHTML=`${props.W.toFixed(1)} × ${props.H.toFixed(1)} mm`; document.getElementById('propsGrid').innerHTML=`<div class="prop-tile"><div class="prop-label">Área</div><div class="prop-value">${props.A.toFixed(0)}</div><span>mm²</span></div><div class="prop-tile"><div class="prop-label">Ix</div><div class="prop-value">${(props.Ix/1e4).toFixed(2)}</div><span>cm⁴</span></div><div class="prop-tile"><div class="prop-label">EIx</div><div class="prop-value">${(EIx/1e6).toFixed(1)}</div><span>kN·m²</span></div><div class="prop-tile"><div class="prop-label">Peso</div><div class="prop-value">${wkg.toFixed(3)}</div><span>kg/m</span></div><div class="prop-tile"><div class="prop-label">Centroide ȳ</div><div class="prop-value">${props.cy.toFixed(1)}</div><span>mm</span></div><div class="prop-tile"><div class="prop-label">Wx</div><div class="prop-value">${props.Wx.toFixed(0)}</div><span>mm³</span></div><div class="prop-tile"><div class="prop-label">L_max (L/${lim})</div><div class="prop-value">${Math.round(Lmax)}</div><span>mm</span></div>`; let ds=document.getElementById('deflectStatus'); ds.className=`deflect-status ${cls}`; ds.innerHTML=`<span class="deflect-big">${dt.toFixed(2)} mm</span><span>${cls==='ok'?'✓ Cumple L/'+lim:cls==='warn'?'⚠ Supera el límite, L_max='+Math.round(Lmax)+' mm':'✗ No cumple, L_max='+Math.round(Lmax)+' mm'}</span>`; buildCharts(EIx, qWind, L, lim, support); let reactions = getHorizontalReactions(support, qWind, L); document.getElementById('anchorQlineal').textContent = `${qWind.toFixed(4)} N/mm`; document.getElementById('horizontalReactions').innerHTML = `<p><strong>Anclaje superior (techo)</strong>: ${reactions.top.toFixed(1)} N (horizontal)</p><p><strong>Anclaje inferior (suelo)</strong>: ${reactions.bottom.toFixed(1)} N (horizontal)</p><p style="font-size:0.8rem; color:var(--color-gray);">${reactions.description}</p>`; document.getElementById('anchorPeso').textContent = `${pesoTotal_N.toFixed(1)} N (vertical, a resistir por el anclaje inferior en compresión o el superior en suspensión)`; let torsionData = null; if (torsionEnabled) { let e = parseFloat(document.getElementById('eccentricity').value) || 0; let G = parseFloat(document.getElementById('G_torsion').value) || 0; let It = parseFloat(document.getElementById('It').value) || 0; let mt = qWind * e; let phi = (mt * L) / (G * It); let phiDeg = phi * 180 / Math.PI; document.getElementById('torsionMt').textContent = `${mt.toFixed(2)} N`; document.getElementById('torsionTau').textContent = `Requiere espesor de pared`; document.getElementById('torsionPhi').textContent = `${phi.toExponential(4)} rad`; document.getElementById('torsionPhiDeg').textContent = `${phiDeg.toFixed(3)} °`; torsionData = { mt, tau: null, phi, phiDeg, e, G, It }; document.getElementById('torsionResultCard').style.display = 'block'; } else { document.getElementById('torsionResultCard').style.display = 'none'; } document.getElementById('results').style.display='block'; document.getElementById('btnPDF').disabled=false; document.getElementById('btnPDF').style.opacity='1'; let supportName = support==='simply'?'Simplemente apoyado':(support==='fixed-fixed'?'Empotrado-empotrado':'Empotrado-apoyado'); let windParams = {}; if (windMethod === 'auto') { windParams = { method: 'auto', altura: parseFloat(document.getElementById('alturaEdificio').value), grado: document.getElementById('gradoAspereza').value, ce: parseFloat(document.getElementById('ceValor').textContent), vb: parseFloat(document.getElementById('viento_kmh').value)/3.6, cp_ext: parseFloat(document.getElementById('cp_ext').value), cp_int: parseFloat(document.getElementById('cp_int').value), anchura: parseFloat(document.getElementById('anchura').value) }; } else { windParams = { method: 'manual', qe_manual: parseFloat(document.getElementById('qe_manual').value), anchura: parseFloat(document.getElementById('anchura_manual').value) }; } window._lastResults = { projectName: document.getElementById('projectName').value, projectAuthor: document.getElementById('projectAuthor').value, dxfFile: document.getElementById('dropFilename').textContent.replace('✓ ',''), date: new Date().toLocaleDateString(), mat: document.getElementById('matSelect').options[document.getElementById('matSelect').selectedIndex].text, E, rho, A: props.A, Ix: props.Ix, cy: props.cy, Wx: props.Wx, W: props.W, H: props.H, EIx, wkg, L, lim, qWind, dt, ll, Lmax, cls, support: supportName, supportCode: support, coeff: coeff, windMethod, windParams, reactions, pesoTotal_N, torsionEnabled, torsionData, zona: document.getElementById('zonaSelect').value, vkmh: document.getElementById('viento_kmh').value, windData: window._windData||null, geoAddr: geoCoords?geoCoords.address:'—', lat: geoCoords?.lat, lon: geoCoords?.lon }; setStatus('Análisis completado según CTE', 'ok'); }catch(e){ setStatus('Error: '+e.message, 'err'); } });
+    document.getElementById('btnAnalyze').addEventListener('click',()=>{ if(!dxfContent) return; try{ let polys=parseDXF(dxfContent); if(polys.length===0) throw new Error('No se encontraron contornos cerrados'); let props=computeProps(polys); lastSectionWidth = props.W; lastSectionHeight = props.H; let E=parseFloat(document.getElementById('modE').value), rho=parseFloat(document.getElementById('density').value); let qWind = recalcViento(); let L=parseFloat(document.getElementById('Lspan').value), lim=parseInt(document.getElementById('limSelect').value); let support = document.getElementById('supportSelect').value; let EIx=E*props.Ix; let wkg=props.A*1e-6*rho; let pesoTotal_N = wkg * (L/1000) * 9.81; let coeff = getDeflectionCoefficient(support); let dt = coeff * qWind * L**4 / EIx; let ll = L/lim; let Lmax = (EIx/(coeff * qWind * lim))**(1/3); let cls = dt/ll <= 1 ? 'ok' : dt/ll <= 2 ? 'warn' : 'fail'; let svg=document.getElementById('sectionSvg'); svg.innerHTML=''; let maxX=Math.max(...props.loops.flatMap(p=>p.pts.map(pt=>pt[0]))), maxY=Math.max(...props.loops.flatMap(p=>p.pts.map(pt=>pt[1]))); let scale=Math.min(150/maxX, 90/maxY), offX=20, offY=15; for(let i=0; i<props.loops.length; i++) { let loop = props.loops[i]; let fill = (i===0) ? '#FFF8DC' : 'none'; let stroke = (i===0) ? '#EDD00E' : '#B8860B'; let strokeWidth = (i===0) ? '1.2' : '0.8'; let d = loop.pts.map((pt,i)=>`${i===0?'M':'L'} ${offX+pt[0]*scale} ${offY+pt[1]*scale}`).join(' ')+'Z'; let path=document.createElementNS('http://www.w3.org/2000/svg','path'); path.setAttribute('d',d); path.setAttribute('fill',fill); path.setAttribute('stroke',stroke); path.setAttribute('stroke-width',strokeWidth); svg.appendChild(path); } document.getElementById('sectionDims').innerHTML=`${props.W.toFixed(1)} × ${props.H.toFixed(1)} mm`; document.getElementById('propsGrid').innerHTML=`<div class="prop-tile"><div class="prop-label">Área</div><div class="prop-value">${props.A.toFixed(0)}</div><span>mm²</span></div><div class="prop-tile"><div class="prop-label">Ix</div><div class="prop-value">${(props.Ix/1e4).toFixed(2)}</div><span>cm⁴</span></div><div class="prop-tile"><div class="prop-label">EIx</div><div class="prop-value">${(EIx/1e6).toFixed(1)}</div><span>kN·m²</span></div><div class="prop-tile"><div class="prop-label">Peso</div><div class="prop-value">${wkg.toFixed(3)}</div><span>kg/m</span></div><div class="prop-tile"><div class="prop-label">Centroide ȳ</div><div class="prop-value">${props.cy.toFixed(1)}</div><span>mm</span></div><div class="prop-tile"><div class="prop-label">Wx</div><div class="prop-value">${props.Wx.toFixed(0)}</div><span>mm³</span></div><div class="prop-tile"><div class="prop-label">L_max (L/${lim})</div><div class="prop-value">${Math.round(Lmax)}</div><span>mm</span></div>`; let ds=document.getElementById('deflectStatus'); ds.className=`deflect-status ${cls}`; ds.innerHTML=`<span class="deflect-big">${dt.toFixed(2)} mm</span><span>${cls==='ok'?'✓ Cumple L/'+lim:cls==='warn'?'⚠ Supera el límite, L_max='+Math.round(Lmax)+' mm':'✗ No cumple, L_max='+Math.round(Lmax)+' mm'}</span>`; buildCharts(EIx, qWind, L, lim, support); let reactions = getHorizontalReactions(support, qWind, L); document.getElementById('anchorQlineal').textContent = `${qWind.toFixed(4)} N/mm`; document.getElementById('horizontalReactions').innerHTML = `<p><strong>Anclaje superior (techo)</strong>: ${reactions.top.toFixed(1)} N (horizontal)</p><p><strong>Anclaje inferior (suelo)</strong>: ${reactions.bottom.toFixed(1)} N (horizontal)</p><p style="font-size:0.8rem; color:var(--color-gray);">${reactions.description}</p>`; document.getElementById('anchorPeso').textContent = `${pesoTotal_N.toFixed(1)} N (vertical, a resistir por el anclaje inferior en compresión o el superior en suspensión)`; let torsionData = null; if (torsionEnabled) { let e = parseFloat(document.getElementById('eccentricity').value) || 0; let G = parseFloat(document.getElementById('G_torsion').value) || 0; let It = parseFloat(document.getElementById('It').value) || 0; let mt = qWind * e; let phi = (mt * L) / (G * It); let phiDeg = phi * 180 / Math.PI; document.getElementById('torsionMt').textContent = `${mt.toFixed(2)} N`; document.getElementById('torsionTau').textContent = `Requiere espesor de pared`; document.getElementById('torsionPhi').textContent = `${phi.toExponential(4)} rad`; document.getElementById('torsionPhiDeg').textContent = `${phiDeg.toFixed(3)} °`; torsionData = { mt, tau: null, phi, phiDeg, e, G, It }; document.getElementById('torsionResultCard').style.display = 'block'; } else { document.getElementById('torsionResultCard').style.display = 'none'; } document.getElementById('results').style.display='block'; document.getElementById('btnPDF').disabled=false; document.getElementById('btnPDF').style.opacity='1'; let supportName = support==='simply'?'Simplemente apoyado':(support==='fixed-fixed'?'Empotrado-empotrado':'Empotrado-apoyado'); let windParams = {}; if (windMethod === 'auto') { windParams = { method: 'auto', altura: parseFloat(document.getElementById('alturaEdificio').value), grado: document.getElementById('gradoAspereza').value, ce: parseFloat(document.getElementById('ceValor').textContent), vb: parseFloat(document.getElementById('viento_kmh').value)/3.6, cp_ext: parseFloat(document.getElementById('cp_ext').value), cp_int: parseFloat(document.getElementById('cp_int').value), anchura: parseFloat(document.getElementById('anchura').value) }; } else { windParams = { method: 'manual', qe_manual: parseFloat(document.getElementById('qe_manual').value), anchura: parseFloat(document.getElementById('anchura_manual').value) }; } window._lastResults = { projectName: document.getElementById('projectName').value, projectAuthor: document.getElementById('projectAuthor').value, dxfFile: document.getElementById('dropFilename').textContent.replace('✓ ',''), date: new Date().toLocaleDateString(), mat: document.getElementById('matSelect').options[document.getElementById('matSelect').selectedIndex].text, E, rho, A: props.A, Ix: props.Ix, cy: props.cy, Wx: props.Wx, W: props.W, H: props.H, EIx, wkg, L, lim, qWind, dt, ll, Lmax, cls, support: supportName, supportCode: support, coeff: coeff, windMethod, windParams, reactions, pesoTotal_N, torsionEnabled, torsionData, zona: document.getElementById('zonaSelect').value, vkmh: document.getElementById('viento_kmh').value, windData: window._windData||null, geoAddr: geoCoords?geoCoords.address:'—', lat: geoCoords?.lat, lon: geoCoords?.lon }; setStatus('Análisis completado según CTE', 'ok'); }catch(e){ setStatus('Error: '+e.message, 'err'); } });
 
     // ================= ASIGNACIÓN DE EVENTOS =================
     document.getElementById('btnPDF').onclick = generatePDF;
