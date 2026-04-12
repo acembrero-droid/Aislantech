@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Aislantech · Informe de Viento en Persianas · CTE DB-SE-AE corregido</title>
+<title>Aislantech · Informe de Viento en Persianas · UNE-EN 13659</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
@@ -301,7 +301,7 @@
 <div class="hero">
     <div class="container">
         <h1>Resistencia al Viento en <em>Persianas</em></h1>
-        <p>CTE DB-SE-AE · Coeficiente de exposición corregido · Rosa de vientos ERA5 (1950-2024)</p>
+        <p>Cálculo según UNE-EN 13659 · Coeficiente de presión específico Cp=0,18 · ERA5 (1950-2024)</p>
     </div>
 </div>
 
@@ -330,30 +330,18 @@
         </div>
     </div>
 
-    <!-- Dirección y orientación -->
+    <!-- Coeficiente fijo según UNE-EN 13659 -->
     <div class="card">
         <div class="card-header">
             <div class="step-badge">2</div>
-            <div class="card-title">Orientación y coeficientes de presión</div>
+            <div class="card-title">Coeficiente de presión para persianas (UNE-EN 13659)</div>
         </div>
         <div class="card-body">
-            <div class="form-grid">
-                <div class="field">
-                    <label>Incidencia del viento sobre la persiana</label>
-                    <select id="orientacion">
-                        <option value="0">Barlovento (presión directa, Cp=+0.8)</option>
-                        <option value="1">Lateral (succión lateral, Cp=-1.2)</option>
-                        <option value="2">Sotavento (succión trasera, Cp=-0.6)</option>
-                    </select>
-                </div>
-                <div class="field">
-                    <label>Coeficiente de presión interior (Cpi)</label>
-                    <select id="cp_int">
-                        <option value="-0.5">Edificio sellado (Cpi = -0.5)</option>
-                        <option value="0.2">Huecos repartidos (Cpi = +0.2)</option>
-                        <option value="0.0">Muy permeable (Cpi = 0)</option>
-                    </select>
-                </div>
+            <div class="info-note" style="background:#f0f7f0; border-left-color:#2e7d32;">
+                <strong>📜 Coeficiente neto Cp = 0,18</strong><br>
+                Según la norma UNE-EN 13659:2016 (Persianas exteriores) y el Manual de ASEFAVE, para persianas con distancia a la ventana ≤ 0,5 m se adopta un coeficiente de presión específico de <strong>0,18</strong>.<br>
+                Este valor considera la semipermeabilidad del conjunto lama + colchón de aire. La presión de cálculo se obtiene como:<br>
+                <strong>q<sub>e</sub> = q<sub>b</sub> · c<sub>e</sub>(z) · 0,18</strong>
             </div>
         </div>
     </div>
@@ -414,8 +402,7 @@
                 <canvas id="windRoseChart" width="400" height="400" style="max-width: 100%; height: auto;"></canvas>
             </div>
             <div class="info-note">
-                <strong>Nota:</strong> Al localizar una dirección, se consulta el archivo histórico ERA5 desde 1950. Se obtiene la racha máxima absoluta y su dirección de procedencia. El coeficiente de exposición se calcula según CTE DB-SE-AE Anejo D (fórmula logarítmica). Si la racha supera la velocidad básica CTE, se aplica automáticamente (amparado por CTE DB-SE-AE 3.3.1).
-                <br><strong>Relación dirección viento vs orientación fachada:</strong> El viento incide frontalmente (barlovento) cuando su dirección de procedencia coincide con la orientación de la fachada (ej: viento del Sur impacta en fachada Sur).
+                <strong>Nota:</strong> Al localizar una dirección, se consulta el archivo histórico ERA5 desde 1950. Se obtiene la racha máxima absoluta y su dirección de procedencia. El coeficiente de exposición ce(z) se calcula según CTE DB-SE-AE Anejo D (fórmula logarítmica). Si la racha supera la velocidad básica CTE, se aplica automáticamente (amparado por CTE DB-SE-AE 3.3.1).
             </div>
         </div>
     </div>
@@ -450,7 +437,7 @@
 
     <!-- Resultados destacados -->
     <div class="result-card">
-        <div style="font-size: 1rem; opacity: 0.9;">Presión neta de cálculo (q<sub>e</sub>)</div>
+        <div style="font-size: 1rem; opacity: 0.9;">Presión neta de cálculo (q<sub>e</sub>) según UNE-EN 13659</div>
         <div class="pressure-value" id="presionValue">0.00 kN/m²</div>
         <div id="presionPa" style="font-size: 0.9rem;">(0 Pa)</div>
         <div id="claseDisplay" class="clase-badge">Clase --</div>
@@ -483,11 +470,11 @@
 </div>
 
 <footer>
-    <div>Aislantech · Cumplimiento CTE DB-SE-AE · Coeficiente de exposición según Anejo D · Datos históricos: Open-Meteo ERA5</div>
+    <div>Aislantech · Cálculo según UNE-EN 13659 · Coeficiente Cp=0,18 · Datos históricos: Open-Meteo ERA5</div>
 </footer>
 
 <script>
-    // ---------- Coeficiente de exposición CORREGIDO según CTE DB-SE-AE Anejo D ----------
+    // ---------- Coeficiente de exposición según CTE DB-SE-AE Anejo D ----------
     const CTE_PARAMS = {
         "I": { k: 0.156, L: 0.003, Z: 1.0 },
         "II": { k: 0.17,  L: 0.01,  Z: 1.0 },
@@ -507,28 +494,17 @@
     
     function velocidadAPresion(vb_m_s) {
         const rho = 1.25;
-        return 0.5 * rho * (vb_m_s * vb_m_s) / 1000;
+        return 0.5 * rho * (vb_m_s * vb_m_s) / 1000; // kN/m²
     }
     
-    function getCpExterior(orient) {
-        if (orient === "0") return 0.8;
-        if (orient === "1") return -1.2;
-        if (orient === "2") return -0.6;
-        return 0.8;
-    }
+    const CP_PERSIANA = 0.18;
     
-    // CORRECCIÓN: Incidencia frontal cuando dirección del viento (procedencia) COINCIDE con orientación de la fachada
     function evaluarIncidencia(dirRacha, orientFachada) {
         if (!dirRacha || !orientFachada) return null;
-        // Direcciones opuestas (para sotavento)
         const opuestas = { 'N':'S', 'S':'N', 'E':'O', 'O':'E', 'NE':'SO', 'SO':'NE', 'SE':'NO', 'NO':'SE' };
-        if (dirRacha === orientFachada) {
-            return "frontal (barlovento, impacto directo)";
-        } else if (opuestas[dirRacha] === orientFachada) {
-            return "trasera (sotavento, succión)";
-        } else {
-            return "incidencia oblicua – considerar el caso más desfavorable (frontal)";
-        }
+        if (dirRacha === orientFachada) return "frontal (barlovento, impacto directo)";
+        else if (opuestas[dirRacha] === orientFachada) return "trasera (sotavento, succión)";
+        else return "incidencia oblicua – considerar el caso más desfavorable (frontal)";
     }
     
     let geoCoords = null;
@@ -537,7 +513,6 @@
     let heightPressureChart = null;
     let historicalRecord = { maxKmh: 0, date: '', direction: '', perDirectionMax: new Array(8).fill(0), observatory: '' };
     
-    // Colores para las áreas de clase (pastel)
     const classColors = [
         'rgba(200,230,200,0.5)',   // Clase 0-1
         'rgba(230,230,180,0.5)',   // Clase 1-2
@@ -548,22 +523,19 @@
     ];
     const classLabels = ['Clase 0 (0-50 Pa)', 'Clase 1 (50-100 Pa)', 'Clase 2 (100-150 Pa)', 'Clase 3 (150-250 Pa)', 'Clase 4 (250-400 Pa)', 'Clase 5 (400-600 Pa)', 'Clase 6 (>600 Pa)'];
     
-    // Plugin para dibujar áreas y leyenda personalizada
     const classAreaPlugin = {
         id: 'classArea',
         afterDraw(chart) {
-            const { ctx, chartArea: { top, bottom, left, right }, scales } = chart;
+            const { ctx, chartArea: { left, right, bottom }, scales } = chart;
             const thresholds = [50, 100, 150, 250, 400, 600];
             const yMax = scales.y.max;
             let prevY = bottom;
-            let prevValue = 0;
             const allThresholds = [...thresholds, Infinity];
             for (let i = 0; i < allThresholds.length; i++) {
                 const thresh = allThresholds[i];
                 const yPos = scales.y.getPixelForValue(Math.min(thresh, yMax));
                 ctx.fillStyle = classColors[i] || 'rgba(180,180,180,0.3)';
                 ctx.fillRect(left, Math.min(prevY, yPos), right - left, Math.abs(prevY - yPos));
-                // Dibujar etiquetas de clase en el margen derecho
                 ctx.save();
                 ctx.font = 'bold 10px "Inter"';
                 ctx.fillStyle = '#696969';
@@ -579,18 +551,15 @@
     
     function updateHeightPressureChart() {
         const vb_final = parseFloat(document.getElementById('racha_historica').value) || parseFloat(document.getElementById('zona').value);
-        const orientacion = document.getElementById('orientacion').value;
-        const cp_ext = getCpExterior(orientacion);
-        const cp_int = parseFloat(document.getElementById('cp_int').value);
-        const cp_neto = Math.abs(cp_ext - cp_int);
         const grado = document.getElementById('aspereza').value;
         const qb = velocidadAPresion(vb_final);
         
         const heights = [];
         const pressures = [];
-        for (let z = 3; z <= 50; z += 1) {
+        // Escala hasta 70 metros (paso 1 m)
+        for (let z = 3; z <= 70; z += 1) {
             const ce = calcCe(z, grado);
-            const qe_kN = qb * ce * cp_neto;
+            const qe_kN = qb * ce * CP_PERSIANA;
             const pa = qe_kN * 1000;
             heights.push(z);
             pressures.push(pa);
@@ -653,11 +622,13 @@
                             }
                         }
                     },
-                    legend: { position: 'top' }
+                    legend: { display: false }  // Eliminar leyenda superior
                 },
                 scales: {
                     x: {
-                        title: { display: true, text: 'Altura del edificio z (m)', font: { weight: 'bold' } }
+                        title: { display: true, text: 'Altura del edificio z (m)', font: { weight: 'bold' } },
+                        min: 3,
+                        max: 70
                     },
                     y: {
                         title: { display: true, text: 'Presión neta (Pa)', font: { weight: 'bold' } },
@@ -668,7 +639,7 @@
             plugins: [classAreaPlugin]
         });
         
-        // Generar leyenda HTML personalizada debajo del gráfico
+        // Leyenda personalizada inferior
         const legendDiv = document.getElementById('pressureLegend');
         legendDiv.innerHTML = '';
         for (let i = 0; i < classColors.length; i++) {
@@ -700,15 +671,11 @@
             }
         }
         
-        const orientacion = document.getElementById('orientacion').value;
-        const cp_ext = getCpExterior(orientacion);
-        const cp_int = parseFloat(document.getElementById('cp_int').value);
-        const cp_neto = Math.abs(cp_ext - cp_int);
         const z = parseFloat(document.getElementById('altura').value);
         const grado = document.getElementById('aspereza').value;
         const ce = calcCe(z, grado);
         const qb = velocidadAPresion(vb_final);
-        let qe = qb * ce * cp_neto;
+        let qe = qb * ce * CP_PERSIANA;
         qe = Math.max(qe, 0.05);
         const pa = qe * 1000;
         
@@ -733,7 +700,7 @@
         const dirRacha = document.getElementById('dir_racha').value;
         const orientFachada = document.getElementById('orient_fachada').value;
         let incidencia = evaluarIncidencia(dirRacha, orientFachada);
-        document.getElementById('incidenciaMsg').innerHTML = incidencia ? `🧭 Incidencia: ${incidencia}` : "";
+        document.getElementById('incidenciaMsg').innerHTML = incidencia ? `🧭 Incidencia (solo informativa): ${incidencia}` : "";
         
         lastData = {
             proj: document.getElementById('projName').value || 'Sin nombre',
@@ -743,30 +710,23 @@
             dir_racha: dirRacha || 'No especificada',
             orient_fachada: orientFachada || 'No especificada',
             incidencia: incidencia || 'No evaluada',
-            orientacion_text: document.getElementById('orientacion').options[document.getElementById('orientacion').selectedIndex].text,
-            cp_ext, cp_int, cp_neto, z, 
-            gradoAspereza: grado,
+            z, gradoAspereza: grado,
             aspereza_text: document.getElementById('aspereza').options[document.getElementById('aspereza').selectedIndex].text,
             ce, qb, qe, pa, clase,
             geoAddr: geoCoords ? geoCoords.address : 'No localizada',
             observatory: historicalRecord.observatory,
-            historicalRecord: historicalRecord.maxKmh > 0 ? historicalRecord : null
+            historicalRecord: historicalRecord.maxKmh > 0 ? historicalRecord : null,
+            cp_persiana: CP_PERSIANA
         };
         document.getElementById('btnPDF').style.display = 'flex';
         
         updateHeightPressureChart();
     }
     
-    // Colores pastel para la rosa de vientos (8 colores diferentes)
     const pastelColors = [
-        'rgba(255, 182, 193, 0.6)', // light pink
-        'rgba(255, 218, 185, 0.6)', // light orange
-        'rgba(255, 255, 180, 0.6)', // light yellow
-        'rgba(200, 230, 200, 0.6)', // light green
-        'rgba(173, 216, 230, 0.6)', // light blue
-        'rgba(221, 160, 221, 0.6)', // light purple
-        'rgba(255, 192, 203, 0.6)', // light rose
-        'rgba(210, 180, 140, 0.6)'  // tan
+        'rgba(255, 182, 193, 0.6)', 'rgba(255, 218, 185, 0.6)', 'rgba(255, 255, 180, 0.6)',
+        'rgba(200, 230, 200, 0.6)', 'rgba(173, 216, 230, 0.6)', 'rgba(221, 160, 221, 0.6)',
+        'rgba(255, 192, 203, 0.6)', 'rgba(210, 180, 140, 0.6)'
     ];
     
     async function fetchWindRoseAuto(lat, lon, locationName) {
@@ -822,10 +782,7 @@
             let dirCode = absDir.split(' ')[0];
             const dirSelect = document.getElementById('dir_racha');
             for (let i=0; i<dirSelect.options.length; i++) {
-                if (dirSelect.options[i].value === dirCode) {
-                    dirSelect.selectedIndex = i;
-                    break;
-                }
+                if (dirSelect.options[i].value === dirCode) { dirSelect.selectedIndex = i; break; }
             }
             
             const vb_zona = parseFloat(document.getElementById('zona').value);
@@ -862,9 +819,7 @@
                             ticks: { stepSize: 20 }
                         }
                     },
-                    plugins: {
-                        legend: { position: 'bottom' }
-                    }
+                    plugins: { legend: { position: 'bottom' } }
                 }
             });
             document.getElementById('windroseCanvasContainer').style.display = 'block';
@@ -930,7 +885,6 @@
         } catch(e) { document.getElementById('sugerenciaAspereza').innerHTML = '❌ No se pudo estimar'; }
     }
     
-    // ---------- PDF de 4 páginas mejorado estéticamente ----------
     async function generarPDF() {
         if (!lastData) { alert("Por favor, calcule primero los resultados."); return; }
         const { jsPDF } = window.jspdf;
@@ -941,7 +895,7 @@
         const C_GREY = [80, 80, 80];
         const C_BG = [248, 249, 250];
 
-        // Página 1 - Portada mejorada
+        // Página 1
         doc.setFillColor(...C_DARK);
         doc.rect(0, 0, 15, 297, 'F');
         doc.setFont("helvetica", "bold");
@@ -995,7 +949,7 @@
         doc.setTextColor(...C_GREY);
         doc.text("Página 1 de 4", 107.5, 285, {align: "center"});
 
-        // Página 2 - Memoria técnica
+        // Página 2
         doc.addPage();
         doc.setFillColor(...C_DARK);
         doc.rect(0, 0, 210, 15, 'F');
@@ -1013,48 +967,57 @@
             ["Racha máxima registrada", d.racha_historica ? `${d.racha_historica.toFixed(1)} m/s (${d.fuente_racha})` : "No disponible"],
             ["Dirección de la racha (procedencia)", d.dir_racha],
             ["Orientación de la fachada", d.orient_fachada],
-            ["Incidencia del viento", d.incidencia],
+            ["Incidencia del viento (informativa)", d.incidencia],
             ["Observatorio de referencia", d.observatory],
             ["Grado de Aspereza", d.aspereza_text],
             ["Altura del edificio (z)", `${d.z} metros`]
         ];
         doc.autoTable({ startY: y+5, body: tableLoc, theme: 'striped', styles: { fontSize: 8.5, cellPadding: 2.5 }, columnStyles: {0: {cellWidth: 55, fontStyle:'bold'}}, margin: {left:20,right:20} });
         y = doc.lastAutoTable.finalY + 12;
-        doc.text("2. COEFICIENTES Y CÁLCULO DINÁMICO", 20, y);
-        const tableCalc = [
-            ["Coef. Exposición (ce)", d.ce.toFixed(3)],
-            ["Coef. Presión Exterior (Cpe)", d.cp_ext.toFixed(1)],
-            ["Coef. Presión Interior (Cpi)", d.cp_int.toFixed(1)],
-            ["Coef. Neto (Cp,net)", d.cp_neto.toFixed(2)],
-            ["Presión Dinámica (qb)", `${d.qb.toFixed(4)} kN/m² (ρ aire = 1.25 kg/m³)`]
-        ];
-        doc.autoTable({ startY: y+5, body: tableCalc, theme: 'grid', styles: { fontSize: 8.5, cellPadding: 2.5 }, columnStyles: {0: {cellWidth: 55, fontStyle:'bold'}}, margin: {left:20,right:20} });
-        y = doc.lastAutoTable.finalY + 12;
-        doc.text("3. JUSTIFICACIÓN NORMATIVA Y NOTAS COMPLEMENTARIAS", 20, y);
+        doc.text("2. JUSTIFICACIÓN DEL COEFICIENTE DE PRESIÓN (Cp = 0,18)", 20, y);
         doc.setFont("helvetica", "normal");
         doc.setFontSize(8);
         doc.setTextColor(...C_GREY);
-        const just = [
-            "• La presión estática equivalente se ha determinado siguiendo el Código Técnico de la Edificación (DB-SE-AE).",
-            `• Se ha aplicado la fórmula qe = qb · ce(z) · Cp,net, resultando en una presión final de ${d.qe.toFixed(3)} kN/m² (${Math.round(d.pa)} Pa).`,
-            `• El coeficiente de exposición se ha calculado según el Anejo D: ce = F·(F+7k), con F = k·ln(z/L).`,
-            `• Para grado ${d.gradoAspereza} y altura ${d.z} m, ce = ${d.ce.toFixed(3)}.`,
-            "• La clasificación de la persiana se asigna según UNE-EN 13659, la cual se verifica mediante ensayo normalizado.",
-            "• Se ha considerado el caso más desfavorable de presión neta (presión exterior positiva y succión interior, o viceversa).",
-            "• La UNE-EN 13659 también exige verificar el sentido de arrancamiento (succión exterior); en este cálculo se ha incluido el valor absoluto del coeficiente neto.",
-            "• El uso de la racha máxima histórica (ERA5) como velocidad de cálculo está amparado por el CTE DB-SE-AE 3.3.1, que permite emplear datos históricos justificados cuando superen la velocidad básica reglamentaria.",
-            "• La incidencia del viento se ha evaluado correctamente: frontal (barlovento) cuando la dirección de procedencia del viento coincide con la orientación de la fachada."
+        const justificacionCp = [
+            "• Según la norma UNE-EN 13659:2016 (Persianas exteriores), para distancia ≤ 0,5 m se adopta Cp = 0,18.",
+            "• El Manual de ASEFAVE prescribe: qe = qb · ce(z) · 0,18.",
+            "• Considera la semipermeabilidad de las lamas y el colchón de aire.",
+            "• La presión de seguridad ps debe cumplir: ps ≥ qe (con ρ=1,25 kg/m³).",
+            "• El método de ensayo asociado es la UNE-EN 1932."
         ];
         let txtY = y+6;
-        for (let line of just) {
+        for (let line of justificacionCp) {
             const lines = doc.splitTextToSize(line, 170);
             doc.text(lines, 25, txtY);
             txtY += lines.length * 4.5;
         }
+        txtY += 6;
+        doc.text("3. COEFICIENTES Y CÁLCULO DINÁMICO", 20, txtY);
+        const tableCalc = [
+            ["Coef. Exposición (ce)", d.ce.toFixed(3)],
+            ["Coef. Presión para persianas (Cp)", d.cp_persiana.toFixed(2)],
+            ["Presión Dinámica (qb)", `${d.qb.toFixed(4)} kN/m²`],
+            ["Presión Neta (qe)", `${d.qe.toFixed(3)} kN/m² (${Math.round(d.pa)} Pa)`]
+        ];
+        doc.autoTable({ startY: txtY+5, body: tableCalc, theme: 'grid', styles: { fontSize: 8.5, cellPadding: 2.5 }, columnStyles: {0: {cellWidth: 55, fontStyle:'bold'}}, margin: {left:20,right:20} });
+        y = doc.lastAutoTable.finalY + 12;
+        doc.text("4. NOTAS COMPLEMENTARIAS", 20, y);
+        doc.setFont("helvetica", "normal");
         doc.setFontSize(8);
+        const notas = [
+            "• Clasificación según UNE-EN 13659 (Clase 1 a 6).",
+            "• ce(z) según CTE DB-SE-AE Anejo D: ce = F·(F+7k).",
+            "• Racha histórica aplicada si supera vb (CTE 3.3.1)."
+        ];
+        txtY = y+6;
+        for (let line of notas) {
+            const lines = doc.splitTextToSize(line, 170);
+            doc.text(lines, 25, txtY);
+            txtY += lines.length * 4.5;
+        }
         doc.text("Página 2 de 4", 107.5, 285, {align: "center"});
 
-        // Página 3 - Rosa de vientos histórica
+        // Página 3 - Rosa de vientos
         doc.addPage();
         doc.setFillColor(...C_DARK);
         doc.rect(0, 0, 210, 15, 'F');
@@ -1071,7 +1034,6 @@
             doc.setTextColor(...C_GREY);
             doc.text(`Fecha: ${d.historicalRecord.date} · Dirección (procedencia): ${d.historicalRecord.direction}`, 20, 50);
             doc.text(`Observatorio: ${d.observatory}`, 20, 58);
-            
             const canvas = document.getElementById('windRoseChart');
             if (canvas && windRoseChart) {
                 try {
@@ -1079,8 +1041,6 @@
                     doc.addImage(imgData, 'PNG', 30, 70, 150, 150);
                 } catch(e) { console.warn("Error al añadir gráfico"); }
             }
-            doc.setFontSize(8);
-            doc.setTextColor(...C_GREY);
             doc.text("La rosa muestra la racha máxima histórica para cada dirección de procedencia.", 20, 240);
             doc.text("Estos datos se han utilizado para determinar la velocidad de cálculo más desfavorable.", 20, 247);
         } else {
@@ -1088,7 +1048,7 @@
         }
         doc.text("Página 3 de 4", 107.5, 285, {align: "center"});
 
-        // Página 4 - Gráfico presión vs altura
+        // Página 4 - Gráfico presión vs altura (con eje hasta 70 m)
         doc.addPage();
         doc.setFillColor(...C_DARK);
         doc.rect(0, 0, 210, 15, 'F');
@@ -1103,8 +1063,6 @@
                 doc.setTextColor(...C_GREY);
                 doc.text("El gráfico muestra la evolución de la presión neta (Pa) con la altura del edificio z (m).", 20, 145);
                 doc.text("Las áreas de color delimitan las clases según UNE-EN 13659.", 20, 152);
-                // Añadir leyenda de clases
-                doc.setFontSize(7);
                 let legendY = 162;
                 for (let i=0; i<classColors.length; i++) {
                     const rgb = classColors[i].match(/\d+/g).slice(0,3).map(Number);
@@ -1126,14 +1084,11 @@
         doc.save(`Informe_Viento_Persianas_${d.proj.replace(/\s/g,'_')}.pdf`);
     }
     
-    // Event listeners
     document.getElementById('btnGeolocate').onclick = geolocate;
     document.getElementById('btnEstimarGrado').onclick = estimarAspereza;
     document.getElementById('btnCalcular').onclick = calcularPresion;
     document.getElementById('btnPDF').onclick = generarPDF;
     document.getElementById('zona').addEventListener('change', calcularPresion);
-    document.getElementById('orientacion').addEventListener('change', calcularPresion);
-    document.getElementById('cp_int').addEventListener('change', calcularPresion);
     document.getElementById('altura').addEventListener('input', calcularPresion);
     document.getElementById('aspereza').addEventListener('change', calcularPresion);
     document.getElementById('racha_historica').addEventListener('input', calcularPresion);
