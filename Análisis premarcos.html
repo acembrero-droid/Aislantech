@@ -3,13 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Analizador de Montantes Verticales · DXF · Aislantech</title>
+<title>Analizador de Montantes Verticales · DXF · Aislantech · CTE / Eurocódigo</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Open+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
 <style>
-    /* ========== ESTILOS (idénticos a versión anterior) ========== */
+    /* ========== ESTILOS (sin cambios) ========== */
     :root { --color-primary: #EDD00E; --color-primary-dark: #B8860B; --color-primary-light: #FFF8DC; --color-secondary: #3E3E3E; --color-secondary-dark: #696969; --color-secondary-light: #D3D3D3; --color-light: #F5F5F5; --color-dark: #333333; --color-gray: #666666; --color-white: #FFFFFF; --transition: all 0.3s ease; --border-radius: 8px; --box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05); --box-shadow-hover: 0 15px 30px rgba(0, 0, 0, 0.1); }
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: 'Open Sans', sans-serif; color: var(--color-gray); background-color: var(--color-light); line-height: 1.6; }
@@ -85,13 +85,13 @@
     <div class="header-container">
         <a href="../" class="logo-text" style="text-decoration: none;">
             <div><span class="logo-aislan">AISLAN</span><span class="logo-tech">TECH</span></div>
-            <div class="logo-tagline">Análisis estructural de perfiles para premarcos </div>
+            <div class="logo-tagline">Ingeniería estructural · Fachadas ventiladas</div>
         </a>
-        <nav><ul><li><a href="#">Herramientas</a></li><li><a href="#">Análisis DXF</a></li><li><a href="./#footer">Contacto</a></li></ul></nav>
+        <nav><ul><li><a href="#">Herramientas</a></li><li><a href="#">Análisis DXF</a></li><li><a href="../footer#">Contacto</a></li></ul></nav>
     </div>
 </header>
 <div class="hero-tool">
-    <div class="container"><h1>Analizador de Montantes Verticales <em>DXF</em></h1><p>Verificación de flecha · Cálculo de anclajes · Torsión automática desde DXF · Informe técnico CTE</p></div>
+    <div class="container"><h1>Analizador de Montantes Verticales <em>DXF</em></h1><p>Verificación de flecha · Cálculo de anclajes · Torsión automática desde DXF · Informe técnico CTE / Eurocódigo</p></div>
 </div>
 <div class="container">
     <div style="display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.5rem;">
@@ -105,12 +105,12 @@
     <div class="card"><div class="card-header"><div class="step-badge">2</div><div class="card-title">Material del perfil</div></div><div class="card-body">
         <div class="form-grid">
             <div class="form-group"><label>Material predefinido</label><select id="matSelect"><option value="pvc_upvc">PVC uPVC</option><option value="aluminio">Aluminio</option><option value="acero">Acero</option><option value="fenolico">Fenólico</option><option value="madera">Madera</option><option value="custom">Personalizado</option></select><div class="chip-row" id="materialChips"><button class="chip active" data-mat="pvc_upvc">PVC</button><button class="chip" data-mat="aluminio">Aluminio</button><button class="chip" data-mat="acero">Acero</button><button class="chip" data-mat="fenolico">Fenólico</button><button class="chip" data-mat="madera">Madera</button><button class="chip" data-mat="custom">Custom</button></div></div>
-            <div class="form-group"><label>Tipo de perfil (opcional)</label><input type="text" id="profileType" placeholder="Ej: Tubular 40x40x2 mm, Omega 2 mm, etc."></div>
+            <div class="form-group"><label>Tipo de perfil (opcional)</label><input type="text" id="profileType" placeholder="Ej: Perfil Z conformado 2 mm"></div>
             <div class="form-group"><label>Módulo E (MPa)</label><div class="input-group"><input type="number" id="modE" value="3000"><span class="input-unit">MPa</span></div></div>
             <div class="form-group"><label>Densidad ρ (kg/m³)</label><div class="input-group"><input type="number" id="density" value="1450"><span class="input-unit">kg/m³</span></div></div>
         </div>
     </div></div>
-    <!-- STEP 3 VIENTO Y LOCALIZACIÓN (con ce analítico) -->
+    <!-- STEP 3 VIENTO Y LOCALIZACIÓN -->
     <div class="card"><div class="card-header"><div class="step-badge">3</div><div class="card-title">Carga neta de viento · CTE DB-SE-AE</div></div><div class="card-body">
         <div style="background:var(--color-primary-light); border-radius:var(--border-radius); padding:1rem; margin-bottom:1rem;">
             <div class="form-grid">
@@ -130,7 +130,11 @@
             <div class="chip-row" id="zonaChips"><button class="chip" data-zona="A">Zona A</button><button class="chip" data-zona="B">Zona B</button><button class="chip active" data-zona="C">Zona C</button><button class="chip" data-zona="custom">Personalizada</button></div>
             <div class="form-grid" style="margin-top:1rem;"><div class="form-group"><label>Altura del edificio z (m)</label><div class="input-group"><input type="number" id="alturaEdificio" value="6" step="1" min="0"><span class="input-unit">m</span></div></div><div class="form-group"><label>Grado de aspereza del entorno</label><select id="gradoAspereza"><option value="I">I - Mar o costa expuesta</option><option value="II">II - Campo abierto sin obstáculos</option><option value="III">III - Zona rural con obstáculos aislados</option><option value="IV" selected>IV - Zona urbana / industrial</option><option value="V">V - Centro urbano denso</option></select><div style="display:flex; gap:0.5rem; margin-top:0.3rem;"><button type="button" class="small-btn" id="btnEstimarGrado" style="background:var(--color-primary);">🔍 Estimar desde ubicación</button></div></div></div>
             <div class="wind-card" style="margin-top:0.5rem;"><div style="font-weight:700; margin-bottom:0.3rem;">📐 Coeficiente de exposición c<sub>e</sub> (CTE fórmula analítica)</div><div id="ceFormula" style="font-size:0.75rem;"></div><div class="wind-result-badge" id="ceValor" style="margin-top:0.3rem; background:#B8860B;">—</div></div>
-            <div class="form-grid" style="margin-top:1rem;"><div class="form-group"><label>Coeficiente de presión exterior C<sub>p,ext</sub></label><div class="input-group"><input type="number" id="cp_ext" value="1.3" step="0.05"><span class="input-unit">—</span></div></div><div class="form-group"><label>Coeficiente de presión interior C<sub>p,int</sub></label><div class="input-group"><input type="number" id="cp_int" value="0.0" step="0.1"><span class="input-unit">—</span></div><span class="hint" style="font-size:0.65rem;">+0,2 sobrepresión / -0,3 depresión</span></div><div class="form-group"><label>Anchura tributaria (mm)</label><div class="input-group"><input type="number" id="anchura" value="700"><span class="input-unit">mm</span></div></div></div>
+            <div class="form-grid" style="margin-top:1rem;">
+                <div class="form-group"><label>Coeficiente de presión exterior C<sub>p,ext</sub></label><div class="input-group"><input type="number" id="cp_ext" value="1.3" step="0.05"><span class="input-unit">—</span></div><span class="hint" style="font-size:0.65rem;">Zona de esquina: hasta 1.5; centro: 0.8</span></div>
+                <div class="form-group"><label>Coeficiente de presión interior C<sub>p,int</sub></label><div class="input-group"><input type="number" id="cp_int" value="0.0" step="0.1"><span class="input-unit">—</span></div><span class="hint" style="font-size:0.65rem;">+0,2 sobrepresión / -0,3 depresión</span></div>
+                <div class="form-group"><label>Anchura tributaria (mm)</label><div class="input-group"><input type="number" id="anchura" value="700"><span class="input-unit">mm</span></div></div>
+            </div>
         </div>
         <div id="manualBlock" style="display:none;"><div class="form-group"><label>Presión neta de viento q<sub>e,neta</sub> (kN/m²)</label><div class="input-group"><input type="number" id="qe_manual" value="2.28" step="0.1"><span class="input-unit">kN/m²</span></div><span class="hint" style="font-size:0.65rem;">Valor proporcionado por ingeniería, incluye efecto de presión interior y exterior</span></div><div class="form-group"><label>Anchura tributaria (mm)</label><div class="input-group"><input type="number" id="anchura_manual" value="700"><span class="input-unit">mm</span></div></div></div>
         <div class="wind-card" style="margin-top:1rem;"><div style="font-weight:700; margin-bottom:0.5rem;">⚡ Resultado · Carga lineal neta de viento</div><div id="windFormula" style="font-size:0.75rem;"></div><div class="wind-result-badge" id="windResult" style="margin-top:0.6rem;">—</div></div>
@@ -177,7 +181,7 @@
     <div id="results" style="display:none;">
         <div class="result-card"><div class="result-header">Sección transversal extraída</div><div class="card-body"><div style="background:var(--color-light); border-radius:var(--border-radius); padding:0.8rem; text-align:center;"><svg id="sectionSvg" viewBox="0 0 200 120" style="width:100%; max-height:130px;"></svg><span id="sectionDims" style="font-size:0.7rem;"></span></div><div class="props-grid" id="propsGrid"></div></div></div>
         <div class="deflect-status" id="deflectStatus"><span class="deflect-big" id="deflectVal">—</span><span id="deflectMsg"></span></div>
-        <div class="result-card"><div class="result-header">Esfuerzos en anclajes (techo y suelo)</div><div class="card-body"><div class="anchor-result" id="anchorResult"><p><strong>📌 Carga de viento horizontal (q<sub>viento</sub>)</strong>: <span id="anchorQlineal">—</span> N/mm</p><p><strong>🪢 Reacciones horizontales por viento:</strong></p><div id="horizontalReactions"></div><p><strong>⬇️ Carga vertical (peso propio)</strong>: <span id="anchorPeso">—</span> N</p></div></div></div>
+        <div class="result-card"><div class="result-header">Esfuerzos en anclajes (techo y suelo)</div><div class="card-body"><div class="anchor-result" id="anchorResult"><p><strong>📌 Carga de viento horizontal (q<sub>viento</sub>)</strong>: <span id="anchorQlineal">—</span> N/mm</p><p><strong>🪢 Reacciones horizontales por viento:</strong></p><div id="horizontalReactions"></div><p><strong>⬇️ Carga vertical (peso propio)</strong>: <span id="anchorPeso">—</span> N</p><p><strong>➕ Carga superficial estimada (50 kg/m²)</strong>: <span id="anchorSuperficial">—</span> N</p><p><strong>📦 Carga vertical total (peso propio + sobrecarga)</strong>: <span id="anchorTotalVertical">—</span> N</p></div></div></div>
         <div class="result-card" id="torsionResultCard" style="display:none;"><div class="result-header">Análisis de torsión</div><div class="card-body"><div class="torsion-result" id="torsionResult"><p><strong>🔁 Momento torsor distribuido m<sub>t</sub></strong>: <span id="torsionMt">—</span> N·mm/mm ( = N )</p><p><strong>🧮 Tensión tangencial máxima (St. Venant)</strong>: <span id="torsionTau">—</span> MPa</p><p><strong>🔄 Giro total φ (ángulo de torsión)</strong>: <span id="torsionPhi">—</span> rad ( <span id="torsionPhiDeg">—</span> grados )</p><p style="font-size:0.8rem;">Nota: El cálculo supone extremos libres para el giro (caso más desfavorable). Para secciones abiertas, considerar alabeo.</p></div></div></div>
         <div class="result-card"><div class="result-header">Gráficas de flecha y rigidez</div><div class="card-body"><div class="charts-grid"><div class="chart-box"><canvas id="chartFlecha"></canvas></div><div class="chart-box"><canvas id="chartBar"></canvas></div><div class="chart-box"><canvas id="chartLmax"></canvas></div><div class="chart-box"><canvas id="chartEI"></canvas></div></div></div></div>
     </div>
@@ -228,7 +232,7 @@
         return qLineal; 
     }
 
-    // ================= GEOLOCALIZACIÓN Y VIENTO HISTÓRICO (sin cambios) =================
+    // ================= GEOLOCALIZACIÓN Y VIENTO HISTÓRICO =================
     function inferZonaByCoords(lat, lon) { if (lat < 30) return 'C'; if (lon < -7.5 && lat > 42) return 'C'; if (lon < -6.5 && lat > 37 && lat < 42) return 'C'; if (lat < 37 && lon < -5) return 'C'; if (lon > -0.5 && lat >= 36 && lat <= 43) return 'C'; if (lon > -1.5 && lat < 39) return 'B'; if (lon > 0 && lat > 41) return 'B'; if (lat > 41.5 && lon > -3.5) return 'A'; if (lat > 40 && lon > -2) return 'A'; if (lat > 39 && lat < 42 && lon > -5 && lon < -1.5) return 'A'; return 'B'; }
     async function estimarGradoDesdeUbicacion() { if (!geoCoords) { setGeoStatus('Primero localiza una dirección con el botón "Localizar"', 'err'); return; } setGeoStatus('Estimando grado de aspereza según ubicación...', ''); try { const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${geoCoords.lat}&lon=${geoCoords.lon}&format=json&accept-language=es`); const data = await res.json(); const address = data.address || {}; const cityType = address.city || address.town || address.village || address.hamlet || ''; const grandesCiudades = ['madrid', 'barcelona', 'valencia', 'sevilla', 'zaragoza', 'málaga', 'bilbao', 'palma']; let grado = 'IV'; if (grandesCiudades.some(c => cityType.toLowerCase().includes(c))) grado = 'V'; else if (cityType && (cityType.includes('ciudad') || cityType.includes('city'))) grado = 'IV'; else if (cityType && (cityType.includes('pueblo') || cityType.includes('village'))) grado = 'III'; else if (cityType === '') grado = 'II'; const isCoastal = (geoCoords.lon < -6 && geoCoords.lat < 43) || (geoCoords.lon > -1 && geoCoords.lat < 43 && geoCoords.lat > 36); if (isCoastal && grado !== 'V') grado = 'II'; document.getElementById('gradoAspereza').value = grado; actualizarCe(); recalcViento(); setGeoStatus(`Grado estimado: ${grado} (${grado==='I'?'costa abierta':grado==='II'?'campo abierto':grado==='III'?'rural':grado==='IV'?'urbano':'centro urbano denso'})`, 'ok'); } catch(e) { setGeoStatus('No se pudo estimar grado automáticamente. Seleccione manualmente.', 'err'); } }
     async function geolocateNow() { let addr = document.getElementById('addressInput').value.trim(); if (!addr) { if (!navigator.geolocation) { setGeoStatus('GPS no disponible.', 'err'); return; } navigator.geolocation.getCurrentPosition(pos => { geoCoords = { lat: pos.coords.latitude, lon: pos.coords.longitude, address: 'Ubicación GPS' }; let zona = inferZonaByCoords(geoCoords.lat, geoCoords.lon); applyZona(zona); setGeoStatus(`✓ GPS: ${geoCoords.lat.toFixed(4)}°, ${geoCoords.lon.toFixed(4)}° → Zona ${zona}`, 'ok'); }, () => setGeoStatus('Error GPS', 'err')); return; } setGeoStatus('⏳ Geocodificando...'); try { let res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(addr)}&countrycodes=es&format=json&limit=1&accept-language=es`, { signal: AbortSignal.timeout(8000) }); let data = await res.json(); if (!data.length) throw new Error(); let lat = parseFloat(data[0].lat), lon = parseFloat(data[0].lon), display = data[0].display_name; geoCoords = { lat, lon, address: display.split(',').slice(0,3).join(',') }; let zona = inferZonaByCoords(lat, lon); applyZona(zona); document.getElementById('addressInput').value = geoCoords.address; setGeoStatus(`✓ ${geoCoords.address} → Zona CTE ${zona}`, 'ok'); } catch(e) { setGeoStatus('❌ No se pudo localizar', 'err'); } }
@@ -270,7 +274,7 @@
     function toggleTorsionMode() { torsionAutoMode = !torsionAutoMode; const btn = document.getElementById('toggleTorsionModeBtn'); const manualBlock = document.getElementById('torsionManualBlock'); const autoBlock = document.getElementById('torsionAutoBlock'); const labelSpan = document.getElementById('torsionModeLabel'); if (torsionAutoMode) { btn.classList.add('on'); labelSpan.innerText = 'Automático (desde DXF)'; manualBlock.style.display = 'none'; autoBlock.style.display = 'block'; } else { btn.classList.remove('on'); labelSpan.innerText = 'Manual (introducir datos)'; manualBlock.style.display = 'block'; autoBlock.style.display = 'none'; } }
     function autoCalculateTorsion() { if (lastSectionWidth === 0 || lastSectionHeight === 0) { alert('Primero realiza el análisis de la sección (pulsa "Calcular flecha...")'); return; } const t = parseFloat(document.getElementById('wallThickness').value); if (t <= 0) { alert('Introduce un espesor de pared válido (>0)'); return; } const width = lastSectionWidth; const height = lastSectionHeight; const Am = (width - t) * (height - t); const Pm = 2 * ((width - t) + (height - t)); const It = 4 * Am * Am / (Pm / t); const loadPos = document.getElementById('loadPosition').value; let e = (loadPos === 'face') ? width / 2 : 0; const E = parseFloat(document.getElementById('modE').value); const nu = parseFloat(document.getElementById('poisson').value); const G = E / (2 * (1 + nu)); document.getElementById('eccentricity').value = e.toFixed(1); document.getElementById('G_torsion').value = G.toFixed(0); document.getElementById('It').value = It.toFixed(0); document.getElementById('autoTorsionInfo').innerHTML = `Dimensiones extraídas: ${width.toFixed(1)} × ${height.toFixed(1)} mm<br>t = ${t} mm → Am = ${Am.toFixed(0)} mm², Pm = ${Pm.toFixed(0)} mm<br>It = ${It.toFixed(0)} mm⁴, e = ${e.toFixed(1)} mm<br>G = ${G.toFixed(0)} MPa`; alert(`Valores calculados:\n- It = ${It.toFixed(0)} mm⁴\n- e = ${e.toFixed(1)} mm\n- G = ${G.toFixed(0)} MPa\n\nSe han actualizado los campos internos.`); }
     
-    // ================= PARSEADOR DXF MEJORADO =================
+    // ================= PARSEADOR DXF =================
     function bulgeToArc(x1,y1,x2,y2,bulge,N=10){
         if(Math.abs(bulge)<1e-10) return [[x2,y2]];
         const theta=4*Math.atan(bulge);
@@ -513,7 +517,7 @@
     function getDeflectionCoefficient(support){ switch(support){ case 'simply': return 5/384; case 'fixed-fixed': return 1/384; case 'fixed-pinned': return 0.005416; default: return 1/384; } }
     function getHorizontalReactions(support, q, L){ if (support === 'simply') { let R = q * L / 2; return { top: R, bottom: R, description: "Reacción igual en ambos apoyos: R = q·L/2" }; } else if (support === 'fixed-fixed') { let R = q * L / 2; return { top: R, bottom: R, description: "Reacción igual en ambos apoyos (empotramiento): R = q·L/2" }; } else if (support === 'fixed-pinned') { let R_top = (5/8) * q * L; let R_bottom = (3/8) * q * L; return { top: R_top, bottom: R_bottom, description: "Reacción mayor en el empotramiento (superior): R_sup = 5/8·q·L, R_inf = 3/8·q·L" }; } return { top: 0, bottom: 0, description: "" }; }
     
-    // ================= GRÁFICOS (con anchura máxima) =================
+    // ================= GRÁFICOS =================
     function buildCharts(EIx, qWind, L, lim, support) {
         destroyCharts();
         let coeff = getDeflectionCoefficient(support);
@@ -540,7 +544,7 @@
         activeCharts.ei = new Chart(document.getElementById('chartEI'), { type: 'bar', data: { labels: [`L/${lim}`], datasets: [{ label: 'Anchura máx (mm)', data: [anchuraMax], backgroundColor: '#B8860B' }] }, options: { plugins: { title: { display: true, text: 'Anchura máxima de fachada / ventana (mm)' }, legend: { display: false } } } });
     }
 
-    // ================= INFORME PDF CORREGIDO CON VERIFICACIÓN DE PANDEO =================
+    // ================= INFORME PDF CON PLANO DEL DXF =================
     async function generatePDF() {
         if (!window._lastResults) { 
             alert('Primero realiza un análisis para generar el informe.'); 
@@ -595,37 +599,98 @@
         });
         y = doc.lastAutoTable.finalY + 10;
 
-        // --- 1. PROPIEDADES DE LA SECCIÓN ---
+        // --- 1. PROPIEDADES DE LA SECCIÓN Y MATERIAL (con plano DXF) ---
         if (y > 270) { doc.addPage(); y = 20; }
         doc.setFont('helvetica', 'bold');
         doc.text('1. PROPIEDADES DE LA SECCIÓN Y MATERIAL', margin, y);
         y += 4;
         let profileType = document.getElementById('profileType').value;
         if (!profileType) profileType = 'Perfil extraído del DXF (contorno cerrado)';
+        let espesorEstimado = parseFloat(document.getElementById('wallThickness').value) || 2;
+        let relacionAncho = lastSectionWidth / espesorEstimado;
+        let claseAdvertencia = '';
+        if (window._lastResults.mat.toLowerCase().includes('acero') && relacionAncho > 50) {
+            claseAdvertencia = '⚠️ Sección potencialmente Clase 4 (pared delgada). Para una verificación rigurosa, aplicar método del ancho eficaz según CTE DB-SE-A / EN 1993-1-3.';
+        }
+        // Tabla de propiedades
         doc.autoTable({
             startY: y,
             margin: { left: margin },
             tableWidth: contentW,
-            head: [['Parámetro', 'Valor', 'Unidad', 'Material']],
+            head: [['Parámetro', 'Valor', 'Unidad']],
             body: [
-                ['Tipo de perfil', profileType, '-', window._lastResults.mat],
-                ['Área neta', window._lastResults.A.toFixed(2), 'mm²', `E = ${window._lastResults.E} MPa`],
-                ['Inercia (Ix)', (window._lastResults.Ix / 1e4).toFixed(2), 'cm⁴', `ρ = ${window._lastResults.rho} kg/m³`],
-                ['Módulo resistente (Wx)', window._lastResults.Wx.toFixed(0), 'mm³', '-'],
-                ['Peso lineal', window._lastResults.wkg.toFixed(3), 'kg/m', '-']
+                ['Material', window._lastResults.mat, '-'],
+                ['Tipo de perfil', profileType, '-'],
+                ['Área neta', window._lastResults.A.toFixed(2), 'mm²'],
+                ['Módulo E', window._lastResults.E.toFixed(0), 'MPa'],
+                ['Inercia (Ix)', (window._lastResults.Ix / 1e4).toFixed(2), 'cm⁴'],
+                ['Densidad ρ', window._lastResults.rho.toFixed(0), 'kg/m³'],
+                ['Módulo resistente (Wx)', window._lastResults.Wx.toFixed(0), 'mm³'],
+                ['Peso lineal', window._lastResults.wkg.toFixed(3), 'kg/m'],
+                ['Observación', claseAdvertencia || 'Sección maciza o tubular (no crítica por abolladura)', '-']
             ],
             theme: 'grid',
             headStyles: { fillColor: colDark, textColor: 255 },
             styles: { fontSize: 8 }
         });
-        y = doc.lastAutoTable.finalY + 10;
+        y = doc.lastAutoTable.finalY + 6;
+
+        // Dibujar la sección del DXF (plano)
+        if (window._lastResults.sectionLoops && window._lastResults.sectionWidth && window._lastResults.sectionHeight) {
+            const canvas = document.createElement('canvas');
+            const w_mm = 70;  // ancho del dibujo en mm
+            const h_mm = 50;  // alto
+            canvas.width = 300;
+            canvas.height = 200;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.strokeStyle = '#3E3E3E';
+            ctx.fillStyle = '#FFF8DC';
+            ctx.lineWidth = 1.5;
+            // Escalar para que quepa en el canvas
+            const maxX = window._lastResults.sectionWidth;
+            const maxY = window._lastResults.sectionHeight;
+            const scale = Math.min(0.9 * canvas.width / maxX, 0.9 * canvas.height / maxY);
+            const offsetX = (canvas.width - maxX * scale) / 2;
+            const offsetY = (canvas.height - maxY * scale) / 2;
+            const loops = window._lastResults.sectionLoops;
+            for (let idx = 0; idx < loops.length; idx++) {
+                const pts = loops[idx].pts;
+                if (pts.length < 3) continue;
+                ctx.beginPath();
+                for (let i = 0; i < pts.length; i++) {
+                    const x = offsetX + pts[i][0] * scale;
+                    const y = offsetY + pts[i][1] * scale;
+                    if (i === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                }
+                ctx.closePath();
+                if (idx === 0) {
+                    ctx.fillStyle = '#FFF8DC';
+                    ctx.fill();
+                }
+                ctx.strokeStyle = idx === 0 ? '#EDD00E' : '#B8860B';
+                ctx.stroke();
+            }
+            // Añadir texto con dimensiones
+            ctx.font = '12px "Open Sans"';
+            ctx.fillStyle = '#333';
+            ctx.fillText(`${window._lastResults.sectionWidth.toFixed(1)} × ${window._lastResults.sectionHeight.toFixed(1)} mm`, 10, 20);
+            const imgData = canvas.toDataURL('image/png');
+            doc.addImage(imgData, 'PNG', margin, y, w_mm, h_mm);
+            doc.setFontSize(8);
+            doc.text('Figura 1: Sección transversal extraída del archivo DXF', margin, y + h_mm + 2);
+            y += h_mm + 10;
+        } else {
+            y += 6;
+        }
 
         // --- 2. MODELO ESTRUCTURAL Y ESQUEMA ---
         if (y > 270) { doc.addPage(); y = 20; }
         doc.setFont('helvetica', 'bold');
         doc.text('2. MODELO ESTRUCTURAL Y ESQUEMA', margin, y);
         y += 4;
-        const supportDesc = window._lastResults.support;
         let apoyoTexto = '';
         let diagM = '';
         if (window._lastResults.supportCode === 'simply') {
@@ -638,7 +703,6 @@
             apoyoTexto = 'Viga empotrada-apoyada. Reacción mayor en el empotramiento.';
             diagM = 'Momento máximo en empotramiento: M = q·L²/8.';
         }
-        // Esquema
         const canvasScheme = document.createElement('canvas');
         canvasScheme.width = 400;
         canvasScheme.height = 80;
@@ -718,7 +782,7 @@
         });
         y = doc.lastAutoTable.finalY + 10;
 
-        // --- 4. DIAGRAMAS DE MOMENTO Y CORTANTE ---
+        // --- 4. DIAGRAMAS DE SOLICITACIONES ---
         if (y > 270) { doc.addPage(); y = 20; }
         doc.setFont('helvetica', 'bold');
         doc.text('4. DIAGRAMAS DE SOLICITACIONES', margin, y);
@@ -745,7 +809,7 @@
         ctxM.moveTo(50, 60);
         ctxM.lineTo(350, 60);
         ctxM.stroke();
-        let scaleY = 40 / M_max;
+        let scaleY = M_max > 0 ? 40 / M_max : 1;
         for (let x = 0; x <= 1; x += 0.02) {
             let xPos = 50 + x * 300;
             let Mx = 0;
@@ -783,7 +847,7 @@
             V_left = (5/8) * window._lastResults.qWind * window._lastResults.L;
             V_right = -(3/8) * window._lastResults.qWind * window._lastResults.L;
         }
-        let scaleV = 40 / Math.max(Math.abs(V_left), Math.abs(V_right));
+        let scaleV = Math.max(Math.abs(V_left), Math.abs(V_right)) > 0 ? 40 / Math.max(Math.abs(V_left), Math.abs(V_right)) : 1;
         ctxV.moveTo(50, 60 - V_left * scaleV);
         ctxV.lineTo(350, 60 - V_right * scaleV);
         ctxV.stroke();
@@ -826,24 +890,22 @@
         });
         y = doc.lastAutoTable.finalY + 10;
 
-        // --- NUEVA SECCIÓN 6: VERIFICACIÓN DE PANDEO ---
+        // --- 6. VERIFICACIÓN DE PANDEO (Euler correcta) ---
         if (y > 270) { doc.addPage(); y = 20; }
         doc.setFont('helvetica', 'bold');
-        doc.text('6. VERIFICACIÓN DE PANDEO', margin, y);
+        doc.text('6. VERIFICACIÓN DE PANDEO (CTE DB-SE-A / EN 1993-1-3)', margin, y);
         y += 4;
-        // Cálculos de pandeo
-        let i = Math.sqrt(window._lastResults.Ix / window._lastResults.A); // radio de giro (mm)
-        let lambda = window._lastResults.L / i; // esbeltez
-        let P_cr = Math.PI * Math.PI * window._lastResults.EIx * 1000 / (window._lastResults.L * window._lastResults.L); // carga crítica Euler (N)
-        // Límite de esbeltez según CTE DB-SE-A (para piezas comprimidas de acero, por ejemplo 200)
+        let i = Math.sqrt(window._lastResults.Ix / window._lastResults.A);
+        let lambda = window._lastResults.L / i;
+        let P_cr = Math.PI * Math.PI * window._lastResults.E * window._lastResults.Ix / (window._lastResults.L * window._lastResults.L);
         let lambda_lim = 200;
         let cumple_esbeltez = lambda <= lambda_lim;
         const bucklingData = [
             ['Radio de giro (i)', `${i.toFixed(2)} mm`, 'i = √(I/A)'],
             ['Esbeltez (λ)', `${lambda.toFixed(1)}`, 'λ = L / i'],
-            ['Carga crítica de Euler (Pcr)', `${P_cr.toFixed(0)} N`, 'Pcr = π²·E·I / L²'],
+            ['Carga crítica de Euler (Pcr)', `${P_cr.toFixed(0)} N`, 'Pcr = π²·E·I / L² (Euler)'],
             ['Límite de esbeltez (CTE)', `λ ≤ ${lambda_lim}`, cumple_esbeltez ? 'CUMPLE' : 'NO CUMPLE'],
-            ['Observación', 'El pandeo no es crítico para cargas axiales reducidas (solo peso propio).', 'Para cargas axiles significativas, realizar verificación detallada.']
+            ['Observación', 'Para secciones de pared delgada (Clase 4), considerar pandeo local y distorsional.', 'Verificar según EN 1993-1-3']
         ];
         doc.autoTable({
             startY: y,
@@ -856,27 +918,33 @@
         });
         y = doc.lastAutoTable.finalY + 10;
 
-        // --- 7. REACCIONES EN ANCLAJES ---
+        // --- 7. REACCIONES PARA CÁLCULO DE ANCLAJES (con carga superficial) ---
         if (y > 270) { doc.addPage(); y = 20; }
         doc.setFont('helvetica', 'bold');
         doc.text('7. REACCIONES PARA CÁLCULO DE ANCLAJES', margin, y);
         y += 4;
+        let area_m2 = (window._lastResults.tributaryWidth_m) * (window._lastResults.L_m);
+        let carga_superficial_kg = 50 * area_m2;
+        let carga_superficial_N = carga_superficial_kg * 9.81;
+        let total_vertical_N = window._lastResults.pesoTotal_N + carga_superficial_N;
         doc.autoTable({
             startY: y,
             margin: { left: margin },
-            tableWidth: contentW/1.5,
-            head: [['Ubicación', 'Reacción Horizontal (Viento)', 'Carga Vertical (Peso)']],
+            tableWidth: contentW,
+            head: [['Ubicación', 'Reacción Horizontal (Viento)', 'Carga Vertical (Peso propio + Sobrecarga)']],
             body: [
                 ['Apoyo Superior', `${window._lastResults.reactions.top.toFixed(1)} N`, '-'],
-                ['Apoyo Inferior', `${window._lastResults.reactions.bottom.toFixed(1)} N`, `${window._lastResults.pesoTotal_N.toFixed(1)} N`]
+                ['Apoyo Inferior', `${window._lastResults.reactions.bottom.toFixed(1)} N`, `${total_vertical_N.toFixed(1)} N`]
             ],
             theme: 'grid',
-            headStyles: { fillColor: colPrimary, textColor: colDark }
+            headStyles: { fillColor: colPrimary, textColor: colDark },
+            foot: [[{ content: `Nota: Se ha añadido una sobrecarga superficial de 50 kg/m² sobre el área tributaria (${area_m2.toFixed(2)} m²), lo que supone ${carga_superficial_N.toFixed(1)} N adicionales.`, colSpan: 3, styles: { fontSize: 7, fillColor: [240,240,240] } }]]
         });
         y = doc.lastAutoTable.finalY + 10;
 
-        // --- 8. GRÁFICOS ---
-        if (y > 220) { doc.addPage(); y = 20; }
+        // --- 8. GRÁFICOS DE ANÁLISIS ESTRUCTURAL ---
+        const neededHeight = 115;
+        if (y + neededHeight > 280) { doc.addPage(); y = 20; }
         doc.setFont('helvetica', 'bold');
         doc.text('8. GRÁFICOS DE ANÁLISIS ESTRUCTURAL', margin, y);
         y += 4;
@@ -905,7 +973,18 @@
     }
 
     // ================= ANÁLISIS PRINCIPAL (botón Calcular) =================
-    document.getElementById('btnAnalyze').addEventListener('click',()=>{ if(!dxfContent) return; try{ let polys=parseDXF(dxfContent); if(polys.length===0) throw new Error('No se encontraron contornos cerrados'); let props=computeProps(polys); lastSectionWidth = props.W; lastSectionHeight = props.H; let E=parseFloat(document.getElementById('modE').value), rho=parseFloat(document.getElementById('density').value); let qWind = recalcViento(); let L=parseFloat(document.getElementById('Lspan').value), lim=parseInt(document.getElementById('limSelect').value); let support = document.getElementById('supportSelect').value; let EIx=E*props.Ix; let wkg=props.A*1e-6*rho; let pesoTotal_N = wkg * (L/1000) * 9.81; let coeff = getDeflectionCoefficient(support); let dt = coeff * qWind * L**4 / EIx; let ll = L/lim; let Lmax = (EIx/(coeff * qWind * lim))**(1/3); let cls = dt/ll <= 1 ? 'ok' : dt/ll <= 2 ? 'warn' : 'fail'; let svg=document.getElementById('sectionSvg'); svg.innerHTML=''; let maxX=Math.max(...props.loops.flatMap(p=>p.pts.map(pt=>pt[0]))), maxY=Math.max(...props.loops.flatMap(p=>p.pts.map(pt=>pt[1]))); let scale=Math.min(150/maxX, 90/maxY), offX=20, offY=15; for(let i=0; i<props.loops.length; i++) { let loop = props.loops[i]; let fill = (i===0) ? '#FFF8DC' : 'none'; let stroke = (i===0) ? '#EDD00E' : '#B8860B'; let strokeWidth = (i===0) ? '1.2' : '0.8'; let d = loop.pts.map((pt,i)=>`${i===0?'M':'L'} ${offX+pt[0]*scale} ${offY+pt[1]*scale}`).join(' ')+'Z'; let path=document.createElementNS('http://www.w3.org/2000/svg','path'); path.setAttribute('d',d); path.setAttribute('fill',fill); path.setAttribute('stroke',stroke); path.setAttribute('stroke-width',strokeWidth); svg.appendChild(path); } document.getElementById('sectionDims').innerHTML=`${props.W.toFixed(1)} × ${props.H.toFixed(1)} mm`; document.getElementById('propsGrid').innerHTML=`<div class="prop-tile"><div class="prop-label">Área</div><div class="prop-value">${props.A.toFixed(0)}</div><span>mm²</span></div><div class="prop-tile"><div class="prop-label">Ix</div><div class="prop-value">${(props.Ix/1e4).toFixed(2)}</div><span>cm⁴</span></div><div class="prop-tile"><div class="prop-label">EIx</div><div class="prop-value">${(EIx/1e6).toFixed(1)}</div><span>kN·m²</span></div><div class="prop-tile"><div class="prop-label">Peso</div><div class="prop-value">${wkg.toFixed(3)}</div><span>kg/m</span></div><div class="prop-tile"><div class="prop-label">Centroide ȳ</div><div class="prop-value">${props.cy.toFixed(1)}</div><span>mm</span></div><div class="prop-tile"><div class="prop-label">Wx</div><div class="prop-value">${props.Wx.toFixed(0)}</div><span>mm³</span></div><div class="prop-tile"><div class="prop-label">L_max (L/${lim})</div><div class="prop-value">${Math.round(Lmax)}</div><span>mm</span></div>`; let ds=document.getElementById('deflectStatus'); ds.className=`deflect-status ${cls}`; ds.innerHTML=`<span class="deflect-big">${dt.toFixed(2)} mm</span><span>${cls==='ok'?'✓ Cumple L/'+lim:cls==='warn'?'⚠ Supera el límite, L_max='+Math.round(Lmax)+' mm':'✗ No cumple, L_max='+Math.round(Lmax)+' mm'}</span>`; buildCharts(EIx, qWind, L, lim, support); let reactions = getHorizontalReactions(support, qWind, L); document.getElementById('anchorQlineal').textContent = `${qWind.toFixed(4)} N/mm`; document.getElementById('horizontalReactions').innerHTML = `<p><strong>Anclaje superior (techo)</strong>: ${reactions.top.toFixed(1)} N (horizontal)</p><p><strong>Anclaje inferior (suelo)</strong>: ${reactions.bottom.toFixed(1)} N (horizontal)</p><p style="font-size:0.8rem; color:var(--color-gray);">${reactions.description}</p>`; document.getElementById('anchorPeso').textContent = `${pesoTotal_N.toFixed(1)} N (vertical, a resistir por el anclaje inferior en compresión o el superior en suspensión)`; let torsionData = null; if (torsionEnabled) { let e = parseFloat(document.getElementById('eccentricity').value) || 0; let G = parseFloat(document.getElementById('G_torsion').value) || 0; let It = parseFloat(document.getElementById('It').value) || 0; let mt = qWind * e; let phi = (mt * L) / (G * It); let phiDeg = phi * 180 / Math.PI; document.getElementById('torsionMt').textContent = `${mt.toFixed(2)} N`; document.getElementById('torsionTau').textContent = `Requiere espesor de pared`; document.getElementById('torsionPhi').textContent = `${phi.toExponential(4)} rad`; document.getElementById('torsionPhiDeg').textContent = `${phiDeg.toFixed(3)} °`; torsionData = { mt, tau: null, phi, phiDeg, e, G, It }; document.getElementById('torsionResultCard').style.display = 'block'; } else { document.getElementById('torsionResultCard').style.display = 'none'; } document.getElementById('results').style.display='block'; document.getElementById('btnPDF').disabled=false; document.getElementById('btnPDF').style.opacity='1'; let supportName = support==='simply'?'Simplemente apoyado':(support==='fixed-fixed'?'Empotrado-empotrado':'Empotrado-apoyado'); let windParams = {}; if (windMethod === 'auto') { windParams = { method: 'auto', altura: parseFloat(document.getElementById('alturaEdificio').value), grado: document.getElementById('gradoAspereza').value, ce: parseFloat(document.getElementById('ceValor').textContent), vb: parseFloat(document.getElementById('viento_kmh').value)/3.6, cp_ext: parseFloat(document.getElementById('cp_ext').value), cp_int: parseFloat(document.getElementById('cp_int').value), anchura: parseFloat(document.getElementById('anchura').value) }; } else { windParams = { method: 'manual', qe_manual: parseFloat(document.getElementById('qe_manual').value), anchura: parseFloat(document.getElementById('anchura_manual').value) }; } window._lastResults = { projectName: document.getElementById('projectName').value, projectAuthor: document.getElementById('projectAuthor').value, dxfFile: document.getElementById('dropFilename').textContent.replace('✓ ',''), date: new Date().toLocaleDateString(), mat: document.getElementById('matSelect').options[document.getElementById('matSelect').selectedIndex].text, E, rho, A: props.A, Ix: props.Ix, cy: props.cy, Wx: props.Wx, W: props.W, H: props.H, EIx, wkg, L, lim, qWind, dt, ll, Lmax, cls, support: supportName, supportCode: support, coeff: coeff, windMethod, windParams, reactions, pesoTotal_N, torsionEnabled, torsionData, zona: document.getElementById('zonaSelect').value, vkmh: document.getElementById('viento_kmh').value, windData: window._windData||null, geoAddr: geoCoords?geoCoords.address:'—', lat: geoCoords?.lat, lon: geoCoords?.lon }; setStatus('Análisis completado según CTE', 'ok'); }catch(e){ setStatus('Error: '+e.message, 'err'); } });
+    document.getElementById('btnAnalyze').addEventListener('click',()=>{ if(!dxfContent) return; try{ let polys=parseDXF(dxfContent); if(polys.length===0) throw new Error('No se encontraron contornos cerrados'); let props=computeProps(polys); lastSectionWidth = props.W; lastSectionHeight = props.H; let E=parseFloat(document.getElementById('modE').value), rho=parseFloat(document.getElementById('density').value); let qWind = recalcViento(); let L=parseFloat(document.getElementById('Lspan').value), lim=parseInt(document.getElementById('limSelect').value); let support = document.getElementById('supportSelect').value; let EIx=E*props.Ix; let wkg=props.A*1e-6*rho; let pesoTotal_N = wkg * (L/1000) * 9.81; let coeff = getDeflectionCoefficient(support); let dt = coeff * qWind * L**4 / EIx; let ll = L/lim; let Lmax = (EIx/(coeff * qWind * lim))**(1/3); let cls = dt/ll <= 1 ? 'ok' : dt/ll <= 2 ? 'warn' : 'fail'; let svg=document.getElementById('sectionSvg'); svg.innerHTML=''; let maxX=Math.max(...props.loops.flatMap(p=>p.pts.map(pt=>pt[0]))), maxY=Math.max(...props.loops.flatMap(p=>p.pts.map(pt=>pt[1]))); let scale=Math.min(150/maxX, 90/maxY), offX=20, offY=15; for(let i=0; i<props.loops.length; i++) { let loop = props.loops[i]; let fill = (i===0) ? '#FFF8DC' : 'none'; let stroke = (i===0) ? '#EDD00E' : '#B8860B'; let strokeWidth = (i===0) ? '1.2' : '0.8'; let d = loop.pts.map((pt,i)=>`${i===0?'M':'L'} ${offX+pt[0]*scale} ${offY+pt[1]*scale}`).join(' ')+'Z'; let path=document.createElementNS('http://www.w3.org/2000/svg','path'); path.setAttribute('d',d); path.setAttribute('fill',fill); path.setAttribute('stroke',stroke); path.setAttribute('stroke-width',strokeWidth); svg.appendChild(path); } document.getElementById('sectionDims').innerHTML=`${props.W.toFixed(1)} × ${props.H.toFixed(1)} mm`; document.getElementById('propsGrid').innerHTML=`<div class="prop-tile"><div class="prop-label">Área</div><div class="prop-value">${props.A.toFixed(0)}</div><span>mm²</span></div><div class="prop-tile"><div class="prop-label">Ix</div><div class="prop-value">${(props.Ix/1e4).toFixed(2)}</div><span>cm⁴</span></div><div class="prop-tile"><div class="prop-label">EIx</div><div class="prop-value">${(EIx/1e6).toFixed(1)}</div><span>kN·m²</span></div><div class="prop-tile"><div class="prop-label">Peso</div><div class="prop-value">${wkg.toFixed(3)}</div><span>kg/m</span></div><div class="prop-tile"><div class="prop-label">Centroide ȳ</div><div class="prop-value">${props.cy.toFixed(1)}</div><span>mm</span></div><div class="prop-tile"><div class="prop-label">Wx</div><div class="prop-value">${props.Wx.toFixed(0)}</div><span>mm³</span></div><div class="prop-tile"><div class="prop-label">L_max (L/${lim})</div><div class="prop-value">${Math.round(Lmax)}</div><span>mm</span></div>`; let ds=document.getElementById('deflectStatus'); ds.className=`deflect-status ${cls}`; ds.innerHTML=`<span class="deflect-big">${dt.toFixed(2)} mm</span><span>${cls==='ok'?'✓ Cumple L/'+lim:cls==='warn'?'⚠ Supera el límite, L_max='+Math.round(Lmax)+' mm':'✗ No cumple, L_max='+Math.round(Lmax)+' mm'}</span>`; buildCharts(EIx, qWind, L, lim, support); let reactions = getHorizontalReactions(support, qWind, L); document.getElementById('anchorQlineal').textContent = `${qWind.toFixed(4)} N/mm`; document.getElementById('horizontalReactions').innerHTML = `<p><strong>Anclaje superior (techo)</strong>: ${reactions.top.toFixed(1)} N (horizontal)</p><p><strong>Anclaje inferior (suelo)</strong>: ${reactions.bottom.toFixed(1)} N (horizontal)</p><p style="font-size:0.8rem; color:var(--color-gray);">${reactions.description}</p>`; document.getElementById('anchorPeso').textContent = `${pesoTotal_N.toFixed(1)} N (vertical, a resistir por el anclaje inferior en compresión o el superior en suspensión)`;
+        // Carga superficial
+        let anchura_m = parseFloat(document.getElementById('anchura').value) / 1000;
+        let L_m = L / 1000;
+        let area_m2 = anchura_m * L_m;
+        let carga_superficial_kg = 50 * area_m2;
+        let carga_superficial_N = carga_superficial_kg * 9.81;
+        let total_vertical_N = pesoTotal_N + carga_superficial_N;
+        document.getElementById('anchorSuperficial').textContent = `${carga_superficial_N.toFixed(1)} N (equivalente a ${carga_superficial_kg.toFixed(1)} kg)`;
+        document.getElementById('anchorTotalVertical').textContent = `${total_vertical_N.toFixed(1)} N`;
+        
+        let torsionData = null; if (torsionEnabled) { let e = parseFloat(document.getElementById('eccentricity').value) || 0; let G = parseFloat(document.getElementById('G_torsion').value) || 0; let It = parseFloat(document.getElementById('It').value) || 0; let mt = qWind * e; let phi = (mt * L) / (G * It); let phiDeg = phi * 180 / Math.PI; document.getElementById('torsionMt').textContent = `${mt.toFixed(2)} N`; document.getElementById('torsionTau').textContent = `Requiere espesor de pared`; document.getElementById('torsionPhi').textContent = `${phi.toExponential(4)} rad`; document.getElementById('torsionPhiDeg').textContent = `${phiDeg.toFixed(3)} °`; torsionData = { mt, tau: null, phi, phiDeg, e, G, It }; document.getElementById('torsionResultCard').style.display = 'block'; } else { document.getElementById('torsionResultCard').style.display = 'none'; } document.getElementById('results').style.display='block'; document.getElementById('btnPDF').disabled=false; document.getElementById('btnPDF').style.opacity='1'; let supportName = support==='simply'?'Simplemente apoyado':(support==='fixed-fixed'?'Empotrado-empotrado':'Empotrado-apoyado'); let windParams = {}; if (windMethod === 'auto') { windParams = { method: 'auto', altura: parseFloat(document.getElementById('alturaEdificio').value), grado: document.getElementById('gradoAspereza').value, ce: parseFloat(document.getElementById('ceValor').textContent), vb: parseFloat(document.getElementById('viento_kmh').value)/3.6, cp_ext: parseFloat(document.getElementById('cp_ext').value), cp_int: parseFloat(document.getElementById('cp_int').value), anchura: parseFloat(document.getElementById('anchura').value) }; } else { windParams = { method: 'manual', qe_manual: parseFloat(document.getElementById('qe_manual').value), anchura: parseFloat(document.getElementById('anchura_manual').value) }; } window._lastResults = { projectName: document.getElementById('projectName').value, projectAuthor: document.getElementById('projectAuthor').value, dxfFile: document.getElementById('dropFilename').textContent.replace('✓ ',''), date: new Date().toLocaleDateString(), mat: document.getElementById('matSelect').options[document.getElementById('matSelect').selectedIndex].text, E, rho, A: props.A, Ix: props.Ix, cy: props.cy, Wx: props.Wx, W: props.W, H: props.H, EIx, wkg, L, lim, qWind, dt, ll, Lmax, cls, support: supportName, supportCode: support, coeff: coeff, windMethod, windParams, reactions, pesoTotal_N, torsionEnabled, torsionData, zona: document.getElementById('zonaSelect').value, vkmh: document.getElementById('viento_kmh').value, windData: window._windData||null, geoAddr: geoCoords?geoCoords.address:'—', lat: geoCoords?.lat, lon: geoCoords?.lon, tributaryWidth_m: anchura_m, L_m: L_m, cargaSuperficial_N: carga_superficial_N, totalVertical_N: total_vertical_N, sectionLoops: props.loops.map(loop => ({ pts: loop.pts.map(pt => [pt[0], pt[1]]) })), sectionWidth: props.W, sectionHeight: props.H }; setStatus('Análisis completado según CTE', 'ok'); }catch(e){ setStatus('Error: '+e.message, 'err'); } });
 
     // ================= ASIGNACIÓN DE EVENTOS =================
     document.getElementById('btnPDF').onclick = generatePDF;
