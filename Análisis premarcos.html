@@ -83,15 +83,15 @@
 <body>
 <header>
     <div class="header-container">
-        <a href="../" class="logo-text" style="text-decoration: none;">
+        <a href="indice.html" class="logo-text" style="text-decoration: none;">
             <div><span class="logo-aislan">AISLAN</span><span class="logo-tech">TECH</span></div>
             <div class="logo-tagline">Ingeniería estructural · Fachadas ventiladas</div>
         </a>
-        <nav><ul><li><a href="#">Herramientas</a></li><li><a href="#">Análisis DXF</a></li><li><a href="./#footer">Contacto</a></li></ul></nav>
+        <nav><ul><li><a href="#">Herramientas</a></li><li><a href="#">Análisis DXF</a></li><li><a href="#">Contacto</a></li></ul></nav>
     </div>
 </header>
 <div class="hero-tool">
-    <div class="container"><h1>Analizador Perfiles Premarco <em>DXF</em></h1><p>Verificación de flecha · Cálculo de anclajes · Torsión automática desde DXF · Informe técnico CTE</p></div>
+    <div class="container"><h1>Analizador de Montantes Verticales <em>DXF</em></h1><p>Verificación de flecha · Cálculo de anclajes · Torsión automática desde DXF · Informe técnico CTE</p></div>
 </div>
 <div class="container">
     <div style="display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.5rem;">
@@ -100,9 +100,16 @@
         <div><button id="btnPDF" disabled style="background: var(--color-primary); color:var(--color-dark); border:none; border-radius: var(--border-radius); padding: 0.6rem 1.2rem; font-weight:600; display: flex; gap:6px; align-items:center; opacity:0.5;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>Informe PDF</button></div>
     </div>
     <!-- STEP 1 DXF -->
-    <div class="card"><div class="card-header"><div class="step-badge">1</div><div class="card-title">Cargar perfil DXF (montante)</div></div><div class="card-body"><div class="drop-zone" id="dropZone"><input type="file" id="dxfInput" accept=".dxf" style="display:none;"><div style="font-size:2rem;">⬡</div><p>Arrastra tu archivo <strong>.dxf</strong> aquí · o haz clic para seleccionar</p><p style="font-size:0.7rem;">Soporta LWPOLYLINE · POLYLINE+VERTEX · LINE (bulges incluidos). <strong>Nuevo:</strong> detecta automáticamente contornos exteriores e interiores (perfiles tubulares).</p><p id="dropFilename" style="margin-top:0.5rem; color:var(--color-primary); font-weight:500; display:none;"></p></div></div></div>
+    <div class="card"><div class="card-header"><div class="step-badge">1</div><div class="card-title">Cargar perfil DXF (montante)</div></div><div class="card-body"><div class="drop-zone" id="dropZone"><input type="file" id="dxfInput" accept=".dxf" style="display:none;"><div style="font-size:2rem;">⬡</div><p>Arrastra tu archivo <strong>.dxf</strong> aquí · o haz clic para seleccionar</p><p style="font-size:0.7rem;">Soporta LWPOLYLINE · POLYLINE+VERTEX · LINE (bulges incluidos). Detecta automáticamente contornos exteriores e interiores (perfiles tubulares).</p><p id="dropFilename" style="margin-top:0.5rem; color:var(--color-primary); font-weight:500; display:none;"></p></div></div></div>
     <!-- STEP 2 MATERIAL -->
-    <div class="card"><div class="card-header"><div class="step-badge">2</div><div class="card-title">Material del perfil</div></div><div class="card-body"><div class="form-grid"><div class="form-group"><label>Material predefinido</label><select id="matSelect"><option value="pvc_upvc">PVC uPVC</option><option value="aluminio">Aluminio</option><option value="acero">Acero</option><option value="fenolico">Fenólico</option><option value="madera">Madera</option><option value="custom">Personalizado</option></select><div class="chip-row" id="materialChips"><button class="chip active" data-mat="pvc_upvc">PVC</button><button class="chip" data-mat="aluminio">Aluminio</button><button class="chip" data-mat="acero">Acero</button><button class="chip" data-mat="fenolico">Fenólico</button><button class="chip" data-mat="madera">Madera</button><button class="chip" data-mat="custom">Custom</button></div></div><div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;"><div class="form-group"><label>Módulo E (MPa)</label><div class="input-group"><input type="number" id="modE" value="3000"><span class="input-unit">MPa</span></div></div><div class="form-group"><label>Densidad ρ (kg/m³)</label><div class="input-group"><input type="number" id="density" value="1450"><span class="input-unit">kg/m³</span></div></div></div></div></div></div>
+    <div class="card"><div class="card-header"><div class="step-badge">2</div><div class="card-title">Material del perfil</div></div><div class="card-body">
+        <div class="form-grid">
+            <div class="form-group"><label>Material predefinido</label><select id="matSelect"><option value="pvc_upvc">PVC uPVC</option><option value="aluminio">Aluminio</option><option value="acero">Acero</option><option value="fenolico">Fenólico</option><option value="madera">Madera</option><option value="custom">Personalizado</option></select><div class="chip-row" id="materialChips"><button class="chip active" data-mat="pvc_upvc">PVC</button><button class="chip" data-mat="aluminio">Aluminio</button><button class="chip" data-mat="acero">Acero</button><button class="chip" data-mat="fenolico">Fenólico</button><button class="chip" data-mat="madera">Madera</button><button class="chip" data-mat="custom">Custom</button></div></div>
+            <div class="form-group"><label>Tipo de perfil (opcional)</label><input type="text" id="profileType" placeholder="Ej: Tubular 40x40x2 mm, Omega 2 mm, etc."></div>
+            <div class="form-group"><label>Módulo E (MPa)</label><div class="input-group"><input type="number" id="modE" value="3000"><span class="input-unit">MPa</span></div></div>
+            <div class="form-group"><label>Densidad ρ (kg/m³)</label><div class="input-group"><input type="number" id="density" value="1450"><span class="input-unit">kg/m³</span></div></div>
+        </div>
+    </div></div>
     <!-- STEP 3 VIENTO Y LOCALIZACIÓN (con ce analítico) -->
     <div class="card"><div class="card-header"><div class="step-badge">3</div><div class="card-title">Carga neta de viento · CTE DB-SE-AE</div></div><div class="card-body">
         <div style="background:var(--color-primary-light); border-radius:var(--border-radius); padding:1rem; margin-bottom:1rem;">
@@ -263,7 +270,7 @@
     function toggleTorsionMode() { torsionAutoMode = !torsionAutoMode; const btn = document.getElementById('toggleTorsionModeBtn'); const manualBlock = document.getElementById('torsionManualBlock'); const autoBlock = document.getElementById('torsionAutoBlock'); const labelSpan = document.getElementById('torsionModeLabel'); if (torsionAutoMode) { btn.classList.add('on'); labelSpan.innerText = 'Automático (desde DXF)'; manualBlock.style.display = 'none'; autoBlock.style.display = 'block'; } else { btn.classList.remove('on'); labelSpan.innerText = 'Manual (introducir datos)'; manualBlock.style.display = 'block'; autoBlock.style.display = 'none'; } }
     function autoCalculateTorsion() { if (lastSectionWidth === 0 || lastSectionHeight === 0) { alert('Primero realiza el análisis de la sección (pulsa "Calcular flecha...")'); return; } const t = parseFloat(document.getElementById('wallThickness').value); if (t <= 0) { alert('Introduce un espesor de pared válido (>0)'); return; } const width = lastSectionWidth; const height = lastSectionHeight; const Am = (width - t) * (height - t); const Pm = 2 * ((width - t) + (height - t)); const It = 4 * Am * Am / (Pm / t); const loadPos = document.getElementById('loadPosition').value; let e = (loadPos === 'face') ? width / 2 : 0; const E = parseFloat(document.getElementById('modE').value); const nu = parseFloat(document.getElementById('poisson').value); const G = E / (2 * (1 + nu)); document.getElementById('eccentricity').value = e.toFixed(1); document.getElementById('G_torsion').value = G.toFixed(0); document.getElementById('It').value = It.toFixed(0); document.getElementById('autoTorsionInfo').innerHTML = `Dimensiones extraídas: ${width.toFixed(1)} × ${height.toFixed(1)} mm<br>t = ${t} mm → Am = ${Am.toFixed(0)} mm², Pm = ${Pm.toFixed(0)} mm<br>It = ${It.toFixed(0)} mm⁴, e = ${e.toFixed(1)} mm<br>G = ${G.toFixed(0)} MPa`; alert(`Valores calculados:\n- It = ${It.toFixed(0)} mm⁴\n- e = ${e.toFixed(1)} mm\n- G = ${G.toFixed(0)} MPa\n\nSe han actualizado los campos internos.`); }
     
-    // ================= PARSEADOR DXF MEJORADO (con detección de contornos cerrados y bulges) =================
+    // ================= PARSEADOR DXF MEJORADO =================
     function bulgeToArc(x1,y1,x2,y2,bulge,N=10){
         if(Math.abs(bulge)<1e-10) return [[x2,y2]];
         const theta=4*Math.atan(bulge);
@@ -282,7 +289,6 @@
     }
     function parseDXF(text){
         const T=text.split(/\r\n|\r|\n/).map(t=>t.trim()).filter(t=>t!=='');
-        // Buscar secciones ENTITIES y BLOCKS
         const SR={};
         let i=0;
         while(i<T.length-3){
@@ -363,7 +369,6 @@
                 i++;
             }
         }
-        // Si no se encontraron polilíneas, intentar unir segmentos LINE
         if(polys.length===0){
             const segs=[];
             for(const sn of ['ENTITIES','BLOCKS']){
@@ -387,13 +392,11 @@
                 }
             }
         }
-        // Normalizar coordenadas trasladando al origen
         if(polys.length>0){
             const ax=polys.flatMap(p=>p.pts.map(pt=>pt[0])),ay=polys.flatMap(p=>p.pts.map(pt=>pt[1]));
             const ox=Math.min(...ax),oy=Math.min(...ay);
             if(Math.abs(ox)>.5||Math.abs(oy)>.5) polys.forEach(p=>{p.pts=p.pts.map(([x,y])=>[x-ox,y-oy]);});
         }
-        // Asegurar que los polígonos estén cerrados (añadir primer punto al final si es necesario)
         polys.forEach(poly => {
             if(poly.pts.length >= 3){
                 const first = poly.pts[0];
@@ -428,11 +431,9 @@
             return { pts, area, cx, cy, sign: sign };
         }).filter(r => r !== null);
         if(regions.length === 0) throw new Error("No se encontraron contornos cerrados con área válida.");
-        // Ordenar por área descendente: el primero será el contorno exterior
         regions.sort((a,b) => b.area - a.area);
         let outer = regions[0];
         let holes = regions.slice(1).filter(h => {
-            // Verificar si el polígono está dentro del exterior usando un punto del primer vértice
             let px = h.pts[0][0], py = h.pts[0][1];
             let cnt = 0;
             for(let i=0; i<outer.pts.length-1; i++){
@@ -512,7 +513,7 @@
     function getDeflectionCoefficient(support){ switch(support){ case 'simply': return 5/384; case 'fixed-fixed': return 1/384; case 'fixed-pinned': return 0.005416; default: return 1/384; } }
     function getHorizontalReactions(support, q, L){ if (support === 'simply') { let R = q * L / 2; return { top: R, bottom: R, description: "Reacción igual en ambos apoyos: R = q·L/2" }; } else if (support === 'fixed-fixed') { let R = q * L / 2; return { top: R, bottom: R, description: "Reacción igual en ambos apoyos (empotramiento): R = q·L/2" }; } else if (support === 'fixed-pinned') { let R_top = (5/8) * q * L; let R_bottom = (3/8) * q * L; return { top: R_top, bottom: R_bottom, description: "Reacción mayor en el empotramiento (superior): R_sup = 5/8·q·L, R_inf = 3/8·q·L" }; } return { top: 0, bottom: 0, description: "" }; }
     
-    // ================= GRÁFICOS =================
+    // ================= GRÁFICOS (con anchura máxima) =================
     function buildCharts(EIx, qWind, L, lim, support) {
         destroyCharts();
         let coeff = getDeflectionCoefficient(support);
@@ -539,154 +540,348 @@
         activeCharts.ei = new Chart(document.getElementById('chartEI'), { type: 'bar', data: { labels: [`L/${lim}`], datasets: [{ label: 'Anchura máx (mm)', data: [anchuraMax], backgroundColor: '#B8860B' }] }, options: { plugins: { title: { display: true, text: 'Anchura máxima de fachada / ventana (mm)' }, legend: { display: false } } } });
     }
 
-    // ================= INFORME PDF (con corrección de velocidad) =================
+    // ================= INFORME PDF CORREGIDO CON VERIFICACIÓN DE PANDEO =================
     async function generatePDF() {
-        if (!window._lastResults) { alert('Primero realiza un análisis.'); return; }
+        if (!window._lastResults) { 
+            alert('Primero realiza un análisis para generar el informe.'); 
+            return; 
+        }
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-        
-        const pageWidth = 210;
-        const leftMargin = 20;
-        const contentWidth = 170;
-        let y = 25;
+        const pw = doc.internal.pageSize.getWidth();
+        const margin = 20;
+        const contentW = pw - (margin * 2);
+        let y = 20;
 
-        const write = (txt, size = 10, style = 'normal', color = [51, 51, 51]) => {
-            doc.setFont('helvetica', style);
-            doc.setFontSize(size);
-            doc.setTextColor(color[0], color[1], color[2]);
-            const lines = doc.splitTextToSize(txt, contentWidth);
-            for (let line of lines) {
-                if (y > 275) { doc.addPage(); y = 25; }
-                doc.text(line, leftMargin, y);
-                y += (size * 0.4) + 2;
-            }
-        };
+        // --- ESTILOS Y COLORES ---
+        const colPrimary = [237, 208, 14];
+        const colDark = [33, 33, 33];
+        const colGray = [100, 100, 100];
 
-        doc.setFillColor(62, 62, 62);
-        doc.rect(0, 0, 210, 18, 'F');
-        doc.setTextColor(237, 208, 14);
-        doc.setFontSize(14);
+        // --- ENCABEZADO ---
+        doc.setFillColor(...colDark);
+        doc.rect(0, 0, pw, 15, 'F');
+        doc.setTextColor(255, 255, 255);
         doc.setFont('helvetica', 'bold');
-        doc.text('AISLANTECH - MEMORIA TÉCNICA DE CÁLCULO', leftMargin, 11);
+        doc.setFontSize(10);
+        doc.text('INFORME TÉCNICO DE CÁLCULO ESTRUCTURAL · AISLANTECH', margin, 10);
 
         y = 30;
-        write('INFORME DE VERIFICACIÓN ESTRUCTURAL', 16, 'bold', [33, 33, 33]);
-        doc.setDrawColor(237, 208, 14);
-        doc.setLineWidth(1);
-        doc.line(leftMargin, y, 100, y);
-        y += 8;
-
-        write(`Proyecto: ${window._lastResults.projectName || 'Sin nombre'}`, 11, 'bold');
-        write(`Redactado por: ${window._lastResults.projectAuthor || 'Departamento Técnico'}`, 10);
-        write(`Archivo DXF: ${window._lastResults.dxfFile}`, 10);
-        write(`Fecha: ${window._lastResults.date}`, 10);
+        doc.setTextColor(...colDark);
+        doc.setFontSize(18);
+        doc.text('Memoria de Verificación de Montantes', margin, y);
+        y += 4;
+        doc.setDrawColor(...colPrimary);
+        doc.setLineWidth(1.5);
+        doc.line(margin, y, margin + 30, y);
+        y += 12;
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'bold');
+        doc.text('DATOS DEL PROYECTO', margin, y);
         y += 5;
-
-        write('1. GEOMETRÍA DE LA SECCIÓN TRANSVERSAL', 12, 'bold');
-        y += 2;
-        try {
-            const svgEl = document.getElementById('sectionSvg');
-            if (svgEl) {
-                const svgData = new XMLSerializer().serializeToString(svgEl);
-                const canvas = document.createElement('canvas');
-                const ctx = canvas.getContext('2d');
-                const img = new Image();
-                canvas.width = 800;
-                canvas.height = 400;
-                const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
-                const url = URL.createObjectURL(svgBlob);
-                await new Promise((resolve) => {
-                    img.onload = () => {
-                        ctx.fillStyle = "#FFFFFF";
-                        ctx.fillRect(0, 0, canvas.width, canvas.height);
-                        ctx.drawImage(img, 50, 20, 700, 360);
-                        resolve();
-                    };
-                    img.src = url;
-                });
-                const imgData = canvas.toDataURL('image/png');
-                doc.addImage(imgData, 'PNG', leftMargin, y, 80, 45);
-                doc.setFontSize(9);
-                doc.setTextColor(60);
-                let infoX = leftMargin + 85;
-                doc.text(`Ancho total: ${window._lastResults.W.toFixed(1)} mm`, infoX, y + 10);
-                doc.text(`Alto total: ${window._lastResults.H.toFixed(1)} mm`, infoX, y + 15);
-                doc.text(`Área: ${window._lastResults.A.toFixed(1)} mm²`, infoX, y + 20);
-                doc.text(`Inercia Ix: ${(window._lastResults.Ix/10000).toFixed(2)} cm⁴`, infoX, y + 25);
-                y += 50;
-                URL.revokeObjectURL(url);
-            }
-        } catch(e) { write('(Error al procesar imagen del perfil)', 9); y += 10; }
-
-        write('2. PARÁMETROS DE DISEÑO Y CARGAS (CTE DB-SE-AE)', 12, 'bold');
-        y += 2;
-        let vkmhValue = window._lastResults.vkmh ? window._lastResults.vkmh : (window._lastResults.windParams?.vb ? (window._lastResults.windParams.vb * 3.6).toFixed(1) : '104.4');
+        doc.setFont('helvetica', 'normal');
+        const projectData = [
+            [`Proyecto: ${window._lastResults.projectName || 'N/A'}`, `Fecha: ${window._lastResults.date}`],
+            [`Redactado por: ${window._lastResults.projectAuthor || 'Depto. Técnico'}`, `Archivo: ${window._lastResults.dxfFile}`]
+        ];
         doc.autoTable({
             startY: y,
-            margin: { left: leftMargin },
-            tableWidth: contentWidth,
-            head: [['Parámetro', 'Descripción', 'Valor']],
+            margin: { left: margin },
+            tableWidth: contentW,
+            body: projectData,
+            theme: 'plain',
+            styles: { fontSize: 9, cellPadding: 1 },
+            columnStyles: { 0: { cellWidth: contentW/2 }, 1: { cellWidth: contentW/2 } }
+        });
+        y = doc.lastAutoTable.finalY + 10;
+
+        // --- 1. PROPIEDADES DE LA SECCIÓN ---
+        if (y > 270) { doc.addPage(); y = 20; }
+        doc.setFont('helvetica', 'bold');
+        doc.text('1. PROPIEDADES DE LA SECCIÓN Y MATERIAL', margin, y);
+        y += 4;
+        let profileType = document.getElementById('profileType').value;
+        if (!profileType) profileType = 'Perfil extraído del DXF (contorno cerrado)';
+        doc.autoTable({
+            startY: y,
+            margin: { left: margin },
+            tableWidth: contentW,
+            head: [['Parámetro', 'Valor', 'Unidad', 'Material']],
             body: [
-                ['Material', window._lastResults.mat, `${window._lastResults.E} MPa`],
-                ['Luz (L)', 'Distancia entre apoyos', `${window._lastResults.L} mm`],
-                ['Ancho Trib.', 'Ancho de influencia de carga', `${window._lastResults.windParams.anchura || '—'} mm`],
-                ['Zona Eólica', `Zona ${window._lastResults.zona || 'C'}`, `${vkmhValue} km/h`],
-                ['Presión Neta', 'Carga de viento calculada', `${(window._lastResults.qWind / (window._lastResults.windParams.anchura/1000)).toFixed(3)} kN/m²`]
+                ['Tipo de perfil', profileType, '-', window._lastResults.mat],
+                ['Área neta', window._lastResults.A.toFixed(2), 'mm²', `E = ${window._lastResults.E} MPa`],
+                ['Inercia (Ix)', (window._lastResults.Ix / 1e4).toFixed(2), 'cm⁴', `ρ = ${window._lastResults.rho} kg/m³`],
+                ['Módulo resistente (Wx)', window._lastResults.Wx.toFixed(0), 'mm³', '-'],
+                ['Peso lineal', window._lastResults.wkg.toFixed(3), 'kg/m', '-']
             ],
             theme: 'grid',
-            headStyles: { fillColor: [62, 62, 62] },
-            styles: { fontSize: 9 }
+            headStyles: { fillColor: colDark, textColor: 255 },
+            styles: { fontSize: 8 }
         });
         y = doc.lastAutoTable.finalY + 10;
 
-        write('3. ESTADO LÍMITE DE SERVICIO (DEFORMACIÓN)', 12, 'bold');
-        y += 2;
-        const statusColor = window._lastResults.cls === 'ok' ? [46, 125, 50] : [198, 40, 40];
-        doc.setFillColor(245, 245, 245);
-        doc.rect(leftMargin, y, contentWidth, 20, 'F');
-        doc.setDrawColor(statusColor[0], statusColor[1], statusColor[2]);
-        doc.rect(leftMargin, y, contentWidth, 20, 'S');
-        doc.setFontSize(10);
-        doc.setTextColor(33);
-        doc.text(`Flecha máxima calculada: ${window._lastResults.dt.toFixed(2)} mm`, leftMargin + 5, y + 8);
-        doc.text(`Límite admisible (L/${window._lastResults.lim}): ${window._lastResults.ll.toFixed(2)} mm`, leftMargin + 5, y + 14);
-        doc.setFontSize(12);
+        // --- 2. MODELO ESTRUCTURAL Y ESQUEMA ---
+        if (y > 270) { doc.addPage(); y = 20; }
         doc.setFont('helvetica', 'bold');
-        doc.setTextColor(statusColor[0], statusColor[1], statusColor[2]);
-        const resultText = window._lastResults.cls === 'ok' ? 'CUMPLE' : 'NO CUMPLE';
-        doc.text(resultText, leftMargin + 130, y + 12);
-        y += 28;
+        doc.text('2. MODELO ESTRUCTURAL Y ESQUEMA', margin, y);
+        y += 4;
+        const supportDesc = window._lastResults.support;
+        let apoyoTexto = '';
+        let diagM = '';
+        if (window._lastResults.supportCode === 'simply') {
+            apoyoTexto = 'Viga simplemente apoyada (biapoyada). Reacciones iguales en ambos extremos.';
+            diagM = 'Momento máximo: M = q·L²/8';
+        } else if (window._lastResults.supportCode === 'fixed-fixed') {
+            apoyoTexto = 'Viga empotrada-empotrada. Reacciones iguales en ambos extremos con momentos de empotramiento.';
+            diagM = 'Momento máximo en apoyos: M = q·L²/12. Momento en centro de vano: M = q·L²/24.';
+        } else {
+            apoyoTexto = 'Viga empotrada-apoyada. Reacción mayor en el empotramiento.';
+            diagM = 'Momento máximo en empotramiento: M = q·L²/8.';
+        }
+        // Esquema
+        const canvasScheme = document.createElement('canvas');
+        canvasScheme.width = 400;
+        canvasScheme.height = 80;
+        const ctxScheme = canvasScheme.getContext('2d');
+        ctxScheme.fillStyle = '#FFFFFF';
+        ctxScheme.fillRect(0, 0, canvasScheme.width, canvasScheme.height);
+        ctxScheme.strokeStyle = '#333';
+        ctxScheme.lineWidth = 1.5;
+        const x0 = 50, x1 = 350, yBeam = 40;
+        ctxScheme.beginPath();
+        ctxScheme.moveTo(x0, yBeam);
+        ctxScheme.lineTo(x1, yBeam);
+        ctxScheme.stroke();
+        if (window._lastResults.supportCode === 'simply') {
+            ctxScheme.fillStyle = '#EDD00E';
+            ctxScheme.beginPath(); ctxScheme.moveTo(x0-8, yBeam+5); ctxScheme.lineTo(x0, yBeam-2); ctxScheme.lineTo(x0+8, yBeam+5); ctxScheme.fill();
+            ctxScheme.beginPath(); ctxScheme.moveTo(x1-8, yBeam+5); ctxScheme.lineTo(x1, yBeam-2); ctxScheme.lineTo(x1+8, yBeam+5); ctxScheme.fill();
+        } else if (window._lastResults.supportCode === 'fixed-fixed') {
+            ctxScheme.fillStyle = '#EDD00E';
+            ctxScheme.fillRect(x0-12, yBeam-6, 12, 12);
+            ctxScheme.fillRect(x1, yBeam-6, 12, 12);
+        } else {
+            ctxScheme.fillStyle = '#EDD00E';
+            ctxScheme.fillRect(x0-12, yBeam-6, 12, 12);
+            ctxScheme.beginPath(); ctxScheme.moveTo(x1-8, yBeam+5); ctxScheme.lineTo(x1, yBeam-2); ctxScheme.lineTo(x1+8, yBeam+5); ctxScheme.fill();
+        }
+        for (let x = x0+20; x <= x1-20; x+=30) {
+            ctxScheme.beginPath();
+            ctxScheme.moveTo(x, yBeam-5);
+            ctxScheme.lineTo(x-5, yBeam-12);
+            ctxScheme.lineTo(x+5, yBeam-12);
+            ctxScheme.fillStyle = '#666';
+            ctxScheme.fill();
+        }
+        const schemeDataUrl = canvasScheme.toDataURL();
+        doc.addImage(schemeDataUrl, 'PNG', margin, y, 100, 25);
+        y += 30;
+        doc.setFontSize(9);
+        doc.text(apoyoTexto, margin, y);
+        y += 5;
+        doc.text(diagM, margin, y);
+        y += 5;
 
-        write('4. REACCIONES EN APOYOS (VALORES CARACTERÍSTICOS)', 12, 'bold');
-        y += 2;
+        // --- 3. DESGLOSE DE VIENTO ---
+        if (y > 270) { doc.addPage(); y = 20; }
+        doc.setFont('helvetica', 'bold');
+        doc.text('3. DESGLOSE DE LA ACCIÓN DEL VIENTO (CTE DB-SE-AE)', margin, y);
+        y += 4;
+        const wind = window._lastResults.windParams;
+        let vb_ms = parseFloat(window._lastResults.vkmh) / 3.6;
+        let qb = 0.5 * 1.25 * vb_ms * vb_ms / 1000;
+        let ce = wind.ce || 1.0;
+        let cp_ext = wind.cp_ext || 1.3;
+        let cp_int = wind.cp_int || 0.0;
+        let cp_net = cp_ext - cp_int;
+        let qe = qb * ce * cp_net;
+        const windData = [
+            ['Velocidad básica (vb)', `${vb_ms.toFixed(1)} m/s`, `${(vb_ms*3.6).toFixed(1)} km/h`],
+            ['Presión dinámica básica (qb)', `${qb.toFixed(3)} kN/m²`, 'qb = 0.5·ρ·vb² (ρ=1.25 kg/m³)'],
+            ['Coeficiente de exposición (ce)', ce.toFixed(2), 'Según altura y grado de aspereza'],
+            ['Coef. presión exterior (cp,ext)', cp_ext.toFixed(2), 'Según zona de fachada'],
+            ['Coef. presión interior (cp,int)', cp_int.toFixed(2), 'Según permeabilidad'],
+            ['Coef. presión neto (cp,net)', cp_net.toFixed(2), 'cp,ext - cp,int'],
+            ['Presión estática final (qe)', `${qe.toFixed(3)} kN/m²`, 'qe = qb·ce·cp,net'],
+            ['Anchura tributaria (at)', `${wind.anchura} mm`, 'Ancho de influencia'],
+            ['Carga lineal resultante (q)', `${window._lastResults.qWind.toFixed(4)} N/mm`, 'q = qe·at']
+        ];
         doc.autoTable({
             startY: y,
-            margin: { left: leftMargin },
-            tableWidth: contentWidth,
-            head: [['Ubicación', 'Carga Horizontal (Viento)', 'Carga Vertical (Peso)']],
-            body: [
-                ['Anclaje Superior', `${window._lastResults.reactions.top.toFixed(1)} N`, '—'],
-                ['Anclaje Inferior', `${window._lastResults.reactions.bottom.toFixed(1)} N`, `${window._lastResults.pesoTotal_N.toFixed(1)} N`]
-            ],
-            headStyles: { fillColor: [184, 134, 11] },
+            margin: { left: margin },
+            tableWidth: contentW,
+            head: [['Concepto', 'Valor', 'Observación']],
+            body: windData,
+            theme: 'striped',
+            headStyles: { fillColor: colGray },
+            styles: { fontSize: 8 }
+        });
+        y = doc.lastAutoTable.finalY + 10;
+
+        // --- 4. DIAGRAMAS DE MOMENTO Y CORTANTE ---
+        if (y > 270) { doc.addPage(); y = 20; }
+        doc.setFont('helvetica', 'bold');
+        doc.text('4. DIAGRAMAS DE SOLICITACIONES', margin, y);
+        y += 4;
+        let M_max = 0, V_max = 0;
+        if (window._lastResults.supportCode === 'simply') {
+            M_max = window._lastResults.qWind * window._lastResults.L ** 2 / 8;
+            V_max = window._lastResults.qWind * window._lastResults.L / 2;
+        } else if (window._lastResults.supportCode === 'fixed-fixed') {
+            M_max = window._lastResults.qWind * window._lastResults.L ** 2 / 12;
+            V_max = window._lastResults.qWind * window._lastResults.L / 2;
+        } else {
+            M_max = window._lastResults.qWind * window._lastResults.L ** 2 / 8;
+            V_max = (5/8) * window._lastResults.qWind * window._lastResults.L;
+        }
+        const canvasM = document.createElement('canvas');
+        canvasM.width = 400;
+        canvasM.height = 70;
+        const ctxM = canvasM.getContext('2d');
+        ctxM.fillStyle = '#FFFFFF';
+        ctxM.fillRect(0, 0, canvasM.width, canvasM.height);
+        ctxM.strokeStyle = '#333';
+        ctxM.beginPath();
+        ctxM.moveTo(50, 60);
+        ctxM.lineTo(350, 60);
+        ctxM.stroke();
+        let scaleY = 40 / M_max;
+        for (let x = 0; x <= 1; x += 0.02) {
+            let xPos = 50 + x * 300;
+            let Mx = 0;
+            if (window._lastResults.supportCode === 'simply') {
+                Mx = window._lastResults.qWind * window._lastResults.L ** 2 / 8 * (4 * x * (1 - x));
+            } else if (window._lastResults.supportCode === 'fixed-fixed') {
+                Mx = window._lastResults.qWind * window._lastResults.L ** 2 / 12 * (6 * x * (1 - x) - 1);
+                Mx = Math.abs(Mx);
+            } else {
+                Mx = window._lastResults.qWind * window._lastResults.L ** 2 / 8 * (4 * x * (1 - x));
+            }
+            let yPos = 60 - Mx * scaleY;
+            if (x === 0) ctxM.moveTo(xPos, yPos);
+            else ctxM.lineTo(xPos, yPos);
+        }
+        ctxM.stroke();
+        ctxM.fillStyle = '#EDD00E';
+        ctxM.fillText('Momento flector (N·mm)', 150, 15);
+        const momentDataUrl = canvasM.toDataURL();
+        doc.addImage(momentDataUrl, 'PNG', margin, y, 80, 20);
+        const canvasV = document.createElement('canvas');
+        canvasV.width = 400;
+        canvasV.height = 70;
+        const ctxV = canvasV.getContext('2d');
+        ctxV.fillStyle = '#FFFFFF';
+        ctxV.fillRect(0, 0, canvasV.width, canvasV.height);
+        ctxV.strokeStyle = '#333';
+        ctxV.beginPath();
+        ctxV.moveTo(50, 60);
+        ctxV.lineTo(350, 60);
+        ctxV.stroke();
+        let V_left = V_max;
+        let V_right = -V_max;
+        if (window._lastResults.supportCode === 'fixed-pinned') {
+            V_left = (5/8) * window._lastResults.qWind * window._lastResults.L;
+            V_right = -(3/8) * window._lastResults.qWind * window._lastResults.L;
+        }
+        let scaleV = 40 / Math.max(Math.abs(V_left), Math.abs(V_right));
+        ctxV.moveTo(50, 60 - V_left * scaleV);
+        ctxV.lineTo(350, 60 - V_right * scaleV);
+        ctxV.stroke();
+        ctxV.fillStyle = '#EDD00E';
+        ctxV.fillText('Cortante (N)', 150, 15);
+        const shearDataUrl = canvasV.toDataURL();
+        doc.addImage(shearDataUrl, 'PNG', margin + 90, y, 80, 20);
+        y += 30;
+
+        // --- 5. VERIFICACIÓN ELU Y ELS ---
+        if (y > 270) { doc.addPage(); y = 20; }
+        doc.setFont('helvetica', 'bold');
+        doc.text('5. VERIFICACIÓN DE ESTADOS LÍMITE', margin, y);
+        y += 4;
+        let sigma = M_max / window._lastResults.Wx;
+        let fy = 0;
+        const material = window._lastResults.mat.toLowerCase();
+        if (material.includes('acero')) fy = 235;
+        else if (material.includes('aluminio')) fy = 200;
+        else if (material.includes('pvc')) fy = 50;
+        else if (material.includes('madera')) fy = 30;
+        else fy = 100;
+        let gammaM = 1.05;
+        let sigma_adm = fy / gammaM;
+        let cumple_tension = sigma <= sigma_adm;
+        const summaryData = [
+            ['Verificación', 'Resultado', 'Valor calculado', 'Límite'],
+            ['Tensión (ELU)', cumple_tension ? 'CUMPLE' : 'NO CUMPLE', `${sigma.toFixed(1)} MPa`, `${sigma_adm.toFixed(1)} MPa`],
+            ['Flecha (ELS)', window._lastResults.cls === 'ok' ? 'CUMPLE' : 'NO CUMPLE', `${window._lastResults.dt.toFixed(2)} mm`, `${window._lastResults.ll.toFixed(2)} mm`]
+        ];
+        doc.autoTable({
+            startY: y,
+            margin: { left: margin },
+            tableWidth: contentW,
+            head: [summaryData[0]],
+            body: summaryData.slice(1),
+            theme: 'grid',
+            headStyles: { fillColor: colPrimary, textColor: colDark },
             styles: { fontSize: 9 }
         });
         y = doc.lastAutoTable.finalY + 10;
 
-        if (y > 220) { doc.addPage(); y = 25; }
-        write('5. JUSTIFICACIÓN SEGÚN CTE DB-SE-AE', 12, 'bold');
-        y += 2;
-        const justText = `La acción del viento se determina según el Anejo D.1 del CTE DB-SE-AE. La presión estática se calcula como q_e = q_b · c_e · c_p, donde q_b es la presión dinámica básica (dependiente de la zona eólica y la velocidad básica del viento), c_e es el coeficiente de exposición (obtenido mediante la expresión analítica en función de la altura y el grado de aspereza del terreno) y c_p es el coeficiente de presión neta (diferencia entre presión exterior e interior). La carga lineal resultante se aplica sobre el montante vertical, y la flecha se verifica con la expresión de viga biapoyada o empotrada según la condición de apoyo. Los valores de racha máxima histórica proceden del reanálisis ERA5 (Open-Meteo).\n\nNota: El límite de deformación L/300 es adecuado para elementos estructurales que no soportan elementos frágiles. En caso de particiones o acristalamientos, se debe adoptar un criterio más restrictivo (L/500).`;
-        write(justText, 9, 'normal', [80,80,80]);
-        y += 5;
-        write('Referencias: CTE DB-SE-AE (Documento Básico Seguridad Estructural - Acciones en la edificación), DB-SE-A (Acero/Aluminio/Madera).', 9, 'italic', [100,100,100]);
-        y += 8;
+        // --- NUEVA SECCIÓN 6: VERIFICACIÓN DE PANDEO ---
+        if (y > 270) { doc.addPage(); y = 20; }
+        doc.setFont('helvetica', 'bold');
+        doc.text('6. VERIFICACIÓN DE PANDEO', margin, y);
+        y += 4;
+        // Cálculos de pandeo
+        let i = Math.sqrt(window._lastResults.Ix / window._lastResults.A); // radio de giro (mm)
+        let lambda = window._lastResults.L / i; // esbeltez
+        let P_cr = Math.PI * Math.PI * window._lastResults.EIx * 1000 / (window._lastResults.L * window._lastResults.L); // carga crítica Euler (N)
+        // Límite de esbeltez según CTE DB-SE-A (para piezas comprimidas de acero, por ejemplo 200)
+        let lambda_lim = 200;
+        let cumple_esbeltez = lambda <= lambda_lim;
+        const bucklingData = [
+            ['Radio de giro (i)', `${i.toFixed(2)} mm`, 'i = √(I/A)'],
+            ['Esbeltez (λ)', `${lambda.toFixed(1)}`, 'λ = L / i'],
+            ['Carga crítica de Euler (Pcr)', `${P_cr.toFixed(0)} N`, 'Pcr = π²·E·I / L²'],
+            ['Límite de esbeltez (CTE)', `λ ≤ ${lambda_lim}`, cumple_esbeltez ? 'CUMPLE' : 'NO CUMPLE'],
+            ['Observación', 'El pandeo no es crítico para cargas axiales reducidas (solo peso propio).', 'Para cargas axiles significativas, realizar verificación detallada.']
+        ];
+        doc.autoTable({
+            startY: y,
+            margin: { left: margin },
+            tableWidth: contentW,
+            body: bucklingData,
+            theme: 'striped',
+            headStyles: { fillColor: colGray },
+            styles: { fontSize: 8 }
+        });
+        y = doc.lastAutoTable.finalY + 10;
 
-        if (y > 200) { doc.addPage(); y = 25; }
-        write('6. GRÁFICOS DE ANÁLISIS ESTRUCTURAL', 12, 'bold');
+        // --- 7. REACCIONES EN ANCLAJES ---
+        if (y > 270) { doc.addPage(); y = 20; }
+        doc.setFont('helvetica', 'bold');
+        doc.text('7. REACCIONES PARA CÁLCULO DE ANCLAJES', margin, y);
+        y += 4;
+        doc.autoTable({
+            startY: y,
+            margin: { left: margin },
+            tableWidth: contentW/1.5,
+            head: [['Ubicación', 'Reacción Horizontal (Viento)', 'Carga Vertical (Peso)']],
+            body: [
+                ['Apoyo Superior', `${window._lastResults.reactions.top.toFixed(1)} N`, '-'],
+                ['Apoyo Inferior', `${window._lastResults.reactions.bottom.toFixed(1)} N`, `${window._lastResults.pesoTotal_N.toFixed(1)} N`]
+            ],
+            theme: 'grid',
+            headStyles: { fillColor: colPrimary, textColor: colDark }
+        });
+        y = doc.lastAutoTable.finalY + 10;
+
+        // --- 8. GRÁFICOS ---
+        if (y > 220) { doc.addPage(); y = 20; }
+        doc.setFont('helvetica', 'bold');
+        doc.text('8. GRÁFICOS DE ANÁLISIS ESTRUCTURAL', margin, y);
         y += 4;
         const charts = ['chartFlecha', 'chartBar', 'chartLmax', 'chartEI'];
-        const positions = [[leftMargin, y], [leftMargin + 85, y], [leftMargin, y + 55], [leftMargin + 85, y + 55]];
+        const positions = [[margin, y], [margin + 85, y], [margin, y + 55], [margin + 85, y + 55]];
         for(let i=0; i<charts.length; i++) {
             let canvas = document.getElementById(charts[i]);
             if (canvas) {
@@ -697,14 +892,16 @@
             }
         }
 
+        // --- PIE DE PÁGINA ---
         const totalPages = doc.internal.getNumberOfPages();
         for (let i = 1; i <= totalPages; i++) {
             doc.setPage(i);
             doc.setFontSize(8);
             doc.setTextColor(150);
-            doc.text(`Aislantech Ingeniería · Informe generado automáticamente · Página ${i} de ${totalPages}`, pageWidth / 2, 285, { align: 'center' });
+            doc.text(`Aislantech Ingeniería · Página ${i} de ${totalPages} · Informe generado automáticamente`, pw/2, 285, { align: 'center' });
         }
-        doc.save(`Informe_Tecnico_Aislantech_${window._lastResults.projectName || 'Perfil'}.pdf`);
+
+        doc.save(`Informe_Tecnico_${window._lastResults.projectName || 'Aislantech'}.pdf`);
     }
 
     // ================= ANÁLISIS PRINCIPAL (botón Calcular) =================
