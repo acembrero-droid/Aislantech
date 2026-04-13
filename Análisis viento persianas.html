@@ -5,22 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>Aislantech · Informe de Viento en Persianas · UNE-EN 13659</title>
     
-    <!-- Favicon (opcional, mismo estilo que el sitio principal) -->
-    <link rel="icon" type="image/x-icon" href="favicon.ico">
-    
-    <!-- Google Fonts (igual que el estilo superior) -->
+    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Open+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
-    
-    <!-- Font Awesome 6 (iconos) -->
+    <!-- Font Awesome 6 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <!-- Librerías para PDF y gráficos (necesarias para la herramienta) -->
+    <!-- Librerías para PDF y gráficos -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     
     <style>
-        /* ========== VARIABLES DE COLOR (HEREDADAS DEL ESTILO AISLANTECH) ========== */
+        /* ========== VARIABLES DE COLOR ========== */
         :root {
             --color-primary: #EDD00E;
             --color-primary-dark: #B8860B;
@@ -39,15 +34,10 @@
             --box-shadow-hover: 0 15px 30px rgba(0, 0, 0, 0.1);
         }
 
-        /* ========== ESTILOS GENERALES ========== */
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-        }
-
-        html {
-            scroll-behavior: smooth;
         }
 
         body {
@@ -71,7 +61,6 @@
             padding: 0 20px;
         }
 
-        /* ========== HEADER FIJO (COMO EL ORIGINAL) ========== */
         header {
             position: fixed;
             top: 0;
@@ -80,7 +69,6 @@
             z-index: 1000;
             background-color: rgba(255, 255, 255, 0.97);
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-            transition: var(--transition);
         }
 
         .header-container {
@@ -96,14 +84,6 @@
             text-decoration: none;
         }
 
-        .logo-img {
-            height: 40px;
-            width: auto;
-            margin-right: 12px;
-            transition: var(--transition);
-        }
-
-        /* Si no hay imagen, usamos texto estilizado */
         .logo-text {
             font-family: 'Montserrat', sans-serif;
             font-weight: 700;
@@ -129,10 +109,8 @@
             color: var(--color-gray);
             font-weight: 400;
             margin-top: 2px;
-            font-family: 'Open Sans', sans-serif;
         }
 
-        /* Botón estilo header */
         .btn-yellow {
             background-color: var(--color-primary);
             color: var(--color-dark);
@@ -151,15 +129,14 @@
 
         .btn-yellow:hover {
             background-color: var(--color-primary-dark);
-            color: var(--color-white);
+            color: white;
             transform: translateY(-3px);
             box-shadow: 0 5px 15px rgba(237, 208, 14, 0.3);
         }
 
-        /* ========== HERO / BANNER ========== */
         .hero-tool {
             background: linear-gradient(135deg, var(--color-secondary) 0%, var(--color-dark) 100%);
-            color: var(--color-white);
+            color: white;
             padding: 120px 0 60px;
             text-align: center;
             margin-bottom: 40px;
@@ -168,7 +145,7 @@
         .hero-tool h1 {
             font-size: 2.5rem;
             font-weight: 700;
-            color: var(--color-white);
+            color: white;
             margin-bottom: 15px;
         }
 
@@ -177,16 +154,8 @@
             font-style: normal;
         }
 
-        .hero-tool p {
-            font-size: 1.1rem;
-            opacity: 0.9;
-            max-width: 700px;
-            margin: 0 auto;
-        }
-
-        /* ========== TARJETAS (CARD) ESTILO AISLANTECH ========== */
         .card {
-            background-color: var(--color-white);
+            background-color: white;
             border-radius: var(--border-radius);
             overflow: hidden;
             box-shadow: var(--box-shadow);
@@ -219,7 +188,6 @@
             align-items: center;
             justify-content: center;
             font-weight: 800;
-            font-family: 'Montserrat', monospace;
             font-size: 1.2rem;
         }
 
@@ -234,7 +202,6 @@
             padding: 24px;
         }
 
-        /* Formulario y campos */
         .form-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -261,9 +228,8 @@
             border: 1px solid var(--color-secondary-light);
             border-radius: var(--border-radius);
             font-size: 0.9rem;
-            font-family: 'Open Sans', sans-serif;
             transition: var(--transition);
-            background: var(--color-white);
+            background: white;
         }
 
         input:focus, select:focus {
@@ -272,7 +238,6 @@
             box-shadow: 0 0 0 3px rgba(237, 208, 14, 0.2);
         }
 
-        /* Botones generales */
         .btn {
             display: inline-flex;
             align-items: center;
@@ -281,7 +246,6 @@
             color: var(--color-dark);
             padding: 10px 24px;
             border-radius: var(--border-radius);
-            text-decoration: none;
             font-weight: 700;
             border: none;
             cursor: pointer;
@@ -292,19 +256,17 @@
 
         .btn-primary {
             background-color: var(--color-primary);
-            color: var(--color-dark);
         }
 
         .btn-primary:hover {
             background-color: var(--color-primary-dark);
-            color: var(--color-white);
+            color: white;
             transform: translateY(-3px);
-            box-shadow: 0 5px 15px rgba(237, 208, 14, 0.3);
         }
 
         .btn-secondary {
             background-color: var(--color-secondary);
-            color: var(--color-white);
+            color: white;
         }
 
         .btn-secondary:hover {
@@ -323,15 +285,13 @@
             color: var(--color-dark);
         }
 
-        /* Tarjeta de resultado (estilo destacado) */
         .result-card {
             background: linear-gradient(135deg, var(--color-secondary) 0%, var(--color-dark) 100%);
-            color: var(--color-white);
+            color: white;
             border-radius: var(--border-radius);
             padding: 32px;
             text-align: center;
             margin-bottom: 30px;
-            box-shadow: var(--box-shadow-hover);
             border-top: 4px solid var(--color-primary);
         }
 
@@ -351,7 +311,6 @@
             font-weight: 800;
             font-size: 1.5rem;
             margin-top: 12px;
-            font-family: 'Montserrat', monospace;
         }
 
         .status-msg, .incidenciaMsg {
@@ -380,9 +339,8 @@
             color: var(--color-secondary);
         }
 
-        /* Gráficos y contenedores */
         .windrose-container, .chart-container {
-            background: var(--color-white);
+            background: white;
             border-radius: var(--border-radius);
             padding: 16px;
             margin-top: 16px;
@@ -394,7 +352,7 @@
             grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
             gap: 12px;
             background: var(--color-secondary);
-            color: var(--color-white);
+            color: white;
             border-radius: var(--border-radius);
             padding: 15px;
             margin-bottom: 16px;
@@ -433,10 +391,9 @@
             vertical-align: middle;
         }
 
-        /* ========== FOOTER ESTILO AISLANTECH ========== */
         footer {
             background-color: var(--color-dark);
-            color: var(--color-white);
+            color: white;
             padding: 60px 0 30px;
             margin-top: 60px;
         }
@@ -462,15 +419,14 @@
         }
 
         .footer-logo .logo-aislan {
-            color: var(--color-white);
+            color: white;
         }
         .footer-logo .logo-tech {
             color: var(--color-primary);
         }
 
         .footer-description {
-            color: rgba(255, 255, 255, 0.8);
-            margin-bottom: 20px;
+            color: rgba(255,255,255,0.8);
             font-size: 0.9rem;
         }
 
@@ -483,7 +439,7 @@
         }
 
         .footer-legal a {
-            color: rgba(255, 255, 255, 0.7);
+            color: rgba(255,255,255,0.7);
             text-decoration: none;
             font-size: 0.85rem;
             transition: var(--transition);
@@ -497,9 +453,8 @@
         .footer-bottom {
             text-align: center;
             padding-top: 30px;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            border-top: 1px solid rgba(255,255,255,0.1);
             font-size: 0.9rem;
-            color: rgba(255, 255, 255, 0.7);
         }
 
         .footer-bottom a {
@@ -507,7 +462,6 @@
             text-decoration: none;
         }
 
-        /* ========== RESPONSIVE ========== */
         @media (max-width: 768px) {
             .form-grid {
                 grid-template-columns: 1fr;
@@ -518,51 +472,23 @@
             .pressure-value {
                 font-size: 2.5rem;
             }
-            .header-container {
-                flex-wrap: wrap;
-            }
-            .logo-img {
-                height: 35px;
-            }
-            .logo-aislan, .logo-tech {
-                font-size: 1.3rem;
-            }
-            .btn-yellow {
-                padding: 8px 16px;
-                font-size: 0.75rem;
-            }
-        }
-
-        @media (max-width: 576px) {
-            .hero-tool {
-                padding: 100px 0 40px;
-            }
-            .card-header {
-                flex-direction: column;
-                text-align: center;
-            }
         }
     </style>
 </head>
 <body>
 
-<!-- HEADER (estilo Aislantech original) -->
 <header>
     <div class="container header-container">
-        <a href="../#" class="logo-container">
-            <!-- Logo tipográfico sin imagen, igual al estilo superior -->
+        <a href="#" class="logo-container">
             <div class="logo-text">
-                <div>
-                    <span class="logo-aislan">AISLAN</span><span class="logo-tech">TECH</span>
-                </div>
+                <div><span class="logo-aislan">AISLAN</span><span class="logo-tech">TECH</span></div>
                 <div class="logo-tagline">Soluciones Técnicas Avanzadas</div>
             </div>
         </a>
-        <a href="./#footer" class="btn-yellow"><i class="fas fa-envelope"></i> Contacto</a>
+        <a href="#footer" class="btn-yellow"><i class="fas fa-envelope"></i> Contacto</a>
     </div>
 </header>
 
-<!-- Hero de la herramienta -->
 <div class="hero-tool">
     <div class="container">
         <h1>Resistencia al Viento en <em>Persianas</em></h1>
@@ -571,7 +497,7 @@
 </div>
 
 <div class="container">
-    <!-- Proyecto y zona -->
+    <!-- Proyecto y ubicación -->
     <div class="card">
         <div class="card-header">
             <div class="step-badge">1</div>
@@ -584,18 +510,15 @@
                     <input type="text" id="projName" placeholder="Ej: Edificio Marina - Fachada Sur">
                 </div>
                 <div class="field">
-                    <label>Zona eólica (CTE 2024)</label>
-                    <select id="zona">
-                        <option value="26">Zona A · vb=26 m/s (Interior)</option>
-                        <option value="27">Zona B · vb=27 m/s (Atlántico)</option>
-                        <option value="29" selected>Zona C · vb=29 m/s (Mediterráneo y Canarias)</option>
-                    </select>
+                    <label>Zona eólica (automática según localización)</label>
+                    <input type="text" id="zonaDisplay" readonly style="background:#f0f0f0; font-weight:bold;" value="-- Pendiente de localizar --">
+                    <input type="hidden" id="zonaValue" value="29">
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Coeficiente fijo según UNE-EN 13659 -->
+    <!-- Coeficiente fijo -->
     <div class="card">
         <div class="card-header">
             <div class="step-badge">2</div>
@@ -604,13 +527,13 @@
         <div class="card-body">
             <div class="info-note">
                 <strong><i class="fas fa-file-alt"></i> Coeficiente neto Cp = 0,18</strong><br>
-                Según la norma UNE-EN 13659:2016 (Persianas exteriores) y el Manual de ASEFAVE, para persianas con distancia a la ventana ≤ 0,5 m se adopta un coeficiente de presión específico de <strong>0,18</strong>.<br>
-                La presión de cálculo se obtiene como: <strong>q<sub>e</sub> = q<sub>b</sub> · c<sub>e</sub>(z) · 0,18</strong>
+                Según UNE-EN 13659:2016 y Manual ASEFAVE, para persianas con distancia a ventana ≤ 0,5 m se adopta Cp = 0,18.<br>
+                Presión de cálculo: <strong>q<sub>e</sub> = q<sub>b</sub> · c<sub>e</sub>(z) · 0,18</strong>
             </div>
         </div>
     </div>
 
-    <!-- Localización + rosa automática (MODIFICADA: ROSA DE LOS VIENTOS DESPLAZADA 22.5º) -->
+    <!-- Localización + rosa automática -->
     <div class="card">
         <div class="card-header">
             <div class="step-badge">3</div>
@@ -640,15 +563,6 @@
                     </select>
                 </div>
                 <div class="field">
-                    <label>Orientación de la fachada</label>
-                    <select id="orient_fachada">
-                        <option value="">-- Sin especificar --</option>
-                        <option value="N">Norte</option><option value="NE">Nordeste</option><option value="E">Este</option>
-                        <option value="SE">Sureste</option><option value="S">Sur</option><option value="SO">Suroeste</option>
-                        <option value="O">Oeste</option><option value="NO">Noroeste</option>
-                    </select>
-                </div>
-                <div class="field">
                     <label>Fuente / estación</label>
                     <input type="text" id="fuente_racha" placeholder="Open-Meteo ERA5">
                 </div>
@@ -663,18 +577,15 @@
                 </div>
             </div>
             <div id="windroseCanvasContainer" class="windrose-container" style="display: none;">
-                <canvas id="windRoseChart" width="400" height="400" style="max-width: 100%; height: auto;"></canvas>
-                <div class="info-note" style="margin-top: 8px; font-size:0.7rem">
-                    <i class="fas fa-compass"></i> Rosa de vientos corregida: sectores centrados en puntos cardinales (desplazamiento +22.5º para alinear quesitos).
-                </div>
+                <canvas id="windRoseCanvas" width="400" height="400" style="width:100%; max-width:400px; height:auto; display:block; margin:0 auto;"></canvas>
             </div>
             <div class="info-note">
-                <i class="fas fa-database"></i> <strong>Nota:</strong> Al localizar una dirección, se consulta el archivo histórico ERA5 desde 1950. Se obtiene la racha máxima absoluta y su dirección. El coeficiente de exposición ce(z) se calcula según CTE DB-SE-AE Anejo D. Si la racha supera la velocidad básica CTE, se aplica automáticamente (CTE DB-SE-AE 3.3.1).
+                <i class="fas fa-database"></i> <strong>Nota:</strong> Al localizar, se consulta ERA5 (1950-hoy). La zona eólica se asigna automáticamente según la ubicación (A: interior, B: Atlántico, C: Mediterráneo/Canarias). La racha máxima histórica se usa como velocidad de cálculo si supera la zona (CTE DB-SE-AE 3.3.1).
             </div>
         </div>
     </div>
 
-    <!-- Exposición y altura -->
+    <!-- Parámetros de exposición -->
     <div class="card">
         <div class="card-header">
             <div class="step-badge">4</div>
@@ -689,11 +600,11 @@
                 <div class="field">
                     <label>Grado de aspereza del entorno</label>
                     <select id="aspereza">
-                        <option value="I">I - Costa / borde del mar (k=0.156, L=0.003, Z=1.0)</option>
-                        <option value="II">II - Campo abierto (k=0.17, L=0.01, Z=1.0)</option>
-                        <option value="III">III - Zona rural (k=0.19, L=0.05, Z=2.0)</option>
-                        <option value="IV" selected>IV - Zona urbana/industrial (k=0.22, L=0.3, Z=5.0)</option>
-                        <option value="V">V - Centro gran ciudad (k=0.24, L=1.0, Z=10.0)</option>
+                        <option value="I">I - Costa / borde del mar</option>
+                        <option value="II">II - Campo abierto</option>
+                        <option value="III">III - Zona rural</option>
+                        <option value="IV" selected>IV - Zona urbana/industrial</option>
+                        <option value="V">V - Centro gran ciudad</option>
                     </select>
                     <button class="btn btn-outline" id="btnEstimarGrado" style="margin-top: 6px; padding: 6px 12px;"><i class="fas fa-search"></i> Estimar desde ubicación</button>
                     <div id="sugerenciaAspereza" style="font-size: 0.7rem; margin-top: 4px;"></div>
@@ -702,7 +613,7 @@
         </div>
     </div>
 
-    <!-- Resultados destacados -->
+    <!-- Resultados -->
     <div class="result-card">
         <div style="font-size: 1rem; opacity: 0.9;">Presión neta de cálculo (q<sub>e</sub>) según UNE-EN 13659</div>
         <div class="pressure-value" id="presionValue">0.00 kN/m²</div>
@@ -716,16 +627,12 @@
     <div class="card">
         <div class="card-header">
             <div class="step-badge">5</div>
-            <div class="card-title">📈 Relación presión neta vs altura del edificio (con umbrales de clase UNE-EN 13659)</div>
+            <div class="card-title">📈 Relación presión neta vs altura del edificio</div>
         </div>
         <div class="card-body">
             <div class="chart-container">
                 <canvas id="heightPressureChart" width="800" height="400" style="width:100%; height:auto; max-height:400px;"></canvas>
                 <div id="pressureLegend" class="custom-legend"></div>
-                <div class="info-note" style="margin-top:12px;">
-                    El gráfico muestra la presión neta (Pa) en función de la altura del edificio z (m) para los parámetros actuales.<br>
-                    Las áreas de color delimitan las clases según UNE-EN 13659.
-                </div>
             </div>
         </div>
     </div>
@@ -736,7 +643,6 @@
     </div>
 </div>
 
-<!-- FOOTER estilo Aislantech -->
 <footer>
     <div class="container">
         <div class="footer-content">
@@ -748,18 +654,18 @@
             </div>
         </div>
         <div class="footer-legal">
-            <a href="politica-privacidad.html" target="_blank">Política de Privacidad</a>
-            <a href="politica-cookies.html" target="_blank">Política de Cookies</a>
-            <a href="aviso-legal.html" target="_blank">Aviso Legal</a>
+            <a href="#">Política de Privacidad</a>
+            <a href="#">Política de Cookies</a>
+            <a href="#">Aviso Legal</a>
         </div>
         <div class="footer-bottom">
-            <p>&copy; 2025 Aislantech. Todos los derechos reservados. | <a href="https://www.aislantech.es">www.aislantech.es</a></p>
+            <p>&copy; 2025 Aislantech. Todos los derechos reservados. | <a href="#">www.aislantech.es</a></p>
         </div>
     </div>
 </footer>
 
 <script>
-    // ---------- COEFICIENTE DE EXPOSICIÓN (CTE DB-SE-AE Anejo D) ----------
+    // Coeficientes exposición CTE
     const CTE_PARAMS = {
         "I": { k: 0.156, L: 0.003, Z: 1.0 },
         "II": { k: 0.17,  L: 0.01,  Z: 1.0 },
@@ -784,54 +690,172 @@
     
     const CP_PERSIANA = 0.18;
     
-    function evaluarIncidencia(dirRacha, orientFachada) {
-        if (!dirRacha || !orientFachada) return null;
-        const opuestas = { 'N':'S', 'S':'N', 'E':'O', 'O':'E', 'NE':'SO', 'SO':'NE', 'SE':'NO', 'NO':'SE' };
-        if (dirRacha === orientFachada) return "frontal (barlovento, impacto directo)";
-        else if (opuestas[dirRacha] === orientFachada) return "trasera (sotavento, succión)";
-        else return "incidencia oblicua – considerar el caso más desfavorable (frontal)";
-    }
-    
     let geoCoords = null;
     let lastData = null;
-    let windRoseChart = null;
     let heightPressureChart = null;
     let historicalRecord = { maxKmh: 0, date: '', direction: '', perDirectionMax: new Array(8).fill(0), observatory: '' };
+    let windRoseData = new Array(8).fill(0);
     
-    const classColors = [
-        'rgba(200,230,200,0.5)', 'rgba(230,230,180,0.5)', 'rgba(255,220,160,0.5)',
-        'rgba(255,200,180,0.5)', 'rgba(230,190,220,0.5)', 'rgba(200,200,200,0.5)'
-    ];
-    const classLabels = ['Clase 0 (0-50 Pa)', 'Clase 1 (50-100 Pa)', 'Clase 2 (100-150 Pa)', 'Clase 3 (150-250 Pa)', 'Clase 4 (250-400 Pa)', 'Clase 5 (400-600 Pa)', 'Clase 6 (>600 Pa)'];
+    // Mapeo de zona eólica según región (aproximado)
+    function determinarZonaEolica(lat, lon) {
+        // Zonas CTE: A (interior, vb=26), B (Atlántico, vb=27), C (Mediterráneo/Canarias/Baleares, vb=29)
+        // Usamos límites geográficos simples:
+        // - Canarias: lat 27-30, lon -18 a -13
+        // - Baleares: lon 1-5, lat 38-40
+        // - Mediterráneo: lon > -1 (aprox) y lat < 44 (excepto Galicia)
+        // - Atlántico: lon < -6 (Galicia, Portugal, Huelva, Cádiz) o zonas costeras atlánticas
+        // - Interior: resto
+        if (lat > 27 && lat < 30 && lon > -18 && lon < -13) return { value: 29, text: "Zona C (Canarias) · vb=29 m/s" };
+        if (lat > 38 && lat < 40 && lon > 1 && lon < 5) return { value: 29, text: "Zona C (Baleares) · vb=29 m/s" };
+        // Costa Mediterránea: desde Girona hasta Almería, más Ceuta/Melilla
+        if (lon > -1 && lat < 44 && lat > 36) return { value: 29, text: "Zona C (Mediterráneo) · vb=29 m/s" };
+        // Costa Atlántica (Galicia, Portugal, Huelva, Cádiz) lon < -6 y lat > 36
+        if (lon < -6 && lat > 36) return { value: 27, text: "Zona B (Atlántico) · vb=27 m/s" };
+        // Resto interior
+        return { value: 26, text: "Zona A (Interior) · vb=26 m/s" };
+    }
     
-    const classAreaPlugin = {
-        id: 'classArea',
-        afterDraw(chart) {
-            const { ctx, chartArea: { left, right, bottom }, scales } = chart;
-            const thresholds = [50, 100, 150, 250, 400, 600];
-            const yMax = scales.y.max;
-            let prevY = bottom;
-            const allThresholds = [...thresholds, Infinity];
-            for (let i = 0; i < allThresholds.length; i++) {
-                const thresh = allThresholds[i];
-                const yPos = scales.y.getPixelForValue(Math.min(thresh, yMax));
-                ctx.fillStyle = classColors[i] || 'rgba(180,180,180,0.3)';
-                ctx.fillRect(left, Math.min(prevY, yPos), right - left, Math.abs(prevY - yPos));
-                ctx.save();
-                ctx.font = 'bold 10px "Montserrat"';
-                ctx.fillStyle = '#696969';
-                const labelX = right + 5;
-                const labelY = (prevY + yPos) / 2;
-                ctx.fillText(classLabels[i], labelX, labelY);
-                ctx.restore();
-                prevY = yPos;
-                if (thresh >= yMax) break;
+    function actualizarZonaEolica(lat, lon) {
+        const zona = determinarZonaEolica(lat, lon);
+        document.getElementById('zonaDisplay').value = zona.text;
+        document.getElementById('zonaValue').value = zona.value;
+        return zona.value;
+    }
+    
+    // Dibujo personalizado de rosa de vientos (Norte arriba)
+    function drawWindRose(data, maxValue) {
+        const canvas = document.getElementById('windRoseCanvas');
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        const size = Math.min(canvas.clientWidth, 400);
+        canvas.width = size;
+        canvas.height = size;
+        const center = size/2;
+        const radius = size * 0.35;
+        const numSectors = 8;
+        const sectorAngle = (2 * Math.PI) / numSectors;
+        const rumbos = ['N', 'NE', 'E', 'SE', 'S', 'SO', 'O', 'NO'];
+        const colores = ['rgba(255,182,193,0.7)', 'rgba(255,218,185,0.7)', 'rgba(255,255,180,0.7)', 'rgba(200,230,200,0.7)', 'rgba(173,216,230,0.7)', 'rgba(221,160,221,0.7)', 'rgba(255,192,203,0.7)', 'rgba(210,180,140,0.7)'];
+        
+        const maxVal = Math.max(...data, 1);
+        ctx.clearRect(0, 0, size, size);
+        for (let i = 0; i < numSectors; i++) {
+            let startAngle = i * sectorAngle - Math.PI/2;
+            let endAngle = startAngle + sectorAngle;
+            let value = data[i];
+            let intensity = value / maxVal;
+            let innerRadius = radius * 0.2;
+            let outerRadius = radius * (0.4 + intensity * 0.6);
+            ctx.beginPath();
+            ctx.moveTo(center + innerRadius * Math.cos(startAngle), center + innerRadius * Math.sin(startAngle));
+            ctx.arc(center, center, innerRadius, startAngle, endAngle);
+            ctx.arc(center, center, outerRadius, endAngle, startAngle, true);
+            ctx.closePath();
+            ctx.fillStyle = colores[i % colores.length];
+            ctx.fill();
+            ctx.strokeStyle = '#696969';
+            ctx.lineWidth = 0.8;
+            ctx.stroke();
+        }
+        // Círculo base
+        ctx.beginPath();
+        ctx.arc(center, center, radius, 0, 2*Math.PI);
+        ctx.strokeStyle = '#aaa';
+        ctx.setLineDash([3,5]);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        // Líneas cardinales
+        for (let i=0; i<numSectors; i+=2) {
+            let angle = i * sectorAngle - Math.PI/2;
+            let x1 = center + radius * 0.9 * Math.cos(angle);
+            let y1 = center + radius * 0.9 * Math.sin(angle);
+            let x2 = center + radius * 1.1 * Math.cos(angle);
+            let y2 = center + radius * 1.1 * Math.sin(angle);
+            ctx.beginPath();
+            ctx.moveTo(x1, y1);
+            ctx.lineTo(x2, y2);
+            ctx.strokeStyle = '#999';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+        }
+        // Etiquetas
+        ctx.font = 'bold 14px "Montserrat"';
+        ctx.fillStyle = '#333';
+        for (let i=0; i<numSectors; i++) {
+            let angle = i * sectorAngle + sectorAngle/2 - Math.PI/2;
+            let labelRadius = radius * 1.15;
+            let x = center + labelRadius * Math.cos(angle);
+            let y = center + labelRadius * Math.sin(angle);
+            ctx.fillText(rumbos[i], x-6, y+4);
+        }
+        ctx.font = 'italic 10px "Open Sans"';
+        ctx.fillStyle = '#666';
+        ctx.fillText('Racha máxima (km/h)', center-45, center + radius + 20);
+    }
+    
+    function updateWindRose(data) {
+        drawWindRose(data, Math.max(...data, 1));
+    }
+    
+    function calcularPresion() {
+        const vb_zona = parseFloat(document.getElementById('zonaValue').value);
+        let vb_final = vb_zona;
+        let rachaVal = null;
+        let rachaUsada = false;
+        let rachaInput = document.getElementById('racha_historica').value;
+        if (rachaInput !== "") {
+            rachaVal = parseFloat(rachaInput);
+            if (!isNaN(rachaVal) && rachaVal > 0 && rachaVal > vb_final) {
+                vb_final = rachaVal;
+                rachaUsada = true;
             }
         }
-    };
+        const z = parseFloat(document.getElementById('altura').value);
+        const grado = document.getElementById('aspereza').value;
+        const ce = calcCe(z, grado);
+        const qb = velocidadAPresion(vb_final);
+        let qe = qb * ce * CP_PERSIANA;
+        qe = Math.max(qe, 0.05);
+        const pa = qe * 1000;
+        let clase = "Clase 0 (<50 Pa)";
+        if (pa >= 600) clase = "Clase 6 (≥600 Pa)";
+        else if (pa >= 400) clase = "Clase 5 (≥400 Pa)";
+        else if (pa >= 250) clase = "Clase 4 (≥250 Pa)";
+        else if (pa >= 150) clase = "Clase 3 (≥150 Pa)";
+        else if (pa >= 100) clase = "Clase 2 (≥100 Pa)";
+        else if (pa >= 50) clase = "Clase 1 (≥50 Pa)";
+        document.getElementById('presionValue').innerText = qe.toFixed(2) + " kN/m²";
+        document.getElementById('presionPa').innerHTML = `(${Math.round(pa)} Pa)`;
+        document.getElementById('claseDisplay').innerHTML = clase;
+        let aviso = "";
+        if (rachaUsada && rachaVal) aviso = `⚠️ Racha máxima (${rachaVal.toFixed(1)} m/s) supera vb zona (${vb_zona} m/s). Se usa racha (CTE DB-SE-AE 3.3.1).`;
+        else if (rachaVal) aviso = `✓ Racha histórica ${rachaVal.toFixed(1)} m/s ≤ vb zona. No modifica.`;
+        else aviso = `ℹ️ Sin racha histórica. Cálculo con vb = ${vb_zona} m/s.`;
+        document.getElementById('avisoRacha').innerHTML = aviso;
+        // Sin orientación de fachada, eliminamos mensaje de incidencia
+        document.getElementById('incidenciaMsg').innerHTML = "";
+        lastData = {
+            proj: document.getElementById('projName').value || 'Sin nombre',
+            fecha: new Date().toLocaleDateString('es-ES'),
+            vb_zona, vb_final, racha_historica: rachaVal, racha_usada: rachaUsada,
+            fuente_racha: document.getElementById('fuente_racha').value || 'Open-Meteo',
+            dir_racha: document.getElementById('dir_racha').value || 'No especificada',
+            z, gradoAspereza: grado,
+            aspereza_text: document.getElementById('aspereza').options[document.getElementById('aspereza').selectedIndex].text,
+            ce, qb, qe, pa, clase,
+            geoAddr: geoCoords ? geoCoords.address : 'No localizada',
+            observatory: historicalRecord.observatory,
+            historicalRecord: historicalRecord.maxKmh > 0 ? historicalRecord : null,
+            cp_persiana: CP_PERSIANA,
+            windRoseData: windRoseData.slice()
+        };
+        document.getElementById('btnPDF').style.display = 'flex';
+        updateHeightPressureChart();
+        if (windRoseData.some(v => v>0)) updateWindRose(windRoseData);
+    }
     
     function updateHeightPressureChart() {
-        const vb_final = parseFloat(document.getElementById('racha_historica').value) || parseFloat(document.getElementById('zona').value);
+        const vb_final = parseFloat(document.getElementById('racha_historica').value) || parseFloat(document.getElementById('zonaValue').value);
         const grado = document.getElementById('aspereza').value;
         const qb = velocidadAPresion(vb_final);
         const heights = [];
@@ -845,6 +869,8 @@
         }
         const ctx = document.getElementById('heightPressureChart').getContext('2d');
         if (heightPressureChart) heightPressureChart.destroy();
+        const classColorsBg = ['rgba(200,230,200,0.5)', 'rgba(230,230,180,0.5)', 'rgba(255,220,160,0.5)', 'rgba(255,200,180,0.5)', 'rgba(230,190,220,0.5)', 'rgba(200,200,200,0.5)'];
+        const classLabels = ['Clase 0 (0-50 Pa)', 'Clase 1 (50-100 Pa)', 'Clase 2 (100-150 Pa)', 'Clase 3 (150-250 Pa)', 'Clase 4 (250-400 Pa)', 'Clase 5 (400-600 Pa)', 'Clase 6 (>600 Pa)'];
         const thresholds = [50, 100, 150, 250, 400, 600];
         const thresholdDatasets = thresholds.map((t, idx) => ({
             label: classLabels[idx+1],
@@ -882,93 +908,56 @@
                     legend: { display: false }
                 },
                 scales: {
-                    x: { title: { display: true, text: 'Altura del edificio z (m)', font: { weight: 'bold' } }, min: 3, max: 70 },
-                    y: { title: { display: true, text: 'Presión neta (Pa)', font: { weight: 'bold' } }, beginAtZero: true }
+                    x: { title: { display: true, text: 'Altura del edificio z (m)' }, min: 3, max: 70 },
+                    y: { title: { display: true, text: 'Presión neta (Pa)' }, beginAtZero: true }
                 }
             },
-            plugins: [classAreaPlugin]
+            plugins: [{
+                id: 'classArea',
+                afterDraw(chart) {
+                    const { ctx, chartArea: { left, right, bottom }, scales } = chart;
+                    const yMax = scales.y.max;
+                    let prevY = bottom;
+                    const allThresholds = [...thresholds, Infinity];
+                    for (let i = 0; i < allThresholds.length; i++) {
+                        const thresh = allThresholds[i];
+                        const yPos = scales.y.getPixelForValue(Math.min(thresh, yMax));
+                        ctx.fillStyle = classColorsBg[i] || 'rgba(180,180,180,0.3)';
+                        ctx.fillRect(left, Math.min(prevY, yPos), right - left, Math.abs(prevY - yPos));
+                        ctx.save();
+                        ctx.font = 'bold 10px "Montserrat"';
+                        ctx.fillStyle = '#696969';
+                        ctx.fillText(classLabels[i], right + 5, (prevY + yPos) / 2);
+                        ctx.restore();
+                        prevY = yPos;
+                        if (thresh >= yMax) break;
+                    }
+                }
+            }]
         });
         const legendDiv = document.getElementById('pressureLegend');
         legendDiv.innerHTML = '';
-        for (let i = 0; i < classColors.length; i++) {
+        for (let i = 0; i < classColorsBg.length; i++) {
             const span = document.createElement('span');
             span.style.display = 'inline-flex';
             span.style.alignItems = 'center';
             span.style.marginRight = '12px';
-            span.innerHTML = `<span class="legend-color" style="background:${classColors[i]}"></span> ${classLabels[i]}`;
+            span.innerHTML = `<span class="legend-color" style="background:${classColorsBg[i]}"></span> ${classLabels[i]}`;
             legendDiv.appendChild(span);
         }
         const span6 = document.createElement('span');
         span6.style.display = 'inline-flex';
-        span6.innerHTML = `<span class="legend-color" style="background:rgba(180,180,180,0.5)"></span> ${classLabels[6]}`;
+        span6.innerHTML = `<span class="legend-color" style="background:rgba(180,180,180,0.3)"></span> ${classLabels[6]}`;
         legendDiv.appendChild(span6);
     }
     
-    function calcularPresion() {
-        const vb_zona = parseFloat(document.getElementById('zona').value);
-        let vb_final = vb_zona;
-        let rachaVal = null;
-        let rachaUsada = false;
-        let rachaInput = document.getElementById('racha_historica').value;
-        if (rachaInput !== "") {
-            rachaVal = parseFloat(rachaInput);
-            if (!isNaN(rachaVal) && rachaVal > 0 && rachaVal > vb_final) {
-                vb_final = rachaVal;
-                rachaUsada = true;
-            }
-        }
-        const z = parseFloat(document.getElementById('altura').value);
-        const grado = document.getElementById('aspereza').value;
-        const ce = calcCe(z, grado);
-        const qb = velocidadAPresion(vb_final);
-        let qe = qb * ce * CP_PERSIANA;
-        qe = Math.max(qe, 0.05);
-        const pa = qe * 1000;
-        let clase = "Clase 0 (<50 Pa)";
-        if (pa >= 600) clase = "Clase 6 (≥600 Pa)";
-        else if (pa >= 400) clase = "Clase 5 (≥400 Pa)";
-        else if (pa >= 250) clase = "Clase 4 (≥250 Pa)";
-        else if (pa >= 150) clase = "Clase 3 (≥150 Pa)";
-        else if (pa >= 100) clase = "Clase 2 (≥100 Pa)";
-        else if (pa >= 50) clase = "Clase 1 (≥50 Pa)";
-        document.getElementById('presionValue').innerText = qe.toFixed(2) + " kN/m²";
-        document.getElementById('presionPa').innerHTML = `(${Math.round(pa)} Pa)`;
-        document.getElementById('claseDisplay').innerHTML = clase;
-        let aviso = "";
-        if (rachaUsada && rachaVal) aviso = `⚠️ Racha máxima (${rachaVal.toFixed(1)} m/s) supera vb zona (${vb_zona} m/s). Se usa racha (CTE DB-SE-AE 3.3.1).`;
-        else if (rachaVal) aviso = `✓ Racha histórica ${rachaVal.toFixed(1)} m/s ≤ vb zona. No modifica.`;
-        else aviso = `ℹ️ Sin racha histórica. Cálculo con vb = ${vb_zona} m/s.`;
-        document.getElementById('avisoRacha').innerHTML = aviso;
-        const dirRacha = document.getElementById('dir_racha').value;
-        const orientFachada = document.getElementById('orient_fachada').value;
-        let incidencia = evaluarIncidencia(dirRacha, orientFachada);
-        document.getElementById('incidenciaMsg').innerHTML = incidencia ? `<i class="fas fa-wind"></i> Incidencia (solo informativa): ${incidencia}` : "";
-        lastData = {
-            proj: document.getElementById('projName').value || 'Sin nombre',
-            fecha: new Date().toLocaleDateString('es-ES'),
-            vb_zona, vb_final, racha_historica: rachaVal, racha_usada: rachaUsada,
-            fuente_racha: document.getElementById('fuente_racha').value || 'Open-Meteo',
-            dir_racha: dirRacha || 'No especificada',
-            orient_fachada: orientFachada || 'No especificada',
-            incidencia: incidencia || 'No evaluada',
-            z, gradoAspereza: grado,
-            aspereza_text: document.getElementById('aspereza').options[document.getElementById('aspereza').selectedIndex].text,
-            ce, qb, qe, pa, clase,
-            geoAddr: geoCoords ? geoCoords.address : 'No localizada',
-            observatory: historicalRecord.observatory,
-            historicalRecord: historicalRecord.maxKmh > 0 ? historicalRecord : null,
-            cp_persiana: CP_PERSIANA
-        };
-        document.getElementById('btnPDF').style.display = 'flex';
-        updateHeightPressureChart();
-    }
-    
-    const pastelColors = ['rgba(255, 182, 193, 0.6)', 'rgba(255, 218, 185, 0.6)', 'rgba(255, 255, 180, 0.6)', 'rgba(200, 230, 200, 0.6)', 'rgba(173, 216, 230, 0.6)', 'rgba(221, 160, 221, 0.6)', 'rgba(255, 192, 203, 0.6)', 'rgba(210, 180, 140, 0.6)'];
-    
     async function fetchWindRoseAuto(lat, lon, locationName) {
         const statusSpan = document.getElementById('geoStatus');
-        statusSpan.innerHTML = '⏳ Consultando archivo histórico desde 1950... <i class="fas fa-spinner fa-pulse"></i>';
+        statusSpan.innerHTML = '⏳ Consultando archivo histórico ERA5... <i class="fas fa-spinner fa-pulse"></i>';
         try {
+            // Actualizar zona eólica según coordenadas
+            actualizarZonaEolica(lat, lon);
+            
             const today = new Date().toISOString().split('T')[0];
             const url = `https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lon}&start_date=1950-01-01&end_date=${today}&daily=wind_gusts_10m_max,wind_direction_10m_dominant&wind_speed_unit=kmh&timezone=auto`;
             const resp = await fetch(url);
@@ -991,6 +980,7 @@
             }
             const observatoryStr = `ERA5 reanalysis (${lat.toFixed(4)}°, ${lon.toFixed(4)}°)`;
             historicalRecord = { maxKmh: absMax, maxMs: absMax / 3.6, date: absDate, direction: absDir, perDirectionMax: perDirMax, observatory: observatoryStr };
+            windRoseData = perDirMax.slice();
             document.getElementById('recordCard').style.display = 'block';
             document.getElementById('recordVal').innerHTML = `${absMax.toFixed(1)} km/h (${(absMax/3.6).toFixed(1)} m/s)`;
             document.getElementById('recordDate').innerHTML = absDate;
@@ -1001,37 +991,17 @@
             let dirCode = absDir.split(' ')[0];
             const dirSelect = document.getElementById('dir_racha');
             for (let i=0; i<dirSelect.options.length; i++) { if (dirSelect.options[i].value === dirCode) { dirSelect.selectedIndex = i; break; } }
-            const vb_zona = parseFloat(document.getElementById('zona').value);
+            const vb_zona = parseFloat(document.getElementById('zonaValue').value);
             const warningDiv = document.getElementById('gustWarning');
-            if ((absMax/3.6) > vb_zona) { warningDiv.style.display = 'block'; warningDiv.innerHTML = `⚠️ Récord histórico (${(absMax/3.6).toFixed(1)} m/s) supera la velocidad básica CTE (${vb_zona} m/s). Se aplicará automáticamente (CTE DB-SE-AE 3.3.1).`; }
+            if ((absMax/3.6) > vb_zona) { warningDiv.style.display = 'block'; warningDiv.innerHTML = `⚠️ Récord histórico (${(absMax/3.6).toFixed(1)} m/s) supera la velocidad básica CTE (${vb_zona} m/s). Se aplicará automáticamente.`; }
             else { warningDiv.style.display = 'none'; }
-            const ctx = document.getElementById('windRoseChart').getContext('2d');
-            if (windRoseChart) windRoseChart.destroy();
-            // --- MODIFICACIÓN: DESPLAZAMIENTO 22.5° PARA CENTRAR QUESITOS EN PUNTOS CARDINALES ---
-            // Se ajusta startAngle a -112.5° para que el centro del sector Norte coincida con el punto cardinal superior.
-            windRoseChart = new Chart(ctx, {
-                type: 'polarArea',
-                data: { labels: RUMBOS, datasets: [{ label: 'Racha máxima histórica (km/h)', data: perDirMax, backgroundColor: pastelColors, borderColor: '#696969', borderWidth: 1.5 }] },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: true,
-                    scales: {
-                        r: {
-                            startAngle: -112.5,      // ROTACIÓN CLAVE: 22.5° para centrar "quesitos" en N, E, S, O.
-                            grid: { color: 'rgba(0,0,0,0.1)' },
-                            angleLines: { color: 'rgba(0,0,0,0.1)' },
-                            suggestedMin: 0,
-                            ticks: { stepSize: 20 }
-                        }
-                    },
-                    plugins: { legend: { position: 'bottom' } }
-                }
-            });
+            
+            updateWindRose(perDirMax);
             document.getElementById('windroseCanvasContainer').style.display = 'block';
-            statusSpan.innerHTML = `✅ Datos históricos cargados. Racha récord: ${absMax.toFixed(1)} km/h (${(absMax/3.6).toFixed(1)} m/s) el ${absDate}. (Rosa centrada en cardinales)`;
+            statusSpan.innerHTML = `✅ Datos cargados. Racha récord: ${absMax.toFixed(1)} km/h (${(absMax/3.6).toFixed(1)} m/s) el ${absDate}. Zona eólica actualizada.`;
             calcularPresion();
         } catch (err) {
-            statusSpan.innerHTML = '❌ Error al cargar datos históricos. Verifique conexión o intente más tarde.';
+            statusSpan.innerHTML = '❌ Error al cargar datos históricos. Verifique conexión.';
             console.error(err);
         }
     }
@@ -1070,13 +1040,13 @@
             const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${geoCoords.lat}&lon=${geoCoords.lon}&format=json&accept-language=es`, { signal: AbortSignal.timeout(8000) });
             const data = await res.json();
             const address = data.address || {};
-            const city = address.city || address.town || address.village || '';
+            const city = (address.city || address.town || address.village || '').toLowerCase();
             const grandes = ['madrid','barcelona','valencia','sevilla','zaragoza','málaga','bilbao','palma'];
             let grado = 'IV';
-            if (grandes.some(c => city.toLowerCase().includes(c))) grado = 'V';
+            if (grandes.some(c => city.includes(c))) grado = 'V';
             else if (city && (city.includes('ciudad') || city.includes('city'))) grado = 'IV';
             else if (city && (city.includes('pueblo') || city.includes('village'))) grado = 'III';
-            else if (city === '') grado = 'II';
+            else if (!city) grado = 'II';
             const isCoastal = (geoCoords.lon < -6 && geoCoords.lat < 43) || (geoCoords.lon > -1 && geoCoords.lat < 43 && geoCoords.lat > 36);
             if (isCoastal && grado !== 'V') grado = 'II';
             document.getElementById('aspereza').value = grado;
@@ -1086,121 +1056,89 @@
         } catch(e) { document.getElementById('sugerenciaAspereza').innerHTML = '❌ No se pudo estimar'; }
     }
     
-   async function generarPDF() {
+    async function generarPDF() {
         if (!lastData) { alert("Por favor, calcule primero los resultados."); return; }
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-        
-        const pageWidth = doc.internal.pageSize.getWidth();
-        const margin = 20;
-        const contentWidth = pageWidth - (margin * 2);
+        const C_DARK = [60,60,60], C_GOLD = [245,197,24], C_GREY = [100,100,100], C_BG = [248,249,250];
         const d = lastData;
-
-        // Colores corporativos
-        const C_DARK = [60, 60, 60];
-        const C_GOLD = [245, 197, 24];
-        const C_GREY = [100, 100, 100];
-        const C_BG = [248, 249, 250];
-
-        // --- PÁGINA 1: PORTADA ---
         doc.setFillColor(...C_DARK);
         doc.rect(0, 0, 15, 297, 'F');
-        
         doc.setFont("helvetica", "bold");
         doc.setFontSize(28);
         doc.setTextColor(...C_GOLD);
         doc.text("AISLANTECH", 25, 32);
-        
         doc.setFontSize(9);
         doc.setTextColor(...C_GREY);
         doc.setFont("helvetica", "normal");
         doc.text("INGENIERÍA DE CERRAMIENTOS Y FACHADAS TÉCNICAS", 25, 40);
-        
         doc.setDrawColor(...C_GOLD);
-        doc.setLineWidth(1.5);
         doc.line(25, 55, 100, 55);
-
         doc.setFontSize(22);
         doc.setTextColor(...C_DARK);
         doc.setFont("helvetica", "bold");
         doc.text("INFORME DE RESISTENCIA", 25, 72);
         doc.text("AL VIENTO DE PERSIANAS", 25, 84);
-
         doc.setFillColor(...C_BG);
         doc.roundedRect(25, 100, 165, 60, 3, 3, 'F');
-        
         doc.setFontSize(9);
         doc.setTextColor(...C_GREY);
         doc.text("PROYECTO:", 35, 112);
         doc.setTextColor(0);
         doc.setFontSize(11);
         doc.text(doc.splitTextToSize(d.proj.toUpperCase(), 140), 35, 119);
-        
         doc.setFontSize(9);
         doc.setTextColor(...C_GREY);
         doc.text("UBICACIÓN:", 35, 132);
         doc.setTextColor(0);
         doc.text(doc.splitTextToSize(d.geoAddr, 145), 35, 138);
-
         doc.setTextColor(...C_GREY);
         doc.text("FECHA DE EMISIÓN:", 140, 112);
         doc.setTextColor(0);
         doc.text(d.fecha, 140, 119);
-
-        // Bloque de Clasificación
         doc.setFillColor(...C_DARK);
         doc.roundedRect(25, 175, 165, 55, 4, 4, 'F');
-        doc.setTextColor(255, 255, 255);
+        doc.setTextColor(255,255,255);
         doc.setFontSize(11);
         doc.text("CLASIFICACIÓN EXIGIDA (UNE-EN 13659)", 107.5, 188, {align: "center"});
         doc.setFontSize(36);
         doc.setTextColor(...C_GOLD);
         doc.text(d.clase.split('(')[0].trim(), 107.5, 210, {align: "center"});
         doc.setFontSize(12);
-        doc.setTextColor(255, 255, 255);
+        doc.setTextColor(255,255,255);
         doc.text(`Presión de cálculo: ${Math.round(d.pa)} Pa`, 107.5, 222, {align: "center"});
-
         doc.setFontSize(8);
         doc.setTextColor(...C_GREY);
         doc.text("Página 1 de 4", 107.5, 285, {align: "center"});
-
-        // --- PÁGINA 2: MEMORIA Y NOTAS ---
         doc.addPage();
         doc.setFillColor(...C_DARK);
         doc.rect(0, 0, 210, 15, 'F');
-        doc.setTextColor(255, 255, 255);
+        doc.setTextColor(255,255,255);
         doc.text("MEMORIA TÉCNICA Y JUSTIFICACIÓN NORMATIVA", 25, 10);
-
         let y = 30;
         doc.setFont("helvetica", "bold");
         doc.setTextColor(...C_DARK);
         doc.setFontSize(11);
         doc.text("1. PARÁMETROS DEL EMPLAZAMIENTO", 20, y);
-        
         const tableLoc = [
-            ["Zona Eólica (CTE)", `Zona ${d.vb_zona===26?'A':d.vb_zona===27?'B':'C'} (vb = ${d.vb_zona} m/s)`],
+            ["Zona Eólica (CTE)", `vb = ${d.vb_zona} m/s (${d.vb_zona===26?'Zona A':d.vb_zona===27?'Zona B':'Zona C'})`],
             ["Velocidad Básica Final", `${d.vb_final} m/s`],
             ["Racha máxima registrada", d.racha_historica ? `${d.racha_historica.toFixed(1)} m/s (${d.fuente_racha})` : "No disponible"],
             ["Dirección de la racha", d.dir_racha],
-            ["Orientación de la fachada", d.orient_fachada],
-            ["Incidencia del viento", d.incidencia],
             ["Observatorio de referencia", d.observatory],
             ["Grado de Aspereza", d.aspereza_text],
             ["Altura del edificio (z)", `${d.z} metros`]
         ];
         doc.autoTable({ startY: y+5, body: tableLoc, theme: 'striped', styles: { fontSize: 8.5 }, columnStyles: {0: {cellWidth: 60, fontStyle:'bold'}}, margin: {left:20, right:20} });
-
         y = doc.lastAutoTable.finalY + 12;
         doc.text("2. JUSTIFICACIÓN DEL COEFICIENTE DE PRESIÓN (Cp = 0,18)", 20, y);
         doc.setFont("helvetica", "normal");
         doc.setFontSize(8.5);
         doc.setTextColor(...C_GREY);
         const justificacion = [
-            `• Según la norma UNE-EN 13659:2016 (Persianas exteriores), para distancia d <= 0,5 m se adopta Cp = 0,18.`,
-            `• El Manual de ASEFAVE prescribe la expresión: qe = qb * ce(z) * 0,18.`,
-            `• Este coeficiente considera la semipermeabilidad de las lamas y el efecto colchón de aire.`,
-            `• La presión de seguridad ps del producto debe cumplir: ps >= qe (con densidad aire = 1.25 kg/m3).`,
-            `• El método de ensayo asociado para verificar la resistencia es la UNE-EN 1932.`
+            `• Según UNE-EN 13659:2016, para distancia d <= 0,5 m se adopta Cp = 0,18.`,
+            `• El Manual de ASEFAVE prescribe: qe = qb * ce(z) * 0,18.`,
+            `• Presión de seguridad ps del producto debe cumplir: ps >= qe.`
         ];
         y += 6;
         justificacion.forEach(line => {
@@ -1208,28 +1146,25 @@
             doc.text(splitLine, 25, y);
             y += splitLine.length * 5;
         });
-
         y += 2;
         doc.setFont("helvetica", "bold");
         doc.setTextColor(...C_DARK);
-        doc.text("3. COEFICIENTES Y CÁLCULO DINÁMICO", 20, y);
+        doc.text("3. COEFICIENTES Y CÁLCULO", 20, y);
         const tableCalc = [
             ["Coef. Exposición (ce)", d.ce.toFixed(3)],
-            ["Coef. Presión para persianas (Cp)", d.cp_persiana.toFixed(2)],
-            ["Presión Dinámica (qb)", `${d.qb.toFixed(4)} kN/m2 (1.25 kg/m3)`],
+            ["Coef. Presión (Cp)", d.cp_persiana.toFixed(2)],
+            ["Presión Dinámica (qb)", `${d.qb.toFixed(4)} kN/m2`],
             ["Presión Neta (qe)", `${d.qe.toFixed(3)} kN/m2 (${Math.round(d.pa)} Pa)`]
         ];
         doc.autoTable({ startY: y+5, body: tableCalc, theme: 'grid', styles: { fontSize: 8.5 }, columnStyles: {0: {cellWidth: 60, fontStyle:'bold'}}, margin: {left:20, right:20} });
-
         y = doc.lastAutoTable.finalY + 12;
-        doc.setFont("helvetica", "bold");
         doc.text("4. NOTAS COMPLEMENTARIAS", 20, y);
         doc.setFont("helvetica", "normal");
         doc.setFontSize(8.5);
         const notas = [
-            "• La clasificación de la persiana se asigna según UNE-EN 13659 (Clase 1 a 6 en función de la presión de ensayo).",
-            "• El coeficiente de exposición ce(z) se ha calculado según CTE DB-SE-AE Anejo D con la fórmula ce = F * (F + 7k).",
-            "• El uso de la racha máxima histórica (ERA5) como velocidad de cálculo está amparado por CTE DB-SE-AE 3.3.1 cuando supera la velocidad básica reglamentaria."
+            "• Clasificación según UNE-EN 13659 (Clase 1 a 6).",
+            "• El coeficiente ce(z) se calcula según CTE DB-SE-AE Anejo D.",
+            "• La racha máxima histórica (ERA5) se aplica si supera la velocidad básica (CTE 3.3.1)."
         ];
         y += 6;
         notas.forEach(line => {
@@ -1237,16 +1172,12 @@
             doc.text(splitLine, 25, y);
             y += splitLine.length * 5;
         });
-
         doc.text("Página 2 de 4", 107.5, 285, {align: "center"});
-
-        // --- PÁGINA 3: ANÁLISIS HISTÓRICO ---
         doc.addPage();
         doc.setFillColor(...C_DARK);
         doc.rect(0, 0, 210, 15, 'F');
-        doc.setTextColor(255, 255, 255);
-        doc.text("ANÁLISIS HISTÓRICO DE VIENTO (ERA5 1950-2024)", 25, 10);
-
+        doc.setTextColor(255,255,255);
+        doc.text("ANÁLISIS HISTÓRICO DE VIENTO (ERA5)", 25, 10);
         if (d.historicalRecord) {
             doc.setTextColor(...C_DARK);
             doc.setFont("helvetica", "bold");
@@ -1257,60 +1188,47 @@
             doc.setFontSize(9);
             doc.setTextColor(...C_GREY);
             doc.setFont("helvetica", "normal");
-            doc.text(`Fecha: ${d.historicalRecord.date} · Dirección (procedencia): ${d.historicalRecord.direction}`, 20, 46);
+            doc.text(`Fecha: ${d.historicalRecord.date} · Dirección: ${d.historicalRecord.direction}`, 20, 46);
             doc.text(`Observatorio: ${d.observatory}`, 20, 52);
-
-            const canvasRose = document.getElementById('windRoseChart');
-            if (canvasRose) {
-                doc.addImage(canvasRose.toDataURL('image/png'), 'PNG', 35, 65, 140, 140);
-            }
-            doc.text("La rosa muestra la racha máxima histórica para cada dirección de procedencia.", 20, 230);
-            doc.text("Estos datos se han utilizado para determinar la velocidad de cálculo más desfavorable.", 20, 236);
+            const canvasRose = document.getElementById('windRoseCanvas');
+            if (canvasRose) doc.addImage(canvasRose.toDataURL('image/png'), 'PNG', 35, 65, 140, 140);
+            doc.text("Rosa de vientos con racha máxima por dirección (Norte arriba).", 20, 230);
         }
         doc.text("Página 3 de 4", 107.5, 285, {align: "center"});
-
-        // --- PÁGINA 4: GRÁFICO PRESIÓN VS ALTURA ---
         doc.addPage();
         doc.setFillColor(...C_DARK);
         doc.rect(0, 0, 210, 15, 'F');
-        doc.setTextColor(255, 255, 255);
-        doc.text("RELACIÓN PRESIÓN NETA VS ALTURA DEL EDIFICIO", 25, 10);
-
+        doc.setTextColor(255,255,255);
+        doc.text("RELACIÓN PRESIÓN NETA VS ALTURA", 25, 10);
         const canvasHeight = document.getElementById('heightPressureChart');
         if (canvasHeight) {
             doc.addImage(canvasHeight.toDataURL('image/png'), 'PNG', 20, 30, 170, 95);
             doc.setFontSize(8.5);
             doc.setTextColor(...C_GREY);
-            doc.text("El gráfico muestra la evolución de la presión neta (Pa) con la altura del edificio z (m).", 20, 135);
-            doc.text("Las áreas de color delimitan las clases según UNE-EN 13659.", 20, 141);
-
+            doc.text("Evolución de la presión neta (Pa) con la altura z (m).", 20, 135);
             let legendY = 155;
-            const colors = [[200,230,200], [230,230,180], [255,220,160], [255,200,180], [230,190,220], [200,200,200], [180,180,180]];
-            const labels = ["Clase 0 (0-50 Pa)", "Clase 1 (50-100 Pa)", "Clase 2 (100-150 Pa)", "Clase 3 (150-250 Pa)", "Clase 4 (250-400 Pa)", "Clase 5 (400-600 Pa)", "Clase 6 (>600 Pa)"];
-            
-            labels.forEach((label, i) => {
+            const colors = [[200,230,200],[230,230,180],[255,220,160],[255,200,180],[230,190,220],[200,200,200],[180,180,180]];
+            const labels = ["Clase 0 (0-50 Pa)","Clase 1 (50-100)","Clase 2 (100-150)","Clase 3 (150-250)","Clase 4 (250-400)","Clase 5 (400-600)","Clase 6 (>600)"];
+            labels.forEach((label,i) => {
                 doc.setFillColor(...colors[i]);
                 doc.rect(25, legendY, 4, 4, 'F');
                 doc.setTextColor(...C_GREY);
-                doc.text(label, 32, legendY + 3.5);
+                doc.text(label, 32, legendY+3.5);
                 legendY += 6;
             });
         }
         doc.text("Página 4 de 4", 107.5, 285, {align: "center"});
-
-        doc.save(`Informe_Viento_Persianas_${d.proj.replace(/\s/g,'_')}.pdf`);
+        doc.save(`Informe_Viento_${d.proj.replace(/\s/g,'_')}.pdf`);
     }
     
     document.getElementById('btnGeolocate').onclick = geolocate;
     document.getElementById('btnEstimarGrado').onclick = estimarAspereza;
     document.getElementById('btnCalcular').onclick = calcularPresion;
     document.getElementById('btnPDF').onclick = generarPDF;
-    document.getElementById('zona').addEventListener('change', calcularPresion);
     document.getElementById('altura').addEventListener('input', calcularPresion);
     document.getElementById('aspereza').addEventListener('change', calcularPresion);
     document.getElementById('racha_historica').addEventListener('input', calcularPresion);
     document.getElementById('dir_racha').addEventListener('change', calcularPresion);
-    document.getElementById('orient_fachada').addEventListener('change', calcularPresion);
     calcularPresion();
 </script>
 </body>
