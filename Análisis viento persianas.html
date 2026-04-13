@@ -610,7 +610,7 @@
         </div>
     </div>
 
-    <!-- Localización + rosa automática -->
+    <!-- Localización + rosa automática (MODIFICADA: ROSA DE LOS VIENTOS DESPLAZADA 22.5º) -->
     <div class="card">
         <div class="card-header">
             <div class="step-badge">3</div>
@@ -664,6 +664,9 @@
             </div>
             <div id="windroseCanvasContainer" class="windrose-container" style="display: none;">
                 <canvas id="windRoseChart" width="400" height="400" style="max-width: 100%; height: auto;"></canvas>
+                <div class="info-note" style="margin-top: 8px; font-size:0.7rem">
+                    <i class="fas fa-compass"></i> Rosa de vientos corregida: sectores centrados en puntos cardinales (desplazamiento +22.5º para alinear quesitos).
+                </div>
             </div>
             <div class="info-note">
                 <i class="fas fa-database"></i> <strong>Nota:</strong> Al localizar una dirección, se consulta el archivo histórico ERA5 desde 1950. Se obtiene la racha máxima absoluta y su dirección. El coeficiente de exposición ce(z) se calcula según CTE DB-SE-AE Anejo D. Si la racha supera la velocidad básica CTE, se aplica automáticamente (CTE DB-SE-AE 3.3.1).
@@ -1004,13 +1007,28 @@
             else { warningDiv.style.display = 'none'; }
             const ctx = document.getElementById('windRoseChart').getContext('2d');
             if (windRoseChart) windRoseChart.destroy();
+            // --- MODIFICACIÓN: DESPLAZAMIENTO 22.5° PARA CENTRAR QUESITOS EN PUNTOS CARDINALES ---
+            // Se ajusta startAngle a -112.5° para que el centro del sector Norte coincida con el punto cardinal superior.
             windRoseChart = new Chart(ctx, {
                 type: 'polarArea',
                 data: { labels: RUMBOS, datasets: [{ label: 'Racha máxima histórica (km/h)', data: perDirMax, backgroundColor: pastelColors, borderColor: '#696969', borderWidth: 1.5 }] },
-                options: { responsive: true, maintainAspectRatio: true, scales: { r: { grid: { color: 'rgba(0,0,0,0.1)' }, angleLines: { color: 'rgba(0,0,0,0.1)' }, suggestedMin: 0, ticks: { stepSize: 20 } } }, plugins: { legend: { position: 'bottom' } } }
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    scales: {
+                        r: {
+                            startAngle: -112.5,      // ROTACIÓN CLAVE: 22.5° para centrar "quesitos" en N, E, S, O.
+                            grid: { color: 'rgba(0,0,0,0.1)' },
+                            angleLines: { color: 'rgba(0,0,0,0.1)' },
+                            suggestedMin: 0,
+                            ticks: { stepSize: 20 }
+                        }
+                    },
+                    plugins: { legend: { position: 'bottom' } }
+                }
             });
             document.getElementById('windroseCanvasContainer').style.display = 'block';
-            statusSpan.innerHTML = `✅ Datos históricos cargados. Racha récord: ${absMax.toFixed(1)} km/h (${(absMax/3.6).toFixed(1)} m/s) el ${absDate}.`;
+            statusSpan.innerHTML = `✅ Datos históricos cargados. Racha récord: ${absMax.toFixed(1)} km/h (${(absMax/3.6).toFixed(1)} m/s) el ${absDate}. (Rosa centrada en cardinales)`;
             calcularPresion();
         } catch (err) {
             statusSpan.innerHTML = '❌ Error al cargar datos históricos. Verifique conexión o intente más tarde.';
