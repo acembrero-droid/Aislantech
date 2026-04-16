@@ -551,7 +551,7 @@
         </div>
     </div>
 
-    <!-- Localización + rosa automática (sin selector de dirección de racha) -->
+    <!-- Localización + rosa automática -->
     <div class="card">
         <div class="card-header">
             <div class="step-badge">3</div>
@@ -653,7 +653,7 @@
 
     <div style="display: flex; gap: 16px; margin-bottom: 40px; flex-wrap: wrap;">
         <button class="btn btn-primary" id="btnCalcular" style="flex: 1; justify-content: center;"><i class="fas fa-calculator"></i> CALCULAR PRESIÓN (NORMATIVA)</button>
-        <button class="btn btn-secondary" id="btnPDF" style="flex: 1; justify-content: center; display: none;"><i class="fas fa-file-pdf"></i> GENERAR INFORME PDF</button>
+        <button class="btn btn-secondary" id="btnPDF" style="flex: 1; justify-content: center; display: none;" disabled><i class="fas fa-file-pdf"></i> GENERAR INFORME PDF</button>
     </div>
 </div>
 
@@ -664,7 +664,7 @@
                 <div class="footer-logo">
                     <span class="logo-aislan">AISLAN</span><span class="logo-tech">TECH</span>
                 </div>
-                <p class="footer-description">Soluciones Técnicas Avanzadas. Especialistas en cálculo de resistencia al viento según normativa europea.</p>
+                <p class="footer-description">Ingeniería de cerramientos y fachadas técnicas. Especialistas en cálculo de resistencia al viento según normativa europea.</p>
             </div>
         </div>
         <div class="footer-legal">
@@ -709,6 +709,7 @@
     let heightPressureChart = null;
     let historicalRecord = { maxKmh: 0, date: '', direction: '', perDirectionMax: new Array(8).fill(0), observatory: '' };
     let windRoseData = new Array(8).fill(0);
+    let isDataReady = false;
     
     function determinarZonaEolica(lat, lon) {
         if (lat > 27 && lat < 30 && lon > -18 && lon < -13) return { value: 29, text: "Zona C (Canarias) · vb=29 m/s" };
@@ -725,25 +726,27 @@
         return zona.value;
     }
     
-    // Dibujo de rosa de vientos con rotación -22.5° (hacia la izquierda) y texto inferior más abajo
+    // Dibujo de rosa de vientos con rotación -22.5° (hacia la izquierda)
     function drawWindRose(data) {
         const canvas = document.getElementById('windRoseCanvas');
-        if (!canvas) return;
+        if (!canvas) return false;
+        // Asegurar dimensiones reales
+        const container = canvas.parentElement;
+        const maxSize = Math.min(container.clientWidth, 400);
+        canvas.width = maxSize;
+        canvas.height = maxSize;
         const ctx = canvas.getContext('2d');
-        const size = Math.min(canvas.clientWidth, 400);
-        canvas.width = size;
-        canvas.height = size;
-        const center = size/2;
-        const radius = size * 0.35;
+        const center = canvas.width/2;
+        const radius = canvas.width * 0.35;
         const numSectors = 8;
         const sectorAngle = (2 * Math.PI) / numSectors;
         const rumbos = ['N', 'NE', 'E', 'SE', 'S', 'SO', 'O', 'NO'];
         const colores = ['rgba(255,182,193,0.7)', 'rgba(255,218,185,0.7)', 'rgba(255,255,180,0.7)', 'rgba(200,230,200,0.7)', 'rgba(173,216,230,0.7)', 'rgba(221,160,221,0.7)', 'rgba(255,192,203,0.7)', 'rgba(210,180,140,0.7)'];
         
         const maxVal = Math.max(...data, 1);
-        ctx.clearRect(0, 0, size, size);
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
         // Rotación de -22.5° (a la izquierda)
-        const rotationOffset = -Math.PI / 8; // -22.5°
+        const rotationOffset = -Math.PI / 8;
         for (let i = 0; i < numSectors; i++) {
             let startAngle = i * sectorAngle - Math.PI/2 + rotationOffset;
             let endAngle = startAngle + sectorAngle;
@@ -762,14 +765,12 @@
             ctx.lineWidth = 0.8;
             ctx.stroke();
         }
-        // Círculo base
         ctx.beginPath();
         ctx.arc(center, center, radius, 0, 2*Math.PI);
         ctx.strokeStyle = '#aaa';
         ctx.setLineDash([3,5]);
         ctx.stroke();
         ctx.setLineDash([]);
-        // Líneas cardinales
         for (let i=0; i<numSectors; i+=2) {
             let angle = i * sectorAngle - Math.PI/2 + rotationOffset;
             let x1 = center + radius * 0.9 * Math.cos(angle);
@@ -783,7 +784,6 @@
             ctx.lineWidth = 1;
             ctx.stroke();
         }
-        // Etiquetas
         ctx.font = 'bold 14px "Montserrat"';
         ctx.fillStyle = '#333';
         for (let i=0; i<numSectors; i++) {
@@ -793,27 +793,20 @@
             let y = center + labelRadius * Math.sin(angle);
             ctx.fillText(rumbos[i], x-6, y+4);
         }
-        // Texto inferior más abajo para evitar solapar con la etiqueta S
         ctx.font = 'italic 10px "Open Sans"';
         ctx.fillStyle = '#666';
         ctx.fillText('Racha máxima (km/h)', center-45, center + radius + 35);
+        return true;
     }
     
-    function updateWindRose(data) {
-        drawWindRose(data);
-        attachWindRoseTooltip(data);
-    }
-    
-    // Tooltip interactivo que sigue al puntero y muestra la velocidad
     function attachWindRoseTooltip(data) {
         const canvas = document.getElementById('windRoseCanvas');
-        const container = document.getElementById('windroseCanvasContainer');
         const tooltip = document.getElementById('windroseTooltip');
         if (!canvas || !tooltip) return;
         
         const numSectors = 8;
         const sectorAngle = (2 * Math.PI) / numSectors;
-        const rotationOffset = -Math.PI / 8; // misma rotación que en el dibujo
+        const rotationOffset = -Math.PI / 8;
         
         function getSectorIndex(mouseX, mouseY) {
             const rect = canvas.getBoundingClientRect();
@@ -825,10 +818,9 @@
             const dx = canvasX - centerX;
             const dy = canvasY - centerY;
             const dist = Math.hypot(dx, dy);
-            const radiusOuter = canvas.width * 0.35 * (0.4 + 0.6); // máximo radio exterior
+            const radiusOuter = canvas.width * 0.35 * (0.4 + 0.6);
             if (dist < canvas.width*0.35*0.2 || dist > radiusOuter) return -1;
             let angle = Math.atan2(dy, dx);
-            // Ajustar por rotación
             angle -= rotationOffset;
             let idx = Math.floor(((angle + Math.PI/2 + sectorAngle/2) % (2*Math.PI)) / sectorAngle);
             return idx % numSectors;
@@ -840,20 +832,30 @@
                 const rumbos = ['N', 'NE', 'E', 'SE', 'S', 'SO', 'O', 'NO'];
                 tooltip.style.display = 'block';
                 tooltip.innerHTML = `${rumbos[idx]}: ${data[idx].toFixed(1)} km/h`;
-                // Posicionar junto al cursor
                 tooltip.style.left = (e.clientX + 15) + 'px';
                 tooltip.style.top = (e.clientY - 30) + 'px';
             } else {
                 tooltip.style.display = 'none';
             }
         }
-        
+        canvas.removeEventListener('mousemove', canvas._tooltipHandler);
         canvas.addEventListener('mousemove', onMouseMove);
-        canvas.addEventListener('mouseleave', () => {
-            tooltip.style.display = 'none';
-        });
-        // Guardar referencia para limpiar si es necesario (opcional)
+        canvas.addEventListener('mouseleave', () => { tooltip.style.display = 'none'; });
         canvas._tooltipHandler = onMouseMove;
+    }
+    
+    function updateWindRose(data) {
+        // Mostrar contenedor y forzar reflow antes de dibujar
+        const container = document.getElementById('windroseCanvasContainer');
+        container.style.display = 'block';
+        // Forzar reflow para que el canvas tenga dimensiones reales
+        container.offsetHeight;
+        // Dibujar
+        const success = drawWindRose(data);
+        if (success) {
+            attachWindRoseTooltip(data);
+        }
+        return success;
     }
     
     function calcularPresion() {
@@ -1047,19 +1049,43 @@
             cp_persiana: CP_PERSIANA,
             windRoseData: windRoseData.slice()
         };
-        document.getElementById('btnPDF').style.display = 'flex';
+        // Habilitar botón PDF solo si hay datos
+        const pdfBtn = document.getElementById('btnPDF');
+        pdfBtn.style.display = 'flex';
+        pdfBtn.disabled = false;
+        isDataReady = true;
+    }
+    
+    async function fetchWindRoseWithRetry(lat, lon, retries = 2) {
+        for (let attempt = 1; attempt <= retries; attempt++) {
+            try {
+                const today = new Date().toISOString().split('T')[0];
+                const url = `https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lon}&start_date=1950-01-01&end_date=${today}&daily=wind_gusts_10m_max,wind_direction_10m_dominant&wind_speed_unit=kmh&timezone=auto`;
+                const resp = await fetch(url, { signal: AbortSignal.timeout(15000) });
+                if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+                const data = await resp.json();
+                if (!data.daily || !data.daily.wind_gusts_10m_max) throw new Error('Datos incompletos');
+                return data;
+            } catch (err) {
+                console.warn(`Intento ${attempt} fallido:`, err);
+                if (attempt === retries) throw err;
+                await new Promise(r => setTimeout(r, 1000));
+            }
+        }
     }
     
     async function fetchWindRoseAuto(lat, lon, locationName) {
         const statusSpan = document.getElementById('geoStatus');
+        const pdfBtn = document.getElementById('btnPDF');
+        pdfBtn.disabled = true;
+        pdfBtn.style.display = 'flex';
+        pdfBtn.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Cargando datos...';
+        
         statusSpan.innerHTML = '⏳ Consultando archivo histórico ERA5... <i class="fas fa-spinner fa-pulse"></i>';
         try {
             actualizarZonaEolica(lat, lon);
-            const today = new Date().toISOString().split('T')[0];
-            const url = `https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lon}&start_date=1950-01-01&end_date=${today}&daily=wind_gusts_10m_max,wind_direction_10m_dominant&wind_speed_unit=kmh&timezone=auto`;
-            const resp = await fetch(url);
-            const data = await resp.json();
-            if (!data.daily || !data.daily.wind_gusts_10m_max) throw new Error('No se pudieron obtener datos históricos');
+            const data = await fetchWindRoseWithRetry(lat, lon, 2);
+            
             const gusts = data.daily.wind_gusts_10m_max;
             const dirs = data.daily.wind_direction_10m_dominant;
             const times = data.daily.time;
@@ -1090,26 +1116,59 @@
             if ((absMax/3.6) > vb_norm) { warningDiv.style.display = 'block'; warningDiv.innerHTML = `⚠️ Récord histórico (${(absMax/3.6).toFixed(1)} m/s) supera la velocidad normativa (${vb_norm} m/s). Se muestra comparativa en gráfico, pero el cálculo oficial usa la normativa.`; }
             else { warningDiv.style.display = 'none'; }
             
-            updateWindRose(perDirMax);
-            document.getElementById('windroseCanvasContainer').style.display = 'block';
+            // Mostrar y dibujar rosa de vientos de forma fiable con un solo clic
+            const container = document.getElementById('windroseCanvasContainer');
+            container.style.display = 'block';
+            // Usar requestAnimationFrame para asegurar que el DOM está listo
+            requestAnimationFrame(() => {
+                const success = updateWindRose(perDirMax);
+                if (!success) {
+                    // Reintentar después de un pequeño retraso
+                    setTimeout(() => updateWindRose(perDirMax), 50);
+                }
+            });
+            
             statusSpan.innerHTML = `✅ Datos cargados. Racha récord: ${absMax.toFixed(1)} km/h (${(absMax/3.6).toFixed(1)} m/s) el ${absDate}. Zona eólica actualizada.`;
             calcularPresion();
+            pdfBtn.innerHTML = '<i class="fas fa-file-pdf"></i> GENERAR INFORME PDF';
+            pdfBtn.disabled = false;
         } catch (err) {
-            statusSpan.innerHTML = '❌ Error al cargar datos históricos. Verifique conexión.';
             console.error(err);
+            statusSpan.innerHTML = '❌ Error al cargar datos históricos. Verifique conexión o intente más tarde.';
+            pdfBtn.innerHTML = '<i class="fas fa-file-pdf"></i> GENERAR INFORME PDF';
+            pdfBtn.disabled = true;
+            document.getElementById('windroseCanvasContainer').style.display = 'none';
+            // Aún así, calcular presión con datos por defecto
+            calcularPresion();
         }
     }
     
     async function geolocate() {
+        // Deshabilitar botón durante la operación para evitar múltiples clics
+        const btn = document.getElementById('btnGeolocate');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Localizando...';
+        
         let addr = document.getElementById('addressInput').value.trim();
         if (!addr) {
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(pos => {
                     geoCoords = { lat: pos.coords.latitude, lon: pos.coords.longitude, address: 'GPS actual' };
                     document.getElementById('geoStatus').innerHTML = `📍 GPS: ${geoCoords.lat.toFixed(4)}, ${geoCoords.lon.toFixed(4)}. Obteniendo histórico...`;
-                    fetchWindRoseAuto(geoCoords.lat, geoCoords.lon, 'GPS');
-                }, () => document.getElementById('geoStatus').innerHTML = '❌ Error GPS');
-            } else { document.getElementById('geoStatus').innerHTML = '❌ GPS no soportado'; }
+                    fetchWindRoseAuto(geoCoords.lat, geoCoords.lon, 'GPS').finally(() => {
+                        btn.disabled = false;
+                        btn.innerHTML = '<i class="fas fa-map-marker-alt"></i> Localizar y obtener datos históricos';
+                    });
+                }, () => {
+                    document.getElementById('geoStatus').innerHTML = '❌ Error GPS';
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-map-marker-alt"></i> Localizar y obtener datos históricos';
+                });
+            } else {
+                document.getElementById('geoStatus').innerHTML = '❌ GPS no soportado';
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-map-marker-alt"></i> Localizar y obtener datos históricos';
+            }
             return;
         }
         document.getElementById('geoStatus').innerHTML = '⏳ Geocodificando...';
@@ -1124,7 +1183,12 @@
             document.getElementById('addressInput').value = display;
             document.getElementById('geoStatus').innerHTML = `✅ ${display}. Cargando histórico...`;
             await fetchWindRoseAuto(lat, lon, display);
-        } catch(e) { document.getElementById('geoStatus').innerHTML = '❌ No se pudo localizar'; }
+        } catch(e) {
+            document.getElementById('geoStatus').innerHTML = '❌ No se pudo localizar';
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-map-marker-alt"></i> Localizar y obtener datos históricos';
+        }
     }
     
     async function estimarAspereza() {
@@ -1152,166 +1216,185 @@
     
     async function generarPDF() {
         if (!lastData) { alert("Por favor, calcule primero los resultados."); return; }
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-        const C_DARK = [60,60,60], C_GOLD = [245,197,24], C_GREY = [100,100,100], C_BG = [248,249,250];
-        const d = lastData;
-        doc.setFillColor(...C_DARK);
-        doc.rect(0, 0, 15, 297, 'F');
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(28);
-        doc.setTextColor(...C_GOLD);
-        doc.text("AISLANTECH", 25, 32);
-        doc.setFontSize(9);
-        doc.setTextColor(...C_GREY);
-        doc.setFont("helvetica", "normal");
-        doc.text("INGENIERÍA DE CERRAMIENTOS Y FACHADAS TÉCNICAS", 25, 40);
-        doc.setDrawColor(...C_GOLD);
-        doc.line(25, 55, 100, 55);
-        doc.setFontSize(22);
-        doc.setTextColor(...C_DARK);
-        doc.setFont("helvetica", "bold");
-        doc.text("INFORME DE RESISTENCIA", 25, 72);
-        doc.text("AL VIENTO DE PERSIANAS", 25, 84);
-        doc.setFillColor(...C_BG);
-        doc.roundedRect(25, 100, 165, 60, 3, 3, 'F');
-        doc.setFontSize(9);
-        doc.setTextColor(...C_GREY);
-        doc.text("PROYECTO:", 35, 112);
-        doc.setTextColor(0);
-        doc.setFontSize(11);
-        doc.text(doc.splitTextToSize(d.proj.toUpperCase(), 140), 35, 119);
-        doc.setFontSize(9);
-        doc.setTextColor(...C_GREY);
-        doc.text("UBICACIÓN:", 35, 132);
-        doc.setTextColor(0);
-        doc.text(doc.splitTextToSize(d.geoAddr, 145), 35, 138);
-        doc.setTextColor(...C_GREY);
-        doc.text("FECHA DE EMISIÓN:", 140, 112);
-        doc.setTextColor(0);
-        doc.text(d.fecha, 140, 119);
-        doc.setFillColor(...C_DARK);
-        doc.roundedRect(25, 175, 165, 55, 4, 4, 'F');
-        doc.setTextColor(255,255,255);
-        doc.setFontSize(11);
-        doc.text("CLASIFICACIÓN EXIGIDA (UNE-EN 13659)", 107.5, 188, {align: "center"});
-        doc.setFontSize(36);
-        doc.setTextColor(...C_GOLD);
-        doc.text(d.clase.split('(')[0].trim(), 107.5, 210, {align: "center"});
-        doc.setFontSize(12);
-        doc.setTextColor(255,255,255);
-        doc.text(`Presión de cálculo: ${Math.round(d.pa_norm)} Pa`, 107.5, 222, {align: "center"});
-        doc.setFontSize(8);
-        doc.setTextColor(...C_GREY);
-        doc.text("Página 1 de 4", 107.5, 285, {align: "center"});
-        doc.addPage();
-        doc.setFillColor(...C_DARK);
-        doc.rect(0, 0, 210, 15, 'F');
-        doc.setTextColor(255,255,255);
-        doc.text("MEMORIA TÉCNICA Y JUSTIFICACIÓN NORMATIVA", 25, 10);
-        let y = 30;
-        doc.setFont("helvetica", "bold");
-        doc.setTextColor(...C_DARK);
-        doc.setFontSize(11);
-        doc.text("1. PARÁMETROS DEL EMPLAZAMIENTO", 20, y);
-        const tableLoc = [
-            ["Zona Eólica (CTE)", `vb = ${d.vb_normativa} m/s (${d.vb_normativa===26?'Zona A':d.vb_normativa===27?'Zona B':'Zona C'})`],
-            ["Racha máxima histórica", d.racha_historica ? `${d.racha_historica.toFixed(1)} m/s (${d.fuente_racha})` : "No disponible"],
-            ["Observatorio de referencia", d.observatory],
-            ["Grado de Aspereza", d.aspereza_text],
-            ["Altura del edificio (z)", `${d.z} metros`]
-        ];
-        doc.autoTable({ startY: y+5, body: tableLoc, theme: 'striped', styles: { fontSize: 8.5 }, columnStyles: {0: {cellWidth: 60, fontStyle:'bold'}}, margin: {left:20, right:20} });
-        y = doc.lastAutoTable.finalY + 12;
-        doc.text("2. JUSTIFICACIÓN DEL COEFICIENTE DE PRESIÓN (Cp = 0,18)", 20, y);
-        doc.setFont("helvetica", "normal");
-        doc.setFontSize(8.5);
-        doc.setTextColor(...C_GREY);
-        const justificacion = [
-            `• Según UNE-EN 13659:2016, para distancia d <= 0,5 m se adopta Cp = 0,18.`,
-            `• El Manual de ASEFAVE prescribe: qe = qb * ce(z) * 0,18.`,
-            `• Presión de seguridad ps del producto debe cumplir: ps >= qe.`
-        ];
-        y += 6;
-        justificacion.forEach(line => {
-            const splitLine = doc.splitTextToSize(line, 170);
-            doc.text(splitLine, 25, y);
-            y += splitLine.length * 5;
-        });
-        y += 2;
-        doc.setFont("helvetica", "bold");
-        doc.setTextColor(...C_DARK);
-        doc.text("3. COEFICIENTES Y CÁLCULO NORMATIVO", 20, y);
-        const tableCalc = [
-            ["Coef. Exposición (ce)", d.ce.toFixed(3)],
-            ["Coef. Presión (Cp)", d.cp_persiana.toFixed(2)],
-            ["Presión Dinámica (qb)", `${(velocidadAPresion(d.vb_normativa)).toFixed(4)} kN/m2`],
-            ["Presión Neta (qe)", `${d.qe_norm.toFixed(3)} kN/m2 (${Math.round(d.pa_norm)} Pa)`]
-        ];
-        doc.autoTable({ startY: y+5, body: tableCalc, theme: 'grid', styles: { fontSize: 8.5 }, columnStyles: {0: {cellWidth: 60, fontStyle:'bold'}}, margin: {left:20, right:20} });
-        y = doc.lastAutoTable.finalY + 12;
-        doc.text("4. NOTAS COMPLEMENTARIAS", 20, y);
-        doc.setFont("helvetica", "normal");
-        doc.setFontSize(8.5);
-        const notas = [
-            "• Clasificación según UNE-EN 13659 (Clase 1 a 6).",
-            "• El coeficiente ce(z) se calcula según CTE DB-SE-AE Anejo D.",
-            "• La racha máxima histórica se muestra solo a efectos comparativos; el cálculo reglamentario emplea exclusivamente la velocidad básica de la zona eólica."
-        ];
-        y += 6;
-        notas.forEach(line => {
-            const splitLine = doc.splitTextToSize(line, 170);
-            doc.text(splitLine, 25, y);
-            y += splitLine.length * 5;
-        });
-        doc.text("Página 2 de 4", 107.5, 285, {align: "center"});
-        doc.addPage();
-        doc.setFillColor(...C_DARK);
-        doc.rect(0, 0, 210, 15, 'F');
-        doc.setTextColor(255,255,255);
-        doc.text("ANÁLISIS HISTÓRICO DE VIENTO (ERA5)", 25, 10);
-        if (d.historicalRecord) {
-            doc.setTextColor(...C_DARK);
+        const pdfBtn = document.getElementById('btnPDF');
+        pdfBtn.disabled = true;
+        pdfBtn.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Generando PDF...';
+        try {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+            const C_DARK = [60,60,60], C_GOLD = [245,197,24], C_GREY = [100,100,100], C_BG = [248,249,250];
+            const d = lastData;
+            doc.setFillColor(...C_DARK);
+            doc.rect(0, 0, 15, 297, 'F');
             doc.setFont("helvetica", "bold");
-            doc.text("Récord absoluto de racha:", 20, 30);
-            doc.setFontSize(14);
+            doc.setFontSize(28);
             doc.setTextColor(...C_GOLD);
-            doc.text(`${d.historicalRecord.maxKmh.toFixed(1)} km/h (${d.historicalRecord.maxMs.toFixed(1)} m/s)`, 20, 38);
+            doc.text("AISLANTECH", 25, 32);
             doc.setFontSize(9);
             doc.setTextColor(...C_GREY);
             doc.setFont("helvetica", "normal");
-            doc.text(`Fecha: ${d.historicalRecord.date} · Dirección: ${d.historicalRecord.direction}`, 20, 46);
-            doc.text(`Observatorio: ${d.observatory}`, 20, 52);
-            const canvasRose = document.getElementById('windRoseCanvas');
-            if (canvasRose) doc.addImage(canvasRose.toDataURL('image/png'), 'PNG', 35, 65, 140, 140);
-            doc.text("Rosa de vientos con racha máxima por dirección (rotada -22.5°). Pase el ratón para ver valores.", 20, 230);
-        }
-        doc.text("Página 3 de 4", 107.5, 285, {align: "center"});
-        doc.addPage();
-        doc.setFillColor(...C_DARK);
-        doc.rect(0, 0, 210, 15, 'F');
-        doc.setTextColor(255,255,255);
-        doc.text("COMPARATIVA DE PRESIÓN NETA", 25, 10);
-        const canvasHeight = document.getElementById('heightPressureChart');
-        if (canvasHeight) {
-            doc.addImage(canvasHeight.toDataURL('image/png'), 'PNG', 20, 30, 170, 95);
+            doc.text("INGENIERÍA DE CERRAMIENTOS Y FACHADAS TÉCNICAS", 25, 40);
+            doc.setDrawColor(...C_GOLD);
+            doc.line(25, 55, 100, 55);
+            doc.setFontSize(22);
+            doc.setTextColor(...C_DARK);
+            doc.setFont("helvetica", "bold");
+            doc.text("INFORME DE RESISTENCIA", 25, 72);
+            doc.text("AL VIENTO DE PERSIANAS", 25, 84);
+            doc.setFillColor(...C_BG);
+            doc.roundedRect(25, 100, 165, 60, 3, 3, 'F');
+            doc.setFontSize(9);
+            doc.setTextColor(...C_GREY);
+            doc.text("PROYECTO:", 35, 112);
+            doc.setTextColor(0);
+            doc.setFontSize(11);
+            doc.text(doc.splitTextToSize(d.proj.toUpperCase(), 140), 35, 119);
+            doc.setFontSize(9);
+            doc.setTextColor(...C_GREY);
+            doc.text("UBICACIÓN:", 35, 132);
+            doc.setTextColor(0);
+            doc.text(doc.splitTextToSize(d.geoAddr, 145), 35, 138);
+            doc.setTextColor(...C_GREY);
+            doc.text("FECHA DE EMISIÓN:", 140, 112);
+            doc.setTextColor(0);
+            doc.text(d.fecha, 140, 119);
+            doc.setFillColor(...C_DARK);
+            doc.roundedRect(25, 175, 165, 55, 4, 4, 'F');
+            doc.setTextColor(255,255,255);
+            doc.setFontSize(11);
+            doc.text("CLASIFICACIÓN EXIGIDA (UNE-EN 13659)", 107.5, 188, {align: "center"});
+            doc.setFontSize(36);
+            doc.setTextColor(...C_GOLD);
+            doc.text(d.clase.split('(')[0].trim(), 107.5, 210, {align: "center"});
+            doc.setFontSize(12);
+            doc.setTextColor(255,255,255);
+            doc.text(`Presión de cálculo: ${Math.round(d.pa_norm)} Pa`, 107.5, 222, {align: "center"});
+            doc.setFontSize(8);
+            doc.setTextColor(...C_GREY);
+            doc.text("Página 1 de 4", 107.5, 285, {align: "center"});
+            doc.addPage();
+            doc.setFillColor(...C_DARK);
+            doc.rect(0, 0, 210, 15, 'F');
+            doc.setTextColor(255,255,255);
+            doc.text("MEMORIA TÉCNICA Y JUSTIFICACIÓN NORMATIVA", 25, 10);
+            let y = 30;
+            doc.setFont("helvetica", "bold");
+            doc.setTextColor(...C_DARK);
+            doc.setFontSize(11);
+            doc.text("1. PARÁMETROS DEL EMPLAZAMIENTO", 20, y);
+            const tableLoc = [
+                ["Zona Eólica (CTE)", `vb = ${d.vb_normativa} m/s (${d.vb_normativa===26?'Zona A':d.vb_normativa===27?'Zona B':'Zona C'})`],
+                ["Racha máxima histórica", d.racha_historica ? `${d.racha_historica.toFixed(1)} m/s (${d.fuente_racha})` : "No disponible"],
+                ["Observatorio de referencia", d.observatory || "No disponible"],
+                ["Grado de Aspereza", d.aspereza_text],
+                ["Altura del edificio (z)", `${d.z} metros`]
+            ];
+            doc.autoTable({ startY: y+5, body: tableLoc, theme: 'striped', styles: { fontSize: 8.5 }, columnStyles: {0: {cellWidth: 60, fontStyle:'bold'}}, margin: {left:20, right:20} });
+            y = doc.lastAutoTable.finalY + 12;
+            doc.text("2. JUSTIFICACIÓN DEL COEFICIENTE DE PRESIÓN (Cp = 0,18)", 20, y);
+            doc.setFont("helvetica", "normal");
             doc.setFontSize(8.5);
             doc.setTextColor(...C_GREY);
-            doc.text("Evolución de la presión neta (Pa) con la altura z (m).", 20, 135);
-            doc.text("Línea sólida: presión normativa. Línea discontinua: presión con racha histórica.", 20, 141);
-            let legendY = 155;
-            const colors = [[200,230,200],[230,230,180],[255,220,160],[255,200,180],[230,190,220],[200,200,200],[180,180,180]];
-            const labels = ["Clase 0 (0-50 Pa)","Clase 1 (50-100)","Clase 2 (100-150)","Clase 3 (150-250)","Clase 4 (250-400)","Clase 5 (400-600)","Clase 6 (>600)"];
-            labels.forEach((label,i) => {
-                doc.setFillColor(...colors[i]);
-                doc.rect(25, legendY, 4, 4, 'F');
-                doc.setTextColor(...C_GREY);
-                doc.text(label, 32, legendY+3.5);
-                legendY += 6;
+            const justificacion = [
+                `• Según UNE-EN 13659:2016, para distancia d <= 0,5 m se adopta Cp = 0,18.`,
+                `• El Manual de ASEFAVE prescribe: qe = qb * ce(z) * 0,18.`,
+                `• Presión de seguridad ps del producto debe cumplir: ps >= qe.`
+            ];
+            y += 6;
+            justificacion.forEach(line => {
+                const splitLine = doc.splitTextToSize(line, 170);
+                doc.text(splitLine, 25, y);
+                y += splitLine.length * 5;
             });
+            y += 2;
+            doc.setFont("helvetica", "bold");
+            doc.setTextColor(...C_DARK);
+            doc.text("3. COEFICIENTES Y CÁLCULO NORMATIVO", 20, y);
+            const tableCalc = [
+                ["Coef. Exposición (ce)", d.ce.toFixed(3)],
+                ["Coef. Presión (Cp)", d.cp_persiana.toFixed(2)],
+                ["Presión Dinámica (qb)", `${(velocidadAPresion(d.vb_normativa)).toFixed(4)} kN/m2`],
+                ["Presión Neta (qe)", `${d.qe_norm.toFixed(3)} kN/m2 (${Math.round(d.pa_norm)} Pa)`]
+            ];
+            doc.autoTable({ startY: y+5, body: tableCalc, theme: 'grid', styles: { fontSize: 8.5 }, columnStyles: {0: {cellWidth: 60, fontStyle:'bold'}}, margin: {left:20, right:20} });
+            y = doc.lastAutoTable.finalY + 12;
+            doc.text("4. NOTAS COMPLEMENTARIAS", 20, y);
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(8.5);
+            const notas = [
+                "• Clasificación según UNE-EN 13659 (Clase 1 a 6).",
+                "• El coeficiente ce(z) se calcula según CTE DB-SE-AE Anejo D.",
+                "• La racha máxima histórica se muestra solo a efectos comparativos; el cálculo reglamentario emplea exclusivamente la velocidad básica de la zona eólica."
+            ];
+            y += 6;
+            notas.forEach(line => {
+                const splitLine = doc.splitTextToSize(line, 170);
+                doc.text(splitLine, 25, y);
+                y += splitLine.length * 5;
+            });
+            doc.text("Página 2 de 4", 107.5, 285, {align: "center"});
+            doc.addPage();
+            doc.setFillColor(...C_DARK);
+            doc.rect(0, 0, 210, 15, 'F');
+            doc.setTextColor(255,255,255);
+            doc.text("ANÁLISIS HISTÓRICO DE VIENTO (ERA5)", 25, 10);
+            if (d.historicalRecord && d.historicalRecord.maxKmh > 0) {
+                doc.setTextColor(...C_DARK);
+                doc.setFont("helvetica", "bold");
+                doc.text("Récord absoluto de racha:", 20, 30);
+                doc.setFontSize(14);
+                doc.setTextColor(...C_GOLD);
+                doc.text(`${d.historicalRecord.maxKmh.toFixed(1)} km/h (${d.historicalRecord.maxMs.toFixed(1)} m/s)`, 20, 38);
+                doc.setFontSize(9);
+                doc.setTextColor(...C_GREY);
+                doc.setFont("helvetica", "normal");
+                doc.text(`Fecha: ${d.historicalRecord.date} · Dirección: ${d.historicalRecord.direction}`, 20, 46);
+                doc.text(`Observatorio: ${d.observatory}`, 20, 52);
+                const canvasRose = document.getElementById('windRoseCanvas');
+                if (canvasRose && canvasRose.width > 0) {
+                    try {
+                        doc.addImage(canvasRose.toDataURL('image/png'), 'PNG', 35, 65, 140, 140);
+                    } catch(e) { console.warn("No se pudo añadir la rosa de vientos al PDF", e); }
+                }
+                doc.text("Rosa de vientos con racha máxima por dirección", 20, 230);
+            } else {
+                doc.text("No se dispone de datos históricos de viento para esta ubicación.", 20, 30);
+            }
+            doc.text("Página 3 de 4", 107.5, 285, {align: "center"});
+            doc.addPage();
+            doc.setFillColor(...C_DARK);
+            doc.rect(0, 0, 210, 15, 'F');
+            doc.setTextColor(255,255,255);
+            doc.text("COMPARATIVA DE PRESIÓN NETA", 25, 10);
+            const canvasHeight = document.getElementById('heightPressureChart');
+            if (canvasHeight) {
+                try {
+                    doc.addImage(canvasHeight.toDataURL('image/png'), 'PNG', 20, 30, 170, 95);
+                } catch(e) { console.warn("No se pudo añadir el gráfico de presión", e); }
+                doc.setFontSize(8.5);
+                doc.setTextColor(...C_GREY);
+                doc.text("Evolución de la presión neta (Pa) con la altura z (m).", 20, 135);
+                doc.text("Línea sólida: presión normativa. Línea discontinua: presión con racha histórica.", 20, 141);
+                let legendY = 155;
+                const colors = [[200,230,200],[230,230,180],[255,220,160],[255,200,180],[230,190,220],[200,200,200],[180,180,180]];
+                const labels = ["Clase 0 (0-50 Pa)","Clase 1 (50-100)","Clase 2 (100-150)","Clase 3 (150-250)","Clase 4 (250-400)","Clase 5 (400-600)","Clase 6 (>600)"];
+                labels.forEach((label,i) => {
+                    doc.setFillColor(...colors[i]);
+                    doc.rect(25, legendY, 4, 4, 'F');
+                    doc.setTextColor(...C_GREY);
+                    doc.text(label, 32, legendY+3.5);
+                    legendY += 6;
+                });
+            }
+            doc.text("Página 4 de 4", 107.5, 285, {align: "center"});
+            doc.save(`Informe_Viento_${d.proj.replace(/\s/g,'_')}.pdf`);
+        } catch(err) {
+            console.error("Error generando PDF", err);
+            alert("Ocurrió un error al generar el PDF. Intente nuevamente.");
+        } finally {
+            pdfBtn.disabled = false;
+            pdfBtn.innerHTML = '<i class="fas fa-file-pdf"></i> GENERAR INFORME PDF';
         }
-        doc.text("Página 4 de 4", 107.5, 285, {align: "center"});
-        doc.save(`Informe_Viento_${d.proj.replace(/\s/g,'_')}.pdf`);
     }
     
     document.getElementById('btnGeolocate').onclick = geolocate;
