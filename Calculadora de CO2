@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Calculadora Profesional de Huella de CO₂ para Premarcos | Sector Construcción</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body { background: #f4f7f6; padding-bottom: 2rem; }
+    .container { max-width: 1600px; }
+    .card { box-shadow: 0 6px 16px rgba(0,0,0,0.05); border: none; margin-bottom: 1.8rem; }
+    .material-row { background: #fff; padding: 1rem; border-radius: 10px; margin-bottom: 0.75rem; border: 1px solid #e2e8f0; }
+    .badge-source { font-size: 0.7rem; background: #e9ecef; color: #2d3748; padding: 4px 8px; border-radius: 20px; }
+    .print-only { display: none; }
+    @media print {
+      .no-print { display: none !important; }
+      .print-only { display: block !important; }
+      .card { box-shadow: none; border: 1px solid #ccc; }
+      body { background: white; }
+      .imagen-seccion { max-height: 150px; }
+    }
+    .huella-total { font-size: 2.2rem; font-weight: 700; color: #0b3b2c; }
+    .imagen-preview { max-width: 100%; max-height: 120px; border: 1px solid #ddd; border-radius: 6px; margin-top: 5px; }
+    .seccion-imagen { background: #f8f9fa; padding: 10px; border-radius: 8px; margin-bottom: 10px; }
+  </style>
+</head>
+<body>
+
+<div class="container mt-4">
+  <!-- Cabecera -->
+  <div class="d-flex justify-content-between align-items-center mb-4 no-print">
+    <h1 class="h3">🌱 Premarco CO₂ · Calculadora profesional</h1>
+    <button class="btn btn-outline-success" onclick="window.print()">🖨️ Generar informe (PDF)</button>
+  </div>
+
+  <div class="row g-4 no-print">
+    <!-- Gestión de sistemas -->
+    <div class="col-xl-5 col-lg-6">
+      <div class="card">
+        <div class="card-header bg-white fw-bold">📦 Mis sistemas de premarcos</div>
+        <div class="card-body">
+          <div class="mb-3">
+            <label class="form-label">Seleccionar sistema</label>
+            <select id="sistemaSelect" class="form-select" onchange="cargarSistemaSeleccionado()"></select>
+          </div>
+          <div class="d-flex gap-2 mb-3">
+            <button class="btn btn-primary btn-sm" onclick="nuevoSistema()">➕ Nuevo</button>
+            <button class="btn btn-outline-secondary btn-sm" onclick="eliminarSistemaActual()">🗑️ Eliminar</button>
+            <button class="btn btn-outline-secondary btn-sm" onclick="duplicarSistema()">📋 Duplicar</button>
+          </div>
+
+          <div class="border-top pt-3">
+            <label class="form-label">Nombre del sistema</label>
+            <input type="text" id="nombreSistema" class="form-control mb-2" placeholder="Ej: Premarco mixto Acero+EPS">
+            <label class="form-label">Descripción</label>
+            <textarea id="descripcionSistema" class="form-control" rows="2" placeholder="Características..."></textarea>
+          </div>
+
+          <!-- Sección para imágenes del sistema -->
+          <div class="mt-4">
+            <h5 class="h6">🖼️ Imágenes de referencia (secciones)</h5>
+            <div class="row">
+              <div class="col-md-6">
+                <div class="seccion-imagen">
+                  <label class="form-label small">Sección vertical</label>
+                  <input type="file" accept="image/*" class="form-control form-control-sm mb-1" id="inputImagenVertical" onchange="cargarImagen('vertical')">
+                  <input type="text" class="form-control form-control-sm mb-1" placeholder="O pegar URL" id="urlImagenVertical" onchange="actualizarImagenDesdeURL('vertical')">
+                  <div id="previewVertical" class="text-center"></div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="seccion-imagen">
+                  <label class="form-label small">Sección horizontal</label>
+                  <input type="file" accept="image/*" class="form-control form-control-sm mb-1" id="inputImagenHorizontal" onchange="cargarImagen('horizontal')">
+                  <input type="text" class="form-control form-control-sm mb-1" placeholder="O pegar URL" id="urlImagenHorizontal" onchange="actualizarImagenDesdeURL('horizontal')">
+                  <div id="previewHorizontal" class="text-center"></div>
+                </div>
+              </div>
+            </div>
+            <small class="text-muted">Puede subir una imagen o pegar una URL para cada sección.</small>
+          </div>
+
+          <div class="mt-4">
+            <div class="d-flex justify-content-between align-items-center">
+              <h5 class="h6">🧱 Materiales del sistema</h5>
+              <button class="btn btn-sm btn-outline-primary" onclick="agregarFilaMaterial()">➕ Agregar material</button>
+            </div>
+            <div id="materialesContainer" class="mt-3"></div>
+            <small class="text-muted">Configure kg/m (vertical/horizontal) y un peso fijo adicional (kg).</small>
+          </div>
+
+          <div class="mt-4">
+            <button class="btn btn-success w-100" onclick="guardarSistemaActual()">💾 Guardar sistema</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Cálculo y visualización de imágenes -->
+    <div class="col-xl-7 col-lg-6">
+      <div class="card">
+        <div class="card-header bg-white fw-bold">📏 Dimensiones y cálculo</div>
+        <div class="card-body">
+          <div class="row g-3">
+            <div class="col-md-4">
+              <label class="form-label">Alto (m)</label>
+              <input type="number" step="0.01" min="0" id="alto" class="form-control" value="2.03">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Ancho (m)</label>
+              <input type="number" step="0.01" min="0" id="ancho" class="form-control" value="0.725">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Tipo de marco</label>
+              <select id="tipoMarco" class="form-select">
+                <option value="3lados" selected>3 lados (2 largueros + cabecero)</option>
+                <option value="4lados">4 lados (incluye umbral)</option>
+              </select>
+            </div>
+          </div>
+          
+          <!-- Mostrar imágenes del sistema seleccionado -->
+          <div class="mt-4" id="contenedorImagenesSistema">
+            <div class="row">
+              <div class="col-md-6 text-center">
+                <h6 class="small">Sección vertical</h6>
+                <img id="imgVerticalMostrar" src="" alt="Sección vertical" class="img-fluid imagen-preview" style="display:none; max-height:150px;">
+                <p id="noImgVertical" class="text-muted small">Sin imagen</p>
+              </div>
+              <div class="col-md-6 text-center">
+                <h6 class="small">Sección horizontal</h6>
+                <img id="imgHorizontalMostrar" src="" alt="Sección horizontal" class="img-fluid imagen-preview" style="display:none; max-height:150px;">
+                <p id="noImgHorizontal" class="text-muted small">Sin imagen</p>
+              </div>
+            </div>
+          </div>
+
+          <button class="btn btn-primary mt-3 w-100" onclick="calcularImpacto()">🔍 Calcular huella de carbono</button>
+
+          <div id="resultadosCalculo" class="mt-4 p-3 bg-light rounded">
+            <p class="text-muted text-center mb-0">Seleccione un sistema y pulse calcular.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- INFORME IMPRIMIBLE -->
+  <div id="informeImprimible" class="print-only mt-4"></div>
+</div>
+
+<script>
+  (function(){
+    "use strict";
+
+    // ---------- BASE DE DATOS DE MATERIALES ----------
+    const MATERIALES_DB = [
+      { id: 'acero_perfil', nombre: 'Perfil de acero', densidad: 7850, factor: 0.646, fuente: 'DAP ArcelorMittal (perfiles tubulares)' },
+      { id: 'pvc_perfil', nombre: 'Perfil de PVC', densidad: 1380, factor: 2.48, fuente: 'Estimación ECVM / Climatiq' },
+      { id: 'aluminio_6063_perfil', nombre: 'Perfil de aluminio 6063', densidad: 2700, factor: 8.62, fuente: 'Base de datos Climatiq (media mercado)' },
+      { id: 'aluminio_5052_chapa', nombre: 'Chapa de aluminio 5052', densidad: 2680, factor: 8.62, fuente: 'Estimación genérica aluminio primario' },
+      { id: 'pvc_celular_panel', nombre: 'Panel PVC celular', densidad: 500, factor: 2.48, fuente: 'Estimación base PVC' },
+      { id: 'osb_panel', nombre: 'Panel madera OSB', densidad: 650, factor: 0.418, fuente: 'DAP SterlingOSB/3-Zero (fósil)' },
+      { id: 'paulownia_panel', nombre: 'Panel alistonado de madera paulownia', densidad: 260, factor: 0.31, fuente: 'Factor genérico madera. Carbono biogénico calculable aparte.', carbonoBiogenico: -1.78 },
+      { id: 'eps_grafitado_35', nombre: 'EPS grafitado 35Kg/m³', densidad: 35, factor: 3.50, fuente: 'Estimación DAP EPS' },
+      { id: 'eps_32', nombre: 'EPS 32Kg/m³', densidad: 32, factor: 3.50, fuente: 'Estimación DAP EPS' },
+      { id: 'xps_35', nombre: 'XPS de 35Kg/m³', densidad: 35, factor: 4.24, fuente: 'Base de datos Baubook (CO2-geschäumt)' }
+    ];
+
+    // ---------- ESTRUCTURA DE UN SISTEMA ----------
+    // materiales: [ { materialId, pesoML_Vertical, pesoML_Horizontal, pesoFijo } ]
+    // imagenVertical, imagenHorizontal (base64 strings o URLs)
+    let sistemas = {};
+    let sistemaActualId = null;
+
+    // Inicializar con ejemplos
+    function inicializarSistemas() {
+      const guardados = localStorage.getItem('sistemasPremarcosV4');
+      if (guardados) {
+        try { sistemas = JSON.parse(guardados); } catch(e){ sistemas = {}; }
+      }
+      if (Object.keys(sistemas).length === 0) {
+        sistemas = {
+          "sistema_1": {
+            nombre: "Premarco estándar Paulownia",
+            descripcion: "Madera ligera, captura carbono",
+            imagenVertical: "",
+            imagenHorizontal: "",
+            materiales: [
+              { materialId: "paulownia_panel", pesoML_Vertical: 0.68, pesoML_Horizontal: 0.68, pesoFijo: 0 }
+            ]
+          },
+          "sistema_2": {
+            nombre: "Premarco mixto Acero + EPS (asimétrico)",
+            descripcion: "Vertical acero más robusto, horizontal EPS",
+            imagenVertical: "",
+            imagenHorizontal: "",
+            materiales: [
+              { materialId: "acero_perfil", pesoML_Vertical: 1.25, pesoML_Horizontal: 0.85, pesoFijo: 0.2 },
+              { materialId: "eps_32", pesoML_Vertical: 0.10, pesoML_Horizontal: 0.08, pesoFijo: 0 }
+            ]
+          }
+        };
+        guardarEnLocalStorage();
+      }
+    }
+
+    function guardarEnLocalStorage() {
+      localStorage.setItem('sistemasPremarcosV4', JSON.stringify(sistemas));
+    }
+
+    // ---------- RENDERIZADO DE UI ----------
+    function llenarSelectSistemas() {
+      const select = document.getElementById('sistemaSelect');
+      select.innerHTML = '';
+      for (let id in sistemas) {
+        const opt = document.createElement('option');
+        opt.value = id;
+        opt.textContent = sistemas[id].nombre;
+        select.appendChild(opt);
+      }
+      if (sistemaActualId && sistemas[sistemaActualId]) {
+        select.value = sistemaActualId;
+      } else if (Object.keys(sistemas).length > 0) {
+        sistemaActualId = Object.keys(sistemas)[0];
+        select.value = sistemaActualId;
+        cargarSistemaEnFormulario(sistemaActualId);
+      }
+    }
+
+    function cargarSistemaEnFormulario(id) {
+      const sistema = sistemas[id];
+      if (!sistema) return;
+      document.getElementById('nombreSistema').value = sistema.nombre || '';
+      document.getElementById('descripcionSistema').value = sistema.descripcion || '';
+      
+      // Cargar imágenes
+      document.getElementById('urlImagenVertical').value = sistema.imagenVertical || '';
+      document.getElementById('urlImagenHorizontal').value = sistema.imagenHorizontal || '';
+      mostrarPreview('vertical', sistema.imagenVertical);
+      mostrarPreview('horizontal', sistema.imagenHorizontal);
+      
+      renderizarTablaMateriales(sistema.materiales || []);
+    }
+
+    function mostrarPreview(tipo, imagenData) {
+      const previewDiv = document.getElementById(`preview${tipo.charAt(0).toUpperCase() + tipo.slice(1)}`);
+      if (imagenData) {
+        previewDiv.innerHTML = `<img src="${imagenData}" class="imagen-preview" alt="Preview">`;
+      } else {
+        previewDiv.innerHTML = '<span class="text-muted small">Sin imagen</span>';
+      }
+      // Actualizar vista en panel de cálculo
+      actualizarImagenesVista();
+    }
+
+    function actualizarImagenesVista() {
+      if (!sistemaActualId) return;
+      const sistema = sistemas[sistemaActualId];
+      const imgV = document.getElementById('imgVerticalMostrar');
+      const imgH = document.getElementById('imgHorizontalMostrar');
+      const noV = document.getElementById('noImgVertical');
+      const noH = document.getElementById('noImgHorizontal');
+      
+      if (sistema.imagenVertical) {
+        imgV.src = sistema.imagenVertical;
+        imgV.style.display = 'inline-block';
+        noV.style.display = 'none';
+      } else {
+        imgV.style.display = 'none';
+        noV.style.display = 'block';
+      }
+      
+      if (sistema.imagenHorizontal) {
+        imgH.src = sistema.imagenHorizontal;
+        imgH.style.display = 'inline-block';
+        noH.style.display = 'none';
+      } else {
+        imgH.style.display = 'none';
+        noH.style.display = 'block';
+      }
+    }
+
+    window.cargarImagen = function(tipo) {
+      const input = document.getElementById(`inputImagen${tipo.charAt(0).toUpperCase() + tipo.slice(1)}`);
+      const file = input.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const base64 = e.target.result;
+          if (sistemaActualId) {
+            sistemas[sistemaActualId][`imagen${tipo.charAt(0).toUpperCase() + tipo.slice(1)}`] = base64;
+            document.getElementById(`urlImagen${tipo.charAt(0).toUpperCase() + tipo.slice(1)}`).value = base64.substring(0, 50) + '...';
+            mostrarPreview(tipo, base64);
+            guardarEnLocalStorage();
+          }
+        };
+        reader.readAsDataURL(file);
+      }
+    };
+
+    window.actualizarImagenDesdeURL = function(tipo) {
+      const urlInput = document.getElementById(`urlImagen${tipo.charAt(0).toUpperCase() + tipo.slice(1)}`);
+      const url = urlInput.value.trim();
+      if (sistemaActualId && url) {
+        sistemas[sistemaActualId][`imagen${tipo.charAt(0).toUpperCase() + tipo.slice(1)}`] = url;
+        mostrarPreview(tipo, url);
+        guardarEnLocalStorage();
+      }
+    };
+
+    function renderizarTablaMateriales(materiales) {
+      const container = document.getElementById('materialesContainer');
+      if (!materiales.length) {
+        container.innerHTML = '<p class="text-muted">No hay materiales. Añada uno.</p>';
+        return;
+      }
+      let html = '';
+      materiales.forEach((mat, index) => {
+        const materialData = MATERIALES_DB.find(m => m.id === mat.materialId) || {};
+        html += `
+          <div class="material-row">
+            <div class="row g-2 align-items-end">
+              <div class="col-md-5">
+                <label class="form-label small">Material</label>
+                <select class="form-select form-select-sm" data-index="${index}" onchange="actualizarMaterialId(${index}, this.value)">
+                  ${MATERIALES_DB.map(m => `<option value="${m.id}" ${m.id === mat.materialId ? 'selected' : ''}>${m.nombre}</option>`).join('')}
+                </select>
+              </div>
+              <div class="col-md-2">
+                <label class="form-label small">kg/m vertical</label>
+                <input type="number" step="0.001" min="0" class="form-control form-control-sm" value="${mat.pesoML_Vertical || 0}" onchange="actualizarCampo(${index}, 'pesoML_Vertical', this.value)">
+              </div>
+              <div class="col-md-2">
+                <label class="form-label small">kg/m horizontal</label>
+                <input type="number" step="0.001" min="0" class="form-control form-control-sm" value="${mat.pesoML_Horizontal || 0}" onchange="actualizarCampo(${index}, 'pesoML_Horizontal', this.value)">
+              </div>
+              <div class="col-md-2">
+                <label class="form-label small">kg fijo</label>
+                <input type="number" step="0.001" min="0" class="form-control form-control-sm" value="${mat.pesoFijo || 0}" onchange="actualizarCampo(${index}, 'pesoFijo', this.value)">
+              </div>
+              <div class="col-md-1 d-flex align-items-end">
+                <button class="btn btn-sm btn-outline-danger w-100" onclick="eliminarFilaMaterial(${index})">✕</button>
+              </div>
+            </div>
+            <div class="mt-1">
+              <span class="badge-source">${materialData.factor} kgCO₂e/kg · ${materialData.fuente}</span>
+            </div>
+          </div>
+        `;
+      });
+      container.innerHTML = html;
+    }
+
+    window.actualizarMaterialId = function(index, nuevoId) {
+      const sistema = sistemas[sistemaActualId];
+      if (sistema && sistema.materiales[index]) {
+        sistema.materiales[index].materialId = nuevoId;
+        guardarEnLocalStorage();
+        renderizarTablaMateriales(sistema.materiales);
+      }
+    };
+
+    window.actualizarCampo = function(index, campo, valor) {
+      const sistema = sistemas[sistemaActualId];
+      if (sistema && sistema.materiales[index]) {
+        sistema.materiales[index][campo] = parseFloat(valor) || 0;
+        guardarEnLocalStorage();
+      }
+    };
+
+    window.eliminarFilaMaterial = function(index) {
+      const sistema = sistemas[sistemaActualId];
+      if (sistema) {
+        sistema.materiales.splice(index, 1);
+        guardarEnLocalStorage();
+        renderizarTablaMateriales(sistema.materiales);
+      }
+    };
+
+    window.agregarFilaMaterial = function() {
+      if (!sistemaActualId) { alert('Seleccione o cree un sistema.'); return; }
+      const sistema = sistemas[sistemaActualId];
+      sistema.materiales.push({ 
+        materialId: MATERIALES_DB[0].id, 
+        pesoML_Vertical: 0.5, 
+        pesoML_Horizontal: 0.5, 
+        pesoFijo: 0 
+      });
+      guardarEnLocalStorage();
+      renderizarTablaMateriales(sistema.materiales);
+    };
+
+    window.cargarSistemaSeleccionado = function() {
+      const id = document.getElementById('sistemaSelect').value;
+      if (id) {
+        sistemaActualId = id;
+        cargarSistemaEnFormulario(id);
+        calcularImpacto();
+        actualizarImagenesVista();
+      }
+    };
+
+    window.nuevoSistema = function() {
+      const newId = 'sistema_' + Date.now();
+      sistemas[newId] = { 
+        nombre: 'Nuevo sistema', 
+        descripcion: '', 
+        imagenVertical: '', 
+        imagenHorizontal: '', 
+        materiales: [] 
+      };
+      sistemaActualId = newId;
+      guardarEnLocalStorage();
+      llenarSelectSistemas();
+      cargarSistemaEnFormulario(newId);
+    };
+
+    window.guardarSistemaActual = function() {
+      if (!sistemaActualId) return;
+      const sistema = sistemas[sistemaActualId];
+      sistema.nombre = document.getElementById('nombreSistema').value;
+      sistema.descripcion = document.getElementById('descripcionSistema').value;
+      // Las imágenes ya se guardan en tiempo real al cargar/pegar URL
+      guardarEnLocalStorage();
+      llenarSelectSistemas();
+      alert('Sistema guardado.');
+    };
+
+    window.eliminarSistemaActual = function() {
+      if (!sistemaActualId) return;
+      if (confirm('¿Eliminar este sistema?')) {
+        delete sistemas[sistemaActualId];
+        sistemaActualId = Object.keys(sistemas)[0] || null;
+        guardarEnLocalStorage();
+        llenarSelectSistemas();
+        if (sistemaActualId) {
+          cargarSistemaEnFormulario(sistemaActualId);
+          actualizarImagenesVista();
+        } else {
+          document.getElementById('materialesContainer').innerHTML = '';
+          document.getElementById('imgVerticalMostrar').style.display = 'none';
+          document.getElementById('imgHorizontalMostrar').style.display = 'none';
+        }
+      }
+    };
+
+    window.duplicarSistema = function() {
+      if (!sistemaActualId) return;
+      const original = sistemas[sistemaActualId];
+      const newId = 'sistema_' + Date.now();
+      sistemas[newId] = JSON.parse(JSON.stringify(original));
+      sistemas[newId].nombre += ' (copia)';
+      sistemaActualId = newId;
+      guardarEnLocalStorage();
+      llenarSelectSistemas();
+      cargarSistemaEnFormulario(newId);
+      actualizarImagenesVista();
+    };
+
+    // ---------- CÁLCULO DE HUELLA ----------
+    window.calcularImpacto = function() {
+      if (!sistemaActualId) return;
+      const sistema = sistemas[sistemaActualId];
+      if (!sistema.materiales || sistema.materiales.length === 0) {
+        document.getElementById('resultadosCalculo').innerHTML = '<p class="text-warning">El sistema no tiene materiales.</p>';
+        return;
+      }
+
+      const alto = parseFloat(document.getElementById('alto').value);
+      const ancho = parseFloat(document.getElementById('ancho').value);
+      const tipo = document.getElementById('tipoMarco').value;
+      if (isNaN(alto) || isNaN(ancho) || alto <= 0 || ancho <= 0) {
+        document.getElementById('resultadosCalculo').innerHTML = '<p class="text-danger">Medidas no válidas.</p>';
+        return;
+      }
+
+      const largoVertical = (tipo === '3lados') ? 2 * alto : 2 * alto;
+      const largoHorizontal = (tipo === '3lados') ? ancho : 2 * ancho;
+
+      let pesoTotal = 0, huellaA1A3 = 0, carbonoBio = 0;
+      let detalles = [];
+
+      sistema.materiales.forEach(item => {
+        const material = MATERIALES_DB.find(m => m.id === item.materialId);
+        if (!material) return;
+
+        const pesoVert = largoVertical * (item.pesoML_Vertical || 0);
+        const pesoHoriz = largoHorizontal * (item.pesoML_Horizontal || 0);
+        const pesoFijo = item.pesoFijo || 0;
+        const pesoTotalMat = pesoVert + pesoHoriz + pesoFijo;
+
+        const huellaMat = pesoTotalMat * material.factor;
+        let bio = 0;
+        if (material.carbonoBiogenico) {
+          bio = pesoTotalMat * material.carbonoBiogenico;
+        }
+
+        pesoTotal += pesoTotalMat;
+        huellaA1A3 += huellaMat;
+        carbonoBio += bio;
+
+        detalles.push({
+          nombre: material.nombre,
+          pesoVert, pesoHoriz, pesoFijo, pesoTotalMat,
+          factor: material.factor,
+          huella: huellaMat,
+          bio: bio,
+          fuente: material.fuente,
+          tieneBio: !!material.carbonoBiogenico
+        });
+      });
+
+      const huellaNeta = huellaA1A3 + carbonoBio;
+
+      let html = `<h5>${sistema.nombre}</h5>`;
+      html += `<p>Alto: ${alto.toFixed(2)} m · Ancho: ${ancho.toFixed(2)} m · Tipo: ${tipo==='3lados'?'3 lados':'4 lados'}<br>`;
+      html += `Longitud vertical: ${largoVertical.toFixed(3)} m · Longitud horizontal: ${largoHorizontal.toFixed(3)} m</p>`;
+
+      html += `<table class="table table-sm table-bordered">
+        <thead><tr><th>Material</th><th>Peso vert.(kg)</th><th>Peso horiz.(kg)</th><th>Peso fijo(kg)</th><th>Peso total(kg)</th><th>Huella(kgCO₂e)</th></tr></thead><tbody>`;
+      detalles.forEach(d => {
+        html += `<tr><td>${d.nombre}</td><td>${d.pesoVert.toFixed(2)}</td><td>${d.pesoHoriz.toFixed(2)}</td><td>${d.pesoFijo.toFixed(2)}</td><td>${d.pesoTotalMat.toFixed(2)}</td><td>${d.huella.toFixed(2)}</td></tr>`;
+      });
+      html += `</tbody></table>`;
+      html += `<p><strong>Peso total del premarco:</strong> ${pesoTotal.toFixed(2)} kg</p>`;
+      html += `<p><strong>Huella producción (A1-A3):</strong> ${huellaA1A3.toFixed(2)} kg CO₂e</p>`;
+      if (carbonoBio < 0) {
+        html += `<p><strong>Carbono biogénico almacenado:</strong> ${carbonoBio.toFixed(2)} kg CO₂e</p>`;
+        html += `<p class="huella-total">Huella neta: ${huellaNeta.toFixed(2)} kg CO₂e</p>`;
+      } else {
+        html += `<p class="huella-total">Huella total: ${huellaA1A3.toFixed(2)} kg CO₂e</p>`;
+      }
+      document.getElementById('resultadosCalculo').innerHTML = html;
+
+      generarInformeImprimible(sistema, alto, ancho, tipo, largoVertical, largoHorizontal, detalles, pesoTotal, huellaA1A3, carbonoBio, huellaNeta);
+    };
+
+    function generarInformeImprimible(sistema, alto, ancho, tipo, largoV, largoH, detalles, pesoTotal, huellaA1A3, carbonoBio, huellaNeta) {
+      const fecha = new Date().toLocaleDateString('es-ES');
+      let filas = '';
+      detalles.forEach(d => {
+        filas += `<tr><td>${d.nombre}</td><td>${d.pesoVert.toFixed(2)}</td><td>${d.pesoHoriz.toFixed(2)}</td><td>${d.pesoFijo.toFixed(2)}</td><td>${d.pesoTotalMat.toFixed(2)}</td><td>${d.factor}</td><td>${d.huella.toFixed(2)}</td></tr>`;
+      });
+      let bioTexto = '';
+      if (carbonoBio < 0) {
+        bioTexto = `<tr><td>Carbono biogénico almacenado</td><td>${carbonoBio.toFixed(2)} kg CO₂e</td></tr>
+                    <tr><td><strong>Huella neta (A1-A3 + biogénico)</strong></td><td><strong>${huellaNeta.toFixed(2)} kg CO₂e</strong></td></tr>`;
+      } else {
+        bioTexto = `<tr><td><strong>Huella total (A1-A3)</strong></td><td><strong>${huellaA1A3.toFixed(2)} kg CO₂e</strong></td></tr>`;
+      }
+
+      // Incluir imágenes en el informe si existen
+      let imagenesHtml = '';
+      if (sistema.imagenVertical || sistema.imagenHorizontal) {
+        imagenesHtml = `<h2>Imágenes de referencia</h2><div style="display:flex; gap:20px;">`;
+        if (sistema.imagenVertical) imagenesHtml += `<div><p>Sección vertical</p><img src="${sistema.imagenVertical}" style="max-width:200px; max-height:150px;"></div>`;
+        if (sistema.imagenHorizontal) imagenesHtml += `<div><p>Sección horizontal</p><img src="${sistema.imagenHorizontal}" style="max-width:200px; max-height:150px;"></div>`;
+        imagenesHtml += `</div>`;
+      }
+
+      const informe = `
+        <div style="font-family: 'Segoe UI', sans-serif;">
+          <div style="border-bottom: 2px solid #1e3a2f; padding-bottom: 10px; margin-bottom: 20px;">
+            <h1 style="color:#1e3a2f;">INFORME DE HUELLA DE CARBONO</h1>
+            <p style="text-align:right;">Fecha: ${fecha}</p>
+          </div>
+          <h2>1. Datos del producto</h2>
+          <p><strong>Sistema:</strong> ${sistema.nombre} ${sistema.descripcion ? '— ' + sistema.descripcion : ''}</p>
+          <p><strong>Dimensiones:</strong> Alto ${alto.toFixed(2)} m, Ancho ${ancho.toFixed(2)} m · Tipo: ${tipo==='3lados'?'3 lados':'4 lados'}</p>
+          <p><strong>Longitudes:</strong> Vertical ${largoV.toFixed(3)} m, Horizontal ${largoH.toFixed(3)} m</p>
+          ${imagenesHtml}
+          <h2>2. Alcance y metodología</h2>
+          <p>Alcance: De la cuna a la puerta (A1-A3) según EN 15804. Cálculo diferenciado por orientación y peso fijo adicional.</p>
+          <h2>3. Inventario de materiales</h2>
+          <table style="width:100%; border-collapse:collapse;" border="1" cellpadding="6">
+            <thead style="background:#e9ecef;"><tr><th>Material</th><th>Peso vert.(kg)</th><th>Peso horiz.(kg)</th><th>Peso fijo(kg)</th><th>Peso total(kg)</th><th>Factor(kgCO₂e/kg)</th><th>Huella(kgCO₂e)</th></tr></thead>
+            <tbody>${filas}</tbody>
+          </table>
+          <h2>4. Resultados</h2>
+          <table style="width:60%; border-collapse:collapse;" border="1" cellpadding="6">
+            <tr><th>Indicador</th><th>Valor</th></tr>
+            <tr><td>Peso total del premarco</td><td>${pesoTotal.toFixed(2)} kg</td></tr>
+            <tr><td>Huella de producción (A1-A3)</td><td>${huellaA1A3.toFixed(2)} kg CO₂e</td></tr>
+            ${bioTexto}
+          </table>
+          <h2>5. Justificación de factores</h2>
+          <ul>
+            ${detalles.map(d => `<li><strong>${d.nombre}:</strong> ${d.factor} kgCO₂e/kg. Fuente: ${d.fuente}</li>`).join('')}
+          </ul>
+          <p>Metodología conforme a ISO 14067.</p>
+          <p style="margin-top:30px;">_________________________________<br>Responsable técnico</p>
+        </div>
+      `;
+      document.getElementById('informeImprimible').innerHTML = informe;
+    }
+
+    // ---------- INICIO ----------
+    window.onload = function() {
+      inicializarSistemas();
+      llenarSelectSistemas();
+      if (sistemaActualId) {
+        cargarSistemaEnFormulario(sistemaActualId);
+        calcularImpacto();
+        actualizarImagenesVista();
+      }
+    };
+  })();
+</script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
