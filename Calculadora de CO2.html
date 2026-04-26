@@ -555,22 +555,45 @@
           <div class="card-title">Dimensiones y cálculo</div>
         </div>
         <div class="card-body">
-          <div class="grid-2cols" style="grid-template-columns: repeat(3, 1fr);">
-            <div>
-              <label class="form-label">Alto (m)</label>
-              <input type="number" step="0.01" id="alto" class="form-control" value="2.03">
+          <!-- Selector de producto -->
+          <div class="mb-3">
+            <label class="form-label">Tipo de producto</label>
+            <select id="tipoProducto" class="form-select" onchange="cambiarTipoProducto()">
+              <option value="premarco">Premarco (marco completo)</option>
+              <option value="cajon">Cajón de persiana</option>
+            </select>
+          </div>
+
+          <!-- Campos para Premarco -->
+          <div id="camposPremarco">
+            <div class="grid-2cols" style="grid-template-columns: repeat(3, 1fr);">
+              <div>
+                <label class="form-label">Alto (m)</label>
+                <input type="number" step="0.01" id="altoPremarco" class="form-control" value="2.03">
+              </div>
+              <div>
+                <label class="form-label">Ancho (m)</label>
+                <input type="number" step="0.01" id="anchoPremarco" class="form-control" value="0.725">
+              </div>
+              <div>
+                <label class="form-label">Tipo de marco</label>
+                <select id="tipoMarco" class="form-select">
+                  <option value="3lados" selected>3 lados (2 largueros + cabecero)</option>
+                  <option value="4lados">4 lados (incluye umbral)</option>
+                </select>
+              </div>
             </div>
-            <div>
-              <label class="form-label">Ancho (m)</label>
-              <input type="number" step="0.01" id="ancho" class="form-control" value="0.725">
+          </div>
+
+          <!-- Campos para Cajón de persiana (solo ancho) -->
+          <div id="camposCajon" style="display:none;">
+            <div class="grid-2cols" style="grid-template-columns: 1fr;">
+              <div>
+                <label class="form-label">Ancho del cajón (m)</label>
+                <input type="number" step="0.01" id="anchoCajon" class="form-control" value="1.00">
+              </div>
             </div>
-            <div>
-              <label class="form-label">Tipo de marco</label>
-              <select id="tipoMarco" class="form-select">
-                <option value="3lados" selected>3 lados (2 largueros + cabecero)</option>
-                <option value="4lados">4 lados (incluye umbral)</option>
-              </select>
-            </div>
+            <p class="small text-muted">La huella se calculará únicamente en función del ancho del cajón.</p>
           </div>
           
           <!-- Previsualización de imágenes del sistema -->
@@ -638,7 +661,7 @@
     let sistemaActualId = null;
 
     function inicializarSistemas() {
-      const guardados = localStorage.getItem('sistemasPremarcosV4');
+      const guardados = localStorage.getItem('sistemasPremarcosV5');
       if (guardados) {
         try { sistemas = JSON.parse(guardados); } catch(e){ sistemas = {}; }
       }
@@ -669,7 +692,7 @@
     }
 
     function guardarEnLocalStorage() {
-      localStorage.setItem('sistemasPremarcosV4', JSON.stringify(sistemas));
+      localStorage.setItem('sistemasPremarcosV5', JSON.stringify(sistemas));
     }
 
     function llenarSelectSistemas() {
@@ -897,6 +920,14 @@
       cargarSistemaEnFormulario(newId);
     };
 
+    // Cambiar visibilidad según tipo de producto
+    window.cambiarTipoProducto = function() {
+      const tipo = document.getElementById('tipoProducto').value;
+      document.getElementById('camposPremarco').style.display = tipo === 'premarco' ? 'block' : 'none';
+      document.getElementById('camposCajon').style.display = tipo === 'cajon' ? 'block' : 'none';
+      calcularImpacto(); // recalcular si cambia el tipo
+    };
+
     // CÁLCULO PRINCIPAL
     window.calcularImpacto = function() {
       if (!sistemaActualId) return;
@@ -905,16 +936,33 @@
         document.getElementById('resultadosCalculo').innerHTML = '<div class="alert alert-warning">El sistema no tiene materiales definidos.</div>';
         return;
       }
-      const alto = parseFloat(document.getElementById('alto').value);
-      const ancho = parseFloat(document.getElementById('ancho').value);
-      const tipo = document.getElementById('tipoMarco').value;
-      if (isNaN(alto) || isNaN(ancho) || alto <= 0 || ancho <= 0) {
-        document.getElementById('resultadosCalculo').innerHTML = '<div class="alert alert-danger">Medidas no válidas.</div>';
-        return;
+
+      const tipoProducto = document.getElementById('tipoProducto').value;
+      let largoVertical = 0, largoHorizontal = 0;
+      let descripcionDimensiones = '';
+
+      if (tipoProducto === 'premarco') {
+        const alto = parseFloat(document.getElementById('altoPremarco').value);
+        const ancho = parseFloat(document.getElementById('anchoPremarco').value);
+        const tipoMarco = document.getElementById('tipoMarco').value;
+        if (isNaN(alto) || isNaN(ancho) || alto <= 0 || ancho <= 0) {
+          document.getElementById('resultadosCalculo').innerHTML = '<div class="alert alert-danger">Medidas no válidas.</div>';
+          return;
+        }
+        largoVertical = 2 * alto;  // siempre 2*alto para largueros
+        largoHorizontal = (tipoMarco === '3lados') ? ancho : 2 * ancho;
+        descripcionDimensiones = `Alto: ${alto.toFixed(2)} m, Ancho: ${ancho.toFixed(2)} m, Tipo: ${tipoMarco==='3lados'?'3 lados':'4 lados'}`;
+      } else { // cajón de persiana - solo ancho
+        const anchoCajon = parseFloat(document.getElementById('anchoCajon').value);
+        if (isNaN(anchoCajon) || anchoCajon <= 0) {
+          document.getElementById('resultadosCalculo').innerHTML = '<div class="alert alert-danger">Ancho del cajón no válido.</div>';
+          return;
+        }
+        largoVertical = 0;               // sin tramos verticales
+        largoHorizontal = anchoCajon;    // solo el ancho
+        descripcionDimensiones = `Cajón de persiana - Ancho: ${anchoCajon.toFixed(2)} m`;
       }
-      const largoVertical = (tipo === '3lados') ? 2 * alto : 2 * alto;
-      const largoHorizontal = (tipo === '3lados') ? ancho : 2 * ancho;
-      
+
       let pesoTotal = 0, huellaA1A3 = 0, carbonoBio = 0;
       let detalles = [];
       
@@ -944,13 +992,15 @@
       
       const huellaNeta = huellaA1A3 + carbonoBio;
       
-      let html = `<h5>${sistema.nombre}</h5><p>Alto: ${alto.toFixed(2)} m · Ancho: ${ancho.toFixed(2)} m · Tipo: ${tipo==='3lados'?'3 lados':'4 lados'}<br>Longitud vertical: ${largoVertical.toFixed(3)} m · Horizontal: ${largoHorizontal.toFixed(3)} m</p>`;
+      let html = `<h5>${sistema.nombre} (${tipoProducto === 'premarco' ? 'Premarco' : 'Cajón de persiana'})</h5>`;
+      html += `<p>${descripcionDimensiones}<br>`;
+      html += `Longitud vertical: ${largoVertical.toFixed(3)} m · Longitud horizontal: ${largoHorizontal.toFixed(3)} m</p>`;
       html += `<table class="table-custom"><thead><tr><th>Material</th><th>Peso vert.(kg)</th><th>Peso horiz.(kg)</th><th>Peso fijo(kg)</th><th>Peso total(kg)</th><th>Huella(kgCO₂e)</th></tr></thead><tbody>`;
       detalles.forEach(d => {
         html += `<tr><td>${d.nombre}</td><td>${d.pesoVert.toFixed(2)}</td><td>${d.pesoHoriz.toFixed(2)}</td><td>${d.pesoFijo.toFixed(2)}</td><td>${d.pesoTotalMat.toFixed(2)}</td><td>${d.huella.toFixed(2)}</td></tr>`;
       });
       html += `</tbody></table>`;
-      html += `<p><strong>Peso total del premarco:</strong> ${pesoTotal.toFixed(2)} kg</p>`;
+      html += `<p><strong>Peso total:</strong> ${pesoTotal.toFixed(2)} kg</p>`;
       html += `<p><strong>Huella producción (A1-A3):</strong> ${huellaA1A3.toFixed(2)} kg CO₂e</p>`;
       if (carbonoBio < 0) {
         html += `<p><strong>Carbono biogénico almacenado:</strong> ${carbonoBio.toFixed(2)} kg CO₂e</p>`;
@@ -960,7 +1010,11 @@
       }
       document.getElementById('resultadosCalculo').innerHTML = html;
       
-      // generar informe imprimible
+      // Informe imprimible
+      generarInformeImprimible(sistema, tipoProducto, descripcionDimensiones, largoVertical, largoHorizontal, detalles, pesoTotal, huellaA1A3, carbonoBio, huellaNeta);
+    };
+
+    function generarInformeImprimible(sistema, tipoProducto, descDim, largoV, largoH, detalles, pesoTotal, huellaA1A3, carbonoBio, huellaNeta) {
       const fecha = new Date().toLocaleDateString('es-ES');
       let filas = '';
       detalles.forEach(d => {
@@ -976,16 +1030,18 @@
         imagenesHtml += `</div>`;
       }
       
+      const tipoTexto = tipoProducto === 'premarco' ? 'Premarco' : 'Cajón de persiana';
       const informe = `
         <div style="font-family: 'Open Sans', sans-serif;">
           <div style="border-bottom: 2px solid #EDD00E; padding-bottom: 10px; margin-bottom: 20px;">
-            <h1 style="color:#3E3E3E;">INFORME DE HUELLA DE CARBONO · PREMARCO</h1>
+            <h1 style="color:#3E3E3E;">INFORME DE HUELLA DE CARBONO · ${tipoTexto.toUpperCase()}</h1>
             <p style="text-align:right;">Fecha: ${fecha}</p>
           </div>
           <h2>1. Datos del producto</h2>
           <p><strong>Sistema:</strong> ${sistema.nombre} ${sistema.descripcion ? '— ' + sistema.descripcion : ''}</p>
-          <p><strong>Dimensiones:</strong> Alto ${alto.toFixed(2)} m, Ancho ${ancho.toFixed(2)} m · Tipo: ${tipo==='3lados'?'3 lados':'4 lados'}</p>
-          <p><strong>Longitudes:</strong> Vertical ${largoVertical.toFixed(3)} m, Horizontal ${largoHorizontal.toFixed(3)} m</p>
+          <p><strong>Tipo:</strong> ${tipoTexto}</p>
+          <p><strong>Dimensiones:</strong> ${descDim}</p>
+          <p><strong>Longitudes:</strong> Vertical ${largoV.toFixed(3)} m, Horizontal ${largoH.toFixed(3)} m</p>
           ${imagenesHtml}
           <h2>2. Alcance y metodología</h2>
           <p>Alcance: De la cuna a la puerta (A1-A3) según EN 15804. Cálculo diferenciado por orientación y peso fijo adicional.</p>
@@ -997,7 +1053,7 @@
           <h2>4. Resultados</h2>
           <table style="width:60%; border-collapse:collapse;" border="1" cellpadding="6">
             <tr><th>Indicador</th><th>Valor</th></tr>
-            <tr><td>Peso total del premarco</td><td>${pesoTotal.toFixed(2)} kg</td></tr>
+            <tr><td>Peso total</td><td>${pesoTotal.toFixed(2)} kg</td></tr>
             <tr><td>Huella de producción (A1-A3)</td><td>${huellaA1A3.toFixed(2)} kg CO₂e</td></tr>
             ${bioTexto}
           </table>
@@ -1008,12 +1064,15 @@
         </div>
       `;
       document.getElementById('informeImprimible').innerHTML = informe;
-    };
-    
+    }
+
     // Inicialización
     window.onload = function() {
       inicializarSistemas();
       llenarSelectSistemas();
+      // Establecer visibilidad inicial según tipo producto por defecto (premarco)
+      document.getElementById('camposPremarco').style.display = 'block';
+      document.getElementById('camposCajon').style.display = 'none';
       if (sistemaActualId) {
         cargarSistemaEnFormulario(sistemaActualId);
         calcularImpacto();
