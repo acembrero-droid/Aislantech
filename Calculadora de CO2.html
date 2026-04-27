@@ -3,16 +3,20 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-  <title>Aislantech · Calculadora de Huella de CO₂ para Premarcos</title>
+  <title>Aislantech · Calculadora profesional de Huella de CO₂ para Premarcos</title>
   
-  <!-- Favicon (símil al estilo Aislantech) -->
+  <!-- Favicon -->
   <link rel="icon" type="image/x-icon" href="favicon.ico">
   
-  <!-- Google Fonts (Montserrat + Open Sans) -->
+  <!-- Google Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Open+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
   
-  <!-- Font Awesome 6 -->
+  <!-- Font Awesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Librerías para PDF -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
   
   <style>
     /* ========== VARIABLES AISLANTECH ========== */
@@ -34,7 +38,6 @@
       --box-shadow-hover: 0 15px 30px rgba(0, 0, 0, 0.1);
     }
     
-    /* ========== RESET Y BASE ========== */
     * {
       margin: 0;
       padding: 0;
@@ -62,7 +65,7 @@
       padding: 0 20px;
     }
     
-    /* ========== HEADER FIJO (estilo Aislantech) ========== */
+    /* Header */
     header {
       position: sticky;
       top: 0;
@@ -71,7 +74,6 @@
       z-index: 1000;
       background-color: rgba(255, 255, 255, 0.97);
       box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-      transition: var(--transition);
     }
     
     .header-container {
@@ -133,27 +135,19 @@
     
     .btn-yellow:hover {
       background-color: var(--color-primary-dark);
-      color: var(--color-white);
+      color: white;
       transform: translateY(-3px);
       box-shadow: 0 5px 15px rgba(237, 208, 14, 0.3);
     }
     
-    /* ========== TARJETAS (CARD) AISLANTECH ========== */
+    /* Cards */
     .card {
-      background: var(--color-white);
+      background: white;
       border-radius: var(--border-radius);
-      overflow: hidden;
       box-shadow: var(--box-shadow);
-      transition: var(--transition);
       margin-bottom: 30px;
       border-top: 4px solid var(--color-primary);
     }
-    
-    .card:hover {
-      transform: translateY(-5px);
-      box-shadow: var(--box-shadow-hover);
-    }
-    
     .card-header {
       background: var(--color-primary-light);
       padding: 1rem 1.5rem;
@@ -162,24 +156,11 @@
       align-items: center;
       gap: 0.8rem;
     }
+    .card-header i { color: var(--color-primary-dark); font-size: 1.3rem; }
+    .card-title { font-size: 1.2rem; font-weight: 600; color: var(--color-secondary); margin: 0; }
+    .card-body { padding: 1.5rem; }
     
-    .card-header i {
-      font-size: 1.3rem;
-      color: var(--color-primary-dark);
-    }
-    
-    .card-title {
-      font-size: 1.2rem;
-      font-weight: 600;
-      margin: 0;
-      color: var(--color-secondary);
-    }
-    
-    .card-body {
-      padding: 1.5rem;
-    }
-    
-    /* ========== FORMULARIOS ========== */
+    /* Forms */
     .form-label {
       font-size: 0.7rem;
       font-weight: 700;
@@ -189,7 +170,6 @@
       margin-bottom: 4px;
       display: block;
     }
-    
     .form-control, .form-select {
       width: 100%;
       padding: 10px 14px;
@@ -198,25 +178,22 @@
       font-size: 0.9rem;
       font-family: 'Open Sans', sans-serif;
       transition: var(--transition);
-      background: var(--color-white);
     }
-    
     .form-control:focus, .form-select:focus {
       border-color: var(--color-primary);
+      box-shadow: 0 0 0 3px rgba(237,208,14,0.2);
       outline: none;
-      box-shadow: 0 0 0 3px rgba(237, 208, 14, 0.2);
     }
     
-    /* ========== BOTONES ========== */
+    /* Botones */
     .btn {
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      background-color: var(--color-accent);
+      background: var(--color-accent);
       color: var(--color-dark);
       padding: 10px 20px;
       border-radius: var(--border-radius);
-      text-decoration: none;
       font-weight: 700;
       border: none;
       cursor: pointer;
@@ -224,245 +201,68 @@
       font-family: 'Montserrat', sans-serif;
       font-size: 0.85rem;
     }
-    
-    .btn-primary {
-      background-color: var(--color-primary);
-      color: var(--color-dark);
-    }
-    
-    .btn-primary:hover {
-      background-color: var(--color-primary-dark);
-      color: var(--color-white);
-      transform: translateY(-2px);
-    }
-    
+    .btn-primary { background: var(--color-primary); }
+    .btn-primary:hover { background: var(--color-primary-dark); color: white; }
     .btn-outline-secondary {
       background: transparent;
       border: 2px solid var(--color-secondary-light);
       color: var(--color-gray);
     }
+    .btn-outline-secondary:hover { border-color: var(--color-primary); color: var(--color-primary-dark); background: var(--color-primary-light); }
+    .btn-danger-outline { background: transparent; border: 1px solid #c62828; color: #c62828; }
+    .btn-danger-outline:hover { background: #c62828; color: white; }
+    .btn-sm { padding: 5px 12px; font-size: 0.75rem; }
     
-    .btn-outline-secondary:hover {
-      border-color: var(--color-primary);
-      color: var(--color-primary-dark);
-      background: var(--color-primary-light);
-    }
-    
-    .btn-danger-outline {
-      background: transparent;
-      border: 1px solid #c62828;
-      color: #c62828;
-    }
-    
-    .btn-danger-outline:hover {
-      background: #c62828;
-      color: white;
-    }
-    
-    .btn-sm {
-      padding: 5px 12px;
-      font-size: 0.75rem;
-    }
-    
-    /* ========== MATERIAL ROW ========== */
     .material-row {
       background: var(--color-light);
       padding: 1rem;
       border-radius: var(--border-radius);
       margin-bottom: 0.75rem;
       border: 1px solid var(--color-secondary-light);
-      transition: var(--transition);
     }
-    
     .badge-source {
       font-size: 0.65rem;
-      background: var(--color-white);
+      background: white;
       color: var(--color-secondary-dark);
       padding: 3px 8px;
       border-radius: 20px;
-      display: inline-block;
     }
+    .grid-2cols { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.2rem; }
     
-    .grid-2cols {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 1.2rem;
-    }
+    .imagen-preview { max-width: 100%; max-height: 120px; border: 1px solid var(--color-secondary-light); border-radius: var(--border-radius); margin-top: 5px; }
+    .seccion-imagen { background: var(--color-light); padding: 0.8rem; border-radius: var(--border-radius); margin-bottom: 0.8rem; }
     
-    /* ========== IMÁGENES Y PREVIEW ========== */
-    .imagen-preview {
-      max-width: 100%;
-      max-height: 120px;
-      border: 1px solid var(--color-secondary-light);
-      border-radius: var(--border-radius);
-      margin-top: 5px;
-    }
+    .table-custom { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+    .table-custom th, .table-custom td { border: 1px solid var(--color-secondary-light); padding: 8px; }
+    .table-custom th { background: var(--color-primary-light); color: var(--color-secondary); font-weight: 600; }
     
-    .seccion-imagen {
-      background: var(--color-light);
-      padding: 0.8rem;
-      border-radius: var(--border-radius);
-      margin-bottom: 0.8rem;
-    }
+    .huella-total { font-size: 1.8rem; font-weight: 700; color: var(--color-primary-dark); }
     
-    /* ========== TABLAS ========== */
-    .table-custom {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 0.85rem;
-    }
-    
-    .table-custom th, .table-custom td {
-      border: 1px solid var(--color-secondary-light);
-      padding: 8px;
-      vertical-align: top;
-    }
-    
-    .table-custom th {
-      background: var(--color-primary-light);
-      color: var(--color-secondary);
-      font-weight: 600;
-    }
-    
-    .huella-total {
-      font-size: 1.8rem;
-      font-weight: 700;
-      color: var(--color-primary-dark);
-    }
-    
-    /* ========== FOOTER ========== */
     footer {
-      background-color: var(--color-dark);
-      color: var(--color-white);
+      background: var(--color-dark);
+      color: white;
       padding: 60px 0 30px;
       margin-top: 60px;
     }
+    .footer-content { display: flex; justify-content: space-between; gap: 40px; margin-bottom: 40px; }
+    .footer-logo { font-family: 'Montserrat', sans-serif; font-size: 1.8rem; font-weight: 700; margin-bottom: 15px; }
+    .footer-logo .logo-aislan { color: white; }
+    .footer-logo .logo-tech { color: var(--color-primary); }
+    .footer-description { color: rgba(255,255,255,0.8); margin-bottom: 20px; font-size: 0.9rem; }
+    .footer-legal { display: flex; justify-content: center; gap: 30px; flex-wrap: wrap; }
+    .footer-legal a { color: rgba(255,255,255,0.7); text-decoration: none; font-size: 0.85rem; }
+    .footer-legal a:hover { color: var(--color-primary); }
+    .footer-bottom { text-align: center; padding-top: 30px; border-top: 1px solid rgba(255,255,255,0.1); font-size: 0.9rem; color: rgba(255,255,255,0.7); }
     
-    .footer-content {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: space-between;
-      gap: 40px;
-      margin-bottom: 40px;
-    }
+    @media (max-width: 992px) { .grid-2cols { grid-template-columns: 1fr; } }
     
-    .footer-about {
-      flex: 1;
-      min-width: 250px;
-    }
-    
-    .footer-logo {
-      font-family: 'Montserrat', sans-serif;
-      font-size: 1.8rem;
-      font-weight: 700;
-      margin-bottom: 15px;
-    }
-    
-    .footer-logo .logo-aislan {
-      color: var(--color-white);
-    }
-    .footer-logo .logo-tech {
-      color: var(--color-primary);
-    }
-    
-    .footer-description {
-      color: rgba(255, 255, 255, 0.8);
-      margin-bottom: 20px;
-      font-size: 0.9rem;
-    }
-    
-    .footer-legal {
-      display: flex;
-      justify-content: center;
-      gap: 30px;
-      margin-top: 15px;
-      flex-wrap: wrap;
-    }
-    
-    .footer-legal a {
-      color: rgba(255, 255, 255, 0.7);
-      text-decoration: none;
-      font-size: 0.85rem;
-      transition: var(--transition);
-    }
-    
-    .footer-legal a:hover {
-      color: var(--color-primary);
-      text-decoration: underline;
-    }
-    
-    .footer-bottom {
-      text-align: center;
-      padding-top: 30px;
-      border-top: 1px solid rgba(255, 255, 255, 0.1);
-      font-size: 0.9rem;
-      color: rgba(255, 255, 255, 0.7);
-    }
-    
-    /* ========== RESPONSIVE ========== */
-    @media (max-width: 992px) {
-      .grid-2cols {
-        grid-template-columns: 1fr;
-      }
-    }
-    
-    @media (max-width: 768px) {
-      .header-container {
-        flex-wrap: wrap;
-      }
-      .logo-aislan, .logo-tech {
-        font-size: 1.3rem;
-      }
-      .btn-yellow {
-        padding: 6px 12px;
-        font-size: 0.7rem;
-      }
-    }
-    
-    /* ========== ESTILOS PARA IMPRESIÓN ========== */
-    @media print {
-      .no-print {
-        display: none !important;
-      }
-      .print-only {
-        display: block !important;
-      }
-      .card {
-        box-shadow: none;
-        border: 1px solid #ccc;
-      }
-      body {
-        background: white;
-      }
-      .imagen-preview {
-        max-height: 100px;
-      }
-    }
-    
-    .print-only {
-      display: none;
-    }
-    
-    /* Helper */
-    .mt-3 { margin-top: 1rem; }
-    .mt-4 { margin-top: 1.5rem; }
-    .mb-2 { margin-bottom: 0.5rem; }
-    .mb-3 { margin-bottom: 1rem; }
-    .mb-4 { margin-bottom: 1.5rem; }
-    .w-100 { width: 100%; }
-    .d-flex { display: flex; }
-    .gap-2 { gap: 0.5rem; }
-    .justify-content-between { justify-content: space-between; }
-    .align-items-center { align-items: center; }
-    .text-center { text-align: center; }
-    .text-muted { color: var(--color-gray); }
-    .small { font-size: 0.75rem; }
+    /* Ocultar elementos en impresión (ya no se usa) */
+    .print-only { display: none; }
   </style>
 </head>
 <body>
 
-<!-- HEADER AISLANTECH -->
-<header>
+<header class="no-print">
   <div class="container header-container">
     <a href="#" class="logo-container">
       <div class="logo-text">
@@ -474,23 +274,26 @@
   </div>
 </header>
 
-<!-- HERO (sencillo) -->
-<div style="background: linear-gradient(135deg, var(--color-secondary) 0%, var(--color-dark) 100%); color: white; padding: 2.5rem 0; margin-bottom: 2rem;">
+<div class="hero no-print" style="background: linear-gradient(135deg, #3E3E3E 0%, #333 100%); color: white; padding: 2.5rem 0; margin-bottom: 2rem;">
   <div class="container">
-    <h1 style="color: white; font-size: 2rem;"><i class="fas fa-leaf" style="color: var(--color-primary);"></i> Calculadora de Huella de CO₂ · Premarcos</h1>
+    <h1 style="color: white; font-size: 2rem;"><i class="fas fa-leaf" style="color: #EDD00E;"></i> Calculadora profesional de Huella de CO₂ · Premarcos</h1>
     <p style="opacity: 0.9;">Alcance A1-A3 (cuna a puerta) según EN 15804 · Factores actualizados a 2025</p>
   </div>
 </div>
 
-<div class="container">
+<div class="container mb-4 no-print">
+  <div class="d-flex justify-content-between align-items-center">
+    <h2 style="color: #3E3E3E; font-size: 1.5rem;">Configuración de sistemas</h2>
+    <button class="btn btn-yellow" id="btnGenerarInforme"><i class="fas fa-file-pdf"></i> Generar informe (PDF)</button>
+  </div>
+</div>
+
+<div class="container calculadora-container no-print">
   <div class="grid-2cols">
-    <!-- COLUMNA IZQUIERDA: Gestión de sistemas -->
+    <!-- Columna izquierda: gestión de sistemas -->
     <div>
       <div class="card">
-        <div class="card-header">
-          <i class="fas fa-cubes"></i>
-          <div class="card-title">Mis sistemas de premarcos</div>
-        </div>
+        <div class="card-header"><i class="fas fa-cubes"></i><div class="card-title">Mis sistemas de premarcos</div></div>
         <div class="card-body">
           <div class="mb-3">
             <label class="form-label">Seleccionar sistema</label>
@@ -510,7 +313,6 @@
             <textarea id="descripcionSistema" class="form-control" rows="2" placeholder="Características del sistema..."></textarea>
           </div>
           
-          <!-- Imágenes de referencia -->
           <div class="mb-4">
             <h5 class="h6"><i class="fas fa-image"></i> Imágenes de referencia (secciones)</h5>
             <div class="grid-2cols" style="grid-template-columns: 1fr 1fr; gap: 1rem;">
@@ -530,7 +332,6 @@
             <small class="text-muted"><i class="fas fa-info-circle"></i> Puede subir una imagen o pegar URL</small>
           </div>
           
-          <!-- Materiales -->
           <div class="mt-4">
             <div class="d-flex justify-content-between align-items-center mb-2">
               <h5 class="h6"><i class="fas fa-database"></i> Materiales del sistema</h5>
@@ -547,15 +348,11 @@
       </div>
     </div>
     
-    <!-- COLUMNA DERECHA: Cálculo y resultados -->
+    <!-- Columna derecha: cálculo -->
     <div>
       <div class="card">
-        <div class="card-header">
-          <i class="fas fa-calculator"></i>
-          <div class="card-title">Dimensiones y cálculo</div>
-        </div>
+        <div class="card-header"><i class="fas fa-calculator"></i><div class="card-title">Dimensiones y cálculo</div></div>
         <div class="card-body">
-          <!-- Selector de producto -->
           <div class="mb-3">
             <label class="form-label">Tipo de producto</label>
             <select id="tipoProducto" class="form-select" onchange="cambiarTipoProducto()">
@@ -564,39 +361,21 @@
             </select>
           </div>
 
-          <!-- Campos para Premarco -->
           <div id="camposPremarco">
             <div class="grid-2cols" style="grid-template-columns: repeat(3, 1fr);">
-              <div>
-                <label class="form-label">Alto (m)</label>
-                <input type="number" step="0.01" id="altoPremarco" class="form-control" value="2.03">
-              </div>
-              <div>
-                <label class="form-label">Ancho (m)</label>
-                <input type="number" step="0.01" id="anchoPremarco" class="form-control" value="0.725">
-              </div>
-              <div>
-                <label class="form-label">Tipo de marco</label>
-                <select id="tipoMarco" class="form-select">
-                  <option value="3lados" selected>3 lados (2 largueros + cabecero)</option>
-                  <option value="4lados">4 lados (incluye umbral)</option>
-                </select>
-              </div>
+              <div><label class="form-label">Alto (m)</label><input type="number" step="0.01" id="altoPremarco" class="form-control" value="2.03"></div>
+              <div><label class="form-label">Ancho (m)</label><input type="number" step="0.01" id="anchoPremarco" class="form-control" value="0.725"></div>
+              <div><label class="form-label">Tipo de marco</label><select id="tipoMarco" class="form-select"><option value="3lados" selected>3 lados (2 largueros + cabecero)</option><option value="4lados">4 lados (incluye umbral)</option></select></div>
             </div>
           </div>
-
-          <!-- Campos para Cajón de persiana (solo ancho) -->
+          
           <div id="camposCajon" style="display:none;">
             <div class="grid-2cols" style="grid-template-columns: 1fr;">
-              <div>
-                <label class="form-label">Ancho del cajón (m)</label>
-                <input type="number" step="0.01" id="anchoCajon" class="form-control" value="1.00">
-              </div>
+              <div><label class="form-label">Ancho del cajón (m)</label><input type="number" step="0.01" id="anchoCajon" class="form-control" value="1.00"></div>
             </div>
             <p class="small text-muted">La huella se calculará únicamente en función del ancho del cajón.</p>
           </div>
           
-          <!-- Previsualización de imágenes del sistema -->
           <div class="mt-4" id="contenedorImagenesSistema">
             <div class="grid-2cols" style="grid-template-columns: 1fr 1fr;">
               <div class="text-center"><h6 class="small">Sección vertical</h6><img id="imgVerticalMostrar" src="" alt="Vertical" style="display:none; max-height:120px;" class="imagen-preview"><p id="noImgVertical" class="text-muted small">Sin imagen</p></div>
@@ -606,7 +385,7 @@
           
           <button class="btn btn-primary w-100 mt-3" onclick="calcularImpacto()"><i class="fas fa-chart-line"></i> Calcular huella de carbono</button>
           
-          <div id="resultadosCalculo" class="mt-4 p-3 bg-light rounded" style="background: var(--color-light); border-radius: var(--border-radius);">
+          <div id="resultadosCalculo" class="mt-4 p-3" style="background: var(--color-light); border-radius: var(--border-radius);">
             <p class="text-muted text-center mb-0">Seleccione un sistema y pulse calcular.</p>
           </div>
         </div>
@@ -615,11 +394,10 @@
   </div>
 </div>
 
-<!-- INFORME IMPRIMIBLE (solo se ve al imprimir) -->
+<!-- El div print-only ya no se usa porque generamos PDF con jsPDF -->
 <div id="informeImprimible" class="print-only container" style="margin-top: 2rem;"></div>
 
-<!-- FOOTER AISLANTECH -->
-<footer>
+<footer class="no-print">
   <div class="container">
     <div class="footer-content">
       <div class="footer-about">
@@ -628,12 +406,12 @@
       </div>
     </div>
     <div class="footer-legal">
-      <a href="politica-privacidad.html">Política de Privacidad</a>
-      <a href="politica-cookies.html">Política de Cookies</a>
-      <a href="aviso-legal.html">Aviso Legal</a>
+      <a href="#">Política de Privacidad</a>
+      <a href="#">Política de Cookies</a>
+      <a href="#">Aviso Legal</a>
     </div>
     <div class="footer-bottom">
-      <p>&copy; 2025 Aislantech. Todos los derechos reservados. | <a href="https://www.aislantech.es">www.aislantech.es</a></p>
+      <p>&copy; 2025 Aislantech. Todos los derechos reservados. | <a href="https://www.aislantech.es" style="color: var(--color-primary);">www.aislantech.es</a></p>
     </div>
   </div>
 </footer>
@@ -642,7 +420,6 @@
   (function(){
     "use strict";
 
-    // ---------- BASE DE DATOS DE MATERIALES ----------
     const MATERIALES_DB = [
       { id: 'acero_perfil', nombre: 'Perfil de acero', densidad: 7850, factor: 0.646, fuente: 'DAP ArcelorMittal (perfiles tubulares)' },
       { id: 'pvc_perfil', nombre: 'Perfil de PVC', densidad: 1380, factor: 2.48, fuente: 'Estimación ECVM / Climatiq' },
@@ -656,14 +433,15 @@
       { id: 'xps_35', nombre: 'XPS de 35Kg/m³', densidad: 35, factor: 4.24, fuente: 'Base de datos Baubook (CO2-geschäumt)' }
     ];
 
-    // ---------- ESTRUCTURA DE SISTEMAS ----------
     let sistemas = {};
     let sistemaActualId = null;
+    let lastCalculation = null; // Guardar últimos resultados para el PDF
 
+    // ---------- Funciones de gestión de sistemas (sin cambios) ----------
     function inicializarSistemas() {
       const guardados = localStorage.getItem('sistemasPremarcosV5');
       if (guardados) {
-        try { sistemas = JSON.parse(guardados); } catch(e){ sistemas = {}; }
+        try { sistemas = JSON.parse(guardados); } catch(e) { sistemas = {}; }
       }
       if (Object.keys(sistemas).length === 0) {
         sistemas = {
@@ -742,7 +520,6 @@
       const imgH = document.getElementById('imgHorizontalMostrar');
       const noV = document.getElementById('noImgVertical');
       const noH = document.getElementById('noImgHorizontal');
-      
       if (sistema.imagenVertical) {
         imgV.src = sistema.imagenVertical;
         imgV.style.display = 'inline-block';
@@ -859,7 +636,12 @@
     window.agregarFilaMaterial = function() {
       if (!sistemaActualId) { alert('Seleccione o cree un sistema.'); return; }
       const sistema = sistemas[sistemaActualId];
-      sistema.materiales.push({ materialId: MATERIALES_DB[0].id, pesoML_Vertical: 0.5, pesoML_Horizontal: 0.5, pesoFijo: 0 });
+      sistema.materiales.push({ 
+        materialId: MATERIALES_DB[0].id, 
+        pesoML_Vertical: 0.5, 
+        pesoML_Horizontal: 0.5, 
+        pesoFijo: 0 
+      });
       guardarEnLocalStorage();
       renderizarTablaMateriales(sistema.materiales);
     };
@@ -876,7 +658,13 @@
 
     window.nuevoSistema = function() {
       const newId = 'sistema_' + Date.now();
-      sistemas[newId] = { nombre: 'Nuevo sistema', descripcion: '', imagenVertical: '', imagenHorizontal: '', materiales: [] };
+      sistemas[newId] = { 
+        nombre: 'Nuevo sistema', 
+        descripcion: '', 
+        imagenVertical: '', 
+        imagenHorizontal: '', 
+        materiales: [] 
+      };
       sistemaActualId = newId;
       guardarEnLocalStorage();
       llenarSelectSistemas();
@@ -900,10 +688,12 @@
         sistemaActualId = Object.keys(sistemas)[0] || null;
         guardarEnLocalStorage();
         llenarSelectSistemas();
-        if (sistemaActualId) cargarSistemaEnFormulario(sistemaActualId);
-        else {
+        if (sistemaActualId) {
+          cargarSistemaEnFormulario(sistemaActualId);
+          calcularImpacto();
+        } else {
           document.getElementById('materialesContainer').innerHTML = '';
-          document.getElementById('resultadosCalculo').innerHTML = '<p class="text-muted">Seleccione o cree un sistema.</p>';
+          document.getElementById('resultadosCalculo').innerHTML = '<p class="text-muted text-center">Seleccione o cree un sistema.</p>';
         }
       }
     };
@@ -918,17 +708,17 @@
       guardarEnLocalStorage();
       llenarSelectSistemas();
       cargarSistemaEnFormulario(newId);
+      calcularImpacto();
     };
 
-    // Cambiar visibilidad según tipo de producto
     window.cambiarTipoProducto = function() {
       const tipo = document.getElementById('tipoProducto').value;
       document.getElementById('camposPremarco').style.display = tipo === 'premarco' ? 'block' : 'none';
       document.getElementById('camposCajon').style.display = tipo === 'cajon' ? 'block' : 'none';
-      calcularImpacto(); // recalcular si cambia el tipo
+      calcularImpacto();
     };
 
-    // CÁLCULO PRINCIPAL
+    // CÁLCULO PRINCIPAL (guarda lastCalculation para el PDF)
     window.calcularImpacto = function() {
       if (!sistemaActualId) return;
       const sistema = sistemas[sistemaActualId];
@@ -949,17 +739,17 @@
           document.getElementById('resultadosCalculo').innerHTML = '<div class="alert alert-danger">Medidas no válidas.</div>';
           return;
         }
-        largoVertical = 2 * alto;  // siempre 2*alto para largueros
+        largoVertical = 2 * alto;
         largoHorizontal = (tipoMarco === '3lados') ? ancho : 2 * ancho;
         descripcionDimensiones = `Alto: ${alto.toFixed(2)} m, Ancho: ${ancho.toFixed(2)} m, Tipo: ${tipoMarco==='3lados'?'3 lados':'4 lados'}`;
-      } else { // cajón de persiana - solo ancho
+      } else {
         const anchoCajon = parseFloat(document.getElementById('anchoCajon').value);
         if (isNaN(anchoCajon) || anchoCajon <= 0) {
           document.getElementById('resultadosCalculo').innerHTML = '<div class="alert alert-danger">Ancho del cajón no válido.</div>';
           return;
         }
-        largoVertical = 0;               // sin tramos verticales
-        largoHorizontal = anchoCajon;    // solo el ancho
+        largoVertical = 0;
+        largoHorizontal = anchoCajon;
         descripcionDimensiones = `Cajón de persiana - Ancho: ${anchoCajon.toFixed(2)} m`;
       }
 
@@ -992,7 +782,8 @@
       
       const huellaNeta = huellaA1A3 + carbonoBio;
       
-      let html = `<h5>${sistema.nombre} (${tipoProducto === 'premarco' ? 'Premarco' : 'Cajón de persiana'})</h5>`;
+      // Mostrar en pantalla
+      let html = `<h5 style="color: var(--color-secondary);">${sistema.nombre} (${tipoProducto === 'premarco' ? 'Premarco' : 'Cajón de persiana'})</h5>`;
       html += `<p>${descripcionDimensiones}<br>`;
       html += `Longitud vertical: ${largoVertical.toFixed(3)} m · Longitud horizontal: ${largoHorizontal.toFixed(3)} m</p>`;
       html += `<table class="table-custom"><thead><tr><th>Material</th><th>Peso vert.(kg)</th><th>Peso horiz.(kg)</th><th>Peso fijo(kg)</th><th>Peso total(kg)</th><th>Huella(kgCO₂e)</th></tr></thead><tbody>`;
@@ -1010,67 +801,262 @@
       }
       document.getElementById('resultadosCalculo').innerHTML = html;
       
-      // Informe imprimible
-      generarInformeImprimible(sistema, tipoProducto, descripcionDimensiones, largoVertical, largoHorizontal, detalles, pesoTotal, huellaA1A3, carbonoBio, huellaNeta);
+      // Guardar datos para el PDF
+      lastCalculation = {
+        sistema: sistema,
+        tipoProducto,
+        descripcionDimensiones,
+        largoVertical,
+        largoHorizontal,
+        detalles,
+        pesoTotal,
+        huellaA1A3,
+        carbonoBio,
+        huellaNeta
+      };
     };
 
-    function generarInformeImprimible(sistema, tipoProducto, descDim, largoV, largoH, detalles, pesoTotal, huellaA1A3, carbonoBio, huellaNeta) {
+    // ---------- GENERACIÓN DE PDF ESTILO AISLANTECH ----------
+    async function generarPDF() {
+      if (!lastCalculation) {
+        alert('Primero realice un cálculo.');
+        return;
+      }
+      const d = lastCalculation;
+      const sistema = d.sistema;
+      const tipoTexto = d.tipoProducto === 'premarco' ? 'Premarco' : 'Cajón de persiana';
       const fecha = new Date().toLocaleDateString('es-ES');
-      let filas = '';
-      detalles.forEach(d => {
-        filas += `<tr><td>${d.nombre}</td><td>${d.pesoVert.toFixed(2)}</td><td>${d.pesoHoriz.toFixed(2)}</td><td>${d.pesoFijo.toFixed(2)}</td><td>${d.pesoTotalMat.toFixed(2)}</td><td>${d.factor}</td><td>${d.huella.toFixed(2)}</td></tr>`;
-      });
-      let bioTexto = (carbonoBio < 0) ? `<tr><td>Carbono biogénico almacenado</td><td colspan="6">${carbonoBio.toFixed(2)} kg CO₂e</td></tr><tr><td><strong>Huella neta</strong></td><td colspan="6"><strong>${huellaNeta.toFixed(2)} kg CO₂e</strong></td></tr>` : `<tr><td><strong>Huella total (A1-A3)</strong></td><td colspan="6"><strong>${huellaA1A3.toFixed(2)} kg CO₂e</strong></td></tr>`;
       
-      let imagenesHtml = '';
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+      
+      const C_DARK = [60,60,60];
+      const C_GOLD = [237,208,14];
+      const C_GREY = [100,100,100];
+      const C_BG = [248,249,250];
+      
+      // ---- PORTADA (página 1) ----
+      // Franja lateral oscura
+      doc.setFillColor(...C_DARK);
+      doc.rect(0, 0, 15, 297, 'F');
+      // Logotipo
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(28);
+      doc.setTextColor(...C_GOLD);
+      doc.text("AISLANTECH", 25, 32);
+      doc.setFontSize(9);
+      doc.setTextColor(...C_GREY);
+      doc.setFont("helvetica", "normal");
+      doc.text("INGENIERÍA DE SOLUCIONES SOSTENIBLES", 25, 40);
+      // Línea decorativa dorada
+      doc.setDrawColor(...C_GOLD);
+      doc.line(25, 55, 100, 55);
+      // Título
+      doc.setFontSize(22);
+      doc.setTextColor(...C_DARK);
+      doc.setFont("helvetica", "bold");
+      doc.text("INFORME DE HUELLA", 25, 72);
+      doc.text("DE CARBONO", 25, 84);
+      // Bloque de datos
+      doc.setFillColor(...C_BG);
+      doc.roundedRect(25, 100, 165, 60, 3, 3, 'F');
+      doc.setFontSize(9);
+      doc.setTextColor(...C_GREY);
+      doc.text("PROYECTO / SISTEMA:", 35, 112);
+      doc.setTextColor(0);
+      doc.setFontSize(11);
+      doc.text(doc.splitTextToSize(sistema.nombre.toUpperCase(), 140), 35, 119);
+      doc.setFontSize(9);
+      doc.setTextColor(...C_GREY);
+      doc.text("TIPO DE PRODUCTO:", 35, 132);
+      doc.setTextColor(0);
+      doc.text(tipoTexto, 35, 138);
+      doc.setTextColor(...C_GREY);
+      doc.text("FECHA DE EMISIÓN:", 140, 112);
+      doc.setTextColor(0);
+      doc.text(fecha, 140, 119);
+      // Resultado principal
+      doc.setFillColor(...C_DARK);
+      doc.roundedRect(25, 175, 165, 55, 4, 4, 'F');
+      doc.setTextColor(255,255,255);
+      doc.setFontSize(11);
+      doc.text("HUELLA DE CARBONO (A1-A3)", 107.5, 188, {align: "center"});
+      doc.setFontSize(36);
+      doc.setTextColor(...C_GOLD);
+      doc.text(`${d.huellaA1A3.toFixed(1)} kg CO₂e`, 107.5, 210, {align: "center"});
+      if (d.carbonoBio < 0) {
+        doc.setFontSize(12);
+        doc.setTextColor(255,255,255);
+        doc.text(`Carbono biogénico: ${d.carbonoBio.toFixed(1)} kg CO₂e`, 107.5, 222, {align: "center"});
+      }
+      doc.setFontSize(8);
+      doc.setTextColor(...C_GREY);
+      doc.text("Página 1 de 3", 107.5, 285, {align: "center"});
+      
+      // ---- PÁGINA 2: MEMORIA TÉCNICA ----
+      doc.addPage();
+      // Franja de encabezado oscura
+      doc.setFillColor(...C_DARK);
+      doc.rect(0, 0, 210, 15, 'F');
+      doc.setTextColor(255,255,255);
+      doc.setFontSize(10);
+      doc.text("MEMORIA TÉCNICA Y JUSTIFICACIÓN", 25, 10);
+      
+      let y = 30;
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(...C_DARK);
+      doc.setFontSize(11);
+      doc.text("1. DATOS DEL PRODUCTO Y DIMENSIONES", 20, y);
+      const tableLoc = [
+        ["Sistema", sistema.nombre],
+        ["Descripción", sistema.descripcion || '—'],
+        ["Tipo de producto", tipoTexto],
+        ["Dimensiones", d.descripcionDimensiones],
+        ["Longitud vertical", d.largoVertical.toFixed(3) + ' m'],
+        ["Longitud horizontal", d.largoHorizontal.toFixed(3) + ' m']
+      ];
+      doc.autoTable({ 
+        startY: y+5, 
+        body: tableLoc, 
+        theme: 'striped', 
+        styles: { fontSize: 8.5 }, 
+        columnStyles: {0: {cellWidth: 55, fontStyle:'bold'}}, 
+        margin: {left:20, right:20} 
+      });
+      y = doc.lastAutoTable.finalY + 12;
+      
+      doc.text("2. INVENTARIO DE MATERIALES", 20, y);
+      const headerMateriales = [["Material", "Peso vert.(kg)", "Peso horiz.(kg)", "Peso fijo(kg)", "Peso total(kg)", "Factor (kgCO₂e/kg)", "Huella (kgCO₂e)"]];
+      const rowsMateriales = d.detalles.map(det => [
+        det.nombre,
+        det.pesoVert.toFixed(2),
+        det.pesoHoriz.toFixed(2),
+        det.pesoFijo.toFixed(2),
+        det.pesoTotalMat.toFixed(2),
+        det.factor.toString(),
+        det.huella.toFixed(2)
+      ]);
+      doc.autoTable({ 
+        startY: y+5, 
+        head: headerMateriales, 
+        body: rowsMateriales, 
+        theme: 'grid', 
+        styles: { fontSize: 7.5, cellPadding: 2 },
+        columnStyles: {0: {cellWidth: 35}, 4: {cellWidth: 22}, 5: {cellWidth: 28}, 6: {cellWidth: 28} },
+        margin: {left:15, right:15}
+      });
+      y = doc.lastAutoTable.finalY + 12;
+      
+      doc.text("3. RESULTADOS", 20, y);
+      const tableRes = [
+        ["Peso total", d.pesoTotal.toFixed(2) + " kg"],
+        ["Huella de producción (A1-A3)", d.huellaA1A3.toFixed(2) + " kg CO₂e"]
+      ];
+      if (d.carbonoBio < 0) {
+        tableRes.push(["Carbono biogénico almacenado", d.carbonoBio.toFixed(2) + " kg CO₂e"]);
+        tableRes.push(["Huella neta", d.huellaNeta.toFixed(2) + " kg CO₂e"]);
+      }
+      doc.autoTable({ 
+        startY: y+5, 
+        body: tableRes, 
+        theme: 'grid', 
+        styles: { fontSize: 8.5 }, 
+        columnStyles: {0: {cellWidth: 70, fontStyle:'bold'}}, 
+        margin: {left:20, right:20} 
+      });
+      y = doc.lastAutoTable.finalY + 12;
+      
+      doc.text("4. JUSTIFICACIÓN DE FACTORES", 20, y);
+      const fuentes = d.detalles.map(det => `• ${det.nombre}: ${det.factor} kgCO₂e/kg. Fuente: ${det.fuente}`);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8);
+      doc.setTextColor(...C_GREY);
+      let yFuente = y + 6;
+      fuentes.forEach(line => {
+        const splitLine = doc.splitTextToSize(line, 170);
+        doc.text(splitLine, 25, yFuente);
+        yFuente += splitLine.length * 5;
+      });
+      
+      // Notas
+      yFuente += 5;
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(...C_DARK);
+      doc.text("5. NOTAS", 20, yFuente);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8);
+      doc.setTextColor(...C_GREY);
+      const notas = [
+        "• Metodología conforme a ISO 14067. Alcance A1-A3 (cuna a puerta) según EN 15804.",
+        "• El cálculo se basa en pesos por metro lineal (vertical/horizontal) y un peso fijo adicional por material.",
+        "• Para maderas, el carbono biogénico se calcula aparte y se deduce de la huella de producción."
+      ];
+      yFuente += 6;
+      notas.forEach(line => {
+        const splitLine = doc.splitTextToSize(line, 170);
+        doc.text(splitLine, 25, yFuente);
+        yFuente += splitLine.length * 5;
+      });
+      
+      doc.setFontSize(8);
+      doc.setTextColor(...C_GREY);
+      doc.text("Página 2 de 3", 107.5, 285, {align: "center"});
+      
+      // ---- PÁGINA 3: IMÁGENES DE REFERENCIA (si existen) ----
       if (sistema.imagenVertical || sistema.imagenHorizontal) {
-        imagenesHtml = `<h2>Imágenes de referencia</h2><div style="display:flex; gap:20px;">`;
-        if (sistema.imagenVertical) imagenesHtml += `<div><p>Sección vertical</p><img src="${sistema.imagenVertical}" style="max-width:200px; max-height:150px;"></div>`;
-        if (sistema.imagenHorizontal) imagenesHtml += `<div><p>Sección horizontal</p><img src="${sistema.imagenHorizontal}" style="max-width:200px; max-height:150px;"></div>`;
-        imagenesHtml += `</div>`;
+        doc.addPage();
+        doc.setFillColor(...C_DARK);
+        doc.rect(0, 0, 210, 15, 'F');
+        doc.setTextColor(255,255,255);
+        doc.setFontSize(10);
+        doc.text("IMÁGENES DE REFERENCIA (SECCIONES)", 25, 10);
+        
+        let imgY = 30;
+        if (sistema.imagenVertical) {
+          doc.setFontSize(9);
+          doc.setTextColor(...C_DARK);
+          doc.text("Sección vertical", 20, imgY);
+          try {
+            doc.addImage(sistema.imagenVertical, 'JPEG', 20, imgY+5, 80, 60);
+          } catch(e) { doc.text("(imagen no disponible)", 20, imgY+5); }
+        }
+        if (sistema.imagenHorizontal) {
+          doc.text("Sección horizontal", 110, imgY);
+          try {
+            doc.addImage(sistema.imagenHorizontal, 'JPEG', 110, imgY+5, 80, 60);
+          } catch(e) { doc.text("(imagen no disponible)", 110, imgY+5); }
+        }
+        
+        doc.setFontSize(8);
+        doc.setTextColor(...C_GREY);
+        doc.text("Página 3 de 3", 107.5, 285, {align: "center"});
       }
       
-      const tipoTexto = tipoProducto === 'premarco' ? 'Premarco' : 'Cajón de persiana';
-      const informe = `
-        <div style="font-family: 'Open Sans', sans-serif;">
-          <div style="border-bottom: 2px solid #EDD00E; padding-bottom: 10px; margin-bottom: 20px;">
-            <h1 style="color:#3E3E3E;">INFORME DE HUELLA DE CARBONO · ${tipoTexto.toUpperCase()}</h1>
-            <p style="text-align:right;">Fecha: ${fecha}</p>
-          </div>
-          <h2>1. Datos del producto</h2>
-          <p><strong>Sistema:</strong> ${sistema.nombre} ${sistema.descripcion ? '— ' + sistema.descripcion : ''}</p>
-          <p><strong>Tipo:</strong> ${tipoTexto}</p>
-          <p><strong>Dimensiones:</strong> ${descDim}</p>
-          <p><strong>Longitudes:</strong> Vertical ${largoV.toFixed(3)} m, Horizontal ${largoH.toFixed(3)} m</p>
-          ${imagenesHtml}
-          <h2>2. Alcance y metodología</h2>
-          <p>Alcance: De la cuna a la puerta (A1-A3) según EN 15804. Cálculo diferenciado por orientación y peso fijo adicional.</p>
-          <h2>3. Inventario de materiales</h2>
-          <table style="width:100%; border-collapse:collapse;" border="1" cellpadding="6">
-            <thead style="background:#F5F5F5;"><tr><th>Material</th><th>Peso vert.(kg)</th><th>Peso horiz.(kg)</th><th>Peso fijo(kg)</th><th>Peso total(kg)</th><th>Factor(kgCO₂e/kg)</th><th>Huella(kgCO₂e)</th></tr></thead>
-            <tbody>${filas}</tbody>
-          </table>
-          <h2>4. Resultados</h2>
-          <table style="width:60%; border-collapse:collapse;" border="1" cellpadding="6">
-            <tr><th>Indicador</th><th>Valor</th></tr>
-            <tr><td>Peso total</td><td>${pesoTotal.toFixed(2)} kg</td></tr>
-            <tr><td>Huella de producción (A1-A3)</td><td>${huellaA1A3.toFixed(2)} kg CO₂e</td></tr>
-            ${bioTexto}
-          </table>
-          <h2>5. Justificación de factores</h2>
-          <ul>${detalles.map(d => `<li><strong>${d.nombre}:</strong> ${d.factor} kgCO₂e/kg. Fuente: ${d.fuente}</li>`).join('')}</ul>
-          <p>Metodología conforme a ISO 14067.</p>
-          <p style="margin-top:30px;">_________________________________<br>Responsable técnico · Aislantech</p>
-        </div>
-      `;
-      document.getElementById('informeImprimible').innerHTML = informe;
+      // Guardar PDF
+      doc.save(`Informe_Huella_CO2_${sistema.nombre.replace(/\s+/g, '_')}.pdf`);
     }
+
+    // Evento del botón "Generar informe (PDF)"
+    document.getElementById('btnGenerarInforme').addEventListener('click', async function() {
+      if (!sistemaActualId) {
+        alert('Seleccione un sistema antes de generar el informe.');
+        return;
+      }
+      // Recalcular para asegurar datos actualizados
+      calcularImpacto();
+      // Pequeña pausa para que lastCalculation se actualice
+      await new Promise(resolve => setTimeout(resolve, 100));
+      if (!lastCalculation) {
+        alert('No se pudo generar el informe. Verifique los datos.');
+        return;
+      }
+      generarPDF();
+    });
 
     // Inicialización
     window.onload = function() {
       inicializarSistemas();
       llenarSelectSistemas();
-      // Establecer visibilidad inicial según tipo producto por defecto (premarco)
       document.getElementById('camposPremarco').style.display = 'block';
       document.getElementById('camposCajon').style.display = 'none';
       if (sistemaActualId) {
