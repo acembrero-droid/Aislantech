@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Simulador de Enrollamiento de Persianas</title>
+    <script src="https://cdn.jsdelivr.net/npm/dxf-parser@1.1.2/dist/dxf-parser.min.js"></script>
+    <style>
+        :root { --primary: #2563eb; --bg: #f8fafc; }
+        body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg); margin: 0; display: flex; height: 100vh; overflow: hidden; }
+        
+        /* Panel Lateral */
+        #sidebar { width: 350px; background: white; border-right: 1px solid #e2e8f0; padding: 20px; display: flex; flex-direction: column; box-shadow: 2px 0 10px rgba(0,0,0,0.05); }
+        h2 { color: #1e293b; font-size: 1.2rem; margin-top: 0; }
+        .control-group { margin-bottom: 15px; }
+        label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 5px; color: #64748b; }
+        input[type="number"], input[type="file"] { width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; }
+        button { background: var(--primary); color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: 600; width: 100%; transition: opacity 0.2s; }
+        button:hover { opacity: 0.9; }
+
+        /* Área Principal */
+        #main { flex-grow: 1; display: flex; flex-direction: column; padding: 20px; overflow-y: auto; }
+        #canvas-container { background: #fff; border-radius: 8px; border: 1px solid #e2e8f0; display: flex; justify-content: center; align-items: center; min-height: 400px; margin-bottom: 20px; position: relative; }
+        canvas { max-width: 100%; max-height: 100%; }
+        
+        /* Tabla de resultados */
+        .table-wrapper { background: white; border-radius: 8px; border: 1px solid #e2e8f0; overflow: hidden; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+        th { background: #f1f5f9; padding: 12px; text-align: left; color: #475569; }
+        td { padding: 10px 12px; border-top: 1px solid #f1f5f9; }
+        tr:nth-child(even) { background: #f8fafc; }
+        
+        .status { font-size: 0.8rem; padding: 10px; border-radius: 4px; margin-bottom: 10px; }
+        .success { background: #dcfce7; color: #166534; }
+        .info { background: #e0f2fe; color: #075985; }
+    </style>
+</head>
+<body>
+
+<div id="sidebar">
+    <h2>Configuración</h2>
+    
+    <div class="control-group">
+        <label>1. Archivo DXF de Lama</label>
+        <input type="file" id="dxfInput" accept=".dxf">
+    </div>
+
+    <div id="dxfStatus" class="status info">Sube un DXF para extraer dimensiones</div>
+
+    <div class="control-group">
+        <label>Diámetro del Eje (mm)</label>
+        <input type="number" id="ejeDiam" value="60" step="1">
+    </div>
+
+    <div class="control-group">
+        <label>Altura Total de Persiana (mm)</label>
+        <input type="number" id="alturaDeseada" value="2000" step="100">
+    </div>
+
+    <div class="control-group">
+        <label>Espesor Nominal (mm) *</label>
+        <input type="number" id="espesorManual" value="9" step="0.1">
+        <small style="color: #94a3b8; font-size: 0.7rem;">* Ajusta según el grosor de la lama cerrada.</small>
+    </div>
+
+    <button onclick="procesarYSimular()">Generar Simulación</button>
+
+    <div id="dimensionesExtraidas" style="margin-top:20px; font-size: 0.85rem; color: #475569;"></div>
+</div>
+
+<div id="main">
+    <div id="canvas-container">
+        <canvas id="persianaCanvas" width="800" height="800"></canvas>
+    </div>
+
+    <div class="table-wrapper">
+        <table id="tablaResultados">
+            <thead>
+                <tr>
+                    <th>Vuelta / Tramo</th>
+                    <th>Lamas Enrolladas</th>
+                    <th>Altura Paño (mm)</th>
+                    <th>Ø Exterior Rollo (mm)</th>
+                </tr>
+            </thead>
+            <tbody>
+                </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    let dimensionesLama = { alto: 0, espesor: 0 };
+
+    // 1. Escuchar la carga del archivo DXF
+    document.getElementById('dxfInput').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const contents = e.target.result;
+            const parser = new DxfParser();
+            try {
+                const dxf = parser.parseSync(contents);
+                // Extraer el Bounding Box del DXF
+                // Nota: Usamos las dimensiones máximas encontradas en las entidades
+                const box = calcularBoundingBox(dxf);
+                
+                dimensionesLama.alto = box.height;
+                dimensionesLama.espesor = box.width;
+
+                document.getElementById('dxfStatus').className = "status success";
+                document.getElementById('dxfStatus').innerText = "DXF cargado correctamente";
+                document.getElementById('dimensionesExtraidas').innerHTML = `
+                    <strong>Detectado en DXF:</strong><br>
+                    Alto lama: ${box.height.toFixed(2)} mm<br>
+                    Ancho perfil: ${box.width.toFixed(2)} mm
+                `;
+                // Sugerir el espesor manual si detectamos uno muy fino
+                document.getElementById('espesorManual').value = Math.min(box.width, box.height).toFixed(1);
+                
+            } catch (err) {
+                alert("Error al procesar el DXF");
+                console.error(err);
+            }
+        };
+        reader.readAsText(file);
+    });
+
+    function calcularBoundingBox(dxf) {
+        // Valores extraídos del Header o iterando entidades
+        let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+        
+        // Si el DXF tiene $EXTMAX y $EXTMIN en el header (como el tuyo)
+        if(dxf.header && dxf.header.$EXTMAX) {
+            return {
+                width: dxf.header.$EXTMAX.x - dxf.header.$EXTMIN.x,
+                height: dxf.header.$EXTMAX.y - dxf.header.$EXTMIN.y
+            };
+        }
+        
+        // Fallback: Iterar entidades
+        dxf.entities.forEach(ent => {
+            if (ent.vertices) {
+                ent.vertices.forEach(v => {
+                    if(v.x < minX) minX = v.x; if(v.x > maxX) maxX = v.x;
+                    if(v.y < minY) minY = v.y; if(v.y > maxY) maxY = v.y;
+                });
+            }
+        });
+        return { width: maxX - minX, height: maxY - minY };
+    }
+
+    function procesarYSimular() {
+        const ejeDiam = parseFloat(document.getElementById('ejeDiam').value);
+        const alturaTotalRequerida = parseFloat(document.getElementById('alturaDeseada').value);
+        const espesorLama = parseFloat(document.getElementById('espesorManual').value);
+        const altoLama = dimensionesLama.alto || 45; // Fallback a 45mm si no hay DXF
+
+        const canvas = document.getElementById('persianaCanvas');
+        const ctx = canvas.getContext('2d');
+        const tbody = document.getElementById('tablaResultados').querySelector('tbody');
+        
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        tbody.innerHTML = "";
+
+        let lamasTotales = Math.ceil(alturaTotalRequerida / altoLama);
+        let radioActual = ejeDiam / 2;
+        let alturaAcumulada = 0;
+        let anguloTotal = 0;
+        
+        // Configuración visual
+        const centro = { x: canvas.width / 2, y: canvas.height / 2 };
+        const escala = (canvas.width / 2) / (radioActual + (lamasTotales * espesorLama / 2) * 1.5);
+
+        // Dibujar Eje
+        ctx.beginPath();
+        ctx.arc(centro.x, centro.y, radioActual * escala, 0, Math.PI * 2);
+        ctx.strokeStyle = "#94a3b8";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // Simulación paso a paso
+        let dataParaTabla = [];
+
+        for (let i = 1; i <= lamasTotales; i++) {
+            // Longitud de la lama en el arco
+            // Cada lama ocupa un ángulo dependiente del radio actual
+            let pasoAngulo = altoLama / radioActual;
+            
+            // Dibujar lama (arco simplificado)
+            ctx.beginPath();
+            ctx.arc(centro.x, centro.y, radioActual * escala, anguloTotal, anguloTotal + pasoAngulo);
+            ctx.strokeStyle = `hsl(${(i * 5) % 360}, 60%, 45%)`;
+            ctx.lineWidth = espesorLama * escala;
+            ctx.stroke();
+
+            anguloTotal += pasoAngulo;
+            alturaAcumulada += altoLama;
+            
+            // Por cada vuelta completa (2PI), aumentamos el radio según el espesor
+            if (anguloTotal >= Math.PI * 2) {
+                radioActual += espesorLama;
+                anguloTotal -= Math.PI * 2;
+                
+                dataParaTabla.push({
+                    vuelta: dataParaTabla.length + 1,
+                    lamas: i,
+                    altura: alturaAcumulada,
+                    diametro: radioActual * 2
+                });
+            }
+        }
+
+        // Agregar última fila si no se completó la vuelta
+        dataParaTabla.push({
+            vuelta: "Final",
+            lamas: lamasTotales,
+            altura: alturaAcumulada,
+            diametro: radioActual * 2
+        });
+
+        // Rellenar tabla
+        dataParaTabla.forEach(row => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${row.vuelta}</td>
+                <td>${row.lamas}</td>
+                <td>${row.altura.toFixed(0)} mm</td>
+                <td><strong>${row.diametro.toFixed(1)} mm</strong></td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+</script>
+
+</body>
+</html>
