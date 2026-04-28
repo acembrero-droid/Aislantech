@@ -13,7 +13,7 @@
             --color-secondary: #3E3E3E; --color-secondary-dark: #696969; --color-secondary-light: #D3D3D3;
             --color-light: #F5F5F5; --color-dark: #333333; --color-gray: #666666; 
             --transition: all 0.2s ease; --border-radius: 8px;
-            --box-shadow: 0 5px 15px rgba(0,0,0,0.05); --box-shadow-hover: 0 15px 30px rgba(0,0,0,0.1);
+            --box-shadow: 0 5px 15px rgba(0,0,0,0.05);
         }
         * { margin:0; padding:0; box-sizing:border-box; }
         body { font-family:'Open Sans',sans-serif; background:var(--color-light); color:var(--color-gray); }
@@ -25,17 +25,17 @@
         .logo-text { display:flex; flex-direction:column; line-height:1.1; }
         .logo-aislan { color:var(--color-secondary); font-size:1.5rem; font-weight:700; }
         .logo-tech { color:var(--color-primary); font-size:1.5rem; font-weight:800; }
-        .btn-yellow { background:var(--color-primary); color:var(--color-dark); font-weight:700; padding:10px 20px; border-radius:var(--border-radius); text-decoration:none; display:inline-flex; align-items:center; gap:8px; font-size:0.85rem; border:none; cursor:pointer; }
-        .btn-yellow:hover { background:var(--color-primary-dark); color:white; transform:translateY(-3px); }
+        
         .card { background:white; border-radius:var(--border-radius); box-shadow:var(--box-shadow); margin-bottom:20px; border-top:4px solid var(--color-primary); }
         .card-header { background:var(--color-primary-light); padding:1rem 1.5rem; display:flex; align-items:center; gap:0.8rem; }
         .card-title { font-size:1.1rem; }
         .card-body { padding:1.2rem; }
-        .controls-grid { display:flex; flex-wrap:wrap; gap:1.2rem; align-items:flex-end;}
-        .control-group { display:flex; flex-direction:column; gap:6px; flex: 1; min-width: 150px;}
+        .controls-grid { display:flex; flex-wrap:wrap; gap:1.2rem; align-items:flex-start;}
+        .control-group { display:flex; flex-direction:column; gap:6px; flex: 1; min-width: 160px;}
         label { font-size:0.7rem; font-weight:700; text-transform:uppercase; color:var(--color-secondary-dark); }
         input, select { padding:8px 12px; border:1px solid var(--color-secondary-light); border-radius:var(--border-radius); font-size:0.85rem; }
         input:focus, select:focus { border-color:var(--color-primary); outline:none; }
+        
         .btn { display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:8px 16px; border-radius:var(--border-radius); font-weight:700; border:none; cursor:pointer; transition:var(--transition); font-family:'Montserrat',sans-serif; font-size:0.85rem; }
         .btn-primary { background:var(--color-primary); color:var(--color-dark); }
         .btn-primary:hover:not(:disabled) { background:var(--color-primary-dark); color:white; }
@@ -45,25 +45,29 @@
         .btn-outline:hover:not(:disabled) { border-color:var(--color-primary); background:var(--color-primary-light); }
         button:disabled { opacity:0.5; cursor:not-allowed; }
         
+        /* Mode Toggle Switch */
+        .mode-switch { display:flex; background:var(--color-light); border-radius:var(--border-radius); border:1px solid var(--color-secondary-light); overflow:hidden; }
+        .mode-btn { flex:1; padding:10px; font-weight:700; font-size:0.85rem; border:none; background:transparent; color:var(--color-secondary-dark); cursor:pointer; transition:var(--transition); }
+        .mode-btn.active { background:var(--color-secondary); color:white; }
+        
         .status-bar { background:var(--color-primary-light); border-left:4px solid var(--color-primary); padding:12px 16px; border-radius:var(--border-radius); margin:15px 0; display:flex; align-items:center; gap:8px; font-weight:600;}
         .status-bar.error { background:#ffebee; border-left-color:#e53935; color:#b71c1c; }
         .status-bar.success { background:#e8f5e9; border-left-color:#2e7d32; color:#1b5e20; }
-        .status-bar.warning { background:#fff3e0; border-left-color:#f57c00; color:#e65100; }
         
         .legend-panel { display:flex; flex-wrap:wrap; gap:0.5rem; background:white; padding:12px; border-radius:var(--border-radius); box-shadow:var(--box-shadow); margin:15px 0; align-items:center; border:1px solid var(--color-secondary-light); }
         .legend-item { display:flex; align-items:center; gap:8px; font-size:0.75rem; cursor:pointer; padding: 6px 10px; border-radius: 4px; border: 1px solid transparent; transition: all 0.2s; }
         .legend-item:hover { background: var(--color-light); border-color: var(--color-secondary-light); transform: translateY(-2px); }
         .legend-color { width:18px; height:18px; border-radius:3px; border:1px solid rgba(0,0,0,0.2); }
+        
         .boundary-legend { display:flex; gap:1rem; align-items:center; margin-left:auto; font-size:0.75rem; font-weight:700; padding-left:15px; border-left:2px solid var(--color-light); }
-        .boundary-swatch { width:14px; height:14px; border-radius:50%; display:inline-block; border:2px solid rgba(0,0,0,0.5); }
+        .boundary-swatch { width:14px; height:14px; border-radius:50%; display:inline-block; border:2px solid rgba(0,0,0,0.5); cursor:pointer;}
         
         .canvas-wrapper { position:relative; background:#fff; border-radius:var(--border-radius); box-shadow:var(--box-shadow); border:1px solid var(--color-secondary-light); overflow:hidden; }
-        canvas { display:block; width:100%; height:auto; cursor:grab; }
-        canvas:active { cursor: grabbing; }
+        canvas { display:block; width:100%; height:auto; cursor:crosshair; }
+        canvas.grabbing { cursor: grabbing !important; }
         
         .result-card { display:none; background:#2e7d32; color:white; padding:20px; border-radius:var(--border-radius); margin-top:20px; text-align:center; box-shadow:var(--box-shadow); }
         .result-card h2 { font-size: 2rem; margin-bottom: 5px; color:white;}
-        .result-card p { opacity: 0.9; font-size: 0.85rem; margin-top: 10px; }
     </style>
 </head>
 <body>
@@ -81,44 +85,65 @@
 <div class="container" style="margin-top:20px;">
     
     <div class="card">
-        <div class="card-header"><i class="fas fa-sliders-h"></i> <div class="card-title">Configuración del Perfil y Análisis</div></div>
+        <div class="card-header"><i class="fas fa-sliders-h"></i> <div class="card-title">Configuración del Proyecto</div></div>
         <div class="card-body">
             <div class="controls-grid">
+                
+                <div class="control-group" style="flex: 2;">
+                    <label>1. Herramienta Activa</label>
+                    <div class="mode-switch">
+                        <button id="btnModeMat" class="mode-btn active"><i class="fas fa-cube"></i> Asignar Materiales</button>
+                        <button id="btnModeBound" class="mode-btn"><i class="fas fa-border-all"></i> Asignar Contornos</button>
+                    </div>
+                </div>
+
                 <div class="control-group" style="flex:1.5;">
-                    <label><i class="fas fa-file-dxf"></i> Cargar DXF</label>
+                    <label><i class="fas fa-file-dxf"></i> 2. Cargar DXF</label>
                     <input type="file" id="dxfFile" accept=".dxf">
                 </div>
 
                 <div class="control-group">
-                    <label><i class="fas fa-search"></i> Vista / Zoom</label>
+                    <label><i class="fas fa-search"></i> Vista</label>
                     <div style="display:flex; gap:5px;">
                         <button id="btnZoomOut" class="btn btn-outline btn-sm" title="Alejar"><i class="fas fa-search-minus"></i></button>
-                        <button id="btnZoomReset" class="btn btn-outline btn-sm" title="Restablecer (Centrar)"><i class="fas fa-expand"></i></button>
+                        <button id="btnZoomReset" class="btn btn-outline btn-sm" title="Centrar Dibujo"><i class="fas fa-expand"></i></button>
                         <button id="btnZoomIn" class="btn btn-outline btn-sm" title="Acercar"><i class="fas fa-search-plus"></i></button>
                     </div>
                 </div>
-                
-                <div class="control-group">
-                    <label><i class="fas fa-sync-alt"></i> Geometría</label>
-                    <button id="btnRotate" class="btn btn-outline btn-sm" title="Rotar 90º sobre el centro"><i class="fas fa-redo"></i> Rotar 90º</button>
-                </div>
 
                 <div class="control-group">
-                    <label><i class="fas fa-arrows-alt-h"></i> Ancho Proyectado (bf) mm</label>
-                    <input type="number" id="LpInput" value="100" step="1" title="Ancho en línea recta de la cara del perfil (perpendicular al flujo)">
+                    <label><i class="fas fa-arrows-alt-h"></i> Ancho Proyectado (bf)</label>
+                    <input type="number" id="LpInput" value="100" step="1" title="Ancho proyectado en mm">
                 </div>
                 
                 <div class="control-group">
-                    <label><i class="fas fa-temperature-low"></i> Temp. Ext / Int (°C)</label>
+                    <label><i class="fas fa-temperature-low"></i> Temp. Ext/Int (°C)</label>
                     <div style="display:flex; gap:5px;">
                         <input type="number" id="tExt" value="0" step="1" style="width:60px;">
                         <input type="number" id="tInt" value="20" step="1" style="width:60px;">
                     </div>
                 </div>
 
-                <div class="control-group" style="flex:1; align-items:flex-end;">
-                    <button id="calcBtn" class="btn btn-success" disabled style="padding:10px 30px; font-size:1rem;"><i class="fas fa-play-circle"></i> CALCULAR Uf</button>
+                <div class="control-group" style="flex:1.5;">
+                    <label>Material Seleccionado / Nuevo</label>
+                    <div style="display:flex; gap:5px; flex-wrap:wrap;">
+                        <select id="matSelect" style="flex:1; min-width:180px;"></select>
+                    </div>
                 </div>
+
+            </div>
+
+            <div id="customMatPanel" style="display:none; background:var(--color-light); padding:10px; border-radius:4px; margin-top:10px; border:1px dashed var(--color-secondary-light);">
+                <div style="display:flex; gap:10px; align-items:flex-end;">
+                    <div class="control-group"><label>Nombre Material</label><input type="text" id="customMatName" placeholder="Ej: Espuma Especial"></div>
+                    <div class="control-group"><label>Conductividad (λ) W/m·K</label><input type="number" id="customMatK" step="0.001" value="0.050"></div>
+                    <div class="control-group"><label>Color</label><input type="color" id="customMatColor" value="#ff9800" style="padding:0; height:35px; width:50px;"></div>
+                    <button id="btnAddCustomMat" class="btn btn-primary"><i class="fas fa-plus"></i> Añadir</button>
+                </div>
+            </div>
+            
+            <div style="display:flex; justify-content: flex-end; margin-top: 15px;">
+                <button id="calcBtn" class="btn btn-success" disabled style="padding:10px 30px; font-size:1rem;"><i class="fas fa-play-circle"></i> CALCULAR TRANSMITANCIA (U)</button>
             </div>
         </div>
     </div>
@@ -128,7 +153,7 @@
     <div class="legend-panel" id="legend"></div>
 
     <div class="canvas-wrapper">
-        <canvas id="canvas" width="1100" height="600"></canvas>
+        <canvas id="canvas" width="1100" height="650"></canvas>
     </div>
 
     <div id="result" class="result-card"></div>
@@ -136,37 +161,39 @@
 
 <script>
 (function() {
-    // MATERIALES NORMATIVOS ISO 10077-2 / ESTÁNDAR
-    const materials = [
-        { name: "Cámara Aire", k: 0.026, color: "#ecf0f1" },
+    // ──── BASE DE MATERIALES (ISO 10077-2) ────
+    let materials = [
+        { name: "Cámara Aire (No ventilada)", k: 0.026, color: "#ecf0f1" },
         { name: "Aluminio", k: 160.0, color: "#95a5a6" },
-        { name: "Poliamida (Rotura)", k: 0.30, color: "#d35400" },
-        { name: "EPDM / Juntas", k: 0.25, color: "#2c3e50" },
+        { name: "Acero", k: 50.0, color: "#7f8c8d" },
+        { name: "Acero Inoxidable", k: 17.0, color: "#b0bec5" },
+        { name: "Poliamida (Rotura Térmica)", k: 0.30, color: "#d35400" },
         { name: "PVC Rígido", k: 0.17, color: "#9b59b6" },
-        { name: "Madera (Blanda)", k: 0.13, color: "#d3a36a" },
-        { name: "Madera (Dura)", k: 0.18, color: "#8d6e63" },
-        { name: "Aislante (XPS/PUR)", k: 0.035, color: "#f1c40f" },
-        { name: "Vidrio", k: 1.0, color: "#81d4fa" },
-        { name: "Acero", k: 50.0, color: "#7f8c8d" }
+        { name: "EPDM (Juntas)", k: 0.25, color: "#2c3e50" },
+        { name: "Silicona", k: 0.35, color: "#00bcd4" },
+        { name: "Poliuretano (PUR)", k: 0.028, color: "#f39c12" },
+        { name: "Aislante XPS", k: 0.035, color: "#f1c40f" },
+        { name: "Aislante EPS", k: 0.038, color: "#ffeb3b" },
+        { name: "Madera Blanda", k: 0.13, color: "#d3a36a" },
+        { name: "Madera Dura", k: 0.18, color: "#8d6e63" },
+        { name: "Vidrio", k: 1.0, color: "#81d4fa" }
     ];
 
     let polygons = [];
     let boundaryEdges = []; 
+    let boundaryAdj = []; // Para el BFS del Shift+Click
     
     let minX, maxX, minY, maxY;
     let selectedPoly = -1;
     let hoveredPolyIdx = -1;
     let hoveredEdgeIdx = -1;
 
-    // Zoom & Pan Variables
+    let editMode = 'MATERIAL'; // 'MATERIAL' o 'BOUNDARY'
+
+    // Zoom & Pan
     let zoomLevel = 1;
-    let offsetX = 0;
-    let offsetY = 0;
-    let baseScale = 1;
-    let isDragging = false;
-    let dragStartX = 0;
-    let dragStartY = 0;
-    let hasDragged = false;
+    let offsetX = 0, offsetY = 0, baseScale = 1;
+    let isDragging = false, dragStartX = 0, dragStartY = 0, hasDragged = false;
 
     // Thermal Engine
     let T = null, kGrid = null, dx, dy;
@@ -177,40 +204,83 @@
     const ctx = canvas.getContext('2d');
     const statusText = document.getElementById('statusText');
 
-    function updateLegend() {
+    // ──── INTERFAZ ────
+    document.getElementById('btnModeMat').onclick = function() {
+        editMode = 'MATERIAL';
+        this.classList.add('active'); document.getElementById('btnModeBound').classList.remove('active');
+        setStatus('Modo Materiales: Haz clic en las áreas para seleccionarlas. La leyenda pintará el área activa.');
+        draw();
+    };
+    document.getElementById('btnModeBound').onclick = function() {
+        editMode = 'BOUNDARY';
+        this.classList.add('active'); document.getElementById('btnModeMat').classList.remove('active');
+        setStatus('Modo Contornos: Haz clic en las líneas para cambiar su frontera (Azul/Rojo). Usa SHIFT+Clic para seleccionar en cadena.');
+        draw();
+    };
+
+    function updateMaterialUI() {
+        const sel = document.getElementById('matSelect');
+        sel.innerHTML = materials.map((m,i) => `<option value="${i}">${m.name} (λ=${m.k})</option>`).join('');
+        sel.innerHTML += `<option value="CUSTOM" style="font-weight:bold; color:var(--color-primary-dark);">+ Crear Material Nuevo...</option>`;
+        
         document.getElementById('legend').innerHTML = materials.map((m,i)=>
-            `<div class="legend-item" data-idx="${i}" title="Aplicar material">
+            `<div class="legend-item" data-idx="${i}" title="Aplicar: ${m.name}">
                 <div class="legend-color" style="background:${m.color}"></div> 
                 <span>${m.name}</span>
             </div>`).join('') +
             `<div class="boundary-legend">
-                <span><span class="boundary-swatch" style="background:#1976d2; border-color:#0d47a1"></span> Borde Exterior</span>
-                <span><span class="boundary-swatch" style="background:#d32f2f; border-color:#b71c1c"></span> Borde Interior</span>
-                <span><span class="boundary-swatch" style="background:#757575; border-color:#424242"></span> Adiabático</span>
+                <span><span class="boundary-swatch" style="background:#1976d2"></span> Exterior</span>
+                <span><span class="boundary-swatch" style="background:#d32f2f"></span> Interior</span>
+                <span><span class="boundary-swatch" style="background:#757575"></span> Adiabático</span>
             </div>`;
     }
+
+    document.getElementById('matSelect').onchange = function() {
+        if(this.value === 'CUSTOM') {
+            document.getElementById('customMatPanel').style.display = 'block';
+        } else {
+            document.getElementById('customMatPanel').style.display = 'none';
+            if (selectedPoly !== -1 && polygons[selectedPoly]) {
+                polygons[selectedPoly].matIdx = parseInt(this.value);
+                draw();
+            }
+        }
+    };
+
+    document.getElementById('btnAddCustomMat').onclick = function() {
+        const name = document.getElementById('customMatName').value || "Material Custom";
+        const k = parseFloat(document.getElementById('customMatK').value) || 0.05;
+        const color = document.getElementById('customMatColor').value;
+        materials.push({name, k, color});
+        updateMaterialUI();
+        document.getElementById('matSelect').value = materials.length - 1;
+        document.getElementById('customMatPanel').style.display = 'none';
+        if(selectedPoly !== -1) { polygons[selectedPoly].matIdx = materials.length - 1; draw(); }
+        setStatus(`Material "${name}" añadido a la biblioteca.`, 'success');
+    };
 
     function setStatus(msg, type = 'info') {
         statusText.textContent = msg;
         const bar = document.getElementById('status');
         bar.className = `status-bar ${type}`;
-        bar.querySelector('i').className = type === 'error' ? 'fas fa-exclamation-triangle' : type === 'success' ? 'fas fa-check-circle' : type==='warning'? 'fas fa-exclamation-circle' : 'fas fa-info-circle';
+        bar.querySelector('i').className = type === 'error' ? 'fas fa-exclamation-triangle' : type === 'success' ? 'fas fa-check-circle' : 'fas fa-info-circle';
     }
 
     document.getElementById('legend').addEventListener('click', e => {
+        if(editMode !== 'MATERIAL') return;
         const item = e.target.closest('.legend-item');
         if (!item) return;
         const matIdx = parseInt(item.getAttribute('data-idx'));
         if (selectedPoly !== -1 && polygons[selectedPoly]) {
             polygons[selectedPoly].matIdx = matIdx;
+            document.getElementById('matSelect').value = matIdx;
             if (!showThermalMap) draw();
-            setStatus(`Material "${materials[matIdx].name}" asignado.`, 'success');
         } else {
-            setStatus('Haz clic primero en un área del dibujo para seleccionarla.', 'warning');
+            setStatus('⚠️ Haz clic primero en un área del dibujo para seleccionarla.', 'warning');
         }
     });
 
-    // ──── PARSER DXF Y TOPOLOGÍA (Resumido) ────
+    // ──── PARSER DXF Y TOPOLOGÍA (Resumido y robusto) ────
     function parseDXF(text) {
         const lines = text.split(/\r?\n/);
         let idx = 0, inEntities = false, segments = [];
@@ -218,24 +288,17 @@
 
         function getPair() {
             while (idx < lines.length - 1) {
-                const codeStr = lines[idx].trim();
-                const valueStr = lines[idx + 1].trim();
-                idx += 2;
+                const codeStr = lines[idx].trim(); const valueStr = lines[idx + 1].trim(); idx += 2;
                 if (codeStr !== '') return [parseInt(codeStr), valueStr];
-            }
-            return null;
+            } return null;
         }
-
         function addBulgeSegments(p1, p2, bulge) {
             if (!bulge || Math.abs(bulge) < 1e-5) { segments.push({ x1: p1.x, y1: p1.y, x2: p2.x, y2: p2.y }); return; }
-            const dx = p2.x - p1.x, dy = p2.y - p1.y, dist = Math.hypot(dx, dy);
-            if (dist < 1e-6) return;
+            const dx = p2.x - p1.x, dy = p2.y - p1.y, dist = Math.hypot(dx, dy); if (dist < 1e-6) return;
             const theta = 4 * Math.atan(bulge), radius = Math.abs(dist / (2 * Math.sin(theta / 2))), dir = bulge > 0 ? 1 : -1;
-            const cx = (p1.x + p2.x)/2 + (-dy/dist*dir) * radius*Math.cos(theta/2);
-            const cy = (p1.y + p2.y)/2 + (dx/dist*dir) * radius*Math.cos(theta/2);
+            const cx = (p1.x + p2.x)/2 + (-dy/dist*dir) * radius*Math.cos(theta/2), cy = (p1.y + p2.y)/2 + (dx/dist*dir) * radius*Math.cos(theta/2);
             let a1 = Math.atan2(p1.y - cy, p1.x - cx), a2 = Math.atan2(p2.y - cy, p2.x - cx);
-            if (bulge > 0 && a2 <= a1) a2 += 2 * Math.PI;
-            if (bulge < 0 && a2 >= a1) a2 -= 2 * Math.PI;
+            if (bulge > 0 && a2 <= a1) a2 += 2 * Math.PI; if (bulge < 0 && a2 >= a1) a2 -= 2 * Math.PI;
             const N = Math.max(6, Math.floor(Math.abs(a2 - a1) * radius / 2));
             let prevX = p1.x, prevY = p1.y;
             for (let i = 1; i <= N; i++) {
@@ -243,14 +306,12 @@
                 segments.push({ x1: prevX, y1: prevY, x2: x, y2: y }); prevX = x; prevY = y;
             }
         }
-
         function flushEntity(ent) {
             if (!ent || ent.ignore) return;
             if (ent.type === 'VERTEX' && currentPolyline) currentPolyline.vertices.push({ x: ent.x, y: ent.y, bulge: ent.bulge });
             if (ent.type === 'LINE' && ent.x1 !== undefined) segments.push({ x1: ent.x1, y1: ent.y1, x2: ent.x2, y2: ent.y2 });
             if ((ent.type === 'CIRCLE' || ent.type === 'ARC') && ent.r > 0) {
-                let start = ent.startAngle || 0, end = ent.endAngle || 360;
-                let rs = start*Math.PI/180, re = end*Math.PI/180;
+                let rs = (ent.startAngle||0)*Math.PI/180, re = (ent.endAngle||360)*Math.PI/180;
                 if (ent.type === 'ARC' && re <= rs) re += 2 * Math.PI;
                 const N = Math.max(12, Math.floor(Math.abs(re - rs) * ent.r / 2));
                 let px = ent.cx + ent.r*Math.cos(rs), py = ent.cy + ent.r*Math.sin(rs);
@@ -345,11 +406,8 @@
                 const k = `${gx+dx},${gy+dy}`;
                 if(grid.has(k)) for(const v of grid.get(k)) if (Math.hypot(v.x-x, v.y-y) <= tol) return v;
             }
-            const newV = {id: vertices.length, x, y, adj: []};
-            vertices.push(newV);
-            const key = `${gx},${gy}`;
-            if(!grid.has(key)) grid.set(key, []);
-            grid.get(key).push(newV); return newV;
+            const newV = {id: vertices.length, x, y, adj: []}; vertices.push(newV);
+            const key = `${gx},${gy}`; if(!grid.has(key)) grid.set(key, []); grid.get(key).push(newV); return newV;
         };
 
         const uniqueEdges = new Map();
@@ -384,10 +442,8 @@
             const he1 = {from: e.v1, to: e.v2, angle: Math.atan2(e.v2.y - e.v1.y, e.v2.x - e.v1.x), used: false};
             const he2 = {from: e.v2, to: e.v1, angle: Math.atan2(e.v1.y - e.v2.y, e.v1.x - e.v2.x), used: false};
             he1.rev = he2; he2.rev = he1;
-            e.v1.adj.push(he1); e.v2.adj.push(he2);
-            halfEdges.push(he1, he2);
+            e.v1.adj.push(he1); e.v2.adj.push(he2); halfEdges.push(he1, he2);
         });
-
         vertices.forEach(v => v.adj.sort((a, b) => a.angle - b.angle));
 
         const rawFaces = [];
@@ -403,7 +459,7 @@
             if(pts.length > 2) {
                 let area = 0;
                 for(let i=0; i<pts.length; i++) area += (pts[i].x * pts[(i+1)%pts.length].y - pts[(i+1)%pts.length].x * pts[i].y);
-                rawFaces.push({pts, signedArea: area/2, area: Math.abs(area/2), matIdx: 1}); // Defecto: Aluminio
+                rawFaces.push({pts, signedArea: area/2, area: Math.abs(area/2), matIdx: 1}); // Aluminio por defecto
             }
         });
 
@@ -423,85 +479,97 @@
                 else map.set(key, {p1, p2, count:1, type:0});
             }
         });
-        return Array.from(map.values()).filter(e => e.count === 1).map(e => ({p1:e.p1, p2:e.p2, type:0}));
+        const edges = Array.from(map.values()).filter(e => e.count === 1).map(e => ({p1:e.p1, p2:e.p2, type:0}));
+        
+        // Construir Grafo de Adyacencia para el BFS (Shift+Click)
+        boundaryAdj = edges.map(() => []);
+        for(let i=0; i<edges.length; i++) {
+            for(let j=i+1; j<edges.length; j++) {
+                if (Math.hypot(edges[i].p1.x-edges[j].p1.x, edges[i].p1.y-edges[j].p1.y) < 1e-4 ||
+                    Math.hypot(edges[i].p1.x-edges[j].p2.x, edges[i].p1.y-edges[j].p2.y) < 1e-4 ||
+                    Math.hypot(edges[i].p2.x-edges[j].p1.x, edges[i].p2.y-edges[j].p1.y) < 1e-4 ||
+                    Math.hypot(edges[i].p2.x-edges[j].p2.x, edges[i].p2.y-edges[j].p2.y) < 1e-4) {
+                    boundaryAdj[i].push(j); boundaryAdj[j].push(i);
+                }
+            }
+        }
+        return edges;
     }
 
-    // ──── GESTIÓN DE VISTA (CENTRADO ABSOLUTO Y ZOOM) ────
+    // ──── GESTIÓN DE VISTA (ZOOM AL RATÓN Y PAN) ────
     function recalcBounds() {
         if(!polygons.length) return;
         const all = polygons.flatMap(p=>p.pts);
         minX = Math.min(...all.map(p=>p.x)); maxX = Math.max(...all.map(p=>p.x));
         minY = Math.min(...all.map(p=>p.y)); maxY = Math.max(...all.map(p=>p.y));
-        
-        // El ancho proyectado suele coincidir con la altura total en Y (si el calor fluye en X) o viceversa.
-        // Asignamos por defecto la altura de la bounding box.
         document.getElementById('LpInput').value = Math.round(maxY - minY);
         
         const pad = 60, cw = canvas.width, ch = canvas.height;
         baseScale = Math.min((cw-pad*2)/(maxX-minX||1), (ch-pad*2)/(maxY-minY||1));
-        
-        zoomLevel = 1;
-        offsetX = 0;
-        offsetY = 0;
+        zoomLevel = 1; offsetX = 0; offsetY = 0;
     }
 
     function getTransform() {
         const cw = canvas.width, ch = canvas.height;
-        const cxWorld = (minX + maxX) / 2;
-        const cyWorld = (minY + maxY) / 2;
-        const cxCanvas = cw / 2;
-        const cyCanvas = ch / 2;
-        
+        const cxWorld = (minX + maxX) / 2, cyWorld = (minY + maxY) / 2;
         return {
             scale: baseScale * zoomLevel,
-            tx: x => offsetX + cxCanvas + (x - cxWorld) * baseScale * zoomLevel,
-            ty: y => offsetY + cyCanvas - (y - cyWorld) * baseScale * zoomLevel
+            tx: x => offsetX + cw/2 + (x - cxWorld) * baseScale * zoomLevel,
+            ty: y => offsetY + ch/2 - (y - cyWorld) * baseScale * zoomLevel
         };
     }
 
     function getWorldCoords(sx, sy) {
         const cw = canvas.width, ch = canvas.height;
-        const cxWorld = (minX + maxX) / 2;
-        const cyWorld = (minY + maxY) / 2;
-        const cxCanvas = cw / 2;
-        const cyCanvas = ch / 2;
-
-        const wx = cxWorld + (sx - offsetX - cxCanvas) / (baseScale * zoomLevel);
-        const wy = cyWorld - (sy - offsetY - cyCanvas) / (baseScale * zoomLevel);
+        const cxWorld = (minX + maxX) / 2, cyWorld = (minY + maxY) / 2;
+        const wx = cxWorld + (sx - offsetX - cw/2) / (baseScale * zoomLevel);
+        const wy = cyWorld - (sy - offsetY - ch/2) / (baseScale * zoomLevel);
         return { x: wx, y: wy };
     }
 
-    function doZoom(factor, mx, my) {
+    function doZoom(factor, screenX, screenY) {
         const newZoom = zoomLevel * factor;
-        if(newZoom > 50 || newZoom < 0.1) return;
-        offsetX = mx - (mx - offsetX) * (newZoom / zoomLevel);
-        offsetY = my - (my - offsetY) * (newZoom / zoomLevel);
+        if(newZoom > 100 || newZoom < 0.05) return;
+
+        // Anclar el punto del mundo que está bajo el ratón
+        const {x: wx, y: wy} = getWorldCoords(screenX, screenY);
+        
         zoomLevel = newZoom;
+        
+        // Calcular dónde caería ese punto del mundo con el nuevo zoom
+        const cw = canvas.width, ch = canvas.height;
+        const cxWorld = (minX + maxX) / 2, cyWorld = (minY + maxY) / 2;
+        const projectedX = offsetX + cw/2 + (wx - cxWorld) * baseScale * zoomLevel;
+        const projectedY = offsetY + ch/2 - (wy - cyWorld) * baseScale * zoomLevel;
+        
+        // Ajustar el offset para que vuelva a caer bajo el ratón
+        offsetX += screenX - projectedX;
+        offsetY += screenY - projectedY;
+        
         draw();
     }
 
-    document.getElementById('btnZoomIn').onclick = () => doZoom(1.2, canvas.width/2, canvas.height/2);
-    document.getElementById('btnZoomOut').onclick = () => doZoom(1/1.2, canvas.width/2, canvas.height/2);
+    document.getElementById('btnZoomIn').onclick = () => doZoom(1.3, canvas.width/2, canvas.height/2);
+    document.getElementById('btnZoomOut').onclick = () => doZoom(1/1.3, canvas.width/2, canvas.height/2);
     document.getElementById('btnZoomReset').onclick = () => { zoomLevel = 1; offsetX = 0; offsetY = 0; draw(); };
 
     canvas.addEventListener('wheel', e => {
         e.preventDefault();
         if(!polygons.length) return;
         const rect = canvas.getBoundingClientRect();
-        const mouseX = (e.clientX - rect.left) * (canvas.width / rect.width);
-        const mouseY = (e.clientY - rect.top) * (canvas.height / rect.height);
-        const factor = e.deltaY < 0 ? 1.1 : 1/1.1;
-        doZoom(factor, mouseX, mouseY);
+        const mx = (e.clientX - rect.left) * (canvas.width / rect.width);
+        const my = (e.clientY - rect.top) * (canvas.height / rect.height);
+        doZoom(e.deltaY < 0 ? 1.15 : 1/1.15, mx, my);
     });
 
-    // ──── INTERACCIONES DE RATÓN (PAN Y CLICK) ────
+    // ──── INTERACCIONES (CLIC Y MOUSEMOVE) ────
     canvas.addEventListener('mousedown', e => {
         if(!polygons.length) return;
         const rect = canvas.getBoundingClientRect();
-        isDragging = true;
-        hasDragged = false;
+        isDragging = true; hasDragged = false;
         dragStartX = (e.clientX - rect.left) * (canvas.width / rect.width) - offsetX;
         dragStartY = (e.clientY - rect.top) * (canvas.height / rect.height) - offsetY;
+        canvas.classList.add('grabbing');
     });
 
     canvas.addEventListener('mousemove', e => {
@@ -510,46 +578,47 @@
         const mouseX = (e.clientX - rect.left) * (canvas.width / rect.width);
         const mouseY = (e.clientY - rect.top) * (canvas.height / rect.height);
 
-        // PAN (Desplazamiento)
         if (isDragging) {
-            offsetX = mouseX - dragStartX;
-            offsetY = mouseY - dragStartY;
-            hasDragged = true;
-            draw();
-            return;
+            offsetX = mouseX - dragStartX; offsetY = mouseY - dragStartY;
+            hasDragged = true; draw(); return;
         }
         
-        // Hover
         const {x: mxWorld, y: myWorld} = getWorldCoords(mouseX, mouseY);
         
-        let minDEdge = Infinity, idxE = -1;
-        boundaryEdges.forEach((edge, i) => {
-            const dx = edge.p2.x - edge.p1.x, dy = edge.p2.y - edge.p1.y, len2 = dx*dx+dy*dy;
-            let t = Math.max(0, Math.min(1, ((mxWorld-edge.p1.x)*dx + (myWorld-edge.p1.y)*dy)/len2));
-            if(Math.hypot(mxWorld-(edge.p1.x+t*dx), myWorld-(edge.p1.y+t*dy)) < minDEdge) { minDEdge = Math.hypot(mxWorld-(edge.p1.x+t*dx), myWorld-(edge.p1.y+t*dy)); idxE = i; }
-        });
-        const nHEdge = (minDEdge < 10/(baseScale*zoomLevel)) ? idxE : -1;
+        // Hover Bordes (Solo en modo BOUNDARY)
+        let nHEdge = -1;
+        if (editMode === 'BOUNDARY') {
+            let minDEdge = Infinity;
+            boundaryEdges.forEach((edge, i) => {
+                const dx = edge.p2.x - edge.p1.x, dy = edge.p2.y - edge.p1.y, len2 = dx*dx+dy*dy;
+                let t = Math.max(0, Math.min(1, ((mxWorld-edge.p1.x)*dx + (myWorld-edge.p1.y)*dy)/len2));
+                let dist = Math.hypot(mxWorld-(edge.p1.x+t*dx), myWorld-(edge.p1.y+t*dy));
+                if(dist < minDEdge) { minDEdge = dist; nHEdge = i; }
+            });
+            if (minDEdge > 10/(baseScale*zoomLevel)) nHEdge = -1;
+        }
 
+        // Hover Polígonos (Solo en modo MATERIAL)
         let nHPoly = -1;
-        for (let i = polygons.length - 1; i >= 0; i--) {
-            let p = polygons[i], inside = false;
-            for(let k=0,j=p.pts.length-1; k<p.pts.length; j=k++) {
-                if((p.pts[k].y > myWorld) !== (p.pts[j].y > myWorld) && mxWorld < (p.pts[j].x-p.pts[k].x)*(myWorld-p.pts[k].y)/(p.pts[j].y-p.pts[k].y)+p.pts[k].x) inside = !inside;
+        if (editMode === 'MATERIAL') {
+            for (let i = polygons.length - 1; i >= 0; i--) {
+                let p = polygons[i], inside = false;
+                for(let k=0,j=p.pts.length-1; k<p.pts.length; j=k++) {
+                    if((p.pts[k].y > myWorld) !== (p.pts[j].y > myWorld) && mxWorld < (p.pts[j].x-p.pts[k].x)*(myWorld-p.pts[k].y)/(p.pts[j].y-p.pts[k].y)+p.pts[k].x) inside = !inside;
+                }
+                if(inside) { nHPoly = i; break; }
             }
-            if(inside) { nHPoly = i; break; }
         }
 
         if(nHEdge !== hoveredEdgeIdx || nHPoly !== hoveredPolyIdx) { 
-            hoveredEdgeIdx = nHEdge; 
-            hoveredPolyIdx = nHPoly; 
-            draw(); 
+            hoveredEdgeIdx = nHEdge; hoveredPolyIdx = nHPoly; draw(); 
         }
     });
 
     canvas.addEventListener('mouseup', e => {
         if(!polygons.length) return;
         isDragging = false;
-        
+        canvas.classList.remove('grabbing');
         if (hasDragged || showThermalMap) return;
 
         const rect = canvas.getBoundingClientRect();
@@ -557,44 +626,69 @@
         const mouseY = (e.clientY - rect.top) * (canvas.height / rect.height);
         const {x: mxWorld, y: myWorld} = getWorldCoords(mouseX, mouseY);
 
-        // Selección de bordes
-        if(boundaryEdges.length) {
+        // MODO CONTORNOS
+        if (editMode === 'BOUNDARY') {
             let minDist = Infinity, idx = -1;
             boundaryEdges.forEach((edge, i) => {
                 const dx = edge.p2.x - edge.p1.x, dy = edge.p2.y - edge.p1.y, len2 = dx*dx+dy*dy;
                 let t = Math.max(0, Math.min(1, ((mxWorld-edge.p1.x)*dx + (myWorld-edge.p1.y)*dy)/len2));
-                if(Math.hypot(mxWorld-(edge.p1.x+t*dx), myWorld-(edge.p1.y+t*dy)) < minDist) { minDist = Math.hypot(mxWorld-(edge.p1.x+t*dx), myWorld-(edge.p1.y+t*dy)); idx = i; }
+                let dist = Math.hypot(mxWorld-(edge.p1.x+t*dx), myWorld-(edge.p1.y+t*dy));
+                if(dist < minDist) { minDist = dist; idx = i; }
             });
-            if(minDist < 10/(baseScale*zoomLevel) && idx !== -1) {
-                boundaryEdges[idx].type = (boundaryEdges[idx].type + 1) % 4; draw(); return;
+            
+            if(minDist < 15/(baseScale*zoomLevel) && idx !== -1) {
+                // SHIFT + CLIC: Pathfinding (BFS)
+                if (e.shiftKey) {
+                    let path = bfsFindNearestAssigned(idx);
+                    if (path && path.length > 0) {
+                        let targetType = boundaryEdges[path[path.length-1]].type;
+                        path.forEach(pIdx => boundaryEdges[pIdx].type = targetType);
+                        setStatus(`Cadena de contornos asignada.`, 'success');
+                    } else {
+                        boundaryEdges[idx].type = (boundaryEdges[idx].type + 1) % 4; // Fallback
+                    }
+                } else {
+                    boundaryEdges[idx].type = (boundaryEdges[idx].type + 1) % 4;
+                }
+                draw(); 
             }
+            return;
         }
 
-        // Selección de áreas (Z-index inverso)
-        selectedPoly = -1;
-        for (let i = polygons.length - 1; i >= 0; i--) {
-            let p = polygons[i], inside = false;
-            for(let k=0,j=p.pts.length-1; k<p.pts.length; j=k++) {
-                if((p.pts[k].y > myWorld) !== (p.pts[j].y > myWorld) && mxWorld < (p.pts[j].x-p.pts[k].x)*(myWorld-p.pts[k].y)/(p.pts[j].y-p.pts[k].y)+p.pts[k].x) inside = !inside;
+        // MODO MATERIALES
+        if (editMode === 'MATERIAL') {
+            selectedPoly = -1;
+            for (let i = polygons.length - 1; i >= 0; i--) {
+                let p = polygons[i], inside = false;
+                for(let k=0,j=p.pts.length-1; k<p.pts.length; j=k++) {
+                    if((p.pts[k].y > myWorld) !== (p.pts[j].y > myWorld) && mxWorld < (p.pts[j].x-p.pts[k].x)*(myWorld-p.pts[k].y)/(p.pts[j].y-p.pts[k].y)+p.pts[k].x) inside = !inside;
+                }
+                if(inside) { selectedPoly = i; break; }
             }
-            if(inside) { selectedPoly = i; break; }
+            if(selectedPoly !== -1) {
+                document.getElementById('matSelect').value = polygons[selectedPoly].matIdx;
+                setStatus(`Región seleccionada. Elige el material en el panel o leyenda.`);
+            }
+            draw();
         }
-        if(selectedPoly !== -1) setStatus(`Área seleccionada. Elige el material en la leyenda.`);
-        draw();
     });
 
-    document.getElementById('btnRotate').onclick = () => {
-        if(!polygons.length) return;
-        const ang = 90 * Math.PI/180;
-        // Rotar siempre sobre el centro exacto del dibujo
-        const cx = (minX+maxX)/2, cy = (minY+maxY)/2;
-        polygons.forEach(p => p.pts.forEach(pt => {
-            const dx = pt.x-cx, dy = pt.y-cy;
-            pt.x = cx + dx*Math.cos(ang) - dy*Math.sin(ang); pt.y = cy + dx*Math.sin(ang) + dy*Math.cos(ang);
-        }));
-        recalcBounds(); boundaryEdges = extractBoundaryEdges(polygons); showThermalMap = false; T = null;
-        document.getElementById('result').style.display = 'none'; draw();
-    };
+    // BFS (Breadth-First Search) para la selección de bordes en cadena
+    function bfsFindNearestAssigned(startIdx) {
+        let queue = [[startIdx, [startIdx]]];
+        let visited = new Set([startIdx]);
+
+        while(queue.length > 0) {
+            let [curr, path] = queue.shift();
+            // Si el borde tiene un color asignado (y no es el de inicio)
+            if (boundaryEdges[curr].type !== 0 && curr !== startIdx) return path;
+
+            for (let n of boundaryAdj[curr]) {
+                if (!visited.has(n)) { visited.add(n); queue.push([n, [...path, n]]); }
+            }
+        }
+        return null;
+    }
 
     function draw() {
         ctx.clearRect(0,0,canvas.width,canvas.height);
@@ -618,42 +712,43 @@
                 ctx.beginPath(); ctx.moveTo(tx(p.pts[0].x), ty(p.pts[0].y));
                 p.pts.forEach(pt => ctx.lineTo(tx(pt.x), ty(pt.y))); ctx.closePath();
                 ctx.fillStyle = materials[p.matIdx]?.color || '#ccc';
-                if (i === hoveredPolyIdx && i !== selectedPoly) { ctx.globalAlpha = 0.6; ctx.fill(); ctx.globalAlpha = 1.0; } 
+                if (editMode === 'MATERIAL' && i === hoveredPolyIdx && i !== selectedPoly) { ctx.globalAlpha = 0.6; ctx.fill(); ctx.globalAlpha = 1.0; } 
                 else ctx.fill();
                 ctx.strokeStyle = i===selectedPoly ? '#e74c3c' : 'rgba(0,0,0,0.4)';
-                ctx.lineWidth = i===selectedPoly ? 3 : 1;
+                ctx.lineWidth = i===selectedPoly ? 4 : 1;
                 ctx.stroke();
             });
         }
         
-        // Dibujar bordes
+        // Dibujar bordes (Siempre visibles, pero destacan más en BOUNDARY)
         if(!showThermalMap) {
             boundaryEdges.forEach((edge, idx) => {
                 ctx.beginPath(); ctx.moveTo(tx(edge.p1.x), ty(edge.p1.y)); ctx.lineTo(tx(edge.p2.x), ty(edge.p2.y));
                 let color = 'rgba(0,0,0,0.1)';
                 if(edge.type === 1) color = '#1976d2'; else if(edge.type === 2) color = '#d32f2f'; else if(edge.type === 3) color = '#757575'; 
-                ctx.strokeStyle = color; ctx.lineWidth = (idx === hoveredEdgeIdx) ? 6 : 3;
+                ctx.strokeStyle = color; 
+                ctx.lineWidth = (editMode === 'BOUNDARY' && idx === hoveredEdgeIdx) ? 8 : (edge.type !== 0 ? 4 : 2);
                 ctx.stroke();
             });
         }
     }
 
-    // ──── SOLVER TÉRMICO Y CÁLCULO DE U ────
+    // ──── SOLVER TÉRMICO Y U ────
     document.getElementById('dxfFile').onchange = e => {
         const file = e.target.files[0]; if(!file) return;
         const reader = new FileReader();
         reader.onload = ev => {
             try {
                 const segments = parseDXF(ev.target.result);
-                if(segments.length === 0) throw new Error("No hay líneas válidas.");
+                if(segments.length === 0) throw new Error("No se detectaron líneas válidas.");
                 polygons = buildTopology(segments, 0.5);
                 if(polygons.length) {
                     recalcBounds(); boundaryEdges = extractBoundaryEdges(polygons);
-                    setStatus(`✅ DXF cargado con éxito. Ahora centra, rota y asigna materiales y bordes.`, 'success');
+                    setStatus(`✅ DXF cargado. Asigna materiales y contornos para calcular la U.`, 'success');
                     document.getElementById('calcBtn').disabled = false;
                     selectedPoly = hoveredPolyIdx = -1; showThermalMap = false; T = null;
                     document.getElementById('result').style.display = 'none'; draw();
-                } else throw new Error("Fallo en tolerancia de unión.");
+                } else throw new Error("Fallo generando la topología cerrada.");
             } catch(err) { setStatus('Error: '+err.message, 'error'); }
         };
         reader.readAsText(file);
@@ -664,7 +759,7 @@
         if(!boundaryEdges.some(e => e.type===1) || !boundaryEdges.some(e => e.type===2)) {
             setStatus('❌ Falta marcar al menos un borde Exterior (azul) e Interior (rojo).', 'error'); return;
         }
-        setStatus('Calculando Matriz Térmica según ISO 10077-2...', 'warning');
+        setStatus('Calculando Matriz Térmica...', 'warning');
         document.getElementById('calcBtn').disabled = true;
         setTimeout(()=> runSolver(0), 50);
     };
@@ -755,18 +850,16 @@
             document.getElementById('result').innerHTML = `
                 <h2>U<sub>f</sub> = ${U.toFixed(3)} W/m²·K</h2>
                 <p>Cálculo basado en UNE-EN ISO 10077-2</p>
-                <p><small>Flujo lineal térmico (Q): ${Math.abs(flux).toFixed(3)} W/m &nbsp;|&nbsp; Ancho Proyectado (b<sub>f</sub>): ${Lp.toFixed(1)} mm &nbsp;|&nbsp; ΔT: ${deltaT} K</small></p>
+                <p style="opacity:0.9; margin-top:5px; font-size:0.85rem;"><small>Flujo (Q): ${Math.abs(flux).toFixed(3)} W/m &nbsp;|&nbsp; Ancho (b<sub>f</sub>): ${Lp.toFixed(1)} mm &nbsp;|&nbsp; ΔT: ${deltaT} K</small></p>
             `;
             setStatus(`✅ Cálculo completado.`, 'success');
             
-            // Centramos la vista para ver el mapa entero
-            zoomLevel = 1; offsetX = 0; offsetY = 0;
-            showThermalMap = true; draw();
+            zoomLevel = 1; offsetX = 0; offsetY = 0; showThermalMap = true; draw();
             document.getElementById('calcBtn').disabled = false;
         }
     }
 
-    updateLegend(); draw();
+    updateMaterialUI(); draw();
 })();
 </script>
 </body>
