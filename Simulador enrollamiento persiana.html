@@ -2,178 +2,234 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Simulador Físico de Persiana</title>
+    <title>Simulador de Persiana Físico - Avanzado</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/dxf-parser@1.1.2/dist/dxf-parser.min.js"></script>
     <style>
-        body { font-family: sans-serif; margin: 0; display: flex; background: #1a1a1a; color: white; height: 100vh; }
-        #menu { width: 320px; padding: 20px; background: #252525; border-right: 1px solid #444; display: flex; flex-direction: column; gap: 15px; }
-        #canvas-container { flex-grow: 1; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; }
-        canvas { background: #000; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
+        body { font-family: sans-serif; margin: 0; display: flex; background: #1a1a1a; color: white; height: 100vh; overflow: hidden; }
+        #menu { width: 340px; padding: 20px; background: #252525; border-right: 1px solid #444; display: flex; flex-direction: column; gap: 12px; z-index: 10; }
+        #canvas-container { flex-grow: 1; position: relative; display: flex; align-items: center; justify-content: center; background: #0f0f0f; }
         input, button { padding: 10px; border-radius: 4px; border: none; width: 100%; box-sizing: border-box; }
-        button { background: #3b82f6; color: white; font-weight: bold; cursor: pointer; }
-        .data-panel { font-size: 0.8rem; background: #333; padding: 10px; border-radius: 4px; }
-        table { width: 100%; font-size: 0.75rem; border-collapse: collapse; margin-top: 10px; }
-        th, td { border-bottom: 1px solid #444; padding: 5px; text-align: left; }
+        input[type="number"] { background: #333; color: white; border: 1px solid #555; }
+        .btn-start { background: #10b981; color: white; font-weight: bold; cursor: pointer; }
+        .btn-motor { background: #3b82f6; color: white; font-weight: bold; cursor: pointer; user-select: none; margin-top: 10px; }
+        .btn-motor:active { background: #2563eb; transform: scale(0.98); }
+        .panel { background: #333; padding: 15px; border-radius: 6px; font-size: 0.85rem; }
+        .data-big { font-size: 1.5rem; color: #60a5fa; font-weight: bold; text-align: center; margin: 10px 0; }
     </style>
 </head>
 <body>
 
 <div id="menu">
-    <h2>Simulador Físico</h2>
-    <label>Archivo DXF de Lama:</label>
+    <h2>Simulador Físico V2</h2>
+    
+    <label>Archivo DXF (Opcional):</label>
     <input type="file" id="dxfInput" accept=".dxf">
     
-    <label>Diámetro Eje (mm):</label>
-    <input type="number" id="ejeDiam" value="60">
+    <div style="display: flex; gap: 10px;">
+        <div>
+            <label>Eje (mm):</label>
+            <input type="number" id="ejeDiam" value="60">
+        </div>
+        <div>
+            <label>Nº Lamas:</label>
+            <input type="number" id="numLamas" value="40">
+        </div>
+    </div>
 
-    <label>Número de Lamas:</label>
-    <input type="number" id="numLamas" value="25">
+    <button class="btn-start" onclick="iniciarMundo()">Generar Paño</button>
 
-    <button onclick="iniciarSimulacion()">Iniciar Motor Físico</button>
+    <div class="panel">
+        <strong>Control del Motor:</strong>
+        <p style="font-size: 0.75rem; color: #aaa; margin: 5px 0;">Mantén presionado para enrollar.</p>
+        <button class="btn-motor" id="btnEnrollar">⬆ MANTENER PARA ENROLLAR</button>
+        <button class="btn-motor" style="background:#eab308;" id="btnDesenrollar">⬇ MANTENER PARA DESENROLLAR</button>
+    </div>
 
-    <div class="data-panel">
-        <strong>Resultados en Tiempo Real:</strong>
-        <div id="stats">Esperando inicio...</div>
-        <table id="tablaFisica">
-            <thead>
-                <tr><th>Lama</th><th>Radio (mm)</th><th>Ø Total</th></tr>
-            </thead>
-            <tbody></tbody>
-        </table>
+    <div class="panel">
+        <strong>Diámetro de Enrollamiento:</strong>
+        <div class="data-big" id="displayDiametro">0.0 mm</div>
     </div>
 </div>
 
-<div id="canvas-container">
-    <div id="sim-info" style="position:absolute; top:10px; left:10px; color:#aaa;">Motor: Matter.js</div>
-</div>
+<div id="canvas-container"></div>
 
 <script>
-    const { Engine, Render, Runner, Bodies, Composite, Constraint, Vector, Body } = Matter;
+    const { Engine, Render, Runner, Bodies, Composite, Constraint, Body, Events, Vector } = Matter;
 
     let engine, render, runner;
-    let dimensionesLama = { alto: 45.9, espesor: 9.0 }; // Valores por defecto
+    let ejeMotor;
+    let lamasFisicas = [];
+    let centroEscena = { x: 500, y: 300 };
+    let escala = 3; // 1mm = 3px
+    
+    // Dimensiones por defecto (se sobrescriben si subes DXF)
+    let dimLama = { alto: 45.9, espesor: 9.0 };
 
-    // Carga de DXF
+    // Lector de DXF
     document.getElementById('dxfInput').addEventListener('change', function(e) {
         const file = e.target.files[0];
+        if(!file) return;
         const reader = new FileReader();
         reader.onload = function(e) {
-            const dxf = new DxfParser().parseSync(e.target.result);
-            if(dxf.header.$EXTMAX) {
-                dimensionesLama.alto = dxf.header.$EXTMAX.y - dxf.header.$EXTMIN.y;
-                dimensionesLama.espesor = 9; // El espesor suele ser la cara corta, pero para colisión usamos un valor nominal
-                console.log("Dimensiones cargadas:", dimensionesLama);
-            }
+            try {
+                const dxf = new DxfParser().parseSync(e.target.result);
+                if(dxf.header.$EXTMAX) {
+                    dimLama.alto = dxf.header.$EXTMAX.y - dxf.header.$EXTMIN.y;
+                    // Forzamos un espesor estándar si el DXF es solo una línea simple
+                    dimLama.espesor = (dxf.header.$EXTMAX.x - dxf.header.$EXTMIN.x) || 9.0; 
+                    alert(`DXF Cargado: Alto ${dimLama.alto.toFixed(1)}mm`);
+                }
+            } catch(err) { console.error("Error DXF", err); }
         };
         reader.readAsText(file);
     });
 
-    function iniciarSimulacion() {
-        if (engine) { // Resetear si ya existe
+    // Crear un cuerpo compuesto (cóncavo) simulando la forma de la lama
+    function crearLamaMultigono(x, y, alto, espesor) {
+        const h = alto * escala;
+        const t = espesor * escala;
+        
+        // Dividimos la lama en 3 segmentos angulados para formar una curva "C"
+        const tercioH = h / 2.8; 
+        const offsetCurva = t * 0.6;
+        const anguloCurva = 0.25; // Radianes
+        
+        // Los 3 polígonos que conforman una sola lama
+        const top = Bodies.rectangle(x - offsetCurva, y - tercioH, t, tercioH*1.2, { angle: -anguloCurva });
+        const mid = Bodies.rectangle(x, y, t, tercioH*1.2, { angle: 0 });
+        const bot = Bodies.rectangle(x - offsetCurva, y + tercioH, t, tercioH*1.2, { angle: anguloCurva });
+
+        return Body.create({
+            parts: [top, mid, bot],
+            friction: 0.6,          // Fricción entre lamas para que se agarren al enrollar
+            restitution: 0.0,       // Sin rebote
+            density: 0.002,         // Masa realista
+            frictionAir: 0.02,      // Resistencia al aire para que no pendulen locamente
+            render: { fillStyle: '#60a5fa', strokeStyle: '#1e3a8a', lineWidth: 1 }
+        });
+    }
+
+    function iniciarMundo() {
+        if (engine) {
             Engine.clear(engine);
             Render.stop(render);
             Runner.stop(runner);
-            render.canvas.remove();
+            document.getElementById('canvas-container').innerHTML = '';
         }
 
         const dEje = parseFloat(document.getElementById('ejeDiam').value);
         const nLamas = parseInt(document.getElementById('numLamas').value);
+
+        // Aumentamos iteraciones para que la "cadena" sea más rígida y no se estire
+        engine = Engine.create({ positionIterations: 10, velocityIterations: 10 });
         
-        // 1. Crear Motor
-        engine = Engine.create({ gravity: { x: 0, y: 1 } });
         render = Render.create({
             element: document.getElementById('canvas-container'),
             engine: engine,
-            options: { width: 800, height: 800, wireframes: false, background: '#111' }
+            options: { width: 1000, height: 800, wireframes: false, background: '#0f0f0f' }
         });
 
-        // 2. Crear Eje (Cuerpo estático que rota)
-        const escala = 3; // Píxeles por mm para visualización
-        const eje = Bodies.circle(400, 400, (dEje / 2) * escala, { 
-            isStatic: true, 
-            render: { fillStyle: '#444' } 
+        const rEjePx = (dEje / 2) * escala;
+
+        // 1. Crear Eje Dinámico (Con masa pero anclado al fondo)
+        ejeMotor = Bodies.circle(centroEscena.x, centroEscena.y, rEjePx, {
+            friction: 1, density: 0.05,
+            render: { fillStyle: '#555', strokeStyle: '#888', lineWidth: 2 }
         });
 
-        // 3. Crear Lamas y Conectarlas
-        let lamas = [];
-        let prevLama = null;
+        // Anclar el eje al centro (Pivote)
+        const anclaEje = Constraint.create({
+            pointA: { x: centroEscena.x, y: centroEscena.y },
+            bodyB: ejeMotor,
+            length: 0,
+            stiffness: 1
+        });
 
+        Composite.add(engine.world, [ejeMotor, anclaEje]);
+
+        // 2. Crear las Lamas y unirlas
+        lamasFisicas = [];
+        let cuerpoAnterior = ejeMotor;
+        
         for (let i = 0; i < nLamas; i++) {
-            // Creamos la lama como un rectángulo con la forma del DXF
-            // Posición inicial: desplegada hacia abajo
-            const x = 400 + (dEje / 2) * escala;
-            const y = 400 + (i * dimensionesLama.alto * escala);
-            
-            const lama = Bodies.rectangle(x, y, dimensionesLama.espesor * escala, dimensionesLama.alto * escala, {
-                chamfer: { radius: 2 },
-                friction: 0.5,
-                restitution: 0.1,
-                render: { fillStyle: i % 2 === 0 ? '#3b82f6' : '#60a5fa' }
-            });
+            // Posición inicial: Colgando desde el borde derecho del eje
+            const x = centroEscena.x + rEjePx + (dimLama.espesor * escala / 2);
+            const y = centroEscena.y + rEjePx + (i * dimLama.alto * escala);
 
-            // Conectar al eje o a la lama anterior (Efecto bisagra)
+            const lama = crearLamaMultigono(x, y, dimLama.alto, dimLama.espesor);
+            lamasFisicas.push(lama);
+
+            // Restricción (Bisagra)
+            let configEnganche = {
+                bodyA: cuerpoAnterior,
+                bodyB: lama,
+                pointB: { x: 0, y: -(dimLama.alto * escala / 2) }, // Arriba de la nueva lama
+                stiffness: 0.9,
+                length: 0
+            };
+
+            // El primer enganche va pegado a la superficie exterior derecha del eje
             if (i === 0) {
-                const joint = Constraint.create({
-                    bodyA: eje,
-                    pointA: { x: (dEje / 2) * escala, y: 0 },
-                    bodyB: lama,
-                    pointB: { x: 0, y: -(dimensionesLama.alto / 2) * escala },
-                    stiffness: 0.8,
-                    length: 0
-                });
-                Composite.add(engine.world, joint);
+                configEnganche.pointA = { x: rEjePx, y: 0 }; 
             } else {
-                const joint = Constraint.create({
-                    bodyA: prevLama,
-                    pointA: { x: 0, y: (dimensionesLama.alto / 2) * escala },
-                    bodyB: lama,
-                    pointB: { x: 0, y: -(dimensionesLama.alto / 2) * escala },
-                    stiffness: 0.8,
-                    length: 2 // Pequeño juego en la articulación
-                });
-                Composite.add(engine.world, joint);
+                configEnganche.pointA = { x: 0, y: (dimLama.alto * escala / 2) }; // Abajo de la lama anterior
             }
 
-            lamas.push(lama);
-            prevLama = lama;
+            Composite.add(engine.world, [lama, Constraint.create(configEnganche)]);
+            cuerpoAnterior = lama;
         }
 
-        Composite.add(engine.world, [eje, ...lamas]);
-
-        // 4. Lógica de Rotación (Enrollamiento)
-        let torque = 0.05;
-        Matter.Events.on(engine, 'beforeUpdate', () => {
-            // Hacemos que el eje rote lentamente para enrollar
-            Body.setAngle(eje, eje.angle + 0.02);
-            
-            // Actualizar tabla cada cierto tiempo
-            if (engine.timing.timestamp % 100 < 20) actualizarDatos(lamas, eje, escala);
-        });
+        // Bucle de actualización para medir el diámetro constantemente
+        Events.on(engine, 'afterUpdate', medirDiametro);
 
         Render.run(render);
         runner = Runner.create();
         Runner.run(runner, engine);
     }
 
-    function actualizarDatos(lamas, eje, escala) {
-        const tbody = document.querySelector('#tablaFisica tbody');
-        tbody.innerHTML = "";
-        
-        // Calculamos el radio máximo actual midiendo la distancia de las lamas al centro del eje
-        let maxR = 0;
-        lamas.forEach((lama, index) => {
-            const dist = Math.sqrt(Math.pow(lama.position.x - 400, 2) + Math.pow(lama.position.y - 400, 2)) / escala;
-            if (dist > maxR) maxR = dist;
+    // --- LÓGICA DEL MOTOR Y CONTROLES ---
+    let velocidadMotor = 0;
 
-            if (index % 5 === 0 || index === lamas.length - 1) {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `<td>${index+1}</td><td>${dist.toFixed(1)}</td><td>${(dist*2).toFixed(1)}</td>`;
-                tbody.appendChild(tr);
-            }
-        });
-        document.getElementById('stats').innerText = `Ø Máximo actual: ${(maxR * 2).toFixed(2)} mm`;
+    document.getElementById('btnEnrollar').addEventListener('mousedown', () => velocidadMotor = -0.06); // Gira anti-horario
+    document.getElementById('btnEnrollar').addEventListener('mouseup', () => velocidadMotor = 0);
+    document.getElementById('btnEnrollar').addEventListener('mouseleave', () => velocidadMotor = 0);
+
+    document.getElementById('btnDesenrollar').addEventListener('mousedown', () => velocidadMotor = 0.06); // Gira horario
+    document.getElementById('btnDesenrollar').addEventListener('mouseup', () => velocidadMotor = 0);
+    document.getElementById('btnDesenrollar').addEventListener('mouseleave', () => velocidadMotor = 0);
+
+    // Aplicar torque al eje en cada fotograma
+    Events.on(engine, 'beforeUpdate', function() {
+        if (ejeMotor) {
+            // Utilizamos Velocidad Angular para que arrastre físicamente el peso de las lamas
+            Body.setAngularVelocity(ejeMotor, velocidadMotor);
+        }
+    });
+
+    // Función para calcular el tamaño del rollo en tiempo real
+    function medirDiametro() {
+        if (!ejeMotor || lamasFisicas.length === 0) return;
+        
+        let distanciaMaxPx = 0;
+        
+        // Medir la distancia desde el centro del eje hasta la lama más alejada
+        for (let lama of lamasFisicas) {
+            const dx = lama.position.x - centroEscena.x;
+            const dy = lama.position.y - centroEscena.y;
+            const dist = Math.sqrt(dx*dx + dy*dy);
+            if (dist > distanciaMaxPx) distanciaMaxPx = dist;
+        }
+
+        // El radio real es la distancia máxima al centro + la mitad del espesor de la lama
+        const radioRolloMm = (distanciaMaxPx / escala) + (dimLama.espesor / 2);
+        const diametroTotal = radioRolloMm * 2;
+
+        document.getElementById('displayDiametro').innerText = diametroTotal.toFixed(1) + " mm";
     }
+
+    // Iniciar automáticamente al cargar
+    window.onload = iniciarMundo;
 </script>
 </body>
 </html>
