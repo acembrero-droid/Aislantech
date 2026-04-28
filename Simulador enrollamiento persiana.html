@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simulador de Persiana - Motor DXF Avanzado</title>
+    <title>Simulador Cinemático PRO - Bisagras y Giro</title>
     <script src="https://cdn.jsdelivr.net/npm/dxf-parser@1.1.2/dist/dxf-parser.min.js"></script>
     <style>
         :root { --bg: #0f172a; --panel: #1e293b; --text: #f8fafc; --accent: #3b82f6; --border: #334155; }
@@ -14,8 +14,7 @@
         label { font-size: 0.85rem; color: #cbd5e1; font-weight: 600; display: block; margin-bottom: 4px; }
         input[type="file"], input[type="number"], input[type="range"] { width: 100%; padding: 8px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg); color: white; box-sizing: border-box; }
         
-        /* Controles de Calibración DXF */
-        .calibracion-box { background: #0f172a; border: 1px solid #3b82f6; border-radius: 6px; padding: 10px; }
+        .control-box { background: #0f172a; border: 1px solid #3b82f6; border-radius: 6px; padding: 10px; }
         .checkbox-group { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
         .checkbox-group input { width: 16px; height: 16px; cursor: pointer; }
         .checkbox-group label { margin: 0; cursor: pointer; color: #e2e8f0; font-size: 0.8rem; font-weight: normal; }
@@ -31,7 +30,7 @@
 <body>
 
 <div id="sidebar">
-    <h2>Simulador de Enrollamiento</h2>
+    <h2>Motor Cinemático Avanzado</h2>
     
     <div>
         <h3>1. Diseño DXF</h3>
@@ -39,30 +38,33 @@
         <div id="dxfStatus" class="status">Esperando archivo...</div>
     </div>
 
-    <div class="calibracion-box">
-        <label style="color:#60a5fa;">Calibración de Importación DXF</label>
-        <div class="checkbox-group">
+    <div class="control-box">
+        <label style="color:#60a5fa;">Ajustes de Lama y Bisagra</label>
+        
+        <div style="margin-top: 10px;">
+            <label>Ajuste de Giro Lama: <strong id="outGiro" style="color:#38bdf8;">0º</strong></label>
+            <input type="range" id="valAjusteGiro" min="-45" max="45" step="1" value="0" oninput="document.getElementById('outGiro').innerText = this.value + 'º'; simular();">
+            <small style="color:#64748b; font-size:0.75rem;">Modifica el ángulo de reposo en la bisagra.</small>
+        </div>
+
+        <div class="checkbox-group" style="margin-top: 15px;">
             <input type="checkbox" id="chkRotar" onchange="simular()">
-            <label for="chkRotar">Rotar 90º (Si se dibujó en horizontal)</label>
+            <label for="chkRotar">Rotar diseño 90º</label>
         </div>
         <div class="checkbox-group">
             <input type="checkbox" id="chkFlipX" onchange="simular()">
-            <label for="chkFlipX">Invertir Cara (Girar Interior/Exterior)</label>
-        </div>
-        <div class="checkbox-group">
-            <input type="checkbox" id="chkFlipY" onchange="simular()">
-            <label for="chkFlipY">Invertir Enganche (Arriba/Abajo)</label>
+            <label for="chkFlipX">Invertir Cara (Interior/Exterior)</label>
         </div>
     </div>
 
     <div>
-        <h3>2. Dimensiones del Cajón</h3>
+        <h3>2. Parámetros del Eje</h3>
         <label>Diámetro del Eje (mm)</label>
         <input type="number" id="valEje" value="60" oninput="simular()">
     </div>
 
     <div>
-        <label>Aumento de radio por vuelta (Espesor e) [mm]</label>
+        <label>Espesor de Crecimiento por Vuelta (mm)</label>
         <input type="number" id="valEspesor" value="9" step="0.1" oninput="simular()">
     </div>
 
@@ -73,7 +75,7 @@
 
     <div class="data-panel">
         <div style="margin-bottom: 8px; display:flex; justify-content:space-between;">
-            <span>Alto útil DXF detectado:</span> <strong id="infoAlto">-- mm</strong>
+            <span>Alto distancia bisagra:</span> <strong id="infoAlto">-- mm</strong>
         </div>
         <div style="margin-bottom: 8px; display:flex; justify-content:space-between;">
             <span>Altura total paño:</span> <strong id="infoPaño">-- mm</strong>
@@ -94,17 +96,17 @@
     
     let dxfPaths = [];
     let bbox = { minX: 0, maxX: 0, minY: 0, maxY: 0 };
-    let lamaHeightDetectada = 45;
     let escalaGlobal = 4;
 
-    window.addEventListener('resize', redimensionar);
-    function redimensionar() {
+    window.addEventListener('resize', () => {
         canvas.width = canvas.parentElement.clientWidth;
         canvas.height = canvas.parentElement.clientHeight;
         simular();
-    }
+    });
+    canvas.width = document.getElementById('canvas-container').clientWidth;
+    canvas.height = document.getElementById('canvas-container').clientHeight;
 
-    // 1. LECTURA Y EXTRACCIÓN PROFUNDA DEL DXF
+    // 1. EXTRACTOR DE DXF (Soporta Bloques y Curvas)
     document.getElementById('fileDxf').addEventListener('change', function(e) {
         const file = e.target.files[0];
         if (!file) return;
@@ -112,204 +114,195 @@
         
         reader.onload = function(evt) {
             try {
-                const parser = new DxfParser();
-                const dxfData = parser.parseSync(evt.target.result);
-                procesarDXF(dxfData);
+                const dxfData = new DxfParser().parseSync(evt.target.result);
+                dxfPaths = extraerCaminos(dxfData.entities, dxfData.blocks);
                 
-                const status = document.getElementById('dxfStatus');
-                status.className = "status ok";
-                status.innerText = `Éxito: ${dxfPaths.length} líneas detectadas`;
+                let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+                dxfPaths.forEach(pts => pts.forEach(p => {
+                    if(p.x < minX) minX = p.x; if(p.x > maxX) maxX = p.x;
+                    if(p.y < minY) minY = p.y; if(p.y > maxY) maxY = p.y;
+                }));
+
+                if (dxfPaths.length > 0) bbox = { minX, maxX, minY, maxY };
+                
+                document.getElementById('dxfStatus').className = "status ok";
+                document.getElementById('dxfStatus').innerText = "DXF Cargado Correctamente";
                 simular();
             } catch(err) {
-                document.getElementById('dxfStatus').className = "status";
-                document.getElementById('dxfStatus').style.backgroundColor = "#7f1d1d";
-                document.getElementById('dxfStatus').innerText = "Error leyendo DXF. Asegúrate de que sea formato ASCII.";
                 console.error(err);
+                alert("Error al leer el DXF.");
             }
         };
         reader.readAsText(file);
     });
 
-    // Función recursiva para extraer líneas incluso si están dentro de BLOQUES de Revit
     function extraerCaminos(entities, blocks, offsetX = 0, offsetY = 0) {
         let paths = [];
         if(!entities) return paths;
-
         entities.forEach(ent => {
             let pts = [];
             if (ent.type === 'LINE') {
                 pts.push({x: ent.vertices[0].x + offsetX, y: ent.vertices[0].y + offsetY});
                 pts.push({x: ent.vertices[1].x + offsetX, y: ent.vertices[1].y + offsetY});
-            } 
-            else if (ent.type === 'LWPOLYLINE' || ent.type === 'POLYLINE') {
+            } else if (ent.type === 'LWPOLYLINE' || ent.type === 'POLYLINE') {
                 ent.vertices.forEach(v => pts.push({x: v.x + offsetX, y: v.y + offsetY}));
                 if (ent.shape || ent.closed) pts.push(pts[0]);
-            }
-            else if (ent.type === 'ARC' || ent.type === 'CIRCLE') {
+            } else if (ent.type === 'ARC' || ent.type === 'CIRCLE') {
                 let cx = ent.center.x + offsetX, cy = ent.center.y + offsetY, r = ent.radius;
                 let sa = ent.startAngle || 0, ea = ent.endAngle || (Math.PI*2);
                 if (ea < sa) ea += Math.PI * 2;
-                for(let i=0; i<=15; i++) {
-                    let a = sa + (ea - sa) * (i/15);
-                    pts.push({x: cx + r * Math.cos(a), y: cy + r * Math.sin(a)});
-                }
-            }
-            else if (ent.type === 'INSERT' && blocks && blocks[ent.name]) {
-                // Extraer de los bloques insertados
+                for(let i=0; i<=15; i++) pts.push({x: cx + r * Math.cos(sa + (ea-sa)*(i/15)), y: cy + r * Math.sin(sa + (ea-sa)*(i/15))});
+            } else if (ent.type === 'INSERT' && blocks && blocks[ent.name]) {
                 let pos = ent.position || {x:0, y:0};
                 paths = paths.concat(extraerCaminos(blocks[ent.name].entities, blocks, pos.x + offsetX, pos.y + offsetY));
             }
-
             if (pts.length > 0) paths.push(pts);
         });
         return paths;
     }
 
-    function procesarDXF(dxfData) {
-        dxfPaths = extraerCaminos(dxfData.entities, dxfData.blocks);
-        
-        let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-        dxfPaths.forEach(pts => {
-            pts.forEach(p => {
-                if(p.x < minX) minX = p.x;
-                if(p.x > maxX) maxX = p.x;
-                if(p.y < minY) minY = p.y;
-                if(p.y > maxY) maxY = p.y;
-            });
-        });
-
-        if (dxfPaths.length > 0) {
-            bbox = { minX, maxX, minY, maxY };
-            // Asumimos inicialmente que la dimensión mayor es la altura de la lama
-            lamaHeightDetectada = (maxY - minY) > (maxX - minX) ? (maxY - minY) : (maxX - minX);
-            document.getElementById('infoAlto').innerText = lamaHeightDetectada.toFixed(2) + " mm";
-        }
-    }
-
-    // 2. MOTOR CINEMÁTICO Y DE RENDERIZADO
+    // 2. MOTOR DE CADENA CINEMÁTICA CON BISAGRAS RÍGIDAS
     function simular() {
         const dEje = parseFloat(document.getElementById('valEje').value) || 60;
         const eLama = parseFloat(document.getElementById('valEspesor').value) || 9;
         const numLamas = parseInt(document.getElementById('valLamas').value) || 35;
+        const offsetGiroRad = (parseFloat(document.getElementById('valAjusteGiro').value) || 0) * (Math.PI / 180);
         
-        // Configuraciones de calibración DXF
         const rotar90 = document.getElementById('chkRotar').checked;
         const flipX = document.getElementById('chkFlipX').checked;
-        const flipY = document.getElementById('chkFlipY').checked;
 
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        // Actualizar la altura útil dependiendo de si rotamos el dibujo
+        // Altura de lama (distancia estricta entre bisagras)
         let altoDXF = rotar90 ? (bbox.maxX - bbox.minX) : (bbox.maxY - bbox.minY);
-        if (altoDXF === 0) altoDXF = 45; // Seguridad
-        const altoLama = dxfPaths.length > 0 ? altoDXF : 45;
+        const altoLama = (dxfPaths.length > 0 && altoDXF > 0) ? altoDXF : 45;
         document.getElementById('infoAlto').innerText = altoLama.toFixed(2) + " mm";
 
-        // Auto-Zoom de cámara
-        const radioEstimado = (dEje / 2) + (numLamas * eLama / 2);
+        // Auto-Zoom
+        const radioEstimado = (dEje / 2) + (numLamas * eLama / 2) + 20;
         escalaGlobal = Math.min(canvas.width / (radioEstimado*2.5), canvas.height / (radioEstimado*2.5));
         if (escalaGlobal < 1) escalaGlobal = 1;
 
         ctx.save();
-        ctx.translate(canvas.width / 2, canvas.height / 2); // Centro de pantalla
+        ctx.translate(canvas.width / 2, canvas.height / 2);
         ctx.scale(escalaGlobal, escalaGlobal);
 
-        // A. Dibujar el Eje
+        // Dibujar Eje
         ctx.beginPath();
         ctx.arc(0, 0, dEje / 2, 0, Math.PI * 2);
         ctx.fillStyle = "#1e293b"; ctx.fill();
         ctx.lineWidth = 1.5 / escalaGlobal; ctx.strokeStyle = "#64748b"; ctx.stroke();
 
-        // B. Calcular Cadena de Bisagras (Arquímedes Exacto)
-        let bisagras = [{ x: dEje/2, y: 0, r: dEje/2, theta: 0 }];
-        let radioMaximo = dEje / 2;
+        // --- CÁLCULO DE CADENA ESTRICTA (Forward Kinematics) ---
+        let bisagras = [];
+        let rInicial = dEje / 2;
+        
+        // Punto 0: Anclado a la derecha del eje
+        bisagras.push({ x: rInicial, y: 0, thetaGlobal: 0 });
+        let radioMaximo = rInicial;
 
         for (let i = 0; i < numLamas; i++) {
             let pAnt = bisagras[i];
-            let dTheta = 0.005;
-            let dist = 0, pNuevo = {x:0, y:0}, rNuevo = pAnt.r;
-
-            // Avanzar en la espiral hasta cumplir la distancia de la lama
-            while (dist < altoLama) {
-                dTheta += 0.005;
-                let thetaTest = pAnt.theta + dTheta;
-                rNuevo = (dEje / 2) + (eLama * (thetaTest / (2 * Math.PI)));
-                pNuevo.x = rNuevo * Math.cos(thetaTest);
-                pNuevo.y = rNuevo * Math.sin(thetaTest);
-                dist = Math.sqrt(Math.pow(pNuevo.x - pAnt.x, 2) + Math.pow(pNuevo.y - pAnt.y, 2));
-            }
             
-            bisagras.push({ x: pNuevo.x, y: pNuevo.y, r: rNuevo, theta: pAnt.theta + dTheta });
-            if (rNuevo > radioMaximo) radioMaximo = rNuevo;
+            // Calculamos una espiral guía local que nace exactamente desde la bisagra actual
+            let rActual = Math.sqrt(pAnt.x*pAnt.x + pAnt.y*pAnt.y);
+            let dTheta = 0.005;
+            let dist = 0;
+            let targetX = 0, targetY = 0;
+
+            // Avanzamos angularmente buscando el punto de distancia = altoLama
+            let testTheta = pAnt.thetaGlobal;
+            while (dist < altoLama) {
+                testTheta += 0.005;
+                // La espiral crece 'eLama' por vuelta respecto a la posición actual
+                let rTest = rActual + (eLama * ((testTheta - pAnt.thetaGlobal) / (2 * Math.PI)));
+                targetX = rTest * Math.cos(testTheta);
+                targetY = rTest * Math.sin(testTheta);
+                dist = Math.hypot(targetX - pAnt.x, targetY - pAnt.y);
+            }
+
+            // Calculamos el ángulo ideal de la lama para seguir la espiral
+            let anguloBase = Math.atan2(targetY - pAnt.y, targetX - pAnt.x);
+            
+            // ¡MAGIA! APLICAMOS EL GIRO DEL USUARIO A LA BISAGRA
+            let anguloReal = anguloBase + offsetGiroRad;
+
+            // Calculamos el NUEVO punto de la bisagra basándonos en la rotación real y la longitud estricta
+            let pNuevo = {
+                x: pAnt.x + altoLama * Math.cos(anguloReal),
+                y: pAnt.y + altoLama * Math.sin(anguloReal),
+                thetaGlobal: testTheta // Guardamos el ángulo base para la siguiente espiral
+            };
+
+            bisagras.push(pNuevo);
+            
+            let rComprobacion = Math.sqrt(pNuevo.x*pNuevo.x + pNuevo.y*pNuevo.y);
+            if (rComprobacion > radioMaximo) radioMaximo = rComprobacion;
         }
 
-        // C. Renderizar Lamas con Transformaciones Nativas
+        // --- RENDERIZADO VISUAL ---
         for (let i = 0; i < numLamas; i++) {
             let p1 = bisagras[i];
             let p2 = bisagras[i+1];
 
             ctx.save();
             
-            // 1. Trasladar al punto de inicio (Bisagra inferior de la lama)
+            // 1. Nos movemos a la bisagra de inicio
             ctx.translate(p1.x, p1.y);
             
-            // 2. Rotar para que el eje X apunte hacia la siguiente bisagra (p2)
+            // 2. Rotamos el canvas apuntando EXACTAMENTE a la siguiente bisagra
             let anguloDireccion = Math.atan2(p2.y - p1.y, p2.x - p1.x);
             ctx.rotate(anguloDireccion);
             
-            // 3. Orientación del Canvas vs CAD
-            // El DXF asume Y como altura, X como grosor.
-            // Rotamos -90º para que el Y del DXF coincida con el X apuntado hacia p2
+            // 3. Orientación estándar de CAD vs HTML
             ctx.rotate(-Math.PI / 2); 
-            
-            // 4. Invertir eje Y porque el canvas HTML dibuja hacia abajo y AutoCAD hacia arriba
             ctx.scale(1, -1);
 
-            // 5. Aplicar Calibraciones del Usuario
+            // 4. Modificadores de usuario
             if (rotar90) ctx.rotate(-Math.PI / 2);
             if (flipX) ctx.scale(-1, 1);
-            if (flipY) ctx.scale(1, -1);
 
             if (dxfPaths.length > 0) {
-                // 6. Centrar el DXF en su origen
+                // Dibujar DXF centrado en el ancho de la bisagra
                 let midX = (bbox.minX + bbox.maxX) / 2;
                 ctx.translate(-midX, -bbox.minY);
 
-                // 7. Dibujar los trazos puros, sin distorsión matemática
                 ctx.beginPath();
                 dxfPaths.forEach(pts => {
                     ctx.moveTo(pts[0].x, pts[0].y);
                     for(let k=1; k<pts.length; k++) ctx.lineTo(pts[k].x, pts[k].y);
                 });
                 ctx.strokeStyle = "#38bdf8";
-                ctx.lineWidth = 1.5 / escalaGlobal;
+                ctx.lineWidth = 1.2 / escalaGlobal;
                 ctx.stroke();
             } else {
-                // Lama Falsa si no hay DXF
+                // Línea de referencia si no hay DXF
                 ctx.beginPath();
-                ctx.moveTo(0,0);
-                ctx.lineTo(0, altoLama);
-                ctx.strokeStyle = "#64748b";
-                ctx.lineWidth = eLama;
-                ctx.stroke();
+                ctx.moveTo(0,0); ctx.lineTo(0, altoLama);
+                ctx.strokeStyle = "#64748b"; ctx.lineWidth = eLama; ctx.stroke();
             }
-
             ctx.restore();
 
-            // Dibujar punto de unión
+            // Dibujar círculo claro marcando el punto exacto de la bisagra
             ctx.beginPath();
-            ctx.arc(p1.x, p1.y, 1.5 / escalaGlobal, 0, Math.PI*2);
-            ctx.fillStyle = "#ef4444"; ctx.fill();
+            ctx.arc(p1.x, p1.y, 2 / escalaGlobal, 0, Math.PI*2);
+            ctx.fillStyle = "#ef4444"; 
+            ctx.fill();
         }
+
+        // Marcar la última bisagra
+        let pFinal = bisagras[numLamas];
+        ctx.beginPath(); ctx.arc(pFinal.x, pFinal.y, 2 / escalaGlobal, 0, Math.PI*2);
+        ctx.fillStyle = "#ef4444"; ctx.fill();
 
         ctx.restore();
 
-        // D. Actualizar UI
+        // Actualizar datos
         document.getElementById('infoPaño').innerText = (altoLama * numLamas).toFixed(0) + " mm";
         document.getElementById('infoDiam').innerText = ((radioMaximo * 2) + eLama).toFixed(1) + " mm";
     }
 
-    redimensionar();
+    simular();
 </script>
 
 </body>
