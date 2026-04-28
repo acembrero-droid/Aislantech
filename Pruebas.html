@@ -148,6 +148,7 @@
     let polygons = [];
     let minX, maxX, minY, maxY;
     let selectedPoly = -1;
+    let hoveredPolyIdx = -1; // Nuevo: Para iluminar el área donde está el ratón
     let T = null, kGrid = null, dx, dy;
     const NX = 120, NY = 120;
     let showThermalMap = false;
@@ -185,7 +186,6 @@
         bar.querySelector('i').className = isError ? 'fas fa-exclamation-triangle' : 'fas fa-info-circle';
     }
 
-    // ──── Parser DXF Avanzado (Soporte Line, Arc, Circle, Polylines y Splines) ────
     function parseDXF(text) {
         const lines = text.split(/\r?\n/);
         let idx = 0;
@@ -274,7 +274,6 @@
                     addBulgeSegments(ent.vertices[ent.vertices.length - 1], ent.vertices[0], ent.vertices[ent.vertices.length - 1].bulge);
                 }
             }
-            // Aproximación básica de Splines (unimos sus puntos de control)
             if (ent.type === 'SPLINE' && ent.pts.length > 1) {
                 for (let i = 0; i < ent.pts.length - 1; i++) {
                     segments.push({ x1: ent.pts[i].x, y1: ent.pts[i].y, x2: ent.pts[i + 1].x, y2: ent.pts[i + 1].y });
@@ -324,7 +323,7 @@
                     currentEntity = null;
                 }
             } else if (currentEntity) {
-                if (code === 67 && value === '1') currentEntity.ignore = true; // Ignorar Layouts
+                if (code === 67 && value === '1') currentEntity.ignore = true; 
                 
                 const v = parseFloat(value);
                 if (currentEntity.type === 'LWPOLYLINE') {
@@ -361,9 +360,7 @@
         return segments.filter(s => Math.hypot(s.x2 - s.x1, s.y2 - s.y1) > 1e-9);
     }
 
-    // ──── Topología robusta: Identificación perfecta de polígonos cerrados ────
     function buildTopology(rawSegments, tol) {
-        // 1. Encontrar todos los puntos de intersección matemáticos
         const points = [];
         rawSegments.forEach(s => { points.push({x: s.x1, y: s.y1}); points.push({x: s.x2, y: s.y2}); });
 
@@ -391,7 +388,6 @@
             }
         }
 
-        // 2. Partir líneas donde haya Nodos T (T-Junctions) o Intersecciones
         const segments = [];
         for(let i=0; i<rawSegments.length; i++) {
             const s = rawSegments[i];
@@ -422,7 +418,6 @@
             }
         }
 
-        // 3. Grid espacial para fusionar vértices adyacentes
         const vertices = [];
         const grid = new Map();
         const getV = (x, y) => {
@@ -445,7 +440,6 @@
             return newV;
         };
 
-        // 4. Eliminar líneas superpuestas y fusionarlas en aristas únicas
         const uniqueEdges = new Map();
         segments.forEach(s => {
             const v1 = getV(s.x1, s.y1);
@@ -456,7 +450,6 @@
             uniqueEdges.set(`${id1}-${id2}`, {v1, v2}); 
         });
 
-        // 5. Podar "ramas muertas" (líneas sueltas que no cierran ningún polígono)
         const adjUndirected = new Map();
         uniqueEdges.forEach((_, key) => {
             const [id1, id2] = key.split('-').map(Number);
@@ -480,7 +473,6 @@
             }
         }
 
-        // 6. Grafo dirigido (Half-Edge) ordenado por ángulo
         const halfEdges = [];
         uniqueEdges.forEach(e => {
             const a1 = Math.atan2(e.v2.y - e.v1.y, e.v2.x - e.v1.x);
@@ -494,7 +486,6 @@
 
         vertices.forEach(v => v.adj.sort((a, b) => a.angle - b.angle));
 
-        // 7. Extracción de ciclos topológicos y cálculo de Signo Vectorial
         const rawFaces = [];
         halfEdges.forEach(he => {
             if(he.used) return;
@@ -515,13 +506,11 @@
                     const p1 = pts[i], p2 = pts[(i+1)%pts.length];
                     area += (p1.x * p2.y - p2.x * p1.y);
                 }
-                area /= 2; // Área direccional de Gauss
+                area /= 2;
                 rawFaces.push({pts, signedArea: area, area: Math.abs(area), matIdx: 3}); 
             }
         });
 
-        // 8. Descartar matemáticamente las caras "Universo" (el exterior del perfil)
-        // La cara del universo siempre tiene el área absoluta más grande y un signo vectorial OPUESTO a los huecos internos.
         let maxArea = -1;
         let universeSign = 1;
         rawFaces.forEach(f => {
@@ -533,17 +522,15 @@
 
         const faces = [];
         rawFaces.forEach(f => {
-            // Guardar solo regiones con el signo de las caras internas y con área válida
             if (Math.sign(f.signedArea) !== universeSign && f.area > 1e-5) {
                 faces.push(f);
             }
         });
 
-        // Asegurar que al hacer click los polígonos chicos queden seleccionables encima de los grandes
-        return faces.sort((a,b) => a.area - b.area);
+        // IMPORTANTE: Ordenar de MAYOR a MENOR área (Fondo abajo, detalles arriba)
+        return faces.sort((a,b) => b.area - a.area);
     }
 
-    // Extrae los bordes del contorno exterior con alta precisión
     function extractBoundaryEdges(polygons) {
         const edgeMap = new Map();
         polygons.forEach(poly => {
@@ -592,35 +579,44 @@
                 }
             }
         } else {
-            // Dibujar polígonos
+            // Dibujar polígonos (los más grandes se dibujan primero por estar ordenados mayor a menor)
             polygons.forEach((p,i) => {
                 ctx.beginPath();
                 ctx.moveTo(tx(p.pts[0].x), ty(p.pts[0].y));
                 p.pts.forEach(pt => ctx.lineTo(tx(pt.x), ty(pt.y)));
                 ctx.closePath();
+                
                 ctx.fillStyle = materials[p.matIdx]?.color || '#ccc';
-                ctx.fill();
+                
+                // Efecto hover (iluminación visual sobre el área donde está el ratón)
+                if (i === hoveredPolyIdx && i !== selectedPoly) {
+                    ctx.globalAlpha = 0.6;
+                    ctx.fill();
+                    ctx.globalAlpha = 1.0;
+                } else {
+                    ctx.fill();
+                }
+                
                 ctx.strokeStyle = i===selectedPoly ? '#e74c3c' : '#2c3e50';
                 ctx.lineWidth = i===selectedPoly ? 3 : 1;
                 ctx.stroke();
             });
         }
-        // Dibujar bordes del contorno exterior
+        
         boundaryEdges.forEach((edge, idx) => {
             ctx.beginPath();
             ctx.moveTo(tx(edge.p1.x), ty(edge.p1.y));
             ctx.lineTo(tx(edge.p2.x), ty(edge.p2.y));
             let color = '#000';
-            if(edge.type === 1) color = '#1976d2'; // exterior
-            else if(edge.type === 2) color = '#d32f2f'; // interior
-            else if(edge.type === 3) color = '#757575'; // neutro
+            if(edge.type === 1) color = '#1976d2'; 
+            else if(edge.type === 2) color = '#d32f2f'; 
+            else if(edge.type === 3) color = '#757575'; 
             ctx.strokeStyle = color;
             ctx.lineWidth = (idx === hoveredEdgeIdx) ? 4 : 2.5;
             ctx.stroke();
         });
     }
 
-    // Autoasignación de bordes
     function autoAssignBoundaries() {
         if(!boundaryEdges.length) return;
         const midXarr = boundaryEdges.map(e => (e.p1.x+e.p2.x)/2);
@@ -628,9 +624,9 @@
         const range = maxMid - minMid || 1;
         boundaryEdges.forEach(e => {
             const mid = (e.p1.x+e.p2.x)/2;
-            if(mid < minMid + 0.1*range) e.type = 1; // exterior
-            else if(mid > maxMid - 0.1*range) e.type = 2; // interior
-            else e.type = 3; // neutro
+            if(mid < minMid + 0.1*range) e.type = 1; 
+            else if(mid > maxMid - 0.1*range) e.type = 2; 
+            else e.type = 3; 
         });
         draw();
         setStatus('Bordes asignados automáticamente. Puedes ajustarlos haciendo clic sobre ellos.');
@@ -669,7 +665,7 @@
                     document.getElementById('calcBtn').disabled = false;
                     document.getElementById('rotateBtn').disabled = false;
                     document.getElementById('autoBoundaryBtn').disabled = false;
-                    selectedPoly = -1; showThermalMap = false; T = null;
+                    selectedPoly = -1; hoveredPolyIdx = -1; showThermalMap = false; T = null;
                     document.getElementById('result').style.display = 'none';
                     draw();
                 } else setStatus('❌ Ocurrió un error leyendo el polígono. Trata de ajustar la "Tolerancia unión".', true);
@@ -697,15 +693,22 @@
             }
         }
 
-        selectedPoly = polygons.findIndex(p => {
+        // IMPORTANTE: Buscar de atrás hacia adelante para seleccionar los detalles pequeños primero
+        selectedPoly = -1;
+        for (let i = polygons.length - 1; i >= 0; i--) {
+            let p = polygons[i];
             let inside = false;
-            for(let i=0,j=p.pts.length-1; i<p.pts.length; j=i++) {
-                if((p.pts[i].y > myWorld) !== (p.pts[j].y > myWorld) &&
-                    mxWorld < (p.pts[j].x-p.pts[i].x)*(myWorld-p.pts[i].y)/(p.pts[j].y-p.pts[i].y)+p.pts[i].x)
+            for(let k=0,j=p.pts.length-1; k<p.pts.length; j=k++) {
+                if((p.pts[k].y > myWorld) !== (p.pts[j].y > myWorld) &&
+                    mxWorld < (p.pts[j].x-p.pts[k].x)*(myWorld-p.pts[k].y)/(p.pts[j].y-p.pts[k].y)+p.pts[k].x)
                     inside = !inside;
             }
-            return inside;
-        });
+            if(inside) { 
+                selectedPoly = i; 
+                break; 
+            }
+        }
+
         if(selectedPoly !== -1) {
             document.getElementById('matSelect').value = polygons[selectedPoly].matIdx;
             setStatus(`Región ${selectedPoly+1} seleccionada.`);
@@ -720,11 +723,27 @@
         const cssX = canvas.width / rect.width, cssY = canvas.height / rect.height;
         const mxWorld = ((e.clientX-rect.left)*cssX - pad)/scale + minX;
         const myWorld = (canvas.height - (e.clientY-rect.top)*cssY - pad)/scale + minY;
+        
         const {idx, minDist} = findNearestEdge(mxWorld, myWorld);
         const thresholdWorld = 10 / scale;
-        const newHover = (minDist < thresholdWorld) ? idx : -1;
-        if(newHover !== hoveredEdgeIdx) {
-            hoveredEdgeIdx = newHover;
+        const newHoverEdge = (minDist < thresholdWorld) ? idx : -1;
+
+        // Búsqueda inversa para iluminar visualmente (efecto hover) el polígono a clickear
+        let newHoverPoly = -1;
+        for (let i = polygons.length - 1; i >= 0; i--) {
+            let p = polygons[i];
+            let inside = false;
+            for(let k=0,j=p.pts.length-1; k<p.pts.length; j=k++) {
+                if((p.pts[k].y > myWorld) !== (p.pts[j].y > myWorld) &&
+                    mxWorld < (p.pts[j].x-p.pts[k].x)*(myWorld-p.pts[k].y)/(p.pts[j].y-p.pts[k].y)+p.pts[k].x)
+                    inside = !inside;
+            }
+            if(inside) { newHoverPoly = i; break; }
+        }
+
+        if(newHoverEdge !== hoveredEdgeIdx || newHoverPoly !== hoveredPolyIdx) {
+            hoveredEdgeIdx = newHoverEdge;
+            hoveredPolyIdx = newHoverPoly;
             draw();
         }
     };
@@ -752,7 +771,6 @@
 
     document.getElementById('autoBoundaryBtn').onclick = autoAssignBoundaries;
 
-    // ──── Solver con condiciones de contorno ────
     document.getElementById('calcBtn').onclick = () => {
         if(!polygons.length) return;
         if(!boundaryEdges.some(e => e.type===1) || !boundaryEdges.some(e => e.type===2)) {
@@ -771,15 +789,19 @@
             dx = (maxX-minX)/NX; dy = (maxY-minY)/NY;
             kGrid = Array.from({length:NY}, (_,i)=> Array.from({length:NX}, (_,j)=> {
                 const x = minX + j*dx + dx/2, y = minY + i*dy + dy/2;
-                const p = polygons.find(poly => {
+                
+                // Mismo sistema inverso para calcular el mapa térmico basado en los materiales correctos
+                let p = null;
+                for (let idx = polygons.length - 1; idx >= 0; idx--) {
+                    let poly = polygons[idx];
                     let inside = false;
                     for(let k=0,l=poly.pts.length-1; k<poly.pts.length; l=k++) {
                         if((poly.pts[k].y > y) !== (poly.pts[l].y > y) &&
                             x < (poly.pts[l].x-poly.pts[k].x)*(y-poly.pts[k].y)/(poly.pts[l].y-poly.pts[k].y)+poly.pts[k].x)
                             inside = !inside;
                     }
-                    return inside;
-                });
+                    if(inside) { p = poly; break; }
+                }
                 return p ? materials[p.matIdx].k : 0.026;
             }));
             
