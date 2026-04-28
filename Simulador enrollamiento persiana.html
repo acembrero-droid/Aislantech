@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simulador Cinemático PRO - Calibración Libre</title>
+    <title>Simulador Cinemático PRO - Eje Libre y Cadena Rígida</title>
     <script src="https://cdn.jsdelivr.net/npm/dxf-parser@1.1.2/dist/dxf-parser.min.js"></script>
     <style>
-        :root { --bg: #0f172a; --panel: #1e293b; --text: #f8fafc; --border: #334155; }
+        :root { --bg: #0f172a; --panel: #1e293b; --text: #f8fafc; --border: #334155; --accent: #3b82f6; }
         body { font-family: system-ui, -apple-system, sans-serif; margin: 0; display: flex; height: 100vh; background: var(--bg); color: var(--text); overflow: hidden; }
         #sidebar { width: 380px; background: var(--panel); padding: 20px; display: flex; flex-direction: column; gap: 15px; border-right: 1px solid var(--border); overflow-y: auto; z-index: 10; box-shadow: 2px 0 10px rgba(0,0,0,0.5); }
         h2 { margin: 0; color: #60a5fa; font-size: 1.2rem; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
@@ -14,14 +14,11 @@
         label { font-size: 0.85rem; color: #cbd5e1; font-weight: 600; display: block; margin-bottom: 4px; }
         input[type="file"], input[type="number"], input[type="range"], select { width: 100%; padding: 8px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg); color: white; box-sizing: border-box; }
         
-        .control-box { background: #0f172a; border: 1px solid #3b82f6; border-radius: 6px; padding: 10px; }
-        .btn-action { background: #3b82f6; color: white; border: none; padding: 10px; border-radius: 6px; width: 100%; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        .control-box { background: #0f172a; border: 1px solid var(--accent); border-radius: 6px; padding: 10px; }
+        .btn-action { background: var(--accent); color: white; border: none; padding: 10px; border-radius: 6px; width: 100%; font-weight: bold; cursor: pointer; transition: 0.2s; margin-bottom: 10px; }
         .btn-action:hover { background: #2563eb; }
-        .material-box { background: #1e293b; border: 1px dashed #64748b; border-radius: 6px; padding: 10px; margin-top: 10px; }
-        .material-item { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; gap: 10px; }
-        .material-item label { margin: 0; font-size: 0.8rem; color: #cbd5e1; flex-shrink: 0; }
         
-        .checkbox-group { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+        .checkbox-group { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
         .checkbox-group input { width: 16px; height: 16px; cursor: pointer; }
         .checkbox-group label { margin: 0; cursor: pointer; font-size: 0.8rem; font-weight: normal; }
         
@@ -30,16 +27,16 @@
         .status { padding: 8px; border-radius: 4px; font-size: 0.8rem; background: #334155; color: #94a3b8; text-align: center; margin-top: 5px; }
         .status.ok { background: #064e3b; color: #34d399; }
         
-        #canvas-container { flex-grow: 1; position: relative; display: flex; background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%); cursor: crosshair; }
+        #canvas-container { flex-grow: 1; position: relative; display: flex; background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%); cursor: crosshair; overflow: hidden; }
         canvas { width: 100%; height: 100%; display: block; }
         
-        #instructionOverlay { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); background: #3b82f6; color: white; padding: 12px 24px; border-radius: 30px; font-weight: bold; display: none; pointer-events: none; box-shadow: 0 4px 15px rgba(0,0,0,0.3); z-index: 20; font-size: 1.1rem; border: 2px solid #fff; }
+        #instructionOverlay { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); background: var(--accent); color: white; padding: 12px 24px; border-radius: 30px; font-weight: bold; display: none; pointer-events: none; box-shadow: 0 4px 15px rgba(0,0,0,0.5); z-index: 20; font-size: 1.1rem; border: 2px solid #fff; text-align: center; }
     </style>
 </head>
 <body>
 
 <div id="sidebar">
-    <h2>Persianas PRO - Calibración Libre</h2>
+    <h2>Cinemática de Cadena Rígida</h2>
     
     <div>
         <h3>1. Diseño DXF</h3>
@@ -48,41 +45,32 @@
     </div>
 
     <div class="control-box">
-        <label style="color:#60a5fa;">Ajustes de Lama</label>
-        <button id="btnRecalibrar" class="btn-action" onclick="iniciarCalibracion()" style="display:none; margin-bottom:10px;">📐 Re-seleccionar Puntos de Giro</button>
+        <label style="color:#60a5fa;">Calibración de la Pieza</label>
+        <button id="btnRecalibrar" class="btn-action" onclick="iniciarCalibracion()" style="display:none;">📍 Re-Calibrar Puntos y Eje</button>
         
-        <div style="margin-top: 5px;">
-            <label>Giro Reposo Bisagra: <strong id="outGiro" style="color:#38bdf8;">0º</strong></label>
-            <input type="range" id="valAjusteGiro" min="-45" max="45" step="1" value="0" oninput="document.getElementById('outGiro').innerText = this.value + 'º'; if(appState==='SIMULATING') simular();">
-        </div>
-        <div class="checkbox-group" style="margin-top: 10px;">
+        <div class="checkbox-group">
             <input type="checkbox" id="chkFlipX" onchange="if(appState==='SIMULATING') simular();">
-            <label for="chkFlipX">Invertir Cara (Interior/Exterior)</label>
+            <label for="chkFlipX">Invertir Cara de Lama (Flip X)</label>
         </div>
-    </div>
-
-    <div id="panelMateriales" class="material-box" style="display: none;">
-        <label style="color:#fde047; border-bottom:1px solid #334155; padding-bottom:5px; margin-bottom:10px;">Asignación de Materiales</label>
-        <div id="listaMateriales"></div>
     </div>
 
     <div>
-        <h3>2. Paño y Eje</h3>
-        <label>Diámetro del Eje (mm)</label>
+        <h3>2. Geometría del Cajón</h3>
+        <label>Diámetro del Eje (Calculado por clic) [mm]</label>
         <input type="number" id="valEje" value="60" oninput="if(appState==='SIMULATING') simular();">
     </div>
     <div>
-        <label>Espesor Crecimiento por Vuelta (mm)</label>
+        <label>Aumento de radio por vuelta (Espesor e) [mm]</label>
         <input type="number" id="valEspesor" value="9" step="0.1" oninput="if(appState==='SIMULATING') simular();">
     </div>
     <div>
-        <label>Número de Lamas: <strong id="outLamas" style="color:#38bdf8;">35</strong></label>
-        <input type="range" id="valLamas" min="5" max="80" value="35" oninput="document.getElementById('outLamas').innerText = this.value; if(appState==='SIMULATING') simular();">
+        <label>Número de Lamas: <strong id="outLamas" style="color:#38bdf8;">30</strong></label>
+        <input type="range" id="valLamas" min="5" max="80" value="30" oninput="document.getElementById('outLamas').innerText = this.value; if(appState==='SIMULATING') simular();">
     </div>
 
     <div class="data-panel">
         <div style="margin-bottom: 8px; display:flex; justify-content:space-between;">
-            <span>Alto útil (Distancia Bisagras):</span> <strong id="infoAlto">-- mm</strong>
+            <span>Distancia entre bisagras:</span> <strong id="infoAlto" style="color:#fde047;">-- mm</strong>
         </div>
         <div style="margin-bottom: 8px; display:flex; justify-content:space-between;">
             <span>Altura total paño:</span> <strong id="infoPaño">-- mm</strong>
@@ -94,7 +82,7 @@
 </div>
 
 <div id="canvas-container">
-    <div id="instructionOverlay">Paso 1: Selecciona el PUNTO DE GIRO SUPERIOR</div>
+    <div id="instructionOverlay"></div>
     <canvas id="simCanvas"></canvas>
 </div>
 
@@ -102,25 +90,20 @@
     const canvas = document.getElementById('simCanvas');
     const ctx = canvas.getContext('2d');
     
+    // Almacenamiento DXF
     let dxfPoligons = []; 
     let allVertices = [];
     let bbox = { minX: 0, maxX: 0, minY: 0, maxY: 0 };
     let escalaGlobal = 4;
 
+    // Máquina de Estados
     let appState = 'IDLE'; 
-    let pSup = null; 
-    let pInf = null; 
+    let pSup = null; // Clic 1: Bisagra Superior
+    let pInf = null; // Clic 2: Bisagra Inferior
+    let pEje = null; // Clic 3: Centro del Eje relativo a la lama
     let hoverPoint = null; 
 
     let calibConfig = { cx: 0, cy: 0, scale: 1, midX: 0, midY: 0 };
-
-    const MATERIALES = [
-        { id: 'transparente', nombre: 'Hueco / Ninguno', color: 'rgba(0,0,0,0)', stroke: '#94a3b8' },
-        { id: 'aluminio_blanco', nombre: 'Aluminio Lacado', color: '#f8fafc', stroke: '#cbd5e1' },
-        { id: 'aluminio_gris', nombre: 'Aluminio Anodizado', color: '#94a3b8', stroke: '#475569' },
-        { id: 'espuma', nombre: 'Espuma Poliuretano', color: '#fef08a', stroke: '#ca8a04' },
-        { id: 'pvc_negro', nombre: 'Goma / PVC Negro', color: '#334155', stroke: '#0f172a' }
-    ];
 
     window.addEventListener('resize', () => {
         canvas.width = canvas.parentElement.clientWidth;
@@ -131,7 +114,7 @@
     canvas.width = document.getElementById('canvas-container').clientWidth;
     canvas.height = document.getElementById('canvas-container').clientHeight;
 
-    // 1. EXTRACTOR DE DXF
+    // 1. EXTRACTOR DXF (Asegura polígonos cerrados para rellenar pintura)
     document.getElementById('fileDxf').addEventListener('change', function(e) {
         const file = e.target.files[0];
         if (!file) return;
@@ -153,9 +136,8 @@
                 if (dxfPoligons.length > 0) bbox = { minX, maxX, minY, maxY };
                 
                 document.getElementById('dxfStatus').className = "status ok";
-                document.getElementById('dxfStatus').innerText = `Geometría OK: ${dxfPoligons.length} capas`;
+                document.getElementById('dxfStatus').innerText = `Procesado: ${dxfPoligons.length} partes`;
                 
-                generarInterfazMateriales();
                 iniciarCalibracion(); 
             } catch(err) {
                 console.error(err); alert("Error al leer el DXF.");
@@ -164,30 +146,29 @@
         reader.readAsText(file);
     });
 
-    function extraerSegmentosRaw(entities, blocks, offsetX = 0, offsetY = 0) {
+    function extraerSegmentosRaw(entities, blocks, offX = 0, offY = 0) {
         let segs = [];
         if(!entities) return segs;
         entities.forEach(ent => {
-            if (ent.type === 'LINE') segs.push({ p1: {x: ent.vertices[0].x+offsetX, y: ent.vertices[0].y+offsetY}, p2: {x: ent.vertices[1].x+offsetX, y: ent.vertices[1].y+offsetY} });
+            if (ent.type === 'LINE') segs.push({ p1: {x: ent.vertices[0].x+offX, y: ent.vertices[0].y+offY}, p2: {x: ent.vertices[1].x+offX, y: ent.vertices[1].y+offY} });
             else if (ent.type === 'LWPOLYLINE' || ent.type === 'POLYLINE') {
-                for(let i=0; i<ent.vertices.length-1; i++) segs.push({ p1: {x: ent.vertices[i].x+offsetX, y: ent.vertices[i].y+offsetY}, p2: {x: ent.vertices[i+1].x+offsetX, y: ent.vertices[i+1].y+offsetY} });
-                if (ent.shape || ent.closed) segs.push({ p1: {x: ent.vertices[ent.vertices.length-1].x+offsetX, y: ent.vertices[ent.vertices.length-1].y+offsetY}, p2: {x: ent.vertices[0].x+offsetX, y: ent.vertices[0].y+offsetY} });
+                for(let i=0; i<ent.vertices.length-1; i++) segs.push({ p1: {x: ent.vertices[i].x+offX, y: ent.vertices[i].y+offY}, p2: {x: ent.vertices[i+1].x+offX, y: ent.vertices[i+1].y+offY} });
+                if (ent.shape || ent.closed) segs.push({ p1: {x: ent.vertices[ent.vertices.length-1].x+offX, y: ent.vertices[ent.vertices.length-1].y+offY}, p2: {x: ent.vertices[0].x+offX, y: ent.vertices[0].y+offY} });
             } else if (ent.type === 'ARC' || ent.type === 'CIRCLE') {
-                let cx = ent.center.x + offsetX, cy = ent.center.y + offsetY, r = ent.radius;
+                let cx = ent.center.x + offX, cy = ent.center.y + offY, r = ent.radius;
                 let sa = ent.startAngle || 0, ea = ent.endAngle || (Math.PI*2);
                 if (ea < sa) ea += Math.PI * 2;
                 let lastP = {x: cx + r*Math.cos(sa), y: cy + r*Math.sin(sa)};
                 for(let i=1; i<=15; i++) { let newP = {x: cx + r*Math.cos(sa + (ea-sa)*(i/15)), y: cy + r*Math.sin(sa + (ea-sa)*(i/15))}; segs.push({ p1: lastP, p2: newP }); lastP = newP; }
             } else if (ent.type === 'INSERT' && blocks && blocks[ent.name]) {
                 let pos = ent.position || {x:0, y:0};
-                segs = segs.concat(extraerSegmentosRaw(blocks[ent.name].entities, blocks, pos.x + offsetX, pos.y + offsetY));
+                segs = segs.concat(extraerSegmentosRaw(blocks[ent.name].entities, blocks, pos.x + offX, pos.y + offY));
             }
         });
         return segs;
     }
 
     function construirPoligonos(segmentosRaw) {
-        const tolerancia = 0.05; 
         let pool = [...segmentosRaw], poligonos = [];
         while(pool.length > 0) {
             let path = []; let current = pool.shift(); path.push(current.p1, current.p2);
@@ -196,90 +177,52 @@
                 conectando = false; let head = path[0], tail = path[path.length - 1];
                 for(let i=0; i<pool.length; i++) {
                     let s = pool[i];
-                    if (Math.hypot(tail.x-s.p1.x, tail.y-s.p1.y) < tolerancia) { path.push(s.p2); pool.splice(i,1); conectando = true; break; }
-                    if (Math.hypot(tail.x-s.p2.x, tail.y-s.p2.y) < tolerancia) { path.push(s.p1); pool.splice(i,1); conectando = true; break; }
-                    if (Math.hypot(head.x-s.p1.x, head.y-s.p1.y) < tolerancia) { path.unshift(s.p2); pool.splice(i,1); conectando = true; break; }
-                    if (Math.hypot(head.x-s.p2.x, head.y-s.p2.y) < tolerancia) { path.unshift(s.p1); pool.splice(i,1); conectando = true; break; }
+                    if (Math.hypot(tail.x-s.p1.x, tail.y-s.p1.y) < 0.05) { path.push(s.p2); pool.splice(i,1); conectando = true; break; }
+                    if (Math.hypot(tail.x-s.p2.x, tail.y-s.p2.y) < 0.05) { path.push(s.p1); pool.splice(i,1); conectando = true; break; }
+                    if (Math.hypot(head.x-s.p1.x, head.y-s.p1.y) < 0.05) { path.unshift(s.p2); pool.splice(i,1); conectando = true; break; }
+                    if (Math.hypot(head.x-s.p2.x, head.y-s.p2.y) < 0.05) { path.unshift(s.p1); pool.splice(i,1); conectando = true; break; }
                 }
             }
-            let cerrado = Math.hypot(path[0].x-path[path.length-1].x, path[0].y-path[path.length-1].y) < tolerancia;
-            let area = 0;
-            if (cerrado) { for (let i = 0; i < path.length - 1; i++) area += path[i].x * path[i+1].y - path[i+1].x * path[i].y; area = Math.abs(area / 2); }
-            poligonos.push({ pts: path, closed: cerrado, area: area, materialId: 'transparente' });
+            let cerrado = Math.hypot(path[0].x-path[path.length-1].x, path[0].y-path[path.length-1].y) < 0.05;
+            let area = 0; if (cerrado) { for (let i = 0; i < path.length - 1; i++) area += path[i].x * path[i+1].y - path[i+1].x * path[i].y; area = Math.abs(area / 2); }
+            poligonos.push({ pts: path, closed: cerrado, area: area });
         }
         return poligonos.sort((a, b) => b.area - a.area);
     }
 
-    function generarInterfazMateriales() {
-        const contenedor = document.getElementById('listaMateriales');
-        contenedor.innerHTML = ""; let areasCerradas = 0;
-        dxfPoligons.forEach((pol, index) => {
-            if (!pol.closed) return;
-            areasCerradas++;
-            if (areasCerradas === 1) pol.materialId = 'aluminio_gris';
-            else if (areasCerradas === 2) pol.materialId = 'espuma';
-
-            const div = document.createElement('div'); div.className = 'material-item';
-            const select = document.createElement('select');
-            MATERIALES.forEach(mat => { let opt = document.createElement('option'); opt.value = mat.id; opt.innerText = mat.nombre; if (mat.id === pol.materialId) opt.selected = true; select.appendChild(opt); });
-            select.onchange = (e) => { pol.materialId = e.target.value; if(appState==='SIMULATING') simular(); };
-            
-            let label = document.createElement('label'); label.innerText = `Capa ${index + 1}`;
-            div.appendChild(label); div.appendChild(select); contenedor.appendChild(div);
-        });
-        document.getElementById('panelMateriales').style.display = areasCerradas > 0 ? 'block' : 'none';
-    }
-
-    // 2. SISTEMA DE CALIBRACIÓN LIBRE Y SOFT-SNAP
+    // 2. SISTEMA DE CALIBRACIÓN DE 3 PUNTOS
     function updateCalibConfig() {
         calibConfig.cx = canvas.width / 2;
         calibConfig.cy = canvas.height / 2;
-        // Zoom generoso para que haya espacio para clicar fuera de la pieza
-        calibConfig.scale = Math.min(canvas.width / (bbox.maxX - bbox.minX), canvas.height / (bbox.maxY - bbox.minY)) * 0.6;
+        calibConfig.scale = Math.min(canvas.width / (bbox.maxX - bbox.minX), canvas.height / (bbox.maxY - bbox.minY)) * 0.4; // Más zoom out para poder poner el eje lejos
         calibConfig.midX = (bbox.minX + bbox.maxX) / 2;
         calibConfig.midY = (bbox.minY + bbox.maxY) / 2;
     }
 
-    function toScreen(pt) {
-        return {
-            x: calibConfig.cx + (pt.x - calibConfig.midX) * calibConfig.scale,
-            y: calibConfig.cy - (pt.y - calibConfig.midY) * calibConfig.scale 
-        };
-    }
-
-    // Transformación Inversa (Pantalla a DXF)
-    function fromScreen(sx, sy) {
-        return {
-            x: calibConfig.midX + (sx - calibConfig.cx) / calibConfig.scale,
-            y: calibConfig.midY - (sy - calibConfig.cy) / -calibConfig.scale // - porque invertimos Y en toScreen
-        };
-    }
+    function toScreen(pt) { return { x: calibConfig.cx + (pt.x - calibConfig.midX) * calibConfig.scale, y: calibConfig.cy - (pt.y - calibConfig.midY) * calibConfig.scale }; }
+    function fromScreen(sx, sy) { return { x: calibConfig.midX + (sx - calibConfig.cx) / calibConfig.scale, y: calibConfig.midY - (sy - calibConfig.cy) / -calibConfig.scale }; }
 
     function getPuntoLibreOSnap(sx, sy) {
         let puntoReal = fromScreen(sx, sy);
-        let minDistScreen = 15; // 15 píxeles de imán
+        let minDistScreen = 15; 
         let closestVertex = null;
-
         allVertices.forEach(pt => {
             let sp = toScreen(pt);
-            let dist = Math.hypot(sp.x - sx, sp.y - sy);
-            if (dist < minDistScreen) { 
-                minDistScreen = dist; 
-                closestVertex = pt; 
-            }
+            if (Math.hypot(sp.x - sx, sp.y - sy) < minDistScreen) { minDistScreen = Math.hypot(sp.x - sx, sp.y - sy); closestVertex = pt; }
         });
-
-        // Si encontró uno cerca, devuelve ese vértice, si no, devuelve exactamente donde está el ratón
         return closestVertex ? closestVertex : puntoReal;
     }
 
     function iniciarCalibracion() {
         if(dxfPoligons.length === 0) return;
         appState = 'CALIBRATING_P1';
-        pSup = null; pInf = null;
-        document.getElementById('instructionOverlay').style.display = 'block';
-        document.getElementById('instructionOverlay').innerText = "📍 Paso 1: Clic en PUNTO DE GIRO SUPERIOR";
-        document.getElementById('instructionOverlay').style.backgroundColor = '#3b82f6';
+        pSup = null; pInf = null; pEje = null;
+        
+        let overlay = document.getElementById('instructionOverlay');
+        overlay.style.display = 'block';
+        overlay.innerHTML = "📍 Paso 1:<br><span style='font-size:0.9rem; font-weight:normal;'>Clic en BISAGRA SUPERIOR (Enganche)</span>";
+        overlay.style.backgroundColor = '#3b82f6';
+        
         document.getElementById('btnRecalibrar').style.display = 'none';
         updateCalibConfig();
         renderCalibracion();
@@ -294,20 +237,33 @@
 
     document.getElementById('simCanvas').addEventListener('mousedown', (e) => {
         if (appState === 'SIMULATING' || !hoverPoint) return;
+        let overlay = document.getElementById('instructionOverlay');
         
         if (appState === 'CALIBRATING_P1') {
             pSup = hoverPoint;
             appState = 'CALIBRATING_P2';
-            document.getElementById('instructionOverlay').innerText = "📍 Paso 2: Clic en PUNTO DE GIRO INFERIOR";
-            document.getElementById('instructionOverlay').style.backgroundColor = '#ef4444';
-        } else if (appState === 'CALIBRATING_P2') {
+            overlay.innerHTML = "📍 Paso 2:<br><span style='font-size:0.9rem; font-weight:normal;'>Clic en BISAGRA INFERIOR (Enganche)</span>";
+            overlay.style.backgroundColor = '#ef4444';
+        } 
+        else if (appState === 'CALIBRATING_P2') {
             pInf = hoverPoint;
+            appState = 'CALIBRATING_AXIS';
+            overlay.innerHTML = "⚙️ Paso 3:<br><span style='font-size:0.9rem; font-weight:normal;'>Clic donde quieras colocar el CENTRO DEL EJE</span>";
+            overlay.style.backgroundColor = '#8b5cf6'; // Morado
+        }
+        else if (appState === 'CALIBRATING_AXIS') {
+            pEje = hoverPoint;
             appState = 'SIMULATING';
-            document.getElementById('instructionOverlay').style.display = 'none';
+            overlay.style.display = 'none';
             document.getElementById('btnRecalibrar').style.display = 'block';
             
+            // Cálculos Críticos tras la Calibración
             let altoLama = Math.hypot(pInf.x - pSup.x, pInf.y - pSup.y);
+            let radioInicial = Math.hypot(pEje.x - pSup.x, pEje.y - pSup.y);
+            
             document.getElementById('infoAlto').innerText = altoLama.toFixed(2) + " mm";
+            document.getElementById('valEje').value = (radioInicial * 2).toFixed(1); // Actualiza el input UI
+            
             simular();
         }
     });
@@ -315,6 +271,7 @@
     function renderCalibracion() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         
+        // 1. Dibujar DXF base
         ctx.save();
         ctx.translate(calibConfig.cx, calibConfig.cy);
         ctx.scale(calibConfig.scale, -calibConfig.scale); 
@@ -330,48 +287,67 @@
         });
         ctx.restore();
 
-        // Dibujar cruz/punto activo
+        // 2. Dibujar Cursor
         if (hoverPoint) {
             let hp = toScreen(hoverPoint);
             
-            // Dibujar cruz de precisión
             ctx.beginPath(); ctx.moveTo(hp.x - 10, hp.y); ctx.lineTo(hp.x + 10, hp.y);
             ctx.moveTo(hp.x, hp.y - 10); ctx.lineTo(hp.x, hp.y + 10);
-            ctx.strokeStyle = "rgba(255,255,255,0.5)"; ctx.lineWidth = 1; ctx.stroke();
+            ctx.strokeStyle = "rgba(255,255,255,0.8)"; ctx.lineWidth = 1; ctx.stroke();
 
             ctx.beginPath(); ctx.arc(hp.x, hp.y, 6, 0, Math.PI*2); 
-            ctx.fillStyle = appState === 'CALIBRATING_P1' ? '#3b82f6' : '#ef4444'; 
+            if (appState === 'CALIBRATING_P1') ctx.fillStyle = '#3b82f6';
+            else if (appState === 'CALIBRATING_P2') ctx.fillStyle = '#ef4444';
+            else ctx.fillStyle = '#8b5cf6';
             ctx.fill();
 
+            // Líneas Guía de Medición
             if (pSup && appState === 'CALIBRATING_P2') {
                 let sp = toScreen(pSup);
                 ctx.beginPath(); ctx.moveTo(sp.x, sp.y); ctx.lineTo(hp.x, hp.y);
-                ctx.strokeStyle = "#ef4444"; ctx.lineWidth = 2; ctx.setLineDash([5, 5]); ctx.stroke();
-                ctx.setLineDash([]);
+                ctx.strokeStyle = "#ef4444"; ctx.lineWidth = 2; ctx.setLineDash([5, 5]); ctx.stroke(); ctx.setLineDash([]);
+            }
+            if (pSup && appState === 'CALIBRATING_AXIS') {
+                let sp = toScreen(pSup);
+                // Dibuja el radio del eje
+                ctx.beginPath(); ctx.moveTo(sp.x, sp.y); ctx.lineTo(hp.x, hp.y);
+                ctx.strokeStyle = "#8b5cf6"; ctx.lineWidth = 2; ctx.setLineDash([5, 5]); ctx.stroke(); ctx.setLineDash([]);
+                // Dibuja el circulo simulado del eje
+                let radio = Math.hypot(hp.x - sp.x, hp.y - sp.y);
+                ctx.beginPath(); ctx.arc(hp.x, hp.y, radio, 0, Math.PI*2);
+                ctx.strokeStyle = "rgba(139, 92, 246, 0.3)"; ctx.lineWidth = 2; ctx.stroke();
             }
         }
 
+        // 3. Dibujar Puntos Confirmados
         if (pSup) {
             let sp = toScreen(pSup);
-            ctx.beginPath(); ctx.arc(sp.x, sp.y, 6, 0, Math.PI*2); ctx.fillStyle = '#3b82f6'; ctx.fill();
-            ctx.strokeStyle = '#fff'; ctx.lineWidth=2; ctx.stroke();
+            ctx.beginPath(); ctx.arc(sp.x, sp.y, 6, 0, Math.PI*2); ctx.fillStyle = '#3b82f6'; ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth=2; ctx.stroke();
+        }
+        if (pInf) {
+            let ip = toScreen(pInf);
+            ctx.beginPath(); ctx.arc(ip.x, ip.y, 6, 0, Math.PI*2); ctx.fillStyle = '#ef4444'; ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth=2; ctx.stroke();
         }
     }
 
-    // 3. MOTOR DE SIMULACIÓN
+    // 3. MOTOR CINEMÁTICO STRICTO (Cadena en Espiral)
     function simular() {
-        if(appState !== 'SIMULATING' || !pSup || !pInf) return;
+        if(appState !== 'SIMULATING' || !pSup || !pInf || !pEje) return;
 
-        const dEje = parseFloat(document.getElementById('valEje').value) || 60;
+        // Variables de entorno
         const eLama = parseFloat(document.getElementById('valEspesor').value) || 9;
-        const numLamas = parseInt(document.getElementById('valLamas').value) || 35;
-        const offsetGiroRad = (parseFloat(document.getElementById('valAjusteGiro').value) || 0) * (Math.PI / 180);
+        const numLamas = parseInt(document.getElementById('valLamas').value) || 30;
         const flipCara = document.getElementById('chkFlipX').checked ? -1 : 1;
 
+        // Distancias Inmutables (Cuerpo Rígido)
         const altoLama = Math.hypot(pInf.x - pSup.x, pInf.y - pSup.y);
+        const radioInicial = Math.hypot(pEje.x - pSup.x, pEje.y - pSup.y);
+        const dEje = radioInicial * 2; // Actualizamos para visualización
+
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        const radioEstimado = (dEje / 2) + (numLamas * eLama / 2) + 20;
+        // Auto-Cámara
+        const radioEstimado = radioInicial + (numLamas * eLama / 2) + 20;
         escalaGlobal = Math.min(canvas.width / (radioEstimado*2.5), canvas.height / (radioEstimado*2.5));
         if (escalaGlobal < 1) escalaGlobal = 1;
 
@@ -379,12 +355,27 @@
         ctx.translate(canvas.width / 2, canvas.height / 2);
         ctx.scale(escalaGlobal, escalaGlobal);
 
-        ctx.beginPath(); ctx.arc(0, 0, dEje / 2, 0, Math.PI * 2);
+        // Dibujar Eje Físico en el Centro del Universo (0,0)
+        ctx.beginPath(); ctx.arc(0, 0, radioInicial, 0, Math.PI * 2);
         ctx.fillStyle = "#1e293b"; ctx.fill();
         ctx.lineWidth = 1.5 / escalaGlobal; ctx.strokeStyle = "#475569"; ctx.stroke();
 
-        let bisagras = [{ x: dEje/2, y: 0, thetaGlobal: 0 }];
-        let radioMaximo = dEje / 2;
+        // ---------------------------------------------------------
+        // ALGORITMO DE CADENA (Forward Kinematics on Archimedean Spiral)
+        // ---------------------------------------------------------
+        let bisagras = [];
+        let radioMaximo = radioInicial;
+
+        // ¿En qué ángulo relativo al eje está enganchada la primera lama?
+        // Lo calculamos a partir de los clics del usuario en la fase de calibración.
+        let anguloEngancheInicial = Math.atan2(pSup.y - pEje.y, pSup.x - pEje.x);
+        
+        // La bisagra 0 se ancla en la superficie del eje, en el ángulo calculado
+        bisagras.push({ 
+            x: radioInicial * Math.cos(anguloEngancheInicial), 
+            y: radioInicial * Math.sin(anguloEngancheInicial), 
+            thetaGlobal: anguloEngancheInicial 
+        });
 
         for (let i = 0; i < numLamas; i++) {
             let pAnt = bisagras[i];
@@ -392,20 +383,19 @@
             let dTheta = 0.005, dist = 0, targetX = 0, targetY = 0;
             let testTheta = pAnt.thetaGlobal;
             
+            // Avanzamos milimétricamente en ángulo hasta que el segmento mida EXACTAMENTE 'altoLama'
             while (dist < altoLama) {
-                testTheta += 0.005;
+                testTheta += 0.005; // Dirección de enrollamiento
+                // El radio crece proporcionalmente al espesor de la lama
                 let rTest = rActual + (eLama * ((testTheta - pAnt.thetaGlobal) / (2 * Math.PI)));
                 targetX = rTest * Math.cos(testTheta);
                 targetY = rTest * Math.sin(testTheta);
                 dist = Math.hypot(targetX - pAnt.x, targetY - pAnt.y);
             }
 
-            let anguloBase = Math.atan2(targetY - pAnt.y, targetX - pAnt.x);
-            let anguloReal = anguloBase + offsetGiroRad;
-
             let pNuevo = {
-                x: pAnt.x + altoLama * Math.cos(anguloReal),
-                y: pAnt.y + altoLama * Math.sin(anguloReal),
+                x: targetX,
+                y: targetY,
                 thetaGlobal: testTheta
             };
 
@@ -413,42 +403,57 @@
             if (Math.hypot(pNuevo.x, pNuevo.y) > radioMaximo) radioMaximo = Math.hypot(pNuevo.x, pNuevo.y);
         }
 
-        // --- MAGIA: Enlazar DXF al punto de giro seleccionado ---
+        // ---------------------------------------------------------
+        // RENDERIZADO DEL DXF COMO ESLABÓN RÍGIDO
+        // ---------------------------------------------------------
         for (let i = 0; i < numLamas; i++) {
             let p1 = bisagras[i], p2 = bisagras[i+1];
 
             ctx.save();
+            // 1. Origen local en la bisagra actual
             ctx.translate(p1.x, p1.y);
+            
+            // 2. Apuntar el eje X del canvas directamente hacia la siguiente bisagra
             ctx.rotate(Math.atan2(p2.y - p1.y, p2.x - p1.x));
+            
+            // 3. Aplicar Modificadores (Flip) y corrección de ejes CAD->Web
             ctx.scale(1, flipCara); 
             ctx.scale(1, -1);       
 
+            // 4. ¿Qué ángulo tenía la lama en el dibujo original del CAD? Lo contra-rotamos.
             let dxfAngle = Math.atan2(pInf.y - pSup.y, pInf.x - pSup.x);
             ctx.rotate(dxfAngle);
             
-            // TRASLACIÓN CRÍTICA: Llevamos el punto seleccionado libremente por el usuario al (0,0) de la bisagra
+            // 5. CRÍTICO: Trasladar el origen del dibujo para que el punto `pSup` elegido por el usuario caiga en (0,0)
             ctx.translate(-pSup.x, -pSup.y);
 
-            dxfPoligons.forEach(pol => {
+            // Dibujar los polígonos
+            dxfPoligons.forEach((pol, index) => {
                 ctx.beginPath();
                 ctx.moveTo(pol.pts[0].x, pol.pts[0].y);
                 for(let k=1; k<pol.pts.length; k++) ctx.lineTo(pol.pts[k].x, pol.pts[k].y);
                 
-                let material = MATERIALES.find(m => m.id === pol.materialId) || MATERIALES[0];
-                if (pol.closed) { ctx.fillStyle = material.color; ctx.fill(); }
+                // Colorización heurística
+                if (pol.closed) { 
+                    if (index === 0) ctx.fillStyle = '#94a3b8'; // Aluminio
+                    else ctx.fillStyle = '#fef08a'; // Espuma
+                    ctx.fill(); 
+                }
                 
-                ctx.strokeStyle = material.stroke;
+                ctx.strokeStyle = '#475569';
                 ctx.lineWidth = 1.0 / escalaGlobal;
                 ctx.stroke();
             });
             ctx.restore();
             
-            ctx.beginPath(); ctx.arc(p1.x, p1.y, 1.5 / escalaGlobal, 0, Math.PI*2);
+            // Dibujar punto visual de la bisagra
+            ctx.beginPath(); ctx.arc(p1.x, p1.y, 2 / escalaGlobal, 0, Math.PI*2);
             ctx.fillStyle = "#ef4444"; ctx.fill();
         }
 
         ctx.restore();
 
+        // Actualizar UI de datos
         document.getElementById('infoPaño').innerText = (altoLama * numLamas).toFixed(0) + " mm";
         document.getElementById('infoDiam').innerText = ((radioMaximo * 2) + eLama).toFixed(1) + " mm";
     }
