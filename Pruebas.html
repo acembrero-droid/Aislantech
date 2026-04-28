@@ -24,7 +24,7 @@
         .card { background:white; border-radius:var(--border-radius); box-shadow:0 5px 15px rgba(0,0,0,0.05); margin-bottom:20px; border-top:4px solid var(--color-primary); }
         .card-body { padding:1.2rem; }
         
-        .controls-grid { display:flex; flex-wrap:wrap; gap:1.2rem; align-items:flex-end;}
+        .controls-grid { display:flex; flex-wrap:wrap; gap:1.2rem; align-items:flex-start;}
         .control-group { display:flex; flex-direction:column; gap:6px; flex: 1; min-width: 150px;}
         label { font-size:0.7rem; font-weight:700; text-transform:uppercase; color:var(--color-secondary); }
         input, select { padding:8px 12px; border:1px solid #ddd; border-radius:var(--border-radius); font-size:0.85rem; width:100%; }
@@ -49,6 +49,9 @@
         .legend-item { display:flex; align-items:center; gap:8px; font-size:0.75rem; cursor:pointer; padding: 6px 10px; border-radius: 4px; transition: var(--transition); }
         .legend-item:hover { background: #f0f0f0; }
         .legend-color { width:16px; height:16px; border-radius:3px; border:1px solid rgba(0,0,0,0.2); }
+        
+        .boundary-legend { display:flex; gap:1rem; align-items:center; margin-left:auto; font-size:0.75rem; font-weight:700; border-left: 1px solid #ddd; padding-left: 15px; }
+        .boundary-swatch { width:12px; height:12px; border-radius:50%; display:inline-block; border:1px solid #000; }
         
         #customMatPanel { background: #f9f9f9; padding: 15px; border-radius: 8px; border: 1px dashed #ccc; margin-bottom: 15px; display: none; }
         .result-card { display:none; background:#2e7d32; color:white; padding:20px; border-radius:var(--border-radius); margin-top:20px; text-align:center; }
@@ -80,7 +83,7 @@
                 </div>
 
                 <div class="control-group" style="flex: 2; border-left: 1px solid #ddd; padding-left: 15px;">
-                    <label id="brushLabel">3. Pincel Activo (Haz clic para pintar)</label>
+                    <label id="brushLabel">3. Pincel Activo</label>
                     <div style="display:flex; gap:5px;" id="matBrushContainer">
                         <select id="matSelect"></select>
                     </div>
@@ -161,15 +164,15 @@
         { name: "Vidrio", k: 1.0, color: "#81d4fa" }
     ];
 
-    const Rse = 0.04; // Resistencia Superficial Exterior
-    const Rsi = 0.13; // Resistencia Superficial Interior
+    const Rse = 0.04;
+    const Rsi = 0.13;
 
     let polygons = [], boundaryEdges = [], boundaryAdj = [];
     let minX, maxX, minY, maxY;
     let selectedPoly = -1, hoveredPolyIdx = -1, hoveredEdgeIdx = -1;
     let editMode = 'MATERIAL';
 
-    // Variables Zoom & Pan Absoluto
+    // Variables Zoom & Pan
     let zoomLevel = 1, offsetX = 0, offsetY = 0, baseScale = 1;
     let isDragging = false, dragStartX = 0, dragStartY = 0, hasDragged = false;
 
@@ -181,7 +184,7 @@
     const ctx = canvas.getContext('2d');
     const statusText = document.querySelector('#status span');
 
-    // ──── INTERFAZ Y MODOS (El "Pincel") ────
+    // ──── INTERFAZ ────
     function updateMaterialUI() {
         const sel = document.getElementById('matSelect');
         sel.innerHTML = materials.map((m,i) => `<option value="${i}">${m.name} (λ=${m.k})</option>`).join('');
@@ -194,7 +197,6 @@
             </div>`).join('');
     }
 
-    // Cambiar Modo de Edición
     document.getElementById('btnModeMat').onclick = function() {
         editMode = 'MATERIAL'; 
         this.classList.add('active'); document.getElementById('btnModeBound').classList.remove('active');
@@ -213,7 +215,6 @@
         draw();
     };
 
-    // Crear Material Custom
     document.getElementById('matSelect').onchange = function() {
         if(this.value === 'CUSTOM') document.getElementById('customMatPanel').style.display = 'block';
         else document.getElementById('customMatPanel').style.display = 'none';
@@ -221,7 +222,7 @@
 
     document.getElementById('btnCancelCustomMat').onclick = () => {
         document.getElementById('customMatPanel').style.display = 'none';
-        document.getElementById('matSelect').value = "0"; // Reset
+        document.getElementById('matSelect').value = "0"; 
     };
     
     document.getElementById('btnAddCustomMat').onclick = function() {
@@ -230,7 +231,7 @@
         const color = document.getElementById('customMatColor').value;
         materials.push({name, k, color});
         updateMaterialUI();
-        document.getElementById('matSelect').value = materials.length - 1; // Fija el pincel
+        document.getElementById('matSelect').value = materials.length - 1; 
         document.getElementById('customMatPanel').style.display = 'none';
         setStatus(`Material "${name}" añadido a la paleta de pinceles.`);
     };
@@ -248,24 +249,30 @@
         bar.querySelector('i').className = type === 'error' ? 'fas fa-exclamation-triangle' : type === 'success' ? 'fas fa-check-circle' : 'fas fa-info-circle';
     }
 
-    // ──── DXF PARSER Y TOPOLOGÍA ────
+    // ──── DXF PARSER ROBUSTO (Polilíneas, Líneas, Arcos, Bulges) ────
     document.getElementById('dxfFile').onchange = e => {
         const file = e.target.files[0]; if(!file) return;
         const reader = new FileReader();
         reader.onload = ev => {
             try {
                 const segments = parseDXF(ev.target.result);
-                if(segments.length === 0) throw new Error("No hay líneas válidas (recuerda explotar bloques en CAD).");
-                polygons = buildTopology(segments, 0.5);
-                if(polygons.length) {
-                    recalcBounds();
-                    boundaryEdges = extractBoundaryEdges(polygons);
-                    document.getElementById('calcBtn').disabled = false;
-                    showThermalMap = false;
-                    document.getElementById('result').style.display = 'none';
-                    setStatus("✅ DXF Importado. Pinta los materiales y contornos.");
-                    draw();
-                } else throw new Error("No se detectaron áreas cerradas.");
+                if(segments.length === 0) throw new Error("No hay líneas válidas. ¡Asegúrate de explotar los bloques en tu programa CAD!");
+                
+                setStatus("Calculando geometría y áreas cerradas...");
+                setTimeout(() => {
+                    polygons = buildTopology(segments);
+                    if(polygons.length) {
+                        recalcBounds();
+                        boundaryEdges = extractBoundaryEdges(polygons);
+                        document.getElementById('calcBtn').disabled = false;
+                        showThermalMap = false;
+                        document.getElementById('result').style.display = 'none';
+                        setStatus("✅ DXF Importado. Pinta los materiales y contornos para calcular la transmitancia térmica.", "success");
+                        draw();
+                    } else {
+                        setStatus("Error: No se detectaron áreas cerradas continuas.", "error");
+                    }
+                }, 50);
             } catch(err) { setStatus("Error DXF: " + err.message, "error"); }
         };
         reader.readAsText(file);
@@ -274,120 +281,218 @@
     function parseDXF(text) {
         const lines = text.split(/\r?\n/);
         let idx = 0, inEntities = false, segments = [];
-        let curE = null;
+        let curE = null, curPoly = null;
 
         const getP = () => {
-            if (idx >= lines.length - 1) return null;
-            const c = parseInt(lines[idx++].trim()), v = lines[idx++].trim(); return [c, v];
+            while (idx < lines.length - 1) {
+                const c = parseInt(lines[idx++].trim()), v = lines[idx++].trim();
+                return [c, v];
+            } return null;
         };
 
-        while (idx < lines.length - 1) {
+        function addBulgeSegments(p1, p2, bulge) {
+            if (!bulge || Math.abs(bulge) < 1e-5) { segments.push({ x1: p1.x, y1: p1.y, x2: p2.x, y2: p2.y }); return; }
+            const dx = p2.x - p1.x, dy = p2.y - p1.y, dist = Math.hypot(dx, dy);
+            if (dist < 1e-6) return;
+            const theta = 4 * Math.atan(bulge);
+            const radius = Math.abs(dist / (2 * Math.sin(theta / 2)));
+            const dir = bulge > 0 ? 1 : -1;
+            const cx = (p1.x + p2.x) / 2 + (-dy / dist * dir) * radius * Math.cos(theta / 2);
+            const cy = (p1.y + p2.y) / 2 + (dx / dist * dir) * radius * Math.cos(theta / 2);
+            let a1 = Math.atan2(p1.y - cy, p1.x - cx), a2 = Math.atan2(p2.y - cy, p2.x - cx);
+            if (bulge > 0 && a2 <= a1) a2 += 2 * Math.PI;
+            if (bulge < 0 && a2 >= a1) a2 -= 2 * Math.PI;
+            const N = Math.max(8, Math.floor(Math.abs(a2 - a1) * radius / 2));
+            let prevX = p1.x, prevY = p1.y;
+            for (let i = 1; i <= N; i++) {
+                const a = a1 + (a2 - a1) * (i / N), x = cx + radius * Math.cos(a), y = cy + radius * Math.sin(a);
+                segments.push({ x1: prevX, y1: prevY, x2: x, y2: y }); prevX = x; prevY = y;
+            }
+        }
+
+        function flushE(e) {
+            if (!e || e.ignore) return;
+            if (e.type === 'VERTEX' && curPoly) curPoly.vertices.push({ x: e.x, y: e.y, bulge: e.bulge });
+            if (e.type === 'LINE' && e.x1 !== undefined && e.x2 !== undefined) segments.push({ x1: e.x1, y1: e.y1, x2: e.x2, y2: e.y2 });
+            if ((e.type === 'CIRCLE' || e.type === 'ARC') && e.r > 0) {
+                let rs = (e.startAngle || 0) * Math.PI / 180, re = (e.endAngle || 360) * Math.PI / 180;
+                if (e.type === 'ARC' && re <= rs) re += 2 * Math.PI;
+                const N = Math.max(16, Math.floor(Math.abs(re - rs) * e.r / 2));
+                let px = e.cx + e.r * Math.cos(rs), py = e.cy + e.r * Math.sin(rs);
+                for (let i = 1; i <= N; i++) {
+                    const a = rs + (re - rs) * (i / N), x = e.cx + e.r * Math.cos(a), y = e.cy + e.r * Math.sin(a);
+                    segments.push({ x1: px, y1: py, x2: x, y2: y }); px = x; py = y;
+                }
+            }
+            if ((e.type === 'LWPOLYLINE' || e.type === 'POLYLINE') && e.vertices && e.vertices.length > 0) {
+                for (let i = 0; i < e.vertices.length - 1; i++) addBulgeSegments(e.vertices[i], e.vertices[i + 1], e.vertices[i].bulge);
+                if (e.closed && e.vertices.length > 2) addBulgeSegments(e.vertices[e.vertices.length - 1], e.vertices[0], e.vertices[e.vertices.length - 1].bulge);
+            }
+        }
+
+        while (true) {
             const pair = getP(); if (!pair) break;
             const [c, v] = pair;
-            if (c === 0 && v === 'SECTION') { if (getP()[1] === 'ENTITIES') inEntities = true; continue; }
+
+            if (c === 0 && v === 'SECTION') { const next = getP(); if (next && next[1] === 'ENTITIES') inEntities = true; continue; }
             if (c === 0 && v === 'ENDSEC') { inEntities = false; continue; }
             if (!inEntities) continue;
 
             if (c === 0) {
-                if (curE) flushE(curE);
-                curE = (v === 'LINE' || v === 'LWPOLYLINE' || v === 'CIRCLE' || v === 'ARC') ? {type: v, vertices: []} : null;
+                if (curE && curE.type !== 'POLYLINE') flushE(curE);
+                if (v === 'LWPOLYLINE') curE = { type: 'LWPOLYLINE', vertices: [], closed: false, ignore: false };
+                else if (v === 'POLYLINE') { if (curPoly) flushE(curPoly); curPoly = { type: 'POLYLINE', vertices: [], closed: false, ignore: false }; curE = curPoly; }
+                else if (v === 'VERTEX' && curPoly) curE = { type: 'VERTEX', x: 0, y: 0, bulge: 0, ignore: false };
+                else if (v === 'SEQEND' && curPoly) { flushE(curPoly); curPoly = null; curE = null; }
+                else if (['LINE', 'CIRCLE', 'ARC'].includes(v)) curE = { type: v, ignore: false };
+                else curE = null;
             } else if (curE) {
+                if (c === 67 && v === '1') curE.ignore = true; 
                 const val = parseFloat(v);
-                if (curE.type === 'LINE') {
-                    if (c === 10) curE.x1 = val; if (c === 20) curE.y1 = val; if (c === 11) curE.x2 = val; if (c === 21) curE.y2 = val;
-                } else if (curE.type === 'LWPOLYLINE') {
+                if (curE.type === 'LWPOLYLINE') {
                     if (c === 70) curE.closed = (parseInt(v) & 1) !== 0;
-                    if (c === 10) curE.vertices.push({x: val, y: 0, bulge: 0});
-                    if (c === 20) curE.vertices[curE.vertices.length-1].y = val;
-                    if (c === 42) curE.vertices[curE.vertices.length-1].bulge = val;
-                } else if (curE.type === 'CIRCLE' || curE.type === 'ARC') {
-                    if (c === 10) curE.cx = val; if (c === 20) curE.cy = val; if (c === 40) curE.r = val;
-                    if (c === 50) curE.start = val; if (c === 51) curE.end = val;
+                    else if (c === 10) curE.vertices.push({ x: val, y: 0, bulge: 0 });
+                    else if (c === 20 && curE.vertices.length > 0) curE.vertices[curE.vertices.length - 1].y = val;
+                    else if (c === 42 && curE.vertices.length > 0) curE.vertices[curE.vertices.length - 1].bulge = val;
+                } else if (curE.type === 'POLYLINE') {
+                    if (c === 70) curE.closed = (parseInt(v) & 1) !== 0;
+                } else if (curE.type === 'VERTEX') {
+                    if (c === 10) curE.x = val; else if (c === 20) curE.y = val; else if (c === 42) curE.bulge = val;
+                } else if (curE.type === 'LINE') {
+                    if (c === 10) curE.x1 = val; else if (c === 20) curE.y1 = val; 
+                    else if (c === 11) curE.x2 = val; else if (c === 21) curE.y2 = val;
+                } else if (['CIRCLE', 'ARC'].includes(curE.type)) {
+                    if (c === 10) curE.cx = val; else if (c === 20) curE.cy = val; else if (c === 40) curE.r = val;
+                    else if (c === 50) curE.startAngle = val; else if (c === 51) curE.endAngle = val;
                 }
             }
         }
-        function flushE(e) {
-            if (e.type === 'LINE') segments.push({x1: e.x1, y1: e.y1, x2: e.x2, y2: e.y2});
-            else if (e.type === 'LWPOLYLINE') {
-                for (let i=0; i<e.vertices.length-1; i++) addB(e.vertices[i], e.vertices[i+1], e.vertices[i].bulge);
-                if (e.closed && e.vertices.length > 2) addB(e.vertices[e.vertices.length-1], e.vertices[0], e.vertices[e.vertices.length-1].bulge);
-            } else if (e.type === 'CIRCLE' || e.type === 'ARC') {
-                let rs = (e.start||0)*Math.PI/180, re = (e.end||360)*Math.PI/180;
-                if (re <= rs) re += 2*Math.PI;
-                const steps = Math.max(12, Math.floor(Math.abs(re-rs)*e.r/2));
-                for (let i=0; i<steps; i++) {
-                    const a1 = rs + (re-rs)*i/steps, a2 = rs + (re-rs)*(i+1)/steps;
-                    segments.push({x1: e.cx+e.r*Math.cos(a1), y1: e.cy+e.r*Math.sin(a1), x2: e.cx+e.r*Math.cos(a2), y2: e.cy+e.r*Math.sin(a2)});
-                }
-            }
-        }
-        function addB(p1, p2, b) {
-            if (!b || Math.abs(b) < 1e-4) segments.push({x1: p1.x, y1: p1.y, x2: p2.x, y2: p2.y});
-            else {
-                const d = Math.hypot(p2.x-p1.x, p2.y-p1.y), th = 4*Math.atan(b), r = Math.abs(d/(2*Math.sin(th/2)));
-                const cx = (p1.x+p2.x)/2 + (-(p2.y-p1.y)/d*(b>0?1:-1))*r*Math.cos(th/2), cy = (p1.y+p2.y)/2 + ((p2.x-p1.x)/d*(b>0?1:-1))*r*Math.cos(th/2);
-                let a1 = Math.atan2(p1.y-cy, p1.x-cx), a2 = Math.atan2(p2.y-cy, p2.x-cx);
-                if (b>0 && a2<=a1) a2+=2*Math.PI; if (b<0 && a2>=a1) a2-=2*Math.PI;
-                const steps = Math.max(6, Math.floor(Math.abs(a2-a1)*r/2));
-                for (let i=0; i<steps; i++) {
-                    const ang1 = a1+(a2-a1)*i/steps, ang2 = a1+(a2-a1)*(i+1)/steps;
-                    segments.push({x1: cx+r*Math.cos(ang1), y1: cy+r*Math.sin(ang1), x2: cx+r*Math.cos(ang2), y2: cy+r*Math.sin(ang2)});
-                }
-            }
-        }
-        return segments;
+        if (curE && curE.type !== 'POLYLINE') flushE(curE);
+        if (curPoly) flushE(curPoly);
+        
+        // Filtrar micro segmentos
+        return segments.filter(s => Math.hypot(s.x2 - s.x1, s.y2 - s.y1) > 1e-4);
     }
 
-    function buildTopology(raw, tol) {
-        const pts = []; raw.forEach(s => { pts.push({x: s.x1, y: s.y1}); pts.push({x: s.x2, y: s.y2}); });
-        const segments = [];
-        for (let i=0; i<raw.length; i++) {
-            const s = raw[i], tV = [0, 1], l2 = (s.x2-s.x1)**2+(s.y2-s.y1)**2;
-            pts.forEach(p => {
-                const t = ((p.x-s.x1)*(s.x2-s.x1)+(p.y-s.y1)*(s.y2-s.y1))/l2;
-                if (t > 0.01 && t < 0.99 && Math.hypot(p.x-(s.x1+t*(s.x2-s.x1)), p.y-(s.y1+t*(s.y2-s.y1))) < tol) tV.push(t);
-            });
-            tV.sort((a,b) => a-b);
-            for (let k=0; k<tV.length-1; k++) {
-                if (tV[k+1]-tV[k] > 0.001) segments.push({x1: s.x1+tV[k]*(s.x2-s.x1), y1: s.y1+tV[k]*(s.y2-s.y1), x2: s.x1+tV[k+1]*(s.x2-s.x1), y2: s.y1+tV[k+1]*(s.y2-s.y1)});
+    function buildTopology(rawSegments) {
+        // Redondeo de vértices al décimo de milímetro para evitar gaps invisibles
+        const snap = v => Math.round(v * 1e4) / 1e4;
+        
+        // 1. Intersección exhaustiva O(N^2)
+        let splits = new Map();
+        for (let i=0; i<rawSegments.length; i++) splits.set(i, [0, 1]);
+
+        for (let i = 0; i < rawSegments.length; i++) {
+            let s1 = rawSegments[i];
+            let dx1 = s1.x2 - s1.x1, dy1 = s1.y2 - s1.y1;
+            for (let j = i + 1; j < rawSegments.length; j++) {
+                let s2 = rawSegments[j];
+                let dx2 = s2.x2 - s2.x1, dy2 = s2.y2 - s2.y1;
+                let den = dx1 * dy2 - dy1 * dx2;
+                if (Math.abs(den) > 1e-7) {
+                    let u = ((s2.x1 - s1.x1) * dy2 - (s2.y1 - s1.y1) * dx2) / den;
+                    let v = ((s2.x1 - s1.x1) * dy1 - (s2.y1 - s1.y1) * dx1) / den;
+                    if (u > 1e-5 && u < 1 - 1e-5 && v > 1e-5 && v < 1 - 1e-5) {
+                        splits.get(i).push(u);
+                        splits.get(j).push(v);
+                    }
+                }
             }
         }
-        const vertices = [], grid = new Map();
-        const getV = (x, y) => {
-            const k = `${Math.round(x/0.1)},${Math.round(y/0.1)}`;
-            if (grid.has(k)) return grid.get(k);
-            const v = {id: vertices.length, x, y, adj: []}; vertices.push(v); grid.set(k, v); return v;
+
+        let splitSegments = [];
+        for (let i = 0; i < rawSegments.length; i++) {
+            let s = rawSegments[i];
+            let tVals = [...new Set(splits.get(i))].sort((a,b)=>a-b);
+            for (let k = 0; k < tVals.length - 1; k++) {
+                if (tVals[k+1] - tVals[k] > 1e-5) {
+                    splitSegments.push({
+                        x1: s.x1 + tVals[k] * (s.x2 - s.x1), y1: s.y1 + tVals[k] * (s.y2 - s.y1),
+                        x2: s.x1 + tVals[k+1] * (s.x2 - s.x1), y2: s.y1 + tVals[k+1] * (s.y2 - s.y1)
+                    });
+                }
+            }
+        }
+
+        // 2. Nodos únicos
+        let vertices = new Map();
+        let getVid = (x, y) => {
+            let k = `${snap(x)},${snap(y)}`;
+            if (!vertices.has(k)) vertices.set(k, {id: vertices.size, x: snap(x), y: snap(y), adj: []});
+            return vertices.get(k);
         };
-        const uniqueE = new Map();
-        segments.forEach(s => {
-            const v1 = getV(s.x1, s.y1), v2 = getV(s.x2, s.y2);
-            if (v1.id === v2.id) return;
-            uniqueE.set(v1.id < v2.id ? `${v1.id}-${v2.id}` : `${v2.id}-${v1.id}`, {v1, v2});
-        });
-        const halfE = [];
-        uniqueE.forEach(e => {
-            const h1 = {from: e.v1, to: e.v2, angle: Math.atan2(e.v2.y-e.v1.y, e.v2.x-e.v1.x), used: false};
-            const h2 = {from: e.v2, to: e.v1, angle: Math.atan2(e.v1.y-e.v2.y, e.v1.x-e.v2.x), used: false};
-            h1.rev = h2; h2.rev = h1; e.v1.adj.push(h1); e.v2.adj.push(h2); halfE.push(h1, h2);
-        });
-        vertices.forEach(v => v.adj.sort((a,b) => a.angle - b.angle));
+
+        let uniqueEdges = new Map();
+        for (let s of splitSegments) {
+            let v1 = getVid(s.x1, s.y1), v2 = getVid(s.x2, s.y2);
+            if (v1.id === v2.id) continue;
+            let minId = Math.min(v1.id, v2.id), maxId = Math.max(v1.id, v2.id);
+            uniqueEdges.set(`${minId}-${maxId}`, {v1, v2});
+        }
+
+        // 3. Eliminar ramas sueltas (Dangles)
+        let edgeList = Array.from(uniqueEdges.values());
+        let adjMap = new Map();
+        for(let e of edgeList) {
+            if(!adjMap.has(e.v1.id)) adjMap.set(e.v1.id, new Set()); adjMap.get(e.v1.id).add(e.v2.id);
+            if(!adjMap.has(e.v2.id)) adjMap.set(e.v2.id, new Set()); adjMap.get(e.v2.id).add(e.v1.id);
+        }
+
+        let dangles = [];
+        for(let [v, neighbors] of adjMap.entries()) { if(neighbors.size === 1) dangles.push(v); }
+        while(dangles.length > 0) {
+            let v = dangles.pop();
+            if(!adjMap.has(v)) continue;
+            let neighbors = adjMap.get(v);
+            if(neighbors.size === 1) {
+                let u = [...neighbors][0];
+                adjMap.get(u).delete(v); adjMap.delete(v);
+                if(adjMap.get(u).size === 1) dangles.push(u);
+            }
+        }
+
+        // 4. Grafos Half-Edge
+        let halfEdges = [];
+        let vArray = Array.from(vertices.values());
+        for (let [u, neighbors] of adjMap.entries()) {
+            for (let v of neighbors) {
+                if (u < v) {
+                    let vu = vArray[u], vv = vArray[v];
+                    let a1 = Math.atan2(vv.y - vu.y, vv.x - vu.x), a2 = Math.atan2(vu.y - vv.y, vu.x - vv.x);
+                    let h1 = {from: vu, to: vv, angle: a1, used: false}, h2 = {from: vv, to: vu, angle: a2, used: false};
+                    h1.rev = h2; h2.rev = h1;
+                    vu.adj.push(h1); vv.adj.push(h2);
+                    halfEdges.push(h1, h2);
+                }
+            }
+        }
+
+        for (let v of vertices.values()) { v.adj.sort((a, b) => a.angle - b.angle); }
+
+        // 5. Encontrar caras
+        let faces = [];
+        for (let he of halfEdges) {
+            if (he.used) continue;
+            let pts = [], curr = he, loops = 0;
+            while (!curr.used && loops < 10000) {
+                curr.used = true; pts.push({x: curr.from.x, y: curr.from.y});
+                let revIdx = curr.to.adj.indexOf(curr.rev);
+                let nextIdx = (revIdx - 1 + curr.to.adj.length) % curr.to.adj.length;
+                curr = curr.to.adj[nextIdx]; loops++;
+            }
+            if (pts.length > 2) {
+                let area = 0;
+                for (let i = 0; i < pts.length; i++) area += pts[i].x * pts[(i+1)%pts.length].y - pts[(i+1)%pts.length].x * pts[i].y;
+                area /= 2;
+                faces.push({pts: pts, signedArea: area, area: Math.abs(area), matIdx: 1}); // Por defecto aluminio
+            }
+        }
+
+        // Eliminar cara universo
+        let maxA = -1, universeFace = null;
+        for (let f of faces) { if (f.area > maxA) { maxA = f.area; universeFace = f; } }
         
-        const faces = [];
-        halfE.forEach(h => {
-            if (h.used) return;
-            const p = []; let cur = h, loops = 0;
-            while (!cur.used && loops < 10000) { 
-                cur.used = true; p.push({x: cur.from.x, y: cur.from.y}); 
-                const idx = cur.to.adj.indexOf(cur.rev); 
-                cur = cur.to.adj[(idx-1+cur.to.adj.length)%cur.to.adj.length]; loops++;
-            }
-            if (p.length > 2) {
-                let a = 0; for(let i=0; i<p.length; i++) a += (p[i].x*p[(i+1)%p.length].y - p[(i+1)%p.length].x*p[i].y);
-                faces.push({pts: p, signedArea: a/2, area: Math.abs(a/2), matIdx: 1}); // Aluminio
-            }
-        });
-        let maxA = -1, sign = 1; faces.forEach(f => { if(f.area > maxA){ maxA = f.area; sign = Math.sign(f.signedArea); } });
-        return faces.filter(f => Math.sign(f.signedArea) !== sign && f.area > 0.1).sort((a,b) => b.area - a.area);
+        return faces.filter(f => f !== universeFace && f.area > 0.01).sort((a, b) => b.area - a.area);
     }
 
     function extractBoundaryEdges(polys) {
@@ -403,7 +508,6 @@
         });
         const edges = Array.from(m.values()).filter(e => e.count === 1).map(e => ({p1:e.p1, p2:e.p2, type:0}));
         
-        // Grafo de Adyacencia para el BFS
         boundaryAdj = edges.map(() => []);
         for(let i=0; i<edges.length; i++){
             for(let j=i+1; j<edges.length; j++){
@@ -470,7 +574,7 @@
 
     document.getElementById('btnZoomReset').onclick = () => { zoomLevel = 1; offsetX = 0; offsetY = 0; draw(); };
 
-    // ──── INTERACCIONES (PINCEL Y PAN) ────
+    // ──── INTERACCIONES (PAN Y CLIC CON PINCEL) ────
     canvas.onmousedown = e => {
         if(!polygons.length) return;
         const rect = canvas.getBoundingClientRect();
@@ -517,25 +621,20 @@
         isDragging = false; canvas.classList.remove('grabbing');
         if(hasDragged || !polygons.length || showThermalMap) return;
         
-        // Pincel de Contornos
+        // Ejecuta Pintado Directo basado en la selección
         if(editMode === 'BOUNDARY' && hoveredEdgeIdx !== -1) {
             const activeType = parseInt(document.getElementById('boundSelect').value);
             
             if(e.shiftKey) {
                 let path = bfsFindNearestAssigned(hoveredEdgeIdx);
-                if(path){ 
-                    // Pinta el camino encontrado con el color del pincel activo
-                    path.forEach(id => boundaryEdges[id].type = activeType); 
-                } else {
-                    boundaryEdges[hoveredEdgeIdx].type = activeType;
-                }
+                if(path){ path.forEach(id => boundaryEdges[id].type = activeType); }
+                else boundaryEdges[hoveredEdgeIdx].type = activeType;
             } else {
                 boundaryEdges[hoveredEdgeIdx].type = activeType;
             }
             draw(); return;
         }
         
-        // Pincel de Materiales
         if (editMode === 'MATERIAL' && hoveredPolyIdx !== -1) {
             const activeMat = parseInt(document.getElementById('matSelect').value);
             if (!isNaN(activeMat)) {
@@ -546,14 +645,13 @@
         }
     };
 
-    // Búsqueda inteligente de caminos
     function bfsFindNearestAssigned(startIdx) {
         let queue = [[startIdx, [startIdx]]];
         let visited = new Set([startIdx]);
 
         while(queue.length > 0) {
             let [curr, path] = queue.shift();
-            // Si tocamos un borde que ya tiene color (y no es el inicial), devolvemos la ruta
+            // Retorna si encuentra un borde coloreado
             if (boundaryEdges[curr].type !== 0 && curr !== startIdx) return path;
             for (let n of boundaryAdj[curr]) {
                 if (!visited.has(n)) { visited.add(n); queue.push([n, [...path, n]]); }
@@ -613,11 +711,11 @@
         recalcBounds(); boundaryEdges = extractBoundaryEdges(polygons); draw();
     };
 
-    // ──── SOLVER TÉRMICO ISO 10077-2 ────
+    // ──── SOLVER TÉRMICO Y CÁLCULO DE U ────
     document.getElementById('calcBtn').onclick = () => {
         if(!polygons.length) return;
         if(!boundaryEdges.some(e => e.type===1) || !boundaryEdges.some(e => e.type===2)) {
-            setStatus('❌ Falta marcar Borde Exterior (azul) e Interior de Medición (rojo).', 'error'); return;
+            setStatus('❌ Falta marcar al menos un borde Exterior (azul) e Interior de Medición (rojo).', 'error'); return;
         }
         
         const res = parseInt(document.getElementById('gridRes').value);
@@ -705,11 +803,6 @@
             setStatus("✅ Análisis completado con éxito.", "success");
         }, 50);
     };
-
-    document.getElementById('btnBackToEdit').onclick = function() {
-        showThermalMap = false; this.style.display = 'none'; draw();
-        setStatus("Modo de edición activado.");
-    }
 
     updateMaterialUI();
 })();
