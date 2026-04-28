@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simulador Cinemático PRO - Calibración por Clics</title>
+    <title>Simulador Cinemático PRO - Calibración Libre</title>
     <script src="https://cdn.jsdelivr.net/npm/dxf-parser@1.1.2/dist/dxf-parser.min.js"></script>
     <style>
         :root { --bg: #0f172a; --panel: #1e293b; --text: #f8fafc; --border: #334155; }
@@ -39,7 +39,7 @@
 <body>
 
 <div id="sidebar">
-    <h2>Persianas PRO - Calibración Métrica</h2>
+    <h2>Persianas PRO - Calibración Libre</h2>
     
     <div>
         <h3>1. Diseño DXF</h3>
@@ -49,7 +49,7 @@
 
     <div class="control-box">
         <label style="color:#60a5fa;">Ajustes de Lama</label>
-        <button id="btnRecalibrar" class="btn-action" onclick="iniciarCalibracion()" style="display:none; margin-bottom:10px;">📐 Re-seleccionar Enganches</button>
+        <button id="btnRecalibrar" class="btn-action" onclick="iniciarCalibracion()" style="display:none; margin-bottom:10px;">📐 Re-seleccionar Puntos de Giro</button>
         
         <div style="margin-top: 5px;">
             <label>Giro Reposo Bisagra: <strong id="outGiro" style="color:#38bdf8;">0º</strong></label>
@@ -82,7 +82,7 @@
 
     <div class="data-panel">
         <div style="margin-bottom: 8px; display:flex; justify-content:space-between;">
-            <span>Alto útil (Paso exacto):</span> <strong id="infoAlto">-- mm</strong>
+            <span>Alto útil (Distancia Bisagras):</span> <strong id="infoAlto">-- mm</strong>
         </div>
         <div style="margin-bottom: 8px; display:flex; justify-content:space-between;">
             <span>Altura total paño:</span> <strong id="infoPaño">-- mm</strong>
@@ -94,7 +94,7 @@
 </div>
 
 <div id="canvas-container">
-    <div id="instructionOverlay">Paso 1: Selecciona el ENGANCHE SUPERIOR</div>
+    <div id="instructionOverlay">Paso 1: Selecciona el PUNTO DE GIRO SUPERIOR</div>
     <canvas id="simCanvas"></canvas>
 </div>
 
@@ -102,21 +102,18 @@
     const canvas = document.getElementById('simCanvas');
     const ctx = canvas.getContext('2d');
     
-    // VARIABLES GLOBALES
     let dxfPoligons = []; 
     let allVertices = [];
     let bbox = { minX: 0, maxX: 0, minY: 0, maxY: 0 };
     let escalaGlobal = 4;
 
-    // ESTADO DE LA APLICACIÓN (Máquina de estados)
-    let appState = 'IDLE'; // IDLE | CALIBRATING_P1 | CALIBRATING_P2 | SIMULATING
-    let pSup = null; // Punto Bisagra Superior
-    let pInf = null; // Punto Bisagra Inferior
-    let hoverPoint = null; // Punto bajo el ratón
+    let appState = 'IDLE'; 
+    let pSup = null; 
+    let pInf = null; 
+    let hoverPoint = null; 
 
     let calibConfig = { cx: 0, cy: 0, scale: 1, midX: 0, midY: 0 };
 
-    // CATÁLOGO DE MATERIALES
     const MATERIALES = [
         { id: 'transparente', nombre: 'Hueco / Ninguno', color: 'rgba(0,0,0,0)', stroke: '#94a3b8' },
         { id: 'aluminio_blanco', nombre: 'Aluminio Lacado', color: '#f8fafc', stroke: '#cbd5e1' },
@@ -134,7 +131,7 @@
     canvas.width = document.getElementById('canvas-container').clientWidth;
     canvas.height = document.getElementById('canvas-container').clientHeight;
 
-    // 1. EXTRACTOR DE DXF (Misma lógica de auto-unión de polígonos)
+    // 1. EXTRACTOR DE DXF
     document.getElementById('fileDxf').addEventListener('change', function(e) {
         const file = e.target.files[0];
         if (!file) return;
@@ -159,7 +156,7 @@
                 document.getElementById('dxfStatus').innerText = `Geometría OK: ${dxfPoligons.length} capas`;
                 
                 generarInterfazMateriales();
-                iniciarCalibracion(); // Auto-inicia la calibración al cargar
+                iniciarCalibracion(); 
             } catch(err) {
                 console.error(err); alert("Error al leer el DXF.");
             }
@@ -233,11 +230,12 @@
         document.getElementById('panelMateriales').style.display = areasCerradas > 0 ? 'block' : 'none';
     }
 
-    // 2. SISTEMA DE CALIBRACIÓN (Mouse y Snapping)
+    // 2. SISTEMA DE CALIBRACIÓN LIBRE Y SOFT-SNAP
     function updateCalibConfig() {
         calibConfig.cx = canvas.width / 2;
         calibConfig.cy = canvas.height / 2;
-        calibConfig.scale = Math.min(canvas.width / (bbox.maxX - bbox.minX), canvas.height / (bbox.maxY - bbox.minY)) * 0.7;
+        // Zoom generoso para que haya espacio para clicar fuera de la pieza
+        calibConfig.scale = Math.min(canvas.width / (bbox.maxX - bbox.minX), canvas.height / (bbox.maxY - bbox.minY)) * 0.6;
         calibConfig.midX = (bbox.minX + bbox.maxX) / 2;
         calibConfig.midY = (bbox.minY + bbox.maxY) / 2;
     }
@@ -245,19 +243,34 @@
     function toScreen(pt) {
         return {
             x: calibConfig.cx + (pt.x - calibConfig.midX) * calibConfig.scale,
-            y: calibConfig.cy - (pt.y - calibConfig.midY) * calibConfig.scale // Invertimos Y para que se vea como en CAD
+            y: calibConfig.cy - (pt.y - calibConfig.midY) * calibConfig.scale 
         };
     }
 
-    function findClosestVertex(sx, sy) {
-        let minDist = 30; // Radio de imantado en píxeles
-        let closest = null;
+    // Transformación Inversa (Pantalla a DXF)
+    function fromScreen(sx, sy) {
+        return {
+            x: calibConfig.midX + (sx - calibConfig.cx) / calibConfig.scale,
+            y: calibConfig.midY - (sy - calibConfig.cy) / -calibConfig.scale // - porque invertimos Y en toScreen
+        };
+    }
+
+    function getPuntoLibreOSnap(sx, sy) {
+        let puntoReal = fromScreen(sx, sy);
+        let minDistScreen = 15; // 15 píxeles de imán
+        let closestVertex = null;
+
         allVertices.forEach(pt => {
             let sp = toScreen(pt);
             let dist = Math.hypot(sp.x - sx, sp.y - sy);
-            if (dist < minDist) { minDist = dist; closest = pt; }
+            if (dist < minDistScreen) { 
+                minDistScreen = dist; 
+                closestVertex = pt; 
+            }
         });
-        return closest;
+
+        // Si encontró uno cerca, devuelve ese vértice, si no, devuelve exactamente donde está el ratón
+        return closestVertex ? closestVertex : puntoReal;
     }
 
     function iniciarCalibracion() {
@@ -265,7 +278,7 @@
         appState = 'CALIBRATING_P1';
         pSup = null; pInf = null;
         document.getElementById('instructionOverlay').style.display = 'block';
-        document.getElementById('instructionOverlay').innerText = "📍 Paso 1: Clic en ENGANCHE SUPERIOR";
+        document.getElementById('instructionOverlay').innerText = "📍 Paso 1: Clic en PUNTO DE GIRO SUPERIOR";
         document.getElementById('instructionOverlay').style.backgroundColor = '#3b82f6';
         document.getElementById('btnRecalibrar').style.display = 'none';
         updateCalibConfig();
@@ -275,7 +288,7 @@
     document.getElementById('simCanvas').addEventListener('mousemove', (e) => {
         if (appState === 'SIMULATING') return;
         const rect = canvas.getBoundingClientRect();
-        hoverPoint = findClosestVertex(e.clientX - rect.left, e.clientY - rect.top);
+        hoverPoint = getPuntoLibreOSnap(e.clientX - rect.left, e.clientY - rect.top);
         renderCalibracion();
     });
 
@@ -285,7 +298,7 @@
         if (appState === 'CALIBRATING_P1') {
             pSup = hoverPoint;
             appState = 'CALIBRATING_P2';
-            document.getElementById('instructionOverlay').innerText = "📍 Paso 2: Clic en ENGANCHE INFERIOR";
+            document.getElementById('instructionOverlay').innerText = "📍 Paso 2: Clic en PUNTO DE GIRO INFERIOR";
             document.getElementById('instructionOverlay').style.backgroundColor = '#ef4444';
         } else if (appState === 'CALIBRATING_P2') {
             pInf = hoverPoint;
@@ -293,7 +306,6 @@
             document.getElementById('instructionOverlay').style.display = 'none';
             document.getElementById('btnRecalibrar').style.display = 'block';
             
-            // Calculamos el paso exacto por Pitágoras
             let altoLama = Math.hypot(pInf.x - pSup.x, pInf.y - pSup.y);
             document.getElementById('infoAlto').innerText = altoLama.toFixed(2) + " mm";
             simular();
@@ -305,7 +317,7 @@
         
         ctx.save();
         ctx.translate(calibConfig.cx, calibConfig.cy);
-        ctx.scale(calibConfig.scale, -calibConfig.scale); // Dibujamos con Y invertida
+        ctx.scale(calibConfig.scale, -calibConfig.scale); 
         ctx.translate(-calibConfig.midX, -calibConfig.midY);
 
         dxfPoligons.forEach(pol => {
@@ -318,21 +330,19 @@
         });
         ctx.restore();
 
-        // Dibujar el punto superior si ya se seleccionó
-        if (pSup) {
-            let sp = toScreen(pSup);
-            ctx.beginPath(); ctx.arc(sp.x, sp.y, 6, 0, Math.PI*2); ctx.fillStyle = '#3b82f6'; ctx.fill();
-            ctx.strokeStyle = '#fff'; ctx.lineWidth=2; ctx.stroke();
-        }
-
-        // Dibujar el punto activo bajo el ratón
+        // Dibujar cruz/punto activo
         if (hoverPoint) {
             let hp = toScreen(hoverPoint);
-            ctx.beginPath(); ctx.arc(hp.x, hp.y, 8, 0, Math.PI*2); 
+            
+            // Dibujar cruz de precisión
+            ctx.beginPath(); ctx.moveTo(hp.x - 10, hp.y); ctx.lineTo(hp.x + 10, hp.y);
+            ctx.moveTo(hp.x, hp.y - 10); ctx.lineTo(hp.x, hp.y + 10);
+            ctx.strokeStyle = "rgba(255,255,255,0.5)"; ctx.lineWidth = 1; ctx.stroke();
+
+            ctx.beginPath(); ctx.arc(hp.x, hp.y, 6, 0, Math.PI*2); 
             ctx.fillStyle = appState === 'CALIBRATING_P1' ? '#3b82f6' : '#ef4444'; 
             ctx.fill();
 
-            // Dibujar la línea de medición virtual
             if (pSup && appState === 'CALIBRATING_P2') {
                 let sp = toScreen(pSup);
                 ctx.beginPath(); ctx.moveTo(sp.x, sp.y); ctx.lineTo(hp.x, hp.y);
@@ -340,9 +350,15 @@
                 ctx.setLineDash([]);
             }
         }
+
+        if (pSup) {
+            let sp = toScreen(pSup);
+            ctx.beginPath(); ctx.arc(sp.x, sp.y, 6, 0, Math.PI*2); ctx.fillStyle = '#3b82f6'; ctx.fill();
+            ctx.strokeStyle = '#fff'; ctx.lineWidth=2; ctx.stroke();
+        }
     }
 
-    // 3. MOTOR DE SIMULACIÓN Y RENDERIZADO
+    // 3. MOTOR DE SIMULACIÓN
     function simular() {
         if(appState !== 'SIMULATING' || !pSup || !pInf) return;
 
@@ -363,12 +379,10 @@
         ctx.translate(canvas.width / 2, canvas.height / 2);
         ctx.scale(escalaGlobal, escalaGlobal);
 
-        // Eje
         ctx.beginPath(); ctx.arc(0, 0, dEje / 2, 0, Math.PI * 2);
         ctx.fillStyle = "#1e293b"; ctx.fill();
         ctx.lineWidth = 1.5 / escalaGlobal; ctx.strokeStyle = "#475569"; ctx.stroke();
 
-        // Calcular Cadena Cinemática de Bisagras
         let bisagras = [{ x: dEje/2, y: 0, thetaGlobal: 0 }];
         let radioMaximo = dEje / 2;
 
@@ -399,29 +413,22 @@
             if (Math.hypot(pNuevo.x, pNuevo.y) > radioMaximo) radioMaximo = Math.hypot(pNuevo.x, pNuevo.y);
         }
 
-        // Renderizar DXF sobre cada eslabón
+        // --- MAGIA: Enlazar DXF al punto de giro seleccionado ---
         for (let i = 0; i < numLamas; i++) {
             let p1 = bisagras[i], p2 = bisagras[i+1];
 
             ctx.save();
-            // 1. Movemos el Canvas a la bisagra actual
             ctx.translate(p1.x, p1.y);
-            
-            // 2. Rotamos el Canvas para que apunte directamente a la siguiente bisagra
             ctx.rotate(Math.atan2(p2.y - p1.y, p2.x - p1.x));
-            
-            // 3. Modificadores de usuario y corrección de ejes CAD vs Web
-            ctx.scale(1, flipCara); // Voltea la cara exterior/interior si el usuario lo pide
-            ctx.scale(1, -1);       // Invierte la "Y" permanentemente (Corrección de AutoCAD a Web)
+            ctx.scale(1, flipCara); 
+            ctx.scale(1, -1);       
 
-            // 4. Calculamos el ángulo interno con el que se dibujó el DXF y lo contra-rotamos
             let dxfAngle = Math.atan2(pInf.y - pSup.y, pInf.x - pSup.x);
             ctx.rotate(dxfAngle);
             
-            // 5. Trasladamos el DXF para que el Punto Superior quede fijado en el origen (0,0) del Canvas
+            // TRASLACIÓN CRÍTICA: Llevamos el punto seleccionado libremente por el usuario al (0,0) de la bisagra
             ctx.translate(-pSup.x, -pSup.y);
 
-            // Dibujamos las capas (Con el orden Z y colores calculados en el paso anterior)
             dxfPoligons.forEach(pol => {
                 ctx.beginPath();
                 ctx.moveTo(pol.pts[0].x, pol.pts[0].y);
@@ -436,7 +443,6 @@
             });
             ctx.restore();
             
-            // Dibujar punto visual de la bisagra
             ctx.beginPath(); ctx.arc(p1.x, p1.y, 1.5 / escalaGlobal, 0, Math.PI*2);
             ctx.fillStyle = "#ef4444"; ctx.fill();
         }
