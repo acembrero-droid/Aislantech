@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simulador Cinemático PRO - Eje Libre y Cadena Rígida</title>
+    <title>Simulador Cinemático PRO - Cadena Perfecta y Eje Libre</title>
     <script src="https://cdn.jsdelivr.net/npm/dxf-parser@1.1.2/dist/dxf-parser.min.js"></script>
     <style>
         :root { --bg: #0f172a; --panel: #1e293b; --text: #f8fafc; --border: #334155; --accent: #3b82f6; }
@@ -36,7 +36,7 @@
 <body>
 
 <div id="sidebar">
-    <h2>Cinemática de Cadena Rígida</h2>
+    <h2>Cinemática de Precisión</h2>
     
     <div>
         <h3>1. Diseño DXF</h3>
@@ -45,18 +45,18 @@
     </div>
 
     <div class="control-box">
-        <label style="color:#60a5fa;">Calibración de la Pieza</label>
+        <label style="color:#60a5fa;">Calibración Espacial (Libre)</label>
         <button id="btnRecalibrar" class="btn-action" onclick="iniciarCalibracion()" style="display:none;">📍 Re-Calibrar Puntos y Eje</button>
         
         <div class="checkbox-group">
             <input type="checkbox" id="chkFlipX" onchange="if(appState==='SIMULATING') simular();">
-            <label for="chkFlipX">Invertir Cara de Lama (Flip X)</label>
+            <label for="chkFlipX">Invertir Cara de Lama (Flip Inside/Out)</label>
         </div>
     </div>
 
     <div>
-        <h3>2. Geometría del Cajón</h3>
-        <label>Diámetro del Eje (Calculado por clic) [mm]</label>
+        <h3>2. Geometría del Rollo</h3>
+        <label>Diámetro del Eje [mm]</label>
         <input type="number" id="valEje" value="60" oninput="if(appState==='SIMULATING') simular();">
     </div>
     <div>
@@ -70,7 +70,7 @@
 
     <div class="data-panel">
         <div style="margin-bottom: 8px; display:flex; justify-content:space-between;">
-            <span>Distancia entre bisagras:</span> <strong id="infoAlto" style="color:#fde047;">-- mm</strong>
+            <span>Distancia exacta entre ejes:</span> <strong id="infoAlto" style="color:#fde047;">-- mm</strong>
         </div>
         <div style="margin-bottom: 8px; display:flex; justify-content:space-between;">
             <span>Altura total paño:</span> <strong id="infoPaño">-- mm</strong>
@@ -92,16 +92,15 @@
     
     // Almacenamiento DXF
     let dxfPoligons = []; 
-    let allVertices = [];
     let bbox = { minX: 0, maxX: 0, minY: 0, maxY: 0 };
     let escalaGlobal = 4;
 
-    // Máquina de Estados
+    // Máquina de Estados (Libertad Total de Puntos)
     let appState = 'IDLE'; 
     let pSup = null; // Clic 1: Bisagra Superior
     let pInf = null; // Clic 2: Bisagra Inferior
-    let pEje = null; // Clic 3: Centro del Eje relativo a la lama
-    let hoverPoint = null; 
+    let pEje = null; // Clic 3: Centro del Eje
+    let cursorPoint = null; 
 
     let calibConfig = { cx: 0, cy: 0, scale: 1, midX: 0, midY: 0 };
 
@@ -114,7 +113,7 @@
     canvas.width = document.getElementById('canvas-container').clientWidth;
     canvas.height = document.getElementById('canvas-container').clientHeight;
 
-    // 1. EXTRACTOR DXF (Asegura polígonos cerrados para rellenar pintura)
+    // 1. EXTRACTOR DXF
     document.getElementById('fileDxf').addEventListener('change', function(e) {
         const file = e.target.files[0];
         if (!file) return;
@@ -125,10 +124,8 @@
                 let segmentos = extraerSegmentosRaw(dxfData.entities, dxfData.blocks);
                 dxfPoligons = construirPoligonos(segmentos);
                 
-                allVertices = [];
                 let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
                 dxfPoligons.forEach(pol => pol.pts.forEach(p => {
-                    allVertices.push(p);
                     if(p.x < minX) minX = p.x; if(p.x > maxX) maxX = p.x;
                     if(p.y < minY) minY = p.y; if(p.y > maxY) maxY = p.y;
                 }));
@@ -136,7 +133,7 @@
                 if (dxfPoligons.length > 0) bbox = { minX, maxX, minY, maxY };
                 
                 document.getElementById('dxfStatus').className = "status ok";
-                document.getElementById('dxfStatus').innerText = `Procesado: ${dxfPoligons.length} partes`;
+                document.getElementById('dxfStatus').innerText = `Geometría procesada con éxito`;
                 
                 iniciarCalibracion(); 
             } catch(err) {
@@ -190,28 +187,18 @@
         return poligonos.sort((a, b) => b.area - a.area);
     }
 
-    // 2. SISTEMA DE CALIBRACIÓN DE 3 PUNTOS
+    // 2. SISTEMA DE CALIBRACIÓN (LIBRE, SIN IMÁN)
     function updateCalibConfig() {
         calibConfig.cx = canvas.width / 2;
         calibConfig.cy = canvas.height / 2;
-        calibConfig.scale = Math.min(canvas.width / (bbox.maxX - bbox.minX), canvas.height / (bbox.maxY - bbox.minY)) * 0.4; // Más zoom out para poder poner el eje lejos
+        calibConfig.scale = Math.min(canvas.width / (bbox.maxX - bbox.minX), canvas.height / (bbox.maxY - bbox.minY)) * 0.4; 
         calibConfig.midX = (bbox.minX + bbox.maxX) / 2;
         calibConfig.midY = (bbox.minY + bbox.maxY) / 2;
     }
 
+    // Transformaciones directas e inversas para libertad total
     function toScreen(pt) { return { x: calibConfig.cx + (pt.x - calibConfig.midX) * calibConfig.scale, y: calibConfig.cy - (pt.y - calibConfig.midY) * calibConfig.scale }; }
     function fromScreen(sx, sy) { return { x: calibConfig.midX + (sx - calibConfig.cx) / calibConfig.scale, y: calibConfig.midY - (sy - calibConfig.cy) / -calibConfig.scale }; }
-
-    function getPuntoLibreOSnap(sx, sy) {
-        let puntoReal = fromScreen(sx, sy);
-        let minDistScreen = 15; 
-        let closestVertex = null;
-        allVertices.forEach(pt => {
-            let sp = toScreen(pt);
-            if (Math.hypot(sp.x - sx, sp.y - sy) < minDistScreen) { minDistScreen = Math.hypot(sp.x - sx, sp.y - sy); closestVertex = pt; }
-        });
-        return closestVertex ? closestVertex : puntoReal;
-    }
 
     function iniciarCalibracion() {
         if(dxfPoligons.length === 0) return;
@@ -220,7 +207,7 @@
         
         let overlay = document.getElementById('instructionOverlay');
         overlay.style.display = 'block';
-        overlay.innerHTML = "📍 Paso 1:<br><span style='font-size:0.9rem; font-weight:normal;'>Clic en BISAGRA SUPERIOR (Enganche)</span>";
+        overlay.innerHTML = "📍 Paso 1:<br><span style='font-size:0.9rem; font-weight:normal;'>Clic libre en la BISAGRA SUPERIOR</span>";
         overlay.style.backgroundColor = '#3b82f6';
         
         document.getElementById('btnRecalibrar').style.display = 'none';
@@ -228,41 +215,42 @@
         renderCalibracion();
     }
 
+    // El cursor sigue exactamente el ratón. Ni rastro de "snap"
     document.getElementById('simCanvas').addEventListener('mousemove', (e) => {
         if (appState === 'SIMULATING') return;
         const rect = canvas.getBoundingClientRect();
-        hoverPoint = getPuntoLibreOSnap(e.clientX - rect.left, e.clientY - rect.top);
+        cursorPoint = fromScreen(e.clientX - rect.left, e.clientY - rect.top);
         renderCalibracion();
     });
 
     document.getElementById('simCanvas').addEventListener('mousedown', (e) => {
-        if (appState === 'SIMULATING' || !hoverPoint) return;
+        if (appState === 'SIMULATING' || !cursorPoint) return;
         let overlay = document.getElementById('instructionOverlay');
         
         if (appState === 'CALIBRATING_P1') {
-            pSup = hoverPoint;
+            pSup = cursorPoint;
             appState = 'CALIBRATING_P2';
-            overlay.innerHTML = "📍 Paso 2:<br><span style='font-size:0.9rem; font-weight:normal;'>Clic en BISAGRA INFERIOR (Enganche)</span>";
+            overlay.innerHTML = "📍 Paso 2:<br><span style='font-size:0.9rem; font-weight:normal;'>Clic libre en la BISAGRA INFERIOR</span>";
             overlay.style.backgroundColor = '#ef4444';
         } 
         else if (appState === 'CALIBRATING_P2') {
-            pInf = hoverPoint;
+            pInf = cursorPoint;
             appState = 'CALIBRATING_AXIS';
-            overlay.innerHTML = "⚙️ Paso 3:<br><span style='font-size:0.9rem; font-weight:normal;'>Clic donde quieras colocar el CENTRO DEL EJE</span>";
-            overlay.style.backgroundColor = '#8b5cf6'; // Morado
+            overlay.innerHTML = "⚙️ Paso 3:<br><span style='font-size:0.9rem; font-weight:normal;'>Clic donde quieras ubicar el CENTRO DEL EJE</span>";
+            overlay.style.backgroundColor = '#8b5cf6';
         }
         else if (appState === 'CALIBRATING_AXIS') {
-            pEje = hoverPoint;
+            pEje = cursorPoint;
             appState = 'SIMULATING';
             overlay.style.display = 'none';
             document.getElementById('btnRecalibrar').style.display = 'block';
             
-            // Cálculos Críticos tras la Calibración
+            // Calculamos la distancia exacta que actuará como eslabón rígido
             let altoLama = Math.hypot(pInf.x - pSup.x, pInf.y - pSup.y);
             let radioInicial = Math.hypot(pEje.x - pSup.x, pEje.y - pSup.y);
             
             document.getElementById('infoAlto').innerText = altoLama.toFixed(2) + " mm";
-            document.getElementById('valEje').value = (radioInicial * 2).toFixed(1); // Actualiza el input UI
+            document.getElementById('valEje').value = (radioInicial * 2).toFixed(1); 
             
             simular();
         }
@@ -271,37 +259,29 @@
     function renderCalibracion() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         
-        // 1. Dibujar DXF base
         ctx.save();
         ctx.translate(calibConfig.cx, calibConfig.cy);
-        ctx.scale(calibConfig.scale, -calibConfig.scale); 
+        ctx.scale(calibConfig.scale, -calibConfig.scale); // Eje Y invertido (Estándar CAD)
         ctx.translate(-calibConfig.midX, -calibConfig.midY);
 
         dxfPoligons.forEach(pol => {
             ctx.beginPath();
             ctx.moveTo(pol.pts[0].x, pol.pts[0].y);
             for(let k=1; k<pol.pts.length; k++) ctx.lineTo(pol.pts[k].x, pol.pts[k].y);
-            ctx.strokeStyle = "rgba(148, 163, 184, 0.4)";
+            ctx.strokeStyle = "rgba(148, 163, 184, 0.6)";
             ctx.lineWidth = 1.5 / calibConfig.scale;
             ctx.stroke();
         });
         ctx.restore();
 
-        // 2. Dibujar Cursor
-        if (hoverPoint) {
-            let hp = toScreen(hoverPoint);
-            
-            ctx.beginPath(); ctx.moveTo(hp.x - 10, hp.y); ctx.lineTo(hp.x + 10, hp.y);
-            ctx.moveTo(hp.x, hp.y - 10); ctx.lineTo(hp.x, hp.y + 10);
-            ctx.strokeStyle = "rgba(255,255,255,0.8)"; ctx.lineWidth = 1; ctx.stroke();
+        // Cruz de precisión extrema del cursor (siempre visible)
+        if (cursorPoint) {
+            let hp = toScreen(cursorPoint);
+            ctx.beginPath(); ctx.moveTo(hp.x - 15, hp.y); ctx.lineTo(hp.x + 15, hp.y);
+            ctx.moveTo(hp.x, hp.y - 15); ctx.lineTo(hp.x, hp.y + 15);
+            ctx.strokeStyle = "rgba(255,255,255,0.9)"; ctx.lineWidth = 1; ctx.stroke();
 
-            ctx.beginPath(); ctx.arc(hp.x, hp.y, 6, 0, Math.PI*2); 
-            if (appState === 'CALIBRATING_P1') ctx.fillStyle = '#3b82f6';
-            else if (appState === 'CALIBRATING_P2') ctx.fillStyle = '#ef4444';
-            else ctx.fillStyle = '#8b5cf6';
-            ctx.fill();
-
-            // Líneas Guía de Medición
+            // Líneas visuales de las conexiones
             if (pSup && appState === 'CALIBRATING_P2') {
                 let sp = toScreen(pSup);
                 ctx.beginPath(); ctx.moveTo(sp.x, sp.y); ctx.lineTo(hp.x, hp.y);
@@ -309,44 +289,40 @@
             }
             if (pSup && appState === 'CALIBRATING_AXIS') {
                 let sp = toScreen(pSup);
-                // Dibuja el radio del eje
                 ctx.beginPath(); ctx.moveTo(sp.x, sp.y); ctx.lineTo(hp.x, hp.y);
                 ctx.strokeStyle = "#8b5cf6"; ctx.lineWidth = 2; ctx.setLineDash([5, 5]); ctx.stroke(); ctx.setLineDash([]);
-                // Dibuja el circulo simulado del eje
                 let radio = Math.hypot(hp.x - sp.x, hp.y - sp.y);
                 ctx.beginPath(); ctx.arc(hp.x, hp.y, radio, 0, Math.PI*2);
-                ctx.strokeStyle = "rgba(139, 92, 246, 0.3)"; ctx.lineWidth = 2; ctx.stroke();
+                ctx.strokeStyle = "rgba(139, 92, 246, 0.4)"; ctx.lineWidth = 1.5; ctx.stroke();
             }
         }
 
-        // 3. Dibujar Puntos Confirmados
+        // Puntos fijados
         if (pSup) {
             let sp = toScreen(pSup);
-            ctx.beginPath(); ctx.arc(sp.x, sp.y, 6, 0, Math.PI*2); ctx.fillStyle = '#3b82f6'; ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth=2; ctx.stroke();
+            ctx.beginPath(); ctx.arc(sp.x, sp.y, 4, 0, Math.PI*2); ctx.fillStyle = '#3b82f6'; ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth=1; ctx.stroke();
         }
         if (pInf) {
             let ip = toScreen(pInf);
-            ctx.beginPath(); ctx.arc(ip.x, ip.y, 6, 0, Math.PI*2); ctx.fillStyle = '#ef4444'; ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth=2; ctx.stroke();
+            ctx.beginPath(); ctx.arc(ip.x, ip.y, 4, 0, Math.PI*2); ctx.fillStyle = '#ef4444'; ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth=1; ctx.stroke();
         }
     }
 
-    // 3. MOTOR CINEMÁTICO STRICTO (Cadena en Espiral)
+    // 3. MOTOR CINEMÁTICO: CUERPO RÍGIDO Y MATRIZ EXACTA
     function simular() {
         if(appState !== 'SIMULATING' || !pSup || !pInf || !pEje) return;
 
-        // Variables de entorno
+        const dEje = parseFloat(document.getElementById('valEje').value) || 60;
         const eLama = parseFloat(document.getElementById('valEspesor').value) || 9;
         const numLamas = parseInt(document.getElementById('valLamas').value) || 30;
         const flipCara = document.getElementById('chkFlipX').checked ? -1 : 1;
 
-        // Distancias Inmutables (Cuerpo Rígido)
+        // Medidas Inmutables
         const altoLama = Math.hypot(pInf.x - pSup.x, pInf.y - pSup.y);
-        const radioInicial = Math.hypot(pEje.x - pSup.x, pEje.y - pSup.y);
-        const dEje = radioInicial * 2; // Actualizamos para visualización
+        const radioInicial = dEje / 2; // Usamos el valor del UI, inicializado con el clic
 
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        // Auto-Cámara
         const radioEstimado = radioInicial + (numLamas * eLama / 2) + 20;
         escalaGlobal = Math.min(canvas.width / (radioEstimado*2.5), canvas.height / (radioEstimado*2.5));
         if (escalaGlobal < 1) escalaGlobal = 1;
@@ -355,26 +331,24 @@
         ctx.translate(canvas.width / 2, canvas.height / 2);
         ctx.scale(escalaGlobal, escalaGlobal);
 
-        // Dibujar Eje Físico en el Centro del Universo (0,0)
+        // Centro Eje Visual
         ctx.beginPath(); ctx.arc(0, 0, radioInicial, 0, Math.PI * 2);
         ctx.fillStyle = "#1e293b"; ctx.fill();
         ctx.lineWidth = 1.5 / escalaGlobal; ctx.strokeStyle = "#475569"; ctx.stroke();
 
-        // ---------------------------------------------------------
-        // ALGORITMO DE CADENA (Forward Kinematics on Archimedean Spiral)
-        // ---------------------------------------------------------
+        // -----------------------------------------------------------------
+        // PASO A: CÁLCULO DE PUNTOS EXACTOS (CADENA CINEMÁTICA)
+        // -----------------------------------------------------------------
         let bisagras = [];
         let radioMaximo = radioInicial;
 
-        // ¿En qué ángulo relativo al eje está enganchada la primera lama?
-        // Lo calculamos a partir de los clics del usuario en la fase de calibración.
-        let anguloEngancheInicial = Math.atan2(pSup.y - pEje.y, pSup.x - pEje.x);
+        // El ángulo natural de salida respecto al eje
+        let anguloInicial = Math.atan2(pSup.y - pEje.y, pSup.x - pEje.x);
         
-        // La bisagra 0 se ancla en la superficie del eje, en el ángulo calculado
         bisagras.push({ 
-            x: radioInicial * Math.cos(anguloEngancheInicial), 
-            y: radioInicial * Math.sin(anguloEngancheInicial), 
-            thetaGlobal: anguloEngancheInicial 
+            x: radioInicial * Math.cos(anguloInicial), 
+            y: radioInicial * Math.sin(anguloInicial), 
+            thetaGlobal: anguloInicial 
         });
 
         for (let i = 0; i < numLamas; i++) {
@@ -383,77 +357,70 @@
             let dTheta = 0.005, dist = 0, targetX = 0, targetY = 0;
             let testTheta = pAnt.thetaGlobal;
             
-            // Avanzamos milimétricamente en ángulo hasta que el segmento mida EXACTAMENTE 'altoLama'
+            // Algoritmo de Búsqueda Radial de Precisión
             while (dist < altoLama) {
-                testTheta += 0.005; // Dirección de enrollamiento
-                // El radio crece proporcionalmente al espesor de la lama
+                testTheta += 0.005;
                 let rTest = rActual + (eLama * ((testTheta - pAnt.thetaGlobal) / (2 * Math.PI)));
                 targetX = rTest * Math.cos(testTheta);
                 targetY = rTest * Math.sin(testTheta);
                 dist = Math.hypot(targetX - pAnt.x, targetY - pAnt.y);
             }
 
-            let pNuevo = {
-                x: targetX,
-                y: targetY,
-                thetaGlobal: testTheta
-            };
-
+            let pNuevo = { x: targetX, y: targetY, thetaGlobal: testTheta };
             bisagras.push(pNuevo);
             if (Math.hypot(pNuevo.x, pNuevo.y) > radioMaximo) radioMaximo = Math.hypot(pNuevo.x, pNuevo.y);
         }
 
-        // ---------------------------------------------------------
-        // RENDERIZADO DEL DXF COMO ESLABÓN RÍGIDO
-        // ---------------------------------------------------------
+        // -----------------------------------------------------------------
+        // PASO B: MATRIZ DE TRANSFORMACIÓN (ENCAJE 100% PERFECTO)
+        // -----------------------------------------------------------------
+        // El ángulo interno original del DXF entre Bisagra Sup e Inf
+        let dxfAngle = Math.atan2(pInf.y - pSup.y, pInf.x - pSup.x);
+
         for (let i = 0; i < numLamas; i++) {
             let p1 = bisagras[i], p2 = bisagras[i+1];
 
             ctx.save();
-            // 1. Origen local en la bisagra actual
+            
+            // 1. Nos posicionamos en la coordenada de inicio del eslabón (p1 = pSup)
             ctx.translate(p1.x, p1.y);
             
-            // 2. Apuntar el eje X del canvas directamente hacia la siguiente bisagra
-            ctx.rotate(Math.atan2(p2.y - p1.y, p2.x - p1.x));
+            // 2. Rotamos el mundo para que el eje X apunte matemáticamente exacto hacia la siguiente bisagra (p2)
+            let worldAngle = Math.atan2(p2.y - p1.y, p2.x - p1.x);
+            ctx.rotate(worldAngle);
             
-            // 3. Aplicar Modificadores (Flip) y corrección de ejes CAD->Web
-            ctx.scale(1, flipCara); 
-            ctx.scale(1, -1);       
-
-            // 4. ¿Qué ángulo tenía la lama en el dibujo original del CAD? Lo contra-rotamos.
-            let dxfAngle = Math.atan2(pInf.y - pSup.y, pInf.x - pSup.x);
-            ctx.rotate(dxfAngle);
+            // 3. Aplicamos el Flip Frontal si el usuario lo requiere y corregimos el eje Y de AutoCAD a Web
+            ctx.scale(1, flipCara * -1); 
             
-            // 5. CRÍTICO: Trasladar el origen del dibujo para que el punto `pSup` elegido por el usuario caiga en (0,0)
+            // 4. Contrarrestamos el ángulo en el que estaba dibujada originalmente la lama
+            ctx.rotate(-dxfAngle);
+            
+            // 5. El Movimiento Maestro: Desplazamos todo para que el clic del usuario (pSup) caiga en el (0,0) actual
             ctx.translate(-pSup.x, -pSup.y);
 
-            // Dibujar los polígonos
+            // Renderizamos el DXF - Automáticamente pInf caerá en p2
             dxfPoligons.forEach((pol, index) => {
                 ctx.beginPath();
                 ctx.moveTo(pol.pts[0].x, pol.pts[0].y);
                 for(let k=1; k<pol.pts.length; k++) ctx.lineTo(pol.pts[k].x, pol.pts[k].y);
                 
-                // Colorización heurística
                 if (pol.closed) { 
-                    if (index === 0) ctx.fillStyle = '#94a3b8'; // Aluminio
-                    else ctx.fillStyle = '#fef08a'; // Espuma
+                    ctx.fillStyle = index === 0 ? '#94a3b8' : '#fef08a';
                     ctx.fill(); 
                 }
-                
                 ctx.strokeStyle = '#475569';
                 ctx.lineWidth = 1.0 / escalaGlobal;
                 ctx.stroke();
             });
             ctx.restore();
             
-            // Dibujar punto visual de la bisagra
-            ctx.beginPath(); ctx.arc(p1.x, p1.y, 2 / escalaGlobal, 0, Math.PI*2);
+            // Dibujamos el punto exacto de la bisagra (se ve cómo comparten el centro)
+            ctx.beginPath(); ctx.arc(p1.x, p1.y, 1.5 / escalaGlobal, 0, Math.PI*2);
             ctx.fillStyle = "#ef4444"; ctx.fill();
         }
 
         ctx.restore();
 
-        // Actualizar UI de datos
         document.getElementById('infoPaño').innerText = (altoLama * numLamas).toFixed(0) + " mm";
         document.getElementById('infoDiam').innerText = ((radioMaximo * 2) + eLama).toFixed(1) + " mm";
     }
