@@ -3,21 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simulador de Enrollamiento PRO - Soporte DXF Real</title>
+    <title>Simulador de Persiana - Motor DXF Avanzado</title>
     <script src="https://cdn.jsdelivr.net/npm/dxf-parser@1.1.2/dist/dxf-parser.min.js"></script>
     <style>
         :root { --bg: #0f172a; --panel: #1e293b; --text: #f8fafc; --accent: #3b82f6; --border: #334155; }
         body { font-family: system-ui, -apple-system, sans-serif; margin: 0; display: flex; height: 100vh; background: var(--bg); color: var(--text); overflow: hidden; }
-        #sidebar { width: 340px; background: var(--panel); padding: 20px; display: flex; flex-direction: column; gap: 15px; border-right: 1px solid var(--border); overflow-y: auto; z-index: 10; box-shadow: 2px 0 10px rgba(0,0,0,0.5); }
-        h2 { margin: 0 0 10px 0; color: #60a5fa; font-size: 1.2rem; }
-        label { font-size: 0.85rem; color: #94a3b8; font-weight: 600; display: block; margin-bottom: 4px; }
+        #sidebar { width: 360px; background: var(--panel); padding: 20px; display: flex; flex-direction: column; gap: 15px; border-right: 1px solid var(--border); overflow-y: auto; z-index: 10; box-shadow: 2px 0 10px rgba(0,0,0,0.5); }
+        h2 { margin: 0; color: #60a5fa; font-size: 1.2rem; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
+        h3 { margin: 10px 0 5px 0; color: #94a3b8; font-size: 0.9rem; text-transform: uppercase; }
+        label { font-size: 0.85rem; color: #cbd5e1; font-weight: 600; display: block; margin-bottom: 4px; }
         input[type="file"], input[type="number"], input[type="range"] { width: 100%; padding: 8px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg); color: white; box-sizing: border-box; }
-        .checkbox-group { display: flex; align-items: center; gap: 10px; margin-top: 5px; }
-        .checkbox-group input { width: auto; width: 18px; height: 18px; cursor: pointer; }
-        .checkbox-group label { margin: 0; cursor: pointer; color: #cbd5e1; }
-        .data-panel { background: var(--bg); padding: 15px; border-radius: 6px; border: 1px solid var(--border); font-size: 0.9rem; margin-top: 10px; }
+        
+        /* Controles de Calibración DXF */
+        .calibracion-box { background: #0f172a; border: 1px solid #3b82f6; border-radius: 6px; padding: 10px; }
+        .checkbox-group { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+        .checkbox-group input { width: 16px; height: 16px; cursor: pointer; }
+        .checkbox-group label { margin: 0; cursor: pointer; color: #e2e8f0; font-size: 0.8rem; font-weight: normal; }
+        
+        .data-panel { background: var(--bg); padding: 15px; border-radius: 6px; border: 1px solid var(--border); font-size: 0.9rem; margin-top: auto; }
         .highlight { color: #10b981; font-weight: bold; font-size: 1.1rem; }
-        .status { padding: 8px; border-radius: 4px; font-size: 0.8rem; background: #334155; color: #94a3b8; text-align: center; }
+        .status { padding: 8px; border-radius: 4px; font-size: 0.8rem; background: #334155; color: #94a3b8; text-align: center; margin-top: 5px; }
         .status.ok { background: #064e3b; color: #34d399; }
         #canvas-container { flex-grow: 1; position: relative; display: flex; background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%); }
         canvas { width: 100%; height: 100%; display: block; }
@@ -26,44 +31,55 @@
 <body>
 
 <div id="sidebar">
-    <h2>Configuración de Persiana</h2>
+    <h2>Simulador de Enrollamiento</h2>
     
     <div>
-        <label>1. Cargar Archivo de Lama (.dxf)</label>
+        <h3>1. Diseño DXF</h3>
         <input type="file" id="fileDxf" accept=".dxf">
-        <div id="dxfStatus" class="status" style="margin-top: 8px;">Ningún archivo cargado</div>
+        <div id="dxfStatus" class="status">Esperando archivo...</div>
     </div>
 
-    <div class="checkbox-group">
-        <input type="checkbox" id="checkInvertir" onchange="simular()">
-        <label for="checkInvertir">Invertir cara de la lama (Interior/Exterior)</label>
+    <div class="calibracion-box">
+        <label style="color:#60a5fa;">Calibración de Importación DXF</label>
+        <div class="checkbox-group">
+            <input type="checkbox" id="chkRotar" onchange="simular()">
+            <label for="chkRotar">Rotar 90º (Si se dibujó en horizontal)</label>
+        </div>
+        <div class="checkbox-group">
+            <input type="checkbox" id="chkFlipX" onchange="simular()">
+            <label for="chkFlipX">Invertir Cara (Girar Interior/Exterior)</label>
+        </div>
+        <div class="checkbox-group">
+            <input type="checkbox" id="chkFlipY" onchange="simular()">
+            <label for="chkFlipY">Invertir Enganche (Arriba/Abajo)</label>
+        </div>
     </div>
 
     <div>
+        <h3>2. Dimensiones del Cajón</h3>
         <label>Diámetro del Eje (mm)</label>
         <input type="number" id="valEje" value="60" oninput="simular()">
     </div>
 
     <div>
-        <label>Espesor real de enrollamiento (e) [mm]</label>
+        <label>Aumento de radio por vuelta (Espesor e) [mm]</label>
         <input type="number" id="valEspesor" value="9" step="0.1" oninput="simular()">
-        <small style="color:#64748b; font-size:0.75rem;">Aumento del radio por vuelta.</small>
     </div>
 
     <div>
-        <label>Nº de Lamas: <span id="outLamas" style="color:#38bdf8;">35</span></label>
+        <label>Número de Lamas: <strong id="outLamas" style="color:#38bdf8;">35</strong></label>
         <input type="range" id="valLamas" min="5" max="80" value="35" oninput="document.getElementById('outLamas').innerText = this.value; simular();">
     </div>
 
     <div class="data-panel">
         <div style="margin-bottom: 8px; display:flex; justify-content:space-between;">
-            <span>Alto útil de lama:</span> <strong id="infoAlto">45.0 mm</strong>
+            <span>Alto útil DXF detectado:</span> <strong id="infoAlto">-- mm</strong>
         </div>
         <div style="margin-bottom: 8px; display:flex; justify-content:space-between;">
             <span>Altura total paño:</span> <strong id="infoPaño">-- mm</strong>
         </div>
         <div style="display:flex; justify-content:space-between; margin-top: 15px; border-top: 1px solid #334155; padding-top: 10px;">
-            <span>Ø Exterior Rollo:</span> <span id="infoDiam" class="highlight">-- mm</span>
+            <span>Ø Exterior Cajón:</span> <span id="infoDiam" class="highlight">-- mm</span>
         </div>
     </div>
 </div>
@@ -76,21 +92,19 @@
     const canvas = document.getElementById('simCanvas');
     const ctx = canvas.getContext('2d');
     
-    // Variables globales
-    let dxfEntitiesParsed = [];
-    let boundingBox = { minX: 0, maxX: 0, minY: 0, maxY: 0 };
-    let lamaH = 45; // Alto por defecto
-    let escalaVisual = 5;
+    let dxfPaths = [];
+    let bbox = { minX: 0, maxX: 0, minY: 0, maxY: 0 };
+    let lamaHeightDetectada = 45;
+    let escalaGlobal = 4;
 
-    // Redimensionar el canvas al tamaño de la ventana
+    window.addEventListener('resize', redimensionar);
     function redimensionar() {
         canvas.width = canvas.parentElement.clientWidth;
         canvas.height = canvas.parentElement.clientHeight;
         simular();
     }
-    window.addEventListener('resize', redimensionar);
 
-    // 1. GESTIÓN Y PARSEO ROBUSTO DEL DXF
+    // 1. LECTURA Y EXTRACCIÓN PROFUNDA DEL DXF
     document.getElementById('fileDxf').addEventListener('change', function(e) {
         const file = e.target.files[0];
         if (!file) return;
@@ -104,240 +118,197 @@
                 
                 const status = document.getElementById('dxfStatus');
                 status.className = "status ok";
-                status.innerText = `DXF OK: ${dxfEntitiesParsed.length} trazados procesados`;
-                
+                status.innerText = `Éxito: ${dxfPaths.length} líneas detectadas`;
                 simular();
             } catch(err) {
-                const status = document.getElementById('dxfStatus');
-                status.className = "status";
-                status.style.backgroundColor = "#7f1d1d";
-                status.style.color = "#fca5a5";
-                status.innerText = "Error: El archivo no es un DXF válido o está corrupto.";
+                document.getElementById('dxfStatus').className = "status";
+                document.getElementById('dxfStatus').style.backgroundColor = "#7f1d1d";
+                document.getElementById('dxfStatus').innerText = "Error leyendo DXF. Asegúrate de que sea formato ASCII.";
                 console.error(err);
             }
         };
         reader.readAsText(file);
     });
 
-    // Convierte curvas, líneas y círculos en simples arrays de puntos (Vectores)
-    function procesarDXF(dxfData) {
-        dxfEntitiesParsed = [];
-        let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    // Función recursiva para extraer líneas incluso si están dentro de BLOQUES de Revit
+    function extraerCaminos(entities, blocks, offsetX = 0, offsetY = 0) {
+        let paths = [];
+        if(!entities) return paths;
 
-        dxfData.entities.forEach(ent => {
+        entities.forEach(ent => {
             let pts = [];
-            
             if (ent.type === 'LINE') {
-                pts.push({x: ent.vertices[0].x, y: ent.vertices[0].y});
-                pts.push({x: ent.vertices[1].x, y: ent.vertices[1].y});
+                pts.push({x: ent.vertices[0].x + offsetX, y: ent.vertices[0].y + offsetY});
+                pts.push({x: ent.vertices[1].x + offsetX, y: ent.vertices[1].y + offsetY});
             } 
             else if (ent.type === 'LWPOLYLINE' || ent.type === 'POLYLINE') {
-                ent.vertices.forEach(v => pts.push({x: v.x, y: v.y}));
-                // Cerrar forma si es necesario
-                if (ent.shape || ent.closed) pts.push({x: ent.vertices[0].x, y: ent.vertices[0].y});
+                ent.vertices.forEach(v => pts.push({x: v.x + offsetX, y: v.y + offsetY}));
+                if (ent.shape || ent.closed) pts.push(pts[0]);
             }
-            else if (ent.type === 'ARC') {
-                // Convertir el arco en múltiples segmentos de línea
-                let cx = ent.center.x, cy = ent.center.y, r = ent.radius;
-                let sa = ent.startAngle, ea = ent.endAngle;
+            else if (ent.type === 'ARC' || ent.type === 'CIRCLE') {
+                let cx = ent.center.x + offsetX, cy = ent.center.y + offsetY, r = ent.radius;
+                let sa = ent.startAngle || 0, ea = ent.endAngle || (Math.PI*2);
                 if (ea < sa) ea += Math.PI * 2;
-                let steps = 15;
-                for(let i=0; i<=steps; i++) {
-                    let a = sa + (ea - sa) * (i/steps);
+                for(let i=0; i<=15; i++) {
+                    let a = sa + (ea - sa) * (i/15);
                     pts.push({x: cx + r * Math.cos(a), y: cy + r * Math.sin(a)});
                 }
             }
-            else if (ent.type === 'CIRCLE') {
-                let cx = ent.center.x, cy = ent.center.y, r = ent.radius;
-                let steps = 30;
-                for(let i=0; i<=steps; i++) {
-                    let a = (Math.PI * 2) * (i/steps);
-                    pts.push({x: cx + r * Math.cos(a), y: cy + r * Math.sin(a)});
-                }
+            else if (ent.type === 'INSERT' && blocks && blocks[ent.name]) {
+                // Extraer de los bloques insertados
+                let pos = ent.position || {x:0, y:0};
+                paths = paths.concat(extraerCaminos(blocks[ent.name].entities, blocks, pos.x + offsetX, pos.y + offsetY));
             }
 
-            if (pts.length > 0) {
-                dxfEntitiesParsed.push(pts);
-                pts.forEach(p => {
-                    if (p.x < minX) minX = p.x;
-                    if (p.x > maxX) maxX = p.x;
-                    if (p.y < minY) minY = p.y;
-                    if (p.y > maxY) maxY = p.y;
-                });
-            }
+            if (pts.length > 0) paths.push(pts);
+        });
+        return paths;
+    }
+
+    function procesarDXF(dxfData) {
+        dxfPaths = extraerCaminos(dxfData.entities, dxfData.blocks);
+        
+        let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+        dxfPaths.forEach(pts => {
+            pts.forEach(p => {
+                if(p.x < minX) minX = p.x;
+                if(p.x > maxX) maxX = p.x;
+                if(p.y < minY) minY = p.y;
+                if(p.y > maxY) maxY = p.y;
+            });
         });
 
-        if (dxfEntitiesParsed.length > 0) {
-            boundingBox = { minX, maxX, minY, maxY };
-            lamaH = maxY - minY; // La altura detectada
-            document.getElementById('infoAlto').innerText = lamaH.toFixed(2) + " mm";
+        if (dxfPaths.length > 0) {
+            bbox = { minX, maxX, minY, maxY };
+            // Asumimos inicialmente que la dimensión mayor es la altura de la lama
+            lamaHeightDetectada = (maxY - minY) > (maxX - minX) ? (maxY - minY) : (maxX - minX);
+            document.getElementById('infoAlto').innerText = lamaHeightDetectada.toFixed(2) + " mm";
         }
     }
 
-    // 2. DIBUJADO DE LA LAMA (Mapeo Matemático Exacto)
-    // Toma los puntos del DXF y los dibuja a lo largo de la línea recta entre bisagra 1 y bisagra 2
-    function dibujarLamaMapeada(p1, p2, thicknessDir) {
-        // Vector de la bisagra (Eje Y del DXF mapeado)
-        let dx = p2.x - p1.x;
-        let dy = p2.y - p1.y;
-        let len = Math.sqrt(dx*dx + dy*dy);
-        if (len < 0.1) return;
-        
-        let ux = dx / len; // Vector unitario en dirección de la altura
-        let uy = dy / len;
-        
-        // Vector perpendicular (Eje X del DXF mapeado, hacia fuera o dentro del rollo)
-        let nx = -uy * thicknessDir;
-        let ny = ux * thicknessDir;
-        
-        // Punto de anclaje base del DXF
-        let dxCenter = (boundingBox.minX + boundingBox.maxX) / 2;
-        let dyBase = boundingBox.minY;
-        
-        // Mantener proporciones
-        let scaleRatio = len / lamaH; 
-
-        ctx.beginPath();
-        dxfEntitiesParsed.forEach(pts => {
-            if (pts.length === 0) return;
-            for(let i = 0; i < pts.length; i++) {
-                // Distancia relativa desde la base y el centro
-                let h_rel = (pts[i].y - dyBase) * scaleRatio;
-                let t_rel = (pts[i].x - dxCenter) * scaleRatio;
-                
-                // Mapear al mundo Canvas usando los vectores direccionales
-                let worldX = p1.x + (h_rel * ux) + (t_rel * nx);
-                let worldY = p1.y + (h_rel * uy) + (t_rel * ny);
-                
-                if (i === 0) ctx.moveTo(worldX, worldY);
-                else ctx.lineTo(worldX, worldY);
-            }
-        });
-        
-        ctx.strokeStyle = "#38bdf8"; // Color azul brillante
-        ctx.lineWidth = 1.5 / escalaVisual;
-        ctx.stroke();
-    }
-
-    // Dibuja una lama falsa si no hay DXF
-    function dibujarLamaFalsa(p1, p2, eLama, thicknessDir) {
-        ctx.beginPath();
-        ctx.moveTo(p1.x, p1.y);
-        
-        // Crear un punto de control para hacer una curva simple
-        let midX = (p1.x + p2.x) / 2;
-        let midY = (p1.y + p2.y) / 2;
-        
-        let dx = p2.x - p1.x; let dy = p2.y - p1.y;
-        let len = Math.sqrt(dx*dx + dy*dy);
-        let nx = -(dy / len) * thicknessDir;
-        let ny = (dx / len) * thicknessDir;
-        
-        // Desplazar el centro para hacer la curva
-        midX += nx * eLama * 2;
-        midY += ny * eLama * 2;
-        
-        ctx.quadraticCurveTo(midX, midY, p2.x, p2.y);
-        ctx.strokeStyle = "#64748b";
-        ctx.lineWidth = 2 / escalaVisual;
-        ctx.stroke();
-    }
-
-    // 3. MOTOR CINEMÁTICO PRINCIPAL
+    // 2. MOTOR CINEMÁTICO Y DE RENDERIZADO
     function simular() {
         const dEje = parseFloat(document.getElementById('valEje').value) || 60;
         const eLama = parseFloat(document.getElementById('valEspesor').value) || 9;
-        const numLamas = parseInt(document.getElementById('valLamas').value) || 30;
-        const invertirCara = document.getElementById('checkInvertir').checked ? -1 : 1;
+        const numLamas = parseInt(document.getElementById('valLamas').value) || 35;
+        
+        // Configuraciones de calibración DXF
+        const rotar90 = document.getElementById('chkRotar').checked;
+        const flipX = document.getElementById('chkFlipX').checked;
+        const flipY = document.getElementById('chkFlipY').checked;
 
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        // Control de cámara (Auto-Zoom)
+        // Actualizar la altura útil dependiendo de si rotamos el dibujo
+        let altoDXF = rotar90 ? (bbox.maxX - bbox.minX) : (bbox.maxY - bbox.minY);
+        if (altoDXF === 0) altoDXF = 45; // Seguridad
+        const altoLama = dxfPaths.length > 0 ? altoDXF : 45;
+        document.getElementById('infoAlto').innerText = altoLama.toFixed(2) + " mm";
+
+        // Auto-Zoom de cámara
         const radioEstimado = (dEje / 2) + (numLamas * eLama / 2);
-        escalaVisual = Math.min((canvas.width / 2.5) / radioEstimado, (canvas.height / 2.5) / radioEstimado);
-        if (escalaVisual < 1) escalaVisual = 1;
-        if (escalaVisual > 10) escalaVisual = 10;
+        escalaGlobal = Math.min(canvas.width / (radioEstimado*2.5), canvas.height / (radioEstimado*2.5));
+        if (escalaGlobal < 1) escalaGlobal = 1;
 
-        const cx = canvas.width / 2;
-        const cy = canvas.height / 2;
-
-        // Configurar matriz de transformación global
         ctx.save();
-        ctx.translate(cx, cy);
-        ctx.scale(escalaVisual, escalaVisual);
+        ctx.translate(canvas.width / 2, canvas.height / 2); // Centro de pantalla
+        ctx.scale(escalaGlobal, escalaGlobal);
 
         // A. Dibujar el Eje
         ctx.beginPath();
         ctx.arc(0, 0, dEje / 2, 0, Math.PI * 2);
-        ctx.fillStyle = "#334155";
-        ctx.fill();
-        ctx.lineWidth = 1.5 / escalaVisual;
-        ctx.strokeStyle = "#94a3b8";
-        ctx.stroke();
+        ctx.fillStyle = "#1e293b"; ctx.fill();
+        ctx.lineWidth = 1.5 / escalaGlobal; ctx.strokeStyle = "#64748b"; ctx.stroke();
 
-        // B. Calcular Puntos de Bisagra (Cadena Geométrica)
-        let bisagras = [];
-        let rActual = dEje / 2;
-        let thetaActual = 0; // Empieza a la derecha (0 radianes)
-        
-        bisagras.push({ x: rActual, y: 0, r: rActual, theta: thetaActual });
+        // B. Calcular Cadena de Bisagras (Arquímedes Exacto)
+        let bisagras = [{ x: dEje/2, y: 0, r: dEje/2, theta: 0 }];
+        let radioMaximo = dEje / 2;
 
         for (let i = 0; i < numLamas; i++) {
             let pAnt = bisagras[i];
-            let dTheta = 0.005; // Paso de cálculo fino
-            let dist = 0;
-            let pNuevo = {x:0, y:0};
-            let rNuevo = pAnt.r;
+            let dTheta = 0.005;
+            let dist = 0, pNuevo = {x:0, y:0}, rNuevo = pAnt.r;
 
-            // Avanzamos por la espiral hasta que la distancia lineal coincida con la altura de la lama
-            while (dist < lamaH) {
+            // Avanzar en la espiral hasta cumplir la distancia de la lama
+            while (dist < altoLama) {
                 dTheta += 0.005;
                 let thetaTest = pAnt.theta + dTheta;
-                // Arquímedes: Aumenta 'eLama' por cada 2*PI (vuelta completa)
                 rNuevo = (dEje / 2) + (eLama * (thetaTest / (2 * Math.PI)));
-                
                 pNuevo.x = rNuevo * Math.cos(thetaTest);
                 pNuevo.y = rNuevo * Math.sin(thetaTest);
-                
                 dist = Math.sqrt(Math.pow(pNuevo.x - pAnt.x, 2) + Math.pow(pNuevo.y - pAnt.y, 2));
             }
-
+            
             bisagras.push({ x: pNuevo.x, y: pNuevo.y, r: rNuevo, theta: pAnt.theta + dTheta });
+            if (rNuevo > radioMaximo) radioMaximo = rNuevo;
         }
 
-        // C. Renderizar Lamas y Obtener Diámetro Final
-        let radioMaximoEnrollado = dEje / 2;
-
+        // C. Renderizar Lamas con Transformaciones Nativas
         for (let i = 0; i < numLamas; i++) {
             let p1 = bisagras[i];
             let p2 = bisagras[i+1];
 
-            if (p2.r > radioMaximoEnrollado) radioMaximoEnrollado = p2.r;
+            ctx.save();
+            
+            // 1. Trasladar al punto de inicio (Bisagra inferior de la lama)
+            ctx.translate(p1.x, p1.y);
+            
+            // 2. Rotar para que el eje X apunte hacia la siguiente bisagra (p2)
+            let anguloDireccion = Math.atan2(p2.y - p1.y, p2.x - p1.x);
+            ctx.rotate(anguloDireccion);
+            
+            // 3. Orientación del Canvas vs CAD
+            // El DXF asume Y como altura, X como grosor.
+            // Rotamos -90º para que el Y del DXF coincida con el X apuntado hacia p2
+            ctx.rotate(-Math.PI / 2); 
+            
+            // 4. Invertir eje Y porque el canvas HTML dibuja hacia abajo y AutoCAD hacia arriba
+            ctx.scale(1, -1);
 
-            // Dibujar Lama (DXF si hay, curva falsa si no)
-            if (dxfEntitiesParsed.length > 0) {
-                dibujarLamaMapeada(p1, p2, invertirCara);
+            // 5. Aplicar Calibraciones del Usuario
+            if (rotar90) ctx.rotate(-Math.PI / 2);
+            if (flipX) ctx.scale(-1, 1);
+            if (flipY) ctx.scale(1, -1);
+
+            if (dxfPaths.length > 0) {
+                // 6. Centrar el DXF en su origen
+                let midX = (bbox.minX + bbox.maxX) / 2;
+                ctx.translate(-midX, -bbox.minY);
+
+                // 7. Dibujar los trazos puros, sin distorsión matemática
+                ctx.beginPath();
+                dxfPaths.forEach(pts => {
+                    ctx.moveTo(pts[0].x, pts[0].y);
+                    for(let k=1; k<pts.length; k++) ctx.lineTo(pts[k].x, pts[k].y);
+                });
+                ctx.strokeStyle = "#38bdf8";
+                ctx.lineWidth = 1.5 / escalaGlobal;
+                ctx.stroke();
             } else {
-                dibujarLamaFalsa(p1, p2, eLama, invertirCara);
+                // Lama Falsa si no hay DXF
+                ctx.beginPath();
+                ctx.moveTo(0,0);
+                ctx.lineTo(0, altoLama);
+                ctx.strokeStyle = "#64748b";
+                ctx.lineWidth = eLama;
+                ctx.stroke();
             }
 
-            // Dibujar punto de unión (bisagra)
+            ctx.restore();
+
+            // Dibujar punto de unión
             ctx.beginPath();
-            ctx.arc(p1.x, p1.y, 1.5 / escalaVisual, 0, Math.PI*2);
-            ctx.fillStyle = "#ef4444"; // Punto rojo
-            ctx.fill();
+            ctx.arc(p1.x, p1.y, 1.5 / escalaGlobal, 0, Math.PI*2);
+            ctx.fillStyle = "#ef4444"; ctx.fill();
         }
 
         ctx.restore();
 
-        // 4. Actualizar Panel de Datos Numéricos
-        document.getElementById('infoPaño').innerText = (lamaH * numLamas).toFixed(0) + " mm";
-        // El diámetro exterior es el radio de la última bisagra + el espesor físico de la última lama hacia fuera
-        let diametroFinal = (radioMaximoEnrollado * 2) + eLama;
-        document.getElementById('infoDiam').innerText = diametroFinal.toFixed(1) + " mm";
+        // D. Actualizar UI
+        document.getElementById('infoPaño').innerText = (altoLama * numLamas).toFixed(0) + " mm";
+        document.getElementById('infoDiam').innerText = ((radioMaximo * 2) + eLama).toFixed(1) + " mm";
     }
 
-    // Inicializar canvas al arrancar
     redimensionar();
 </script>
 
