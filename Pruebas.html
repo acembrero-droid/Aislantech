@@ -24,10 +24,10 @@
         .card { background:white; border-radius:var(--border-radius); box-shadow:0 5px 15px rgba(0,0,0,0.05); margin-bottom:20px; border-top:4px solid var(--color-primary); }
         .card-body { padding:1.2rem; }
         
-        .controls-grid { display:flex; flex-wrap:wrap; gap:1.2rem; align-items:flex-end;}
+        .controls-grid { display:flex; flex-wrap:wrap; gap:1.2rem; align-items:flex-start;}
         .control-group { display:flex; flex-direction:column; gap:6px; flex: 1; min-width: 150px;}
         label { font-size:0.7rem; font-weight:700; text-transform:uppercase; color:var(--color-secondary); }
-        input, select { padding:8px 12px; border:1px solid #ddd; border-radius:var(--border-radius); font-size:0.85rem; }
+        input, select { padding:8px 12px; border:1px solid #ddd; border-radius:var(--border-radius); font-size:0.85rem; width:100%; }
         
         .btn { display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:10px 16px; border-radius:var(--border-radius); font-weight:700; border:none; cursor:pointer; transition:var(--transition); font-size:0.85rem; }
         .btn-primary { background:var(--color-primary); color:var(--color-dark); }
@@ -36,90 +36,118 @@
         .btn-edit { background:#0288d1; color:white; }
         
         .mode-switch { display:flex; background:#eee; border-radius:var(--border-radius); overflow:hidden; border:1px solid #ddd; }
-        .mode-btn { flex:1; padding:10px; font-weight:700; font-size:0.8rem; border:none; background:transparent; cursor:pointer; color: #666; }
+        .mode-btn { flex:1; padding:10px; font-weight:700; font-size:0.8rem; border:none; background:transparent; cursor:pointer; color: #666; transition:var(--transition); }
         .mode-btn.active { background:var(--color-secondary); color:white; }
         
         .status-bar { background:var(--color-primary-light); border-left:4px solid var(--color-primary); padding:12px 16px; border-radius:var(--border-radius); margin:15px 0; font-weight:600; font-size:0.85rem; display: flex; align-items: center; gap: 10px;}
         
         .canvas-wrapper { position:relative; background:#fff; border-radius:var(--border-radius); border:1px solid #ddd; overflow:hidden; box-shadow: inset 0 0 10px rgba(0,0,0,0.05); }
-        canvas { display:block; width:100%; height:auto; cursor:crosshair; background-image: radial-gradient(#ddd 1px, transparent 1px); background-size: 20px 20px; }
+        canvas { display:block; width:100%; height:auto; cursor:crosshair; }
         canvas.grabbing { cursor: grabbing !important; }
         
         .legend-panel { display:flex; flex-wrap:wrap; gap:0.5rem; background:white; padding:12px; border-radius:var(--border-radius); margin:15px 0; align-items:center; border:1px solid #ddd; }
-        .legend-item { display:flex; align-items:center; gap:8px; font-size:0.75rem; cursor:pointer; padding: 6px 10px; border-radius: 4px; transition: var(--transition); }
-        .legend-item:hover { background: #f0f0f0; }
+        .legend-item { display:flex; align-items:center; gap:8px; font-size:0.75rem; padding: 6px 10px; border-radius: 4px; }
         .legend-color { width:16px; height:16px; border-radius:3px; border:1px solid rgba(0,0,0,0.2); }
-        
-        .boundary-legend { display:flex; gap:1rem; align-items:center; margin-left:auto; font-size:0.75rem; font-weight:700; border-left: 1px solid #ddd; padding-left: 15px; }
-        .boundary-swatch { width:12px; height:12px; border-radius:50%; display:inline-block; border:1px solid #000; }
         
         #customMatPanel { background: #f9f9f9; padding: 15px; border-radius: 8px; border: 1px dashed #ccc; margin-bottom: 15px; display: none; }
         .result-card { display:none; background:#2e7d32; color:white; padding:20px; border-radius:var(--border-radius); margin-top:20px; text-align:center; }
+        
+        /* Ocultar/Mostrar paneles según modo */
+        #matSelectorPanel { display: block; }
+        #boundSelectorPanel { display: none; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div class="header-container">
-        <div><span class="logo-aislan">AISLAN</span><span class="logo-tech">TECH</span> <small style="margin-left:10px; opacity:0.6;">ISO 10077-2 Analysis</small></div>
-        <div id="solverStatus" style="font-weight: bold; color: #d32f2f; display:none;"><i class="fas fa-circle-notch fa-spin"></i> Analizando flujo de calor...</div>
+        <div><span class="logo-aislan">AISLAN</span><span class="logo-tech">TECH</span> <small style="margin-left:10px; opacity:0.6; font-weight: 400;">Thermal Analysis Pro</small></div>
+        <div id="solverStatus" style="font-weight: bold; color: #d32f2f; display:none;"><i class="fas fa-circle-notch fa-spin"></i> Analizando matriz térmica...</div>
     </div>
     
     <div class="card">
         <div class="card-body">
             <div class="controls-grid">
+                
+                <div class="control-group" style="flex: 1.2;">
+                    <label>1. Cargar DXF</label>
+                    <input type="file" id="dxfFile" accept=".dxf">
+                </div>
+
                 <div class="control-group" style="flex: 1.5;">
-                    <label>Herramienta Activa</label>
+                    <label>2. Modo de Edición</label>
                     <div class="mode-switch">
                         <button id="btnModeMat" class="mode-btn active"><i class="fas fa-fill-drip"></i> Materiales</button>
                         <button id="btnModeBound" class="mode-btn"><i class="fas fa-vector-square"></i> Contornos</button>
                     </div>
                 </div>
 
-                <div class="control-group">
-                    <label>Resolución</label>
-                    <select id="gridRes">
-                        <option value="80">Baja (80x80)</option>
-                        <option value="120" selected>Estándar (120x120)</option>
-                        <option value="200">Alta (200x200)</option>
-                    </select>
-                </div>
+                <div class="control-group" style="flex: 2; border-left: 1px solid #ddd; padding-left: 15px;" id="dynamicSelectorContainer">
+                    
+                    <div id="matSelectorPanel">
+                        <label>Seleccionar Material a Pintar</label>
+                        <div style="display:flex; gap:5px;">
+                            <select id="matSelect"></select>
+                            <button id="btnShowCustomMat" class="btn btn-outline btn-sm" title="Crear Material"><i class="fas fa-plus"></i></button>
+                        </div>
+                    </div>
 
-                <div class="control-group">
-                    <label>Archivo DXF</label>
-                    <input type="file" id="dxfFile" accept=".dxf">
-                </div>
-
-                <div class="control-group">
-                    <label>bf (mm)</label>
-                    <input type="number" id="LpInput" value="100">
-                </div>
-
-                <div class="control-group" style="flex: 2;">
-                    <label>Acciones</label>
-                    <div style="display:flex; gap:5px;">
-                        <button id="btnRotate" class="btn btn-outline btn-sm"><i class="fas fa-sync-alt"></i> 90º</button>
-                        <button id="btnZoomReset" class="btn btn-outline btn-sm"><i class="fas fa-compress-arrows-alt"></i> Centrar</button>
-                        <button id="btnBackToEdit" class="btn btn-edit" style="display:none;"><i class="fas fa-pencil-alt"></i> Volver</button>
-                        <button id="calcBtn" class="btn btn-success" disabled><i class="fas fa-play-circle"></i> CALCULAR Uf</button>
+                    <div id="boundSelectorPanel">
+                        <label>Seleccionar Tipo de Contorno a Pintar</label>
+                        <select id="boundSelect">
+                            <option value="1" style="color:#1976d2; font-weight:bold;">Exterior (Frío + Rse)</option>
+                            <option value="2" style="color:#d32f2f; font-weight:bold;">Interior (Medir Uf + Rsi)</option>
+                            <option value="4" style="color:#ff9800; font-weight:bold;">Interior Secundario (Calor perdido)</option>
+                            <option value="3" style="color:#757575;">Adiabático (Cortar flujo)</option>
+                            <option value="0">Vacío (Sin asignar)</option>
+                        </select>
                     </div>
                 </div>
-            </div>
-        </div>
-    </div>
 
-    <div id="customMatPanel">
-        <div style="display:flex; gap:15px; align-items:flex-end;">
-            <div class="control-group"><label>Nombre</label><input type="text" id="customMatName" placeholder="Espuma PUR"></div>
-            <div class="control-group"><label>Conductividad (λ)</label><input type="number" id="customMatK" step="0.001" value="0.035"></div>
-            <div class="control-group"><label>Color</label><input type="color" id="customMatColor" value="#ff9800" style="height:38px; padding:0;"></div>
-            <button id="btnAddCustomMat" class="btn btn-primary">Crear</button>
+                <div class="control-group" style="flex: 1.5; border-left: 1px solid #ddd; padding-left: 15px;">
+                    <label>Parámetros Análisis</label>
+                    <div style="display:flex; gap:5px;">
+                        <input type="number" id="LpInput" value="100" title="Ancho (bf) mm" placeholder="bf (mm)">
+                        <input type="number" id="tExt" value="0" title="Temp Exterior (ºC)">
+                        <input type="number" id="tInt" value="20" title="Temp Interior (ºC)">
+                    </div>
+                </div>
+
+            </div>
+
+            <div id="customMatPanel" style="margin-top: 15px;">
+                <div style="display:flex; gap:15px; align-items:flex-end;">
+                    <div class="control-group"><label>Nombre</label><input type="text" id="customMatName" placeholder="Espuma PUR"></div>
+                    <div class="control-group"><label>Conductividad (λ)</label><input type="number" id="customMatK" step="0.001" value="0.035"></div>
+                    <div class="control-group" style="min-width:60px;"><label>Color</label><input type="color" id="customMatColor" value="#ff9800" style="height:38px; padding:0;"></div>
+                    <button id="btnAddCustomMat" class="btn btn-primary">Añadir a la lista</button>
+                    <button id="btnCancelCustomMat" class="btn btn-outline">Cancelar</button>
+                </div>
+            </div>
+            
+            <hr style="border:none; border-top:1px solid #ddd; margin: 15px 0;">
+
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <div style="display:flex; gap:10px;">
+                    <button id="btnRotate" class="btn btn-outline btn-sm" title="Rotar 90º"><i class="fas fa-sync-alt"></i> Rotar</button>
+                    <button id="btnZoomReset" class="btn btn-outline btn-sm" title="Centrar Vista"><i class="fas fa-compress-arrows-alt"></i> Centrar</button>
+                    <select id="gridRes" style="width:auto; height:34px;">
+                        <option value="80">Malla 80x80</option>
+                        <option value="120" selected>Malla 120x120</option>
+                        <option value="200">Malla 200x200 (Lento)</option>
+                    </select>
+                </div>
+                
+                <div style="display:flex; gap:10px;">
+                    <button id="btnBackToEdit" class="btn btn-edit" style="display:none;"><i class="fas fa-pencil-alt"></i> Editar Perfil</button>
+                    <button id="calcBtn" class="btn btn-success" disabled style="padding:10px 30px; font-size:1rem;"><i class="fas fa-play-circle"></i> CALCULAR Uf</button>
+                </div>
+            </div>
+
         </div>
     </div>
 
     <div class="status-bar" id="status"><i class="fas fa-info-circle"></i> <span>Esperando archivo DXF...</span></div>
-
-    <div class="legend-panel" id="legend"></div>
 
     <div class="canvas-wrapper">
         <canvas id="canvas" width="1100" height="650"></canvas>
@@ -134,19 +162,24 @@
     let materials = [
         { name: "Cámara Aire", k: 0.026, color: "#ecf0f1" },
         { name: "Aluminio", k: 160.0, color: "#95a5a6" },
+        { name: "Acero Inox", k: 17.0, color: "#b0bec5" },
         { name: "Poliamida 25% FV", k: 0.30, color: "#d35400" },
         { name: "PVC Rígido", k: 0.17, color: "#9b59b6" },
         { name: "EPDM / Juntas", k: 0.25, color: "#2c3e50" },
+        { name: "Silicona", k: 0.35, color: "#00bcd4" },
         { name: "Aislante (XPS)", k: 0.035, color: "#f1c40f" },
         { name: "Vidrio", k: 1.0, color: "#81d4fa" }
     ];
 
+    const Rse = 0.04; // Exterior ISO 6946
+    const Rsi = 0.13; // Interior ISO 6946
+
     let polygons = [], boundaryEdges = [], boundaryAdj = [];
     let minX, maxX, minY, maxY;
-    let selectedPoly = -1, hoveredPolyIdx = -1, hoveredEdgeIdx = -1;
+    let hoveredPolyIdx = -1, hoveredEdgeIdx = -1;
     let editMode = 'MATERIAL';
 
-    // Zoom y Pan Corregidos
+    // Zoom y Pan
     let zoomLevel = 1, offsetX = 0, offsetY = 0, baseScale = 1;
     let isDragging = false, dragStartX = 0, dragStartY = 0, hasDragged = false;
 
@@ -158,58 +191,73 @@
     const ctx = canvas.getContext('2d');
     const statusText = document.querySelector('#status span');
 
-    // ──── GESTIÓN DE VISTA (ZOOM AL PUNTERO) ────
-    function getTransform() {
-        const cw = canvas.width, ch = canvas.height;
-        const cxW = (minX + maxX) / 2, cyW = (minY + maxY) / 2;
-        return {
-            s: baseScale * zoomLevel,
-            tx: x => offsetX + cw / 2 + (x - cxW) * baseScale * zoomLevel,
-            ty: y => offsetY + ch / 2 - (y - cyW) * baseScale * zoomLevel
-        };
+    // ──── INTERFAZ Y MODOS ────
+    function updateMaterialUI() {
+        const sel = document.getElementById('matSelect');
+        sel.innerHTML = materials.map((m,i) => `<option value="${i}">${m.name} (λ=${m.k})</option>`).join('');
     }
 
-    function getWorld(sx, sy) {
-        const cw = canvas.width, ch = canvas.height;
-        const cxW = (minX + maxX) / 2, cyW = (minY + maxY) / 2;
-        return {
-            x: cxW + (sx - offsetX - cw / 2) / (baseScale * zoomLevel),
-            y: cyW - (sy - offsetY - ch / 2) / (baseScale * zoomLevel)
-        };
-    }
-
-    canvas.onwheel = e => {
-        e.preventDefault();
-        if (!polygons.length) return;
-        const rect = canvas.getBoundingClientRect();
-        const mx = (e.clientX - rect.left) * (canvas.width / rect.width);
-        const my = (e.clientY - rect.top) * (canvas.height / rect.height);
-        
-        const wBefore = getWorld(mx, my);
-        const factor = e.deltaY < 0 ? 1.15 : 1 / 1.15;
-        zoomLevel = Math.max(0.1, Math.min(zoomLevel * factor, 50));
-        
-        const wAfter = getWorld(mx, my);
-        offsetX += (wAfter.x - wBefore.x) * baseScale * zoomLevel;
-        offsetY -= (wAfter.y - wBefore.y) * baseScale * zoomLevel;
+    document.getElementById('btnModeMat').onclick = function() {
+        editMode = 'MATERIAL'; 
+        this.classList.add('active'); document.getElementById('btnModeBound').classList.remove('active');
+        document.getElementById('matSelectorPanel').style.display = 'block';
+        document.getElementById('boundSelectorPanel').style.display = 'none';
+        setStatus("Modo Materiales: Selecciona el material en la lista de arriba y haz clic en las piezas para pintarlas.");
         draw();
     };
 
-    // ──── DXF PARSER COMPLETO ────
+    document.getElementById('btnModeBound').onclick = function() {
+        editMode = 'BOUNDARY'; 
+        this.classList.add('active'); document.getElementById('btnModeMat').classList.remove('active');
+        document.getElementById('matSelectorPanel').style.display = 'none';
+        document.getElementById('boundSelectorPanel').style.display = 'block';
+        setStatus("Modo Contornos: Selecciona el tipo de contorno arriba y haz clic en las líneas (Usa SHIFT+Clic para rellenar camino).");
+        draw();
+    };
+
+    document.getElementById('btnShowCustomMat').onclick = () => document.getElementById('customMatPanel').style.display = 'block';
+    document.getElementById('btnCancelCustomMat').onclick = () => document.getElementById('customMatPanel').style.display = 'none';
+    
+    document.getElementById('btnAddCustomMat').onclick = function() {
+        const name = document.getElementById('customMatName').value || "Nuevo Mat";
+        const k = parseFloat(document.getElementById('customMatK').value) || 0.1;
+        const color = document.getElementById('customMatColor').value;
+        materials.push({name, k, color});
+        updateMaterialUI();
+        document.getElementById('matSelect').value = materials.length - 1; // Seleccionar el recién creado
+        document.getElementById('customMatPanel').style.display = 'none';
+        setStatus(`Material "${name}" creado. Listo para pintar.`);
+    };
+
+    document.getElementById('btnBackToEdit').onclick = function() {
+        showThermalMap = false; this.style.display = 'none'; draw();
+    };
+
+    function setStatus(msg, type = 'info') {
+        statusText.textContent = msg;
+        const bar = document.getElementById('status');
+        bar.className = `status-bar ${type}`;
+        bar.querySelector('i').className = type === 'error' ? 'fas fa-exclamation-triangle' : type === 'success' ? 'fas fa-check-circle' : 'fas fa-info-circle';
+    }
+
+    // ──── DXF PARSER Y TOPOLOGÍA ────
     document.getElementById('dxfFile').onchange = e => {
         const file = e.target.files[0]; if(!file) return;
         const reader = new FileReader();
         reader.onload = ev => {
             try {
                 const segments = parseDXF(ev.target.result);
+                if(segments.length === 0) throw new Error("No hay líneas válidas.");
                 polygons = buildTopology(segments, 0.5);
-                recalcBounds();
-                boundaryEdges = extractBoundaryEdges(polygons);
-                document.getElementById('calcBtn').disabled = false;
-                showThermalMap = false;
-                setStatus("DXF Cargado. Selecciona materiales y contornos.");
-                draw();
-            } catch(err) { setStatus("Error DXF: " + err.message); }
+                if(polygons.length) {
+                    recalcBounds();
+                    boundaryEdges = extractBoundaryEdges(polygons);
+                    document.getElementById('calcBtn').disabled = false;
+                    showThermalMap = false;
+                    setStatus("✅ DXF Importado con éxito.");
+                    draw();
+                } else throw new Error("No se cerraron geometrías.");
+            } catch(err) { setStatus("Error DXF: " + err.message, "error"); }
         };
         reader.readAsText(file);
     };
@@ -319,8 +367,13 @@
         const faces = [];
         halfE.forEach(h => {
             if (h.used) return;
-            const p = []; let cur = h;
-            while (!cur.used) { cur.used = true; p.push({x: cur.from.x, y: cur.from.y}); const idx = cur.to.adj.indexOf(cur.rev); cur = cur.to.adj[(idx-1+cur.to.adj.length)%cur.to.adj.length]; }
+            const p = []; let cur = h, loops = 0;
+            while (!cur.used && loops < 10000) { 
+                cur.used = true; p.push({x: cur.from.x, y: cur.from.y}); 
+                const idx = cur.to.adj.indexOf(cur.rev); 
+                cur = cur.to.adj[(idx-1+cur.to.adj.length)%cur.to.adj.length];
+                loops++;
+            }
             if (p.length > 2) {
                 let a = 0; for(let i=0; i<p.length; i++) a += (p[i].x*p[(i+1)%p.length].y - p[(i+1)%p.length].x*p[i].y);
                 faces.push({pts: p, signedArea: a/2, area: Math.abs(a/2), matIdx: 1});
@@ -345,7 +398,10 @@
         boundaryAdj = edges.map(() => []);
         for(let i=0; i<edges.length; i++){
             for(let j=i+1; j<edges.length; j++){
-                if(Math.hypot(edges[i].p1.x-edges[j].p1.x, edges[i].p1.y-edges[j].p1.y) < 0.1 || Math.hypot(edges[i].p1.x-edges[j].p2.x, edges[i].p1.y-edges[j].p2.y) < 0.1 || Math.hypot(edges[i].p2.x-edges[j].p1.x, edges[i].p2.y-edges[j].p1.y) < 0.1 || Math.hypot(edges[i].p2.x-edges[j].p2.x, edges[i].p2.y-edges[j].p2.y) < 0.1) {
+                if(Math.hypot(edges[i].p1.x-edges[j].p1.x, edges[i].p1.y-edges[j].p1.y) < 0.1 || 
+                   Math.hypot(edges[i].p1.x-edges[j].p2.x, edges[i].p1.y-edges[j].p2.y) < 0.1 || 
+                   Math.hypot(edges[i].p2.x-edges[j].p1.x, edges[i].p2.y-edges[j].p1.y) < 0.1 || 
+                   Math.hypot(edges[i].p2.x-edges[j].p2.x, edges[i].p2.y-edges[j].p2.y) < 0.1) {
                     boundaryAdj[i].push(j); boundaryAdj[j].push(i);
                 }
             }
@@ -353,67 +409,76 @@
         return edges;
     }
 
-    // ──── DIBUJO Y SELECCIÓN ────
+    // ──── GESTIÓN DE VISTA (ZOOM AL PUNTERO ABSOLUTO) ────
     function recalcBounds() {
+        if(!polygons.length) return;
         const all = polygons.flatMap(p => p.pts);
         minX = Math.min(...all.map(p => p.x)); maxX = Math.max(...all.map(p => p.x));
         minY = Math.min(...all.map(p => p.y)); maxY = Math.max(...all.map(p => p.y));
         document.getElementById('LpInput').value = Math.round(maxY-minY);
-        const pad = 60;
-        baseScale = Math.min((canvas.width-pad*2)/(maxX-minX||1), (canvas.height-pad*2)/(maxY-minY||1));
+        
+        const pad = 60, cw = canvas.width, ch = canvas.height;
+        baseScale = Math.min((cw-pad*2)/(maxX-minX||1), (ch-pad*2)/(maxY-minY||1));
         zoomLevel = 1; offsetX = 0; offsetY = 0;
     }
 
-    function draw() {
-        ctx.clearRect(0,0,canvas.width,canvas.height);
-        if(!polygons.length) return;
-        const {tx, ty, s} = getTransform();
-
-        if(showThermalMap && T) {
-            const res = parseInt(document.getElementById('gridRes').value);
-            const cw = (maxX-minX)/res*s, ch = (maxY-minY)/res*s;
-            for(let i=0; i<res; i++) {
-                for(let j=0; j<res; j++) {
-                    if(kGrid[i][j] > 0) {
-                        const f = Math.max(0, Math.min(1, (T[i][j]-0)/(20-0||1)));
-                        ctx.fillStyle = `hsl(${(1-f)*240}, 75%, 50%)`;
-                        ctx.fillRect(tx(minX+j*dx), ty(minY+i*dy)-ch, cw+0.6, ch+0.6);
-                    }
-                }
-            }
-        }
-
-        ctx.globalAlpha = showThermalMap ? 0.2 : 1.0;
-        polygons.forEach((p, i) => {
-            ctx.beginPath(); ctx.moveTo(tx(p.pts[0].x), ty(p.pts[0].y));
-            p.pts.forEach(pt => ctx.lineTo(tx(pt.x), ty(pt.y))); ctx.closePath();
-            ctx.fillStyle = materials[p.matIdx].color; ctx.fill();
-            ctx.strokeStyle = i === selectedPoly ? "red" : "rgba(0,0,0,0.2)";
-            ctx.lineWidth = i === selectedPoly ? 3 : 1; ctx.stroke();
-        });
-        ctx.globalAlpha = 1.0;
-
-        boundaryEdges.forEach((edge, i) => {
-            if(edge.type === 0 && showThermalMap) return;
-            ctx.beginPath(); ctx.moveTo(tx(edge.p1.x), ty(edge.p1.y)); ctx.lineTo(tx(edge.p2.x), ty(edge.p2.y));
-            let color = "rgba(0,0,0,0.1)";
-            if(edge.type === 1) color = "#1976d2"; if(edge.type === 2) color = "#d32f2f"; if(edge.type === 4) color = "#ff9800";
-            ctx.strokeStyle = color; ctx.lineWidth = (editMode==='BOUNDARY' && i===hoveredEdgeIdx) ? 8 : (edge.type!==0 ? 5 : 2);
-            ctx.stroke();
-        });
+    function getTransform() {
+        const cw = canvas.width, ch = canvas.height;
+        const cxW = (minX + maxX) / 2, cyW = (minY + maxY) / 2;
+        return {
+            s: baseScale * zoomLevel,
+            tx: x => offsetX + cw / 2 + (x - cxW) * baseScale * zoomLevel,
+            ty: y => offsetY + ch / 2 - (y - cyW) * baseScale * zoomLevel
+        };
     }
 
-    // ──── INTERACCIONES ────
+    function getWorld(sx, sy) {
+        const cw = canvas.width, ch = canvas.height;
+        const cxW = (minX + maxX) / 2, cyW = (minY + maxY) / 2;
+        return {
+            x: cxW + (sx - offsetX - cw / 2) / (baseScale * zoomLevel),
+            y: cyW - (sy - offsetY - ch / 2) / (baseScale * zoomLevel)
+        };
+    }
+
+    canvas.onwheel = e => {
+        e.preventDefault();
+        if (!polygons.length) return;
+        const rect = canvas.getBoundingClientRect();
+        const mx = (e.clientX - rect.left) * (canvas.width / rect.width);
+        const my = (e.clientY - rect.top) * (canvas.height / rect.height);
+        
+        const wBefore = getWorld(mx, my);
+        const factor = e.deltaY < 0 ? 1.15 : 1 / 1.15;
+        zoomLevel = Math.max(0.1, Math.min(zoomLevel * factor, 50));
+        
+        // Ajuste matemático exacto para anclar el zoom
+        const cw = canvas.width, ch = canvas.height;
+        const cxW = (minX + maxX) / 2, cyW = (minY + maxY) / 2;
+        
+        offsetX = mx - cw / 2 - (wBefore.x - cxW) * baseScale * zoomLevel;
+        offsetY = my - ch / 2 + (wBefore.y - cyW) * baseScale * zoomLevel;
+        
+        draw();
+    };
+
+    document.getElementById('btnZoomReset').onclick = () => { zoomLevel = 1; offsetX = 0; offsetY = 0; draw(); };
+
+    // ──── INTERACCIONES (PAN Y CLIC) ────
     canvas.onmousedown = e => {
+        if(!polygons.length) return;
         const rect = canvas.getBoundingClientRect();
         isDragging = true; hasDragged = false;
         dragStartX = (e.clientX-rect.left)*(canvas.width/rect.width) - offsetX;
         dragStartY = (e.clientY-rect.top)*(canvas.height/rect.height) - offsetY;
+        canvas.classList.add('grabbing');
     };
+
     canvas.onmousemove = e => {
+        if(!polygons.length || showThermalMap) return;
         const rect = canvas.getBoundingClientRect();
         const mx = (e.clientX-rect.left)*(canvas.width/rect.width), my = (e.clientY-rect.top)*(canvas.height/rect.height);
-        if(isDragging){ offsetX = mx-dragStartX; offsetY = my-dragStartY; hasDragged = true; draw(); canvas.classList.add('grabbing'); return; }
+        if(isDragging){ offsetX = mx-dragStartX; offsetY = my-dragStartY; hasDragged = true; draw(); return; }
         
         const w = getWorld(mx, my);
         if(editMode === 'BOUNDARY') {
@@ -424,7 +489,7 @@
                 let dist = Math.hypot(w.x-(edge.p1.x+t*dx), w.y-(edge.p1.y+t*dy));
                 if(dist < minD){ minD = dist; hoveredEdgeIdx = i; }
             });
-            if(minD > 15/(baseScale*zoomLevel)) hoveredEdgeIdx = -1;
+            if(minD > 12/(baseScale*zoomLevel)) hoveredEdgeIdx = -1;
         } else {
             hoveredPolyIdx = -1;
             for(let i=polygons.length-1; i>=0; i--){
@@ -437,30 +502,105 @@
         }
         draw();
     };
+
     canvas.onmouseup = e => {
         isDragging = false; canvas.classList.remove('grabbing');
-        if(hasDragged || !polygons.length) return;
-        const rect = canvas.getBoundingClientRect();
-        const w = getWorld((e.clientX-rect.left)*(canvas.width/rect.width), (e.clientY-rect.top)*(canvas.height/rect.height));
-
+        if(hasDragged || !polygons.length || showThermalMap) return;
+        
+        // Ejecuta Pintado Directo basado en la selección
         if(editMode === 'BOUNDARY' && hoveredEdgeIdx !== -1) {
+            const selectedType = parseInt(document.getElementById('boundSelect').value);
+            
             if(e.shiftKey) {
-                let q = [[hoveredEdgeIdx, [hoveredEdgeIdx]]], v = new Set([hoveredEdgeIdx]), path = null;
-                while(q.length > 0){
-                    let [c, p] = q.shift();
-                    if(boundaryEdges[c].type !== 0 && c !== hoveredEdgeIdx){ path = p; break; }
-                    boundaryAdj[c].forEach(n => { if(!v.has(n)){ v.add(n); q.push([n, [...p, n]]); } });
-                }
-                if(path){ let type = boundaryEdges[path[path.length-1]].type; path.forEach(id => boundaryEdges[id].type = type); }
-            } else boundaryEdges[hoveredEdgeIdx].type = (boundaryEdges[hoveredEdgeIdx].type + 1) % 5;
+                let path = bfsFindNearestAssigned(hoveredEdgeIdx);
+                if(path){ path.forEach(id => boundaryEdges[id].type = selectedType); }
+                else boundaryEdges[hoveredEdgeIdx].type = selectedType;
+            } else {
+                boundaryEdges[hoveredEdgeIdx].type = selectedType;
+            }
             draw(); return;
         }
-        selectedPoly = hoveredPolyIdx;
-        draw();
+        
+        if (editMode === 'MATERIAL' && hoveredPolyIdx !== -1) {
+            const selectedMat = parseInt(document.getElementById('matSelect').value);
+            polygons[hoveredPolyIdx].matIdx = selectedMat;
+            draw();
+        }
     };
 
-    // ──── SOLVER E ISO 10077-2 ────
+    function bfsFindNearestAssigned(startIdx) {
+        let queue = [[startIdx, [startIdx]]];
+        let visited = new Set([startIdx]);
+
+        while(queue.length > 0) {
+            let [curr, path] = queue.shift();
+            // Evitar bucle si clickea en un borde ya pintado
+            if (boundaryEdges[curr].type !== 0 && curr !== startIdx) return path;
+            for (let n of boundaryAdj[curr]) {
+                if (!visited.has(n)) { visited.add(n); queue.push([n, [...path, n]]); }
+            }
+        }
+        return null;
+    }
+
+    function draw() {
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+        if(!polygons.length) return;
+        const {tx, ty, s} = getTransform();
+
+        if(showThermalMap && T) {
+            const res = parseInt(document.getElementById('gridRes').value);
+            const te = +document.getElementById('tExt').value, ti = +document.getElementById('tInt').value;
+            const cw = (maxX-minX)/res*s, ch = (maxY-minY)/res*s;
+            for(let i=0; i<res; i++) {
+                for(let j=0; j<res; j++) {
+                    if(kGrid[i][j] > 0) {
+                        const f = Math.max(0, Math.min(1, (T[i][j]-te)/(ti-te||1)));
+                        ctx.fillStyle = `hsl(${(1-f)*240}, 75%, 50%)`;
+                        ctx.fillRect(tx(minX+j*dx), ty(minY+i*dy)-ch, cw+0.6, ch+0.6);
+                    }
+                }
+            }
+        }
+
+        ctx.globalAlpha = showThermalMap ? 0.3 : 1.0;
+        polygons.forEach((p, i) => {
+            ctx.beginPath(); ctx.moveTo(tx(p.pts[0].x), ty(p.pts[0].y));
+            p.pts.forEach(pt => ctx.lineTo(tx(pt.x), ty(pt.y))); ctx.closePath();
+            ctx.fillStyle = materials[p.matIdx].color; ctx.fill();
+            if (editMode === 'MATERIAL' && i === hoveredPolyIdx) { ctx.fillStyle="rgba(255,255,255,0.4)"; ctx.fill(); } 
+            ctx.strokeStyle = "rgba(0,0,0,0.5)"; ctx.lineWidth = 1; ctx.stroke();
+        });
+        ctx.globalAlpha = 1.0;
+
+        boundaryEdges.forEach((edge, i) => {
+            if(edge.type === 0 && showThermalMap) return;
+            ctx.beginPath(); ctx.moveTo(tx(edge.p1.x), ty(edge.p1.y)); ctx.lineTo(tx(edge.p2.x), ty(edge.p2.y));
+            let color = "rgba(0,0,0,0.1)";
+            if(edge.type === 1) color = "#1976d2"; if(edge.type === 2) color = "#d32f2f"; if(edge.type === 4) color = "#ff9800";
+            ctx.strokeStyle = color; 
+            ctx.lineWidth = (editMode==='BOUNDARY' && i===hoveredEdgeIdx) ? 8 : (edge.type!==0 ? 4 : 1.5);
+            ctx.stroke();
+        });
+    }
+
+    document.getElementById('btnRotate').onclick = () => {
+        if(!polygons.length) return;
+        const cx = (minX+maxX)/2, cy = (minY+maxY)/2;
+        polygons.forEach(p => p.pts.forEach(pt => {
+            const dxx = pt.x-cx, dyy = pt.y-cy;
+            pt.x = cx - dyy; pt.y = cy + dxx;
+        }));
+        recalcBounds(); boundaryEdges = extractBoundaryEdges(polygons); draw();
+    };
+
+    // ──── SOLVER TÉRMICO Y CÁLCULO DE U ────
     document.getElementById('calcBtn').onclick = () => {
+        if(!polygons.length) return;
+        if(!boundaryEdges.some(e => e.type===1) || !boundaryEdges.some(e => e.type===2)) {
+            setStatus('❌ Falta marcar al menos un borde Exterior (azul) e Interior de Medición (rojo).', 'error'); return;
+        }
+        
         const res = parseInt(document.getElementById('gridRes').value);
         const lp = (+document.getElementById('LpInput').value || 100) / 1000;
         document.getElementById('solverStatus').style.display = "block";
@@ -477,7 +617,8 @@
                 }); return p ? materials[p.matIdx].k : 0;
             }));
 
-            T = Array.from({length:res}, () => new Array(res).fill(10));
+            const te = +document.getElementById('tExt').value, ti = +document.getElementById('tInt').value;
+            T = Array.from({length:res}, () => new Array(res).fill((te+ti)/2));
             isExt = Array.from({length:res}, () => new Array(res).fill(false));
             isIntMeas = Array.from({length:res}, () => new Array(res).fill(false));
             isIntSec = Array.from({length:res}, () => new Array(res).fill(false));
@@ -490,17 +631,21 @@
                     const j = Math.floor((px-minX)/dx), i = Math.floor((py-minY)/dy);
                     if(i>=0 && i<res && j>=0 && j<res){
                         if(e.type===1) isExt[i][j]=true; if(e.type===2) isIntMeas[i][j]=true; if(e.type===4) isIntSec[i][j]=true;
-                        if(kGrid[i][j]===0) kGrid[i][j] = 0.026;
+                        if(kGrid[i][j]===0) kGrid[i][j] = 0.026; 
                     }
                 }
             });
 
-            for(let it=0; it<2000; it++){
+            const iter = res === 200 ? 3000 : 1500;
+            for(let it=0; it<iter; it++){
                 for(let i=0; i<res; i++){
                     for(let j=0; j<res; j++){
                         if(kGrid[i][j]===0) continue;
-                        if(isExt[i][j]){ T[i][j] = (0 + T[i][j]*(kGrid[i][j]*0.04/dx)) / (1 + (kGrid[i][j]*0.04/dx)); continue; }
-                        if(isIntMeas[i][j] || isIntSec[i][j]){ T[i][j] = (20 + T[i][j]*(kGrid[i][j]*0.13/dx)) / (1 + (kGrid[i][j]*0.13/dx)); continue; }
+                        
+                        // Resistencias Superficiales (Rs)
+                        if(isExt[i][j]){ T[i][j] = (te + T[i][j]*(kGrid[i][j]*Rse/dx)) / (1 + (kGrid[i][j]*Rse/dx)); continue; }
+                        if(isIntMeas[i][j] || isIntSec[i][j]){ T[i][j] = (ti + T[i][j]*(kGrid[i][j]*Rsi/dx)) / (1 + (kGrid[i][j]*Rsi/dx)); continue; }
+                        
                         let n=0, d=0;
                         if(j>0 && kGrid[i][j-1]>0){ n += kGrid[i][j-1]*T[i][j-1]; d += kGrid[i][j-1]; }
                         if(j<res-1 && kGrid[i][j+1]>0){ n += kGrid[i][j+1]*T[i][j+1]; d += kGrid[i][j+1]; }
@@ -515,29 +660,27 @@
             for(let i=0; i<res; i++){
                 for(let j=0; j<res; j++){
                     if(isIntMeas[i][j]){
-                        if(j>0 && !isIntMeas[i][j-1] && kGrid[i][j-1]>0) flux += kGrid[i][j]*(20 - T[i][j]) / (kGrid[i][j]*0.13 + dx/2);
-                        if(j<res-1 && !isIntMeas[i][j+1] && kGrid[i][j+1]>0) flux += kGrid[i][j]*(20 - T[i][j]) / (kGrid[i][j]*0.13 + dx/2);
-                        if(i>0 && !isIntMeas[i-1][j] && kGrid[i-1][j]>0) flux += kGrid[i][j]*(20 - T[i][j]) / (kGrid[i][j]*0.13 + dy/2);
-                        if(i<res-1 && !isIntMeas[i+1][j] && kGrid[i+1][j]>0) flux += kGrid[i][j]*(20 - T[i][j]) / (kGrid[i][j]*0.13 + dy/2);
+                        if(j>0 && !isIntMeas[i][j-1] && kGrid[i][j-1]>0) flux += kGrid[i][j]*(ti - T[i][j]) / (kGrid[i][j]*Rsi + dx/2);
+                        if(j<res-1 && !isIntMeas[i][j+1] && kGrid[i][j+1]>0) flux += kGrid[i][j]*(ti - T[i][j]) / (kGrid[i][j]*Rsi + dx/2);
+                        if(i>0 && !isIntMeas[i-1][j] && kGrid[i-1][j]>0) flux += kGrid[i][j]*(ti - T[i][j]) / (kGrid[i][j]*Rsi + dy/2);
+                        if(i<res-1 && !isIntMeas[i+1][j] && kGrid[i+1][j]>0) flux += kGrid[i][j]*(ti - T[i][j]) / (kGrid[i][j]*Rsi + dy/2);
                     }
                 }
             }
-            const U = Math.abs(flux) / (lp * 20);
+            
+            const deltaT = Math.abs(ti - te) || 1;
+            const U = Math.abs(flux) / (lp * deltaT);
             document.getElementById('result').style.display="block";
-            document.getElementById('result').innerHTML=`<h2>Uf = ${U.toFixed(3)} W/m²K</h2><p>Flujo: ${Math.abs(flux).toFixed(3)} W/m |bf: ${lp*1000}mm</p>`;
-            showThermalMap=true; document.getElementById('btnBackToEdit').style.display="inline-flex";
-            document.getElementById('solverStatus').style.display="none"; draw();
-        }, 100);
+            document.getElementById('result').innerHTML=`<h2>Uf = ${U.toFixed(3)} W/m²K</h2><p>Flujo lineal (Q): ${Math.abs(flux).toFixed(3)} W/m | Malla: ${res}x${res}</p>`;
+            
+            showThermalMap=true; 
+            document.getElementById('btnBackToEdit').style.display="inline-flex";
+            document.getElementById('solverStatus').style.display="none"; 
+            draw();
+        }, 50);
     };
 
-    document.getElementById('btnZoomReset').onclick = () => recalcBounds() || draw();
-    document.getElementById('btnRotate').onclick = () => {
-        const cx = (minX+maxX)/2, cy = (minY+maxY)/2;
-        polygons.forEach(p => p.pts.forEach(pt => { const dx = pt.x-cx, dy = pt.y-cy; pt.x = cx - dy; pt.y = cy + dx; }));
-        recalcBounds(); boundaryEdges = extractBoundaryEdges(polygons); draw();
-    };
-
-    updateLegend();
+    updateMaterialUI();
 })();
 </script>
 </body>
