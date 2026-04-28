@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simulador Cinemático - Exportación DXF</title>
+    <title>Simulador de Persianas PRO - Estable</title>
     <script src="https://cdn.jsdelivr.net/npm/dxf-parser@1.1.2/dist/dxf-parser.min.js"></script>
     <style>
         :root { --bg: #0f172a; --panel: #1e293b; --text: #f8fafc; --border: #334155; --accent: #3b82f6; --success: #10b981; }
@@ -16,25 +16,19 @@
         
         .control-box { background: #0f172a; border: 1px solid var(--accent); border-radius: 6px; padding: 10px; }
         .btn-action { background: var(--accent); color: white; border: none; padding: 10px; border-radius: 6px; width: 100%; font-weight: bold; cursor: pointer; transition: 0.2s; margin-bottom: 10px; }
-        .btn-action:hover { background: #2563eb; }
         .btn-export { background: var(--success); color: white; border: none; padding: 12px; border-radius: 6px; width: 100%; font-weight: bold; cursor: pointer; transition: 0.2s; margin-top: 10px; display: none; }
-        .btn-export:hover { background: #059669; }
         
-        .checkbox-group { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
-        .data-panel { background: var(--bg); padding: 15px; border-radius: 6px; border: 1px solid var(--border); font-size: 0.9rem; margin-top: auto; }
-        .highlight { color: #10b981; font-weight: bold; font-size: 1.1rem; }
-        .status { padding: 8px; border-radius: 4px; font-size: 0.8rem; background: #334155; color: #94a3b8; text-align: center; margin-top: 5px; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .input-group { background: #1e293b; padding: 10px; border-radius: 6px; border: 1px solid #334155; margin-bottom: 10px; }
         #canvas-container { flex-grow: 1; position: relative; background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%); cursor: crosshair; overflow: hidden; }
         canvas { width: 100%; height: 100%; display: block; }
-        #instructionOverlay { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); background: var(--accent); color: white; padding: 12px 24px; border-radius: 30px; font-weight: bold; display: none; pointer-events: none; z-index: 20; border: 2px solid #fff; text-align: center; }
-        .input-group { background: #1e293b; padding: 10px; border-radius: 6px; border: 1px solid #334155; margin-bottom: 10px; }
+        #instructionOverlay { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); background: var(--accent); color: white; padding: 12px 24px; border-radius: 30px; font-weight: bold; display: none; pointer-events: none; z-index: 20; border: 2px solid #fff; }
     </style>
 </head>
 <body>
 
 <div id="sidebar">
     <h2>Motor de Fabricación</h2>
-    
     <div>
         <h3>1. Diseño DXF</h3>
         <input type="file" id="fileDxf" accept=".dxf">
@@ -42,16 +36,15 @@
     </div>
 
     <div class="control-box">
-        <label style="color:#60a5fa;">Calibración Espacial</label>
         <button id="btnRecalibrar" class="btn-action" onclick="iniciarCalibracion()" style="display:none;">📍 Re-Calibrar Puntos</button>
-        <div class="checkbox-group">
+        <div style="display:flex; align-items:center; gap:8px;">
             <input type="checkbox" id="chkFlipX" onchange="if(appState==='SIMULATING') simular();">
-            <label for="chkFlipX" style="font-weight: normal; font-size: 0.8rem;">Invertir Cara de Lama (Flip)</label>
+            <label for="chkFlipX" style="margin:0; font-weight:normal;">Invertir Cara (Flip)</label>
         </div>
     </div>
 
     <div>
-        <h3>2. Geometría y Cálculo</h3>
+        <h3>2. Geometría</h3>
         <div class="grid-2">
             <div>
                 <label>Diámetro Eje (mm)</label>
@@ -62,24 +55,17 @@
                 <input type="number" id="valEspesor" value="9" step="0.1" oninput="if(appState==='SIMULATING') simular();">
             </div>
         </div>
-        <div class="input-group" style="margin-top: 15px; border-color: #38bdf8;">
-            <label style="color:#38bdf8;">Ø Máx. Cajón Deseado (mm)</label>
-            <input type="number" id="valDiametroObjetivo" value="160" step="5">
-        </div>
-        <div class="input-group">
-            <label>Número de Lamas</label>
-            <input type="number" id="valLamas" value="30" step="1">
+        <div class="input-group" style="margin-top:15px;">
+            <label>Nº de Lamas</label>
+            <input type="number" id="valLamas" value="30" oninput="if(appState==='SIMULATING') simular();">
         </div>
     </div>
 
     <button id="btnExportar" class="btn-export" onclick="exportarADXF()">💾 Exportar Simulación a DXF</button>
 
-    <div class="data-panel">
-        <div style="margin-bottom: 8px; display:flex; justify-content:space-between;">
-            <span>Alto útil:</span> <strong id="infoAlto" style="color:#fde047;">-- mm</strong>
-        </div>
+    <div class="data-panel" style="margin-top:auto; background:#0f172a; padding:10px; border-radius:6px;">
         <div style="display:flex; justify-content:space-between;">
-            <span>Ø Resultante:</span> <span id="infoDiam" class="highlight">-- mm</span>
+            <span>Ø Resultante:</span> <strong id="infoDiam" style="color:#10b981;">-- mm</strong>
         </div>
     </div>
 </div>
@@ -92,48 +78,15 @@
 <script>
     const canvas = document.getElementById('simCanvas');
     const ctx = canvas.getContext('2d');
-    let dxfPoligons = [], bbox = { minX: 0, maxX: 0, minY: 0, maxY: 0 };
+    let dxfPoligons = [], allVertices = [], bbox = { minX: 0, maxX: 0, minY: 0, maxY: 0 };
     let appState = 'IDLE', pSup = null, pInf = null, pEje = null, cursorPoint = null; 
     let calibConfig = { cx: 0, cy: 0, scale: 1, midX: 0, midY: 0 };
     let simCam = { x: 0, y: 0, zoom: 1 }, isDragging = false, lastMouse = { x: 0, y: 0 };
     let altoLama = 45; 
-    let lamasCalculadasFinales = []; // Para exportación
+    let bisagrasFinales = []; 
     const LAMAS_COLGANTES = 2;
 
-    // --- LÓGICA DE CÁLCULO ---
-    const inputLamas = document.getElementById('valLamas');
-    const inputDiametroObj = document.getElementById('valDiametroObjetivo');
-    let ignoreNextEvent = false;
-
-    inputLamas.addEventListener('input', function() { if (appState === 'SIMULATING' && !ignoreNextEvent) simular(); });
-
-    inputDiametroObj.addEventListener('input', function() {
-        if (appState !== 'SIMULATING' || ignoreNextEvent) return;
-        let targetMaxRadius = parseFloat(this.value) / 2;
-        let eLama = parseFloat(document.getElementById('valEspesor').value);
-        let radioEje = parseFloat(document.getElementById('valEje').value) / 2;
-        let rActual = radioEje + (eLama / 2); 
-        let lCount = 0;
-        let testTheta = Math.atan2(pSup.y - pEje.y, pSup.x - pEje.x);
-        let pA = { x: rActual * Math.cos(testTheta), y: rActual * Math.sin(testTheta), thetaGlobal: testTheta };
-        while (rActual < targetMaxRadius && lCount < 150) { 
-            lCount++;
-            let d = 0;
-            while (d < altoLama) {
-                testTheta += 0.005;
-                let rT = rActual + (eLama * ((testTheta - pA.thetaGlobal) / (2 * Math.PI)));
-                d = Math.hypot(rT * Math.cos(testTheta) - pA.x, rT * Math.sin(testTheta) - pA.y);
-            }
-            rActual = Math.hypot(pA.x + altoLama * Math.cos(Math.atan2(rActual * Math.sin(testTheta) - pA.y, rActual * Math.cos(testTheta) - pA.x)), pA.y + altoLama * Math.sin(Math.atan2(rActual * Math.sin(testTheta) - pA.y, rActual * Math.cos(testTheta) - pA.x)));
-            pA = { x: rActual * Math.cos(testTheta), y: rActual * Math.sin(testTheta), thetaGlobal: testTheta };
-        }
-        ignoreNextEvent = true;
-        inputLamas.value = (lCount > 1 ? lCount - 1 : 1) + LAMAS_COLGANTES;
-        ignoreNextEvent = false;
-        simular();
-    });
-
-    // --- MANEJO DE DXF ---
+    // --- IMPORTACIÓN DXF ---
     document.getElementById('fileDxf').addEventListener('change', function(e) {
         const file = e.target.files[0];
         if (!file) return;
@@ -141,35 +94,38 @@
         reader.onload = function(evt) {
             try {
                 const dxfData = new DxfParser().parseSync(evt.target.result);
-                dxfPoligons = construirPoligonos(extraerSegmentosRaw(dxfData.entities, dxfData.blocks));
+                let segs = extraerSegmentos(dxfData.entities, dxfData.blocks);
+                dxfPoligons = construirPoligonos(segs);
+                
+                allVertices = [];
                 let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
                 dxfPoligons.forEach(pol => pol.pts.forEach(p => {
+                    allVertices.push(p);
                     minX = Math.min(minX, p.x); maxX = Math.max(maxX, p.x);
                     minY = Math.min(minY, p.y); maxY = Math.max(maxY, p.y);
                 }));
                 bbox = { minX, maxX, minY, maxY };
-                document.getElementById('dxfStatus').className = "status ok";
-                document.getElementById('dxfStatus').innerText = `Geometría OK`;
+                document.getElementById('dxfStatus').innerText = "Geometría Cargada";
                 iniciarCalibracion(); 
             } catch(err) { alert("Error al leer DXF"); }
         };
         reader.readAsText(file);
     });
 
-    function extraerSegmentosRaw(entities, blocks, offX = 0, offY = 0) {
+    function extraerSegmentos(entities, blocks, offX = 0, offY = 0) {
         let segs = []; if(!entities) return segs;
         entities.forEach(ent => {
             if (ent.type === 'LINE') segs.push({ p1: {x: ent.vertices[0].x+offX, y: ent.vertices[0].y+offY}, p2: {x: ent.vertices[1].x+offX, y: ent.vertices[1].y+offY} });
             else if (ent.type === 'LWPOLYLINE' || ent.type === 'POLYLINE') {
                 for(let i=0; i<ent.vertices.length-1; i++) segs.push({ p1: {x: ent.vertices[i].x+offX, y: ent.vertices[i].y+offY}, p2: {x: ent.vertices[i+1].x+offX, y: ent.vertices[i+1].y+offY} });
-                if (ent.shape || ent.closed) segs.push({ p1: {x: ent.vertices[ent.vertices.length-1].x+offX, y: ent.vertices[ent.vertices.length-1].y+offY}, p2: {x: ent.vertices[0].x+offX, y: ent.vertices[0].y+offY} });
+                if (ent.closed) segs.push({ p1: {x: ent.vertices[ent.vertices.length-1].x+offX, y: ent.vertices[ent.vertices.length-1].y+offY}, p2: {x: ent.vertices[0].x+offX, y: ent.vertices[0].y+offY} });
             } else if (ent.type === 'ARC' || ent.type === 'CIRCLE') {
                 let cx = ent.center.x + offX, cy = ent.center.y + offY, r = ent.radius, sa = ent.startAngle || 0, ea = ent.endAngle || (Math.PI*2);
                 if (ea < sa) ea += Math.PI * 2;
-                let lastP = {x: cx + r*Math.cos(sa), y: cy + r*Math.sin(sa)};
-                for(let i=1; i<=20; i++) { let newP = {x: cx + r*Math.cos(sa + (ea-sa)*(i/20)), y: cy + r*Math.sin(sa + (ea-sa)*(i/20))}; segs.push({ p1: lastP, p2: newP }); lastP = newP; }
-            } else if (ent.type === 'INSERT' && blocks && blocks[ent.name]) {
-                segs = segs.concat(extraerSegmentosRaw(blocks[ent.name].entities, blocks, ent.position.x + offX, ent.position.y + offY));
+                let steps = 16, lastP = {x: cx + r*Math.cos(sa), y: cy + r*Math.sin(sa)};
+                for(let i=1; i<=steps; i++) { let newP = {x: cx + r*Math.cos(sa + (ea-sa)*(i/steps)), y: cy + r*Math.sin(sa + (ea-sa)*(i/steps))}; segs.push({ p1: lastP, p2: newP }); lastP = newP; }
+            } else if (ent.type === 'INSERT' && blocks[ent.name]) {
+                segs = segs.concat(extraerSegmentos(blocks[ent.name].entities, blocks, ent.position.x + offX, ent.position.y + offY));
             }
         });
         return segs;
@@ -178,32 +134,35 @@
     function construirPoligonos(segs) {
         let pool = [...segs], pols = [];
         while(pool.length > 0) {
-            let path = [pool.shift().p1, pool[0]?pool[0].p1:segs[0].p2], c = true;
-            while(c && pool.length > 0) {
-                c = false; let t = path[path.length-1];
-                for(let i=0; i<pool.length; i++){
-                    if(Math.hypot(t.x-pool[i].p1.x, t.y-pool[i].p1.y)<0.05){ path.push(pool[i].p2); pool.splice(i,1); c=true; break; }
-                    if(Math.hypot(t.x-pool[i].p2.x, t.y-pool[i].p2.y)<0.05){ path.push(pool[i].p1); pool.splice(i,1); c=true; break; }
+            let path = [pool.shift().p1, segs[0].p2], c = true; // Fallback simple
+            path = [segs[0].p1, segs[0].p2]; // Start over for robustness
+            let currentPath = [pool[0].p1, pool[0].p2]; pool.shift();
+            let connecting = true;
+            while(connecting && pool.length > 0) {
+                connecting = false; let tail = currentPath[currentPath.length-1];
+                for(let i=0; i<pool.length; i++) {
+                    if(Math.hypot(tail.x-pool[i].p1.x, tail.y-pool[i].p1.y)<0.1){ currentPath.push(pool[i].p2); pool.splice(i,1); connecting=true; break; }
+                    if(Math.hypot(tail.x-pool[i].p2.x, tail.y-pool[i].p2.y)<0.1){ currentPath.push(pool[i].p1); pool.splice(i,1); connecting=true; break; }
                 }
             }
-            pols.push({ pts: path, closed: Math.hypot(path[0].x-path[path.length-1].x, path[0].y-path[path.length-1].y)<0.05 });
+            pols.push({ pts: currentPath, closed: Math.hypot(currentPath[0].x-currentPath[currentPath.length-1].x, currentPath[0].y-currentPath[currentPath.length-1].y)<0.5 });
         }
         return pols;
     }
 
-    // --- CALIBRACIÓN Y CÁMARA ---
+    // --- CÁMARA Y CALIBRACIÓN ---
     function updateCalibConfig() {
         calibConfig.cx = canvas.width/2; calibConfig.cy = canvas.height/2;
-        calibConfig.scale = Math.min(canvas.width/(bbox.maxX-bbox.minX), canvas.height/(bbox.maxY-bbox.minY))*0.4;
+        calibConfig.scale = Math.min(canvas.width/(bbox.maxX-bbox.minX+10), canvas.height/(bbox.maxY-bbox.minY+10))*0.6;
         calibConfig.midX = (bbox.minX+bbox.maxX)/2; calibConfig.midY = (bbox.minY+bbox.maxY)/2;
     }
     function toScreen(p) { return { x: calibConfig.cx + (p.x - calibConfig.midX) * calibConfig.scale, y: calibConfig.cy - (p.y - calibConfig.midY) * calibConfig.scale }; }
-    function fromScreen(sx, sy) { return { x: calibConfig.midX + (sx - calibConfig.cx) / calibConfig.scale, y: calibConfig.midY - (sy - calibConfig.cy) / calibConfig.scale }; }
+    function fromScreen(sx, sy) { return { x: calibConfig.midX + (sx - calibConfig.cx) / calibConfig.scale, y: calibConfig.midY - (sy - calibConfig.cy) / -calibConfig.scale }; }
 
     function iniciarCalibracion() {
-        appState = 'CALIBRATING_P1'; pSup = pInf = pEje = null; simCam = { x:0, y:0, zoom:1 };
+        appState = 'CALIBRATING_P1'; pSup = pInf = pEje = null;
         document.getElementById('instructionOverlay').style.display = 'block';
-        document.getElementById('instructionOverlay').innerHTML = "Paso 1: Bisagra Superior";
+        document.getElementById('instructionOverlay').innerText = "Paso 1: Clic en Bisagra Superior";
         updateCalibConfig(); renderCalibracion();
     }
 
@@ -211,125 +170,108 @@
     canvas.addEventListener('mousedown', e => {
         let r = canvas.getBoundingClientRect(); let mx = e.clientX-r.left, my = e.clientY-r.top;
         if(e.button>0){ isDragging=true; lastMouse={x:mx, y:my}; return; }
-        if(appState.startsWith('CALIBRATING')){
-            if(appState==='CALIBRATING_P1'){ pSup=cursorPoint; appState='CALIBRATING_P2'; document.getElementById('instructionOverlay').innerHTML="Paso 2: Bisagra Inferior"; }
-            else if(appState==='CALIBRATING_P2'){ pInf=cursorPoint; appState='CALIBRATING_AXIS'; document.getElementById('instructionOverlay').innerHTML="Paso 3: Centro Eje"; }
-            else {
-                pEje=cursorPoint; appState='SIMULATING'; document.getElementById('instructionOverlay').style.display='none';
-                document.getElementById('btnRecalibrar').style.display='block'; document.getElementById('btnExportar').style.display='block';
-                altoLama = Math.hypot(pInf.x-pSup.x, pInf.y-pSup.y);
-                document.getElementById('valEje').value="60";
-                let dx = pInf.x-pSup.x, dy = pInf.y-pSup.y, maxD = -Infinity, minD = Infinity;
-                dxfPoligons.forEach(pol => pol.pts.forEach(p => { let d = (dx*(pSup.y-p.y)-(pSup.x-p.x)*dy)/altoLama; maxD=Math.max(maxD,d); minD=Math.min(minD,d); }));
-                document.getElementById('valEspesor').value = ((maxD-minD)*0.7).toFixed(1);
-                document.getElementById('infoAlto').innerText = altoLama.toFixed(2)+" mm";
-                simular();
-            }
+        if(appState==='CALIBRATING_P1'){ pSup=fromScreen(mx,my); appState='CALIBRATING_P2'; document.getElementById('instructionOverlay').innerText="Paso 2: Clic en Bisagra Inferior"; }
+        else if(appState==='CALIBRATING_P2'){ pInf=fromScreen(mx,my); appState='CALIBRATING_AXIS'; document.getElementById('instructionOverlay').innerText="Paso 3: Clic en Centro Eje"; }
+        else if(appState==='CALIBRATING_AXIS'){
+            pEje=fromScreen(mx,my); appState='SIMULATING'; document.getElementById('instructionOverlay').style.display='none';
+            document.getElementById('btnExportar').style.display='block'; document.getElementById('btnRecalibrar').style.display='block';
+            altoLama = Math.hypot(pInf.x-pSup.x, pInf.y-pSup.y);
+            // Default 60mm y Grosor -30%
+            document.getElementById('valEje').value = "60";
+            let anchoLama = (bbox.maxX - bbox.minX);
+            document.getElementById('valEspesor').value = (anchoLama * 0.7).toFixed(1);
+            simular();
         } else { isDragging=true; lastMouse={x:mx, y:my}; }
     });
     canvas.addEventListener('mousemove', e => {
         let r = canvas.getBoundingClientRect(); let mx = e.clientX-r.left, my = e.clientY-r.top;
         if(isDragging){ let dx=mx-lastMouse.x, dy=my-lastMouse.y; if(appState==='SIMULATING'){ simCam.x+=dx; simCam.y+=dy; simular(); } else { calibConfig.cx+=dx; calibConfig.cy+=dy; renderCalibracion(); } lastMouse={x:mx, y:my}; }
-        else if(appState.startsWith('CALIBRATING')){ cursorPoint = fromScreen(mx, my); renderCalibracion(); }
+        else if(appState.startsWith('CALIBRATING')) renderCalibracion(fromScreen(mx,my));
     });
     window.addEventListener('mouseup', () => isDragging=false);
 
-    function renderCalibracion() {
+    function renderCalibracion(hover=null) {
         ctx.clearRect(0,0,canvas.width,canvas.height);
         ctx.save(); ctx.translate(calibConfig.cx, calibConfig.cy); ctx.scale(calibConfig.scale, -calibConfig.scale); ctx.translate(-calibConfig.midX, -calibConfig.midY);
-        dxfPoligons.forEach(pol => { ctx.beginPath(); ctx.moveTo(pol.pts[0].x, pol.pts[0].y); pol.pts.forEach(p=>ctx.lineTo(p.x, p.y)); ctx.strokeStyle="rgba(255,255,255,0.3)"; ctx.lineWidth=1/calibConfig.scale; ctx.stroke(); });
+        dxfPoligons.forEach(pol => { ctx.beginPath(); ctx.moveTo(pol.pts[0].x, pol.pts[0].y); pol.pts.forEach(p=>ctx.lineTo(p.x, p.y)); ctx.strokeStyle="rgba(255,255,255,0.4)"; ctx.lineWidth=1/calibConfig.scale; ctx.stroke(); });
         ctx.restore();
-        if(cursorPoint){ let p=toScreen(cursorPoint); ctx.strokeStyle="white"; ctx.beginPath(); ctx.moveTo(p.x-10,p.y); ctx.lineTo(p.x+10,p.y); ctx.moveTo(p.x,p.y-10); ctx.lineTo(p.x,p.y+10); ctx.stroke(); }
-        if(pSup){ let p=toScreen(pSup); ctx.fillStyle="blue"; ctx.beginPath(); ctx.arc(p.x,p.y,4,0,7); ctx.fill(); }
-        if(pInf){ let p=toScreen(pInf); ctx.fillStyle="red"; ctx.beginPath(); ctx.arc(p.x,p.y,4,0,7); ctx.fill(); }
+        if(hover){ let p=toScreen(hover); ctx.strokeStyle="white"; ctx.beginPath(); ctx.moveTo(p.x-10,p.y); ctx.lineTo(p.x+10,p.y); ctx.moveTo(p.x,p.y-10); ctx.lineTo(p.x,p.y+10); ctx.stroke(); }
+        if(pSup){ let p=toScreen(pSup); ctx.fillStyle="blue"; ctx.beginPath(); ctx.arc(p.x,p.y,5,0,7); ctx.fill(); }
+        if(pInf){ let p=toScreen(pInf); ctx.fillStyle="red"; ctx.beginPath(); ctx.arc(p.x,p.y,5,0,7); ctx.fill(); }
     }
 
-    // --- MOTOR CINEMÁTICO ---
+    // --- SIMULACIÓN Y EXPORTACIÓN ---
     function simular() {
-        if(appState!=='SIMULATING') return;
-        const dEje = parseFloat(document.getElementById('valEje').value), eLama = parseFloat(document.getElementById('valEspesor').value), nL = parseInt(inputLamas.value);
-        let rB = (dEje/2) + (eLama/2), lRoll = Math.max(1, nL-LAMAS_COLGANTES), bis = [], rM = rB;
+        const dEje = parseFloat(document.getElementById('valEje').value), eLama = parseFloat(document.getElementById('valEspesor').value), nL = parseInt(document.getElementById('valLamas').value);
+        let rB = (dEje/2) + (eLama/2), lRoll = Math.max(1, nL - LAMAS_COLGANTES), bis = [];
         let ang = Math.atan2(pSup.y-pEje.y, pSup.x-pEje.x);
         bis.push({ x: rB*Math.cos(ang), y: rB*Math.sin(ang), t: ang });
+        
         for(let i=0; i<lRoll; i++){
             let pA = bis[i], rA = Math.hypot(pA.x, pA.y), tT = pA.t, d = 0;
-            while(d < altoLama){ tT += 0.005; let rT = rA + (eLama*(tT-pA.t)/(2*Math.PI)); d = Math.hypot(rT*Math.cos(tT)-pA.x, rT*Math.sin(tT)-pA.y); }
-            bis.push({ x: Math.hypot(pA.x,pA.y+altoLama)*Math.cos(tT), y: Math.hypot(pA.x,pA.y+altoLama)*Math.sin(tT), t: tT }); // Simplificado para visual
-            bis[bis.length-1].x = Math.hypot(targetX=Math.hypot(pA.x,pA.y)*Math.cos(tT), targetY=Math.hypot(pA.x,pA.y)*Math.sin(tT)) * Math.cos(tT); // Corrección real
-            // Re-calculo preciso
-            let tX = (rA + (eLama*(tT-pA.t)/(2*Math.PI)))*Math.cos(tT), tY = (rA + (eLama*(tT-pA.t)/(2*Math.PI)))*Math.sin(tT);
-            bis[bis.length-1] = { x: tX, y: tY, t: tT };
-            rM = Math.max(rM, Math.hypot(tX, tY));
+            while(d < altoLama){
+                tT += 0.005; 
+                let rT = rA + (eLama*(tT-pA.t)/(2*Math.PI));
+                d = Math.hypot(rT*Math.cos(tT)-pA.x, rT*Math.sin(tT)-pA.y);
+            }
+            bis.push({ x: (rA + (eLama*(tT-pA.t)/(2*Math.PI)))*Math.cos(tT), y: (rA + (eLama*(tT-pA.t)/(2*Math.PI)))*Math.sin(tT), t: tT });
         }
-        let corr = (Math.PI/2) - Math.atan2(bis[bis.length-1].y - bis[bis.length-2].y, bis[bis.length-1].x - bis[bis.length-2].x);
+        
+        // Rotar para que la penúltima (final de espiral) esté a las 3
+        let pU = bis[bis.length-1], pP = bis[bis.length-2];
+        let corr = (Math.PI/2) - Math.atan2(pU.y - pP.y, pU.x - pP.x);
         bis.forEach(b => { let nx = b.x*Math.cos(corr)-b.y*Math.sin(corr), ny = b.x*Math.sin(corr)+b.y*Math.cos(corr); b.x=nx; b.y=ny; });
-        let xF = bis[bis.length-1].x, yF = bis[bis.length-1].y;
-        for(let i=0; i<nL-lRoll; i++){ yF += altoLama; bis.push({ x: xF, y: yF }); }
-        lamasCalculadasFinales = bis;
+        
+        // Caída Vertical
+        let xV = bis[bis.length-1].x, yV = bis[bis.length-1].y;
+        for(let i=0; i<LAMAS_COLGANTES; i++){ yV += altoLama; bis.push({ x: xV, y: yV }); }
+        bisagrasFinales = bis;
 
         ctx.clearRect(0,0,canvas.width,canvas.height);
-        let s = Math.min(canvas.width/(rM*3), canvas.height/(rM*3)) * simCam.zoom;
+        let s = Math.min(canvas.width/(dEje*4), canvas.height/(dEje*4)) * simCam.zoom;
         ctx.save(); ctx.translate(canvas.width/2+simCam.x, canvas.height/2+simCam.y); ctx.scale(s,s);
         ctx.beginPath(); ctx.arc(0,0,dEje/2,0,7); ctx.strokeStyle="#475569"; ctx.stroke();
-        let dA = Math.atan2(pInf.y-pSup.y, pInf.x-pSup.x);
+        
+        let dA = Math.atan2(pInf.y-pSup.y, pInf.x-pSup.x), flip = document.getElementById('chkFlipX').checked?-1:1;
         for(let i=0; i<nL; i++){
-            let p1=bis[i], p2=bis[i+1]; ctx.save(); ctx.translate(p1.x, p1.y); ctx.rotate(Math.atan2(p2.y-p1.y, p2.x-p1.x));
-            ctx.scale(1, (document.getElementById('chkFlipX').checked?-1:1)*-1); ctx.rotate(-dA); ctx.translate(-pSup.x, -pSup.y);
+            let b1=bis[i], b2=bis[i+1]; ctx.save(); ctx.translate(b1.x, b1.y); ctx.rotate(Math.atan2(b2.y-b1.y, b2.x-b1.x));
+            ctx.scale(1, flip*-1); ctx.rotate(-dA); ctx.translate(-pSup.x, -pSup.y);
             dxfPoligons.forEach((pol,idx)=>{ ctx.beginPath(); ctx.moveTo(pol.pts[0].x, pol.pts[0].y); pol.pts.forEach(p=>ctx.lineTo(p.x,p.y)); 
             if(pol.closed){ctx.fillStyle=idx==0?"#94a3b8":"#fef08a"; ctx.fill();} ctx.strokeStyle="#475569"; ctx.lineWidth=1/s; ctx.stroke(); });
             ctx.restore();
         }
         ctx.restore();
-        document.getElementById('infoDiam').innerText = (rM*2+eLama).toFixed(1)+" mm";
-        if(!ignoreNextEvent) document.getElementById('valDiametroObjetivo').value = (rM*2+eLama).toFixed(0);
+        document.getElementById('infoDiam').innerText = (Math.hypot(bis[lRoll].x, bis[lRoll].y)*2 + eLama).toFixed(1) + " mm";
     }
 
-    // --- FUNCIÓN DE EXPORTACIÓN DXF ---
     function exportarADXF() {
         let dxf = "  0\nSECTION\n  2\nENTITIES\n";
-        // 1. Eje
         const dEje = parseFloat(document.getElementById('valEje').value);
-        dxf += `  0\nCIRCLE\n  8\nEJE_CENTRAL\n 10\n0.0\n 20\n0.0\n 40\n${dEje/2}\n`;
-        
-        let dA = Math.atan2(pInf.y-pSup.y, pInf.x-pSup.x);
-        let flip = document.getElementById('chkFlipX').checked ? -1 : 1;
-
-        for (let i = 0; i < lamasCalculadasFinales.length - 1; i++) {
-            let p1 = lamasCalculadasFinales[i], p2 = lamasCalculadasFinales[i+1];
-            let rotPaño = Math.atan2(p2.y - p1.y, p2.x - p1.x);
-
-            dxfPoligons.forEach((pol, pIdx) => {
-                for (let j = 0; j < pol.pts.length - 1; j++) {
-                    let pt1 = transformarPunto(pol.pts[j], p1, rotPaño, dA, flip);
-                    let pt2 = transformarPunto(pol.pts[j+1], p1, rotPaño, dA, flip);
-                    dxf += `  0\nLINE\n  8\nLAMA_${i+1}\n 10\n${pt1.x}\n 20\n${pt1.y}\n 11\n${pt2.x}\n 21\n${pt2.y}\n`;
-                }
-                if (pol.closed) {
-                    let pt1 = transformarPunto(pol.pts[pol.pts.length-1], p1, rotPaño, dA, flip);
-                    let pt2 = transformarPunto(pol.pts[0], p1, rotPaño, dA, flip);
-                    dxf += `  0\nLINE\n  8\nLAMA_${i+1}\n 10\n${pt1.x}\n 20\n${pt1.y}\n 11\n${pt2.x}\n 21\n${pt2.y}\n`;
+        dxf += `  0\nCIRCLE\n  8\nEJE\n 10\n0.0\n 20\n0.0\n 40\n${dEje/2}\n`;
+        let dA = Math.atan2(pInf.y-pSup.y, pInf.x-pSup.x), flip = document.getElementById('chkFlipX').checked?-1:1;
+        for (let i = 0; i < bisagrasFinales.length - 1; i++) {
+            let b1 = bisagrasFinales[i], b2 = bisagrasFinales[i+1], rotP = Math.atan2(b2.y-b1.y, b2.x-b1.x);
+            dxfPoligons.forEach(pol => {
+                for (let j = 0; j < pol.pts.length; j++) {
+                    let pA = pol.pts[j], pB = pol.pts[(j+1)%pol.pts.length];
+                    if(!pol.closed && j === pol.pts.length-1) continue;
+                    let t1 = transf(pA, b1, rotP, dA, flip), t2 = transf(pB, b1, rotP, dA, flip);
+                    dxf += `  0\nLINE\n  8\nLAMA_${i+1}\n 10\n${t1.x}\n 20\n${t1.y}\n 11\n${t2.x}\n 21\n${t2.y}\n`;
                 }
             });
         }
         dxf += "  0\nENDSEC\n  0\nEOF";
-        let blob = new Blob([dxf], {type: 'application/dxf'});
         let link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = "simulacion_persiana.dxf";
-        link.click();
+        link.href = URL.createObjectURL(new Blob([dxf], {type:'application/dxf'}));
+        link.download = "persiana_calculada.dxf"; link.click();
     }
 
-    function transformarPunto(pt, p1, rotPaño, dA, flip) {
-        // 1. Centrar en pSup
+    function transf(pt, b1, rotP, dA, flip) {
         let x = pt.x - pSup.x, y = pt.y - pSup.y;
-        // 2. Aplicar rotación original del DXF (Inversa)
-        let cosA = Math.cos(-dA), sinA = Math.sin(-dA);
-        let nx = x * cosA - y * sinA, ny = x * sinA + y * cosA;
-        // 3. Aplicar Flip e inversión de Y
-        ny *= (flip * -1);
-        // 4. Aplicar rotación del paño
-        let cosP = Math.cos(rotPaño), sinP = Math.sin(rotPaño);
-        return { x: p1.x + (nx * cosP - ny * sinP), y: p1.y + (nx * sinP + ny * cosP) };
+        let cA = Math.cos(-dA), sA = Math.sin(-dA);
+        let nx = x*cA - y*sA, ny = (x*sA + y*cA) * flip * -1;
+        let cP = Math.cos(rotP), sP = Math.sin(rotP);
+        return { x: b1.x + (nx*cP - ny*sP), y: b1.y + (nx*sP + ny*cP) };
     }
 </script>
 </body>
