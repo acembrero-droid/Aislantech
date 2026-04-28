@@ -2,237 +2,178 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Simulador de Enrollamiento de Persianas</title>
+    <title>Simulador Físico de Persiana</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/dxf-parser@1.1.2/dist/dxf-parser.min.js"></script>
     <style>
-        :root { --primary: #2563eb; --bg: #f8fafc; }
-        body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg); margin: 0; display: flex; height: 100vh; overflow: hidden; }
-        
-        /* Panel Lateral */
-        #sidebar { width: 350px; background: white; border-right: 1px solid #e2e8f0; padding: 20px; display: flex; flex-direction: column; box-shadow: 2px 0 10px rgba(0,0,0,0.05); }
-        h2 { color: #1e293b; font-size: 1.2rem; margin-top: 0; }
-        .control-group { margin-bottom: 15px; }
-        label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 5px; color: #64748b; }
-        input[type="number"], input[type="file"] { width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; }
-        button { background: var(--primary); color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: 600; width: 100%; transition: opacity 0.2s; }
-        button:hover { opacity: 0.9; }
-
-        /* Área Principal */
-        #main { flex-grow: 1; display: flex; flex-direction: column; padding: 20px; overflow-y: auto; }
-        #canvas-container { background: #fff; border-radius: 8px; border: 1px solid #e2e8f0; display: flex; justify-content: center; align-items: center; min-height: 400px; margin-bottom: 20px; position: relative; }
-        canvas { max-width: 100%; max-height: 100%; }
-        
-        /* Tabla de resultados */
-        .table-wrapper { background: white; border-radius: 8px; border: 1px solid #e2e8f0; overflow: hidden; }
-        table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
-        th { background: #f1f5f9; padding: 12px; text-align: left; color: #475569; }
-        td { padding: 10px 12px; border-top: 1px solid #f1f5f9; }
-        tr:nth-child(even) { background: #f8fafc; }
-        
-        .status { font-size: 0.8rem; padding: 10px; border-radius: 4px; margin-bottom: 10px; }
-        .success { background: #dcfce7; color: #166534; }
-        .info { background: #e0f2fe; color: #075985; }
+        body { font-family: sans-serif; margin: 0; display: flex; background: #1a1a1a; color: white; height: 100vh; }
+        #menu { width: 320px; padding: 20px; background: #252525; border-right: 1px solid #444; display: flex; flex-direction: column; gap: 15px; }
+        #canvas-container { flex-grow: 1; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+        canvas { background: #000; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
+        input, button { padding: 10px; border-radius: 4px; border: none; width: 100%; box-sizing: border-box; }
+        button { background: #3b82f6; color: white; font-weight: bold; cursor: pointer; }
+        .data-panel { font-size: 0.8rem; background: #333; padding: 10px; border-radius: 4px; }
+        table { width: 100%; font-size: 0.75rem; border-collapse: collapse; margin-top: 10px; }
+        th, td { border-bottom: 1px solid #444; padding: 5px; text-align: left; }
     </style>
 </head>
 <body>
 
-<div id="sidebar">
-    <h2>Configuración</h2>
+<div id="menu">
+    <h2>Simulador Físico</h2>
+    <label>Archivo DXF de Lama:</label>
+    <input type="file" id="dxfInput" accept=".dxf">
     
-    <div class="control-group">
-        <label>1. Archivo DXF de Lama</label>
-        <input type="file" id="dxfInput" accept=".dxf">
-    </div>
+    <label>Diámetro Eje (mm):</label>
+    <input type="number" id="ejeDiam" value="60">
 
-    <div id="dxfStatus" class="status info">Sube un DXF para extraer dimensiones</div>
+    <label>Número de Lamas:</label>
+    <input type="number" id="numLamas" value="25">
 
-    <div class="control-group">
-        <label>Diámetro del Eje (mm)</label>
-        <input type="number" id="ejeDiam" value="60" step="1">
-    </div>
+    <button onclick="iniciarSimulacion()">Iniciar Motor Físico</button>
 
-    <div class="control-group">
-        <label>Altura Total de Persiana (mm)</label>
-        <input type="number" id="alturaDeseada" value="2000" step="100">
-    </div>
-
-    <div class="control-group">
-        <label>Espesor Nominal (mm) *</label>
-        <input type="number" id="espesorManual" value="9" step="0.1">
-        <small style="color: #94a3b8; font-size: 0.7rem;">* Ajusta según el grosor de la lama cerrada.</small>
-    </div>
-
-    <button onclick="procesarYSimular()">Generar Simulación</button>
-
-    <div id="dimensionesExtraidas" style="margin-top:20px; font-size: 0.85rem; color: #475569;"></div>
-</div>
-
-<div id="main">
-    <div id="canvas-container">
-        <canvas id="persianaCanvas" width="800" height="800"></canvas>
-    </div>
-
-    <div class="table-wrapper">
-        <table id="tablaResultados">
+    <div class="data-panel">
+        <strong>Resultados en Tiempo Real:</strong>
+        <div id="stats">Esperando inicio...</div>
+        <table id="tablaFisica">
             <thead>
-                <tr>
-                    <th>Vuelta / Tramo</th>
-                    <th>Lamas Enrolladas</th>
-                    <th>Altura Paño (mm)</th>
-                    <th>Ø Exterior Rollo (mm)</th>
-                </tr>
+                <tr><th>Lama</th><th>Radio (mm)</th><th>Ø Total</th></tr>
             </thead>
-            <tbody>
-                </tbody>
+            <tbody></tbody>
         </table>
     </div>
 </div>
 
-<script>
-    let dimensionesLama = { alto: 0, espesor: 0 };
+<div id="canvas-container">
+    <div id="sim-info" style="position:absolute; top:10px; left:10px; color:#aaa;">Motor: Matter.js</div>
+</div>
 
-    // 1. Escuchar la carga del archivo DXF
+<script>
+    const { Engine, Render, Runner, Bodies, Composite, Constraint, Vector, Body } = Matter;
+
+    let engine, render, runner;
+    let dimensionesLama = { alto: 45.9, espesor: 9.0 }; // Valores por defecto
+
+    // Carga de DXF
     document.getElementById('dxfInput').addEventListener('change', function(e) {
         const file = e.target.files[0];
-        if (!file) return;
-
         const reader = new FileReader();
         reader.onload = function(e) {
-            const contents = e.target.result;
-            const parser = new DxfParser();
-            try {
-                const dxf = parser.parseSync(contents);
-                // Extraer el Bounding Box del DXF
-                // Nota: Usamos las dimensiones máximas encontradas en las entidades
-                const box = calcularBoundingBox(dxf);
-                
-                dimensionesLama.alto = box.height;
-                dimensionesLama.espesor = box.width;
-
-                document.getElementById('dxfStatus').className = "status success";
-                document.getElementById('dxfStatus').innerText = "DXF cargado correctamente";
-                document.getElementById('dimensionesExtraidas').innerHTML = `
-                    <strong>Detectado en DXF:</strong><br>
-                    Alto lama: ${box.height.toFixed(2)} mm<br>
-                    Ancho perfil: ${box.width.toFixed(2)} mm
-                `;
-                // Sugerir el espesor manual si detectamos uno muy fino
-                document.getElementById('espesorManual').value = Math.min(box.width, box.height).toFixed(1);
-                
-            } catch (err) {
-                alert("Error al procesar el DXF");
-                console.error(err);
+            const dxf = new DxfParser().parseSync(e.target.result);
+            if(dxf.header.$EXTMAX) {
+                dimensionesLama.alto = dxf.header.$EXTMAX.y - dxf.header.$EXTMIN.y;
+                dimensionesLama.espesor = 9; // El espesor suele ser la cara corta, pero para colisión usamos un valor nominal
+                console.log("Dimensiones cargadas:", dimensionesLama);
             }
         };
         reader.readAsText(file);
     });
 
-    function calcularBoundingBox(dxf) {
-        // Valores extraídos del Header o iterando entidades
-        let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-        
-        // Si el DXF tiene $EXTMAX y $EXTMIN en el header (como el tuyo)
-        if(dxf.header && dxf.header.$EXTMAX) {
-            return {
-                width: dxf.header.$EXTMAX.x - dxf.header.$EXTMIN.x,
-                height: dxf.header.$EXTMAX.y - dxf.header.$EXTMIN.y
-            };
+    function iniciarSimulacion() {
+        if (engine) { // Resetear si ya existe
+            Engine.clear(engine);
+            Render.stop(render);
+            Runner.stop(runner);
+            render.canvas.remove();
         }
+
+        const dEje = parseFloat(document.getElementById('ejeDiam').value);
+        const nLamas = parseInt(document.getElementById('numLamas').value);
         
-        // Fallback: Iterar entidades
-        dxf.entities.forEach(ent => {
-            if (ent.vertices) {
-                ent.vertices.forEach(v => {
-                    if(v.x < minX) minX = v.x; if(v.x > maxX) maxX = v.x;
-                    if(v.y < minY) minY = v.y; if(v.y > maxY) maxY = v.y;
-                });
-            }
+        // 1. Crear Motor
+        engine = Engine.create({ gravity: { x: 0, y: 1 } });
+        render = Render.create({
+            element: document.getElementById('canvas-container'),
+            engine: engine,
+            options: { width: 800, height: 800, wireframes: false, background: '#111' }
         });
-        return { width: maxX - minX, height: maxY - minY };
+
+        // 2. Crear Eje (Cuerpo estático que rota)
+        const escala = 3; // Píxeles por mm para visualización
+        const eje = Bodies.circle(400, 400, (dEje / 2) * escala, { 
+            isStatic: true, 
+            render: { fillStyle: '#444' } 
+        });
+
+        // 3. Crear Lamas y Conectarlas
+        let lamas = [];
+        let prevLama = null;
+
+        for (let i = 0; i < nLamas; i++) {
+            // Creamos la lama como un rectángulo con la forma del DXF
+            // Posición inicial: desplegada hacia abajo
+            const x = 400 + (dEje / 2) * escala;
+            const y = 400 + (i * dimensionesLama.alto * escala);
+            
+            const lama = Bodies.rectangle(x, y, dimensionesLama.espesor * escala, dimensionesLama.alto * escala, {
+                chamfer: { radius: 2 },
+                friction: 0.5,
+                restitution: 0.1,
+                render: { fillStyle: i % 2 === 0 ? '#3b82f6' : '#60a5fa' }
+            });
+
+            // Conectar al eje o a la lama anterior (Efecto bisagra)
+            if (i === 0) {
+                const joint = Constraint.create({
+                    bodyA: eje,
+                    pointA: { x: (dEje / 2) * escala, y: 0 },
+                    bodyB: lama,
+                    pointB: { x: 0, y: -(dimensionesLama.alto / 2) * escala },
+                    stiffness: 0.8,
+                    length: 0
+                });
+                Composite.add(engine.world, joint);
+            } else {
+                const joint = Constraint.create({
+                    bodyA: prevLama,
+                    pointA: { x: 0, y: (dimensionesLama.alto / 2) * escala },
+                    bodyB: lama,
+                    pointB: { x: 0, y: -(dimensionesLama.alto / 2) * escala },
+                    stiffness: 0.8,
+                    length: 2 // Pequeño juego en la articulación
+                });
+                Composite.add(engine.world, joint);
+            }
+
+            lamas.push(lama);
+            prevLama = lama;
+        }
+
+        Composite.add(engine.world, [eje, ...lamas]);
+
+        // 4. Lógica de Rotación (Enrollamiento)
+        let torque = 0.05;
+        Matter.Events.on(engine, 'beforeUpdate', () => {
+            // Hacemos que el eje rote lentamente para enrollar
+            Body.setAngle(eje, eje.angle + 0.02);
+            
+            // Actualizar tabla cada cierto tiempo
+            if (engine.timing.timestamp % 100 < 20) actualizarDatos(lamas, eje, escala);
+        });
+
+        Render.run(render);
+        runner = Runner.create();
+        Runner.run(runner, engine);
     }
 
-    function procesarYSimular() {
-        const ejeDiam = parseFloat(document.getElementById('ejeDiam').value);
-        const alturaTotalRequerida = parseFloat(document.getElementById('alturaDeseada').value);
-        const espesorLama = parseFloat(document.getElementById('espesorManual').value);
-        const altoLama = dimensionesLama.alto || 45; // Fallback a 45mm si no hay DXF
-
-        const canvas = document.getElementById('persianaCanvas');
-        const ctx = canvas.getContext('2d');
-        const tbody = document.getElementById('tablaResultados').querySelector('tbody');
-        
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+    function actualizarDatos(lamas, eje, escala) {
+        const tbody = document.querySelector('#tablaFisica tbody');
         tbody.innerHTML = "";
-
-        let lamasTotales = Math.ceil(alturaTotalRequerida / altoLama);
-        let radioActual = ejeDiam / 2;
-        let alturaAcumulada = 0;
-        let anguloTotal = 0;
         
-        // Configuración visual
-        const centro = { x: canvas.width / 2, y: canvas.height / 2 };
-        const escala = (canvas.width / 2) / (radioActual + (lamasTotales * espesorLama / 2) * 1.5);
+        // Calculamos el radio máximo actual midiendo la distancia de las lamas al centro del eje
+        let maxR = 0;
+        lamas.forEach((lama, index) => {
+            const dist = Math.sqrt(Math.pow(lama.position.x - 400, 2) + Math.pow(lama.position.y - 400, 2)) / escala;
+            if (dist > maxR) maxR = dist;
 
-        // Dibujar Eje
-        ctx.beginPath();
-        ctx.arc(centro.x, centro.y, radioActual * escala, 0, Math.PI * 2);
-        ctx.strokeStyle = "#94a3b8";
-        ctx.lineWidth = 2;
-        ctx.stroke();
-
-        // Simulación paso a paso
-        let dataParaTabla = [];
-
-        for (let i = 1; i <= lamasTotales; i++) {
-            // Longitud de la lama en el arco
-            // Cada lama ocupa un ángulo dependiente del radio actual
-            let pasoAngulo = altoLama / radioActual;
-            
-            // Dibujar lama (arco simplificado)
-            ctx.beginPath();
-            ctx.arc(centro.x, centro.y, radioActual * escala, anguloTotal, anguloTotal + pasoAngulo);
-            ctx.strokeStyle = `hsl(${(i * 5) % 360}, 60%, 45%)`;
-            ctx.lineWidth = espesorLama * escala;
-            ctx.stroke();
-
-            anguloTotal += pasoAngulo;
-            alturaAcumulada += altoLama;
-            
-            // Por cada vuelta completa (2PI), aumentamos el radio según el espesor
-            if (anguloTotal >= Math.PI * 2) {
-                radioActual += espesorLama;
-                anguloTotal -= Math.PI * 2;
-                
-                dataParaTabla.push({
-                    vuelta: dataParaTabla.length + 1,
-                    lamas: i,
-                    altura: alturaAcumulada,
-                    diametro: radioActual * 2
-                });
+            if (index % 5 === 0 || index === lamas.length - 1) {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td>${index+1}</td><td>${dist.toFixed(1)}</td><td>${(dist*2).toFixed(1)}</td>`;
+                tbody.appendChild(tr);
             }
-        }
-
-        // Agregar última fila si no se completó la vuelta
-        dataParaTabla.push({
-            vuelta: "Final",
-            lamas: lamasTotales,
-            altura: alturaAcumulada,
-            diametro: radioActual * 2
         });
-
-        // Rellenar tabla
-        dataParaTabla.forEach(row => {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td>${row.vuelta}</td>
-                <td>${row.lamas}</td>
-                <td>${row.altura.toFixed(0)} mm</td>
-                <td><strong>${row.diametro.toFixed(1)} mm</strong></td>
-            `;
-            tbody.appendChild(tr);
-        });
+        document.getElementById('stats').innerText = `Ø Máximo actual: ${(maxR * 2).toFixed(2)} mm`;
     }
 </script>
-
 </body>
 </html>
