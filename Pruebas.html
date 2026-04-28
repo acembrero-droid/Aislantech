@@ -24,10 +24,10 @@
         .card { background:white; border-radius:var(--border-radius); box-shadow:0 5px 15px rgba(0,0,0,0.05); margin-bottom:20px; border-top:4px solid var(--color-primary); }
         .card-body { padding:1.2rem; }
         
-        .controls-grid { display:flex; flex-wrap:wrap; gap:1.2rem; align-items:flex-start;}
+        .controls-grid { display:flex; flex-wrap:wrap; gap:1.2rem; align-items:flex-end;}
         .control-group { display:flex; flex-direction:column; gap:6px; flex: 1; min-width: 150px;}
         label { font-size:0.7rem; font-weight:700; text-transform:uppercase; color:var(--color-secondary); }
-        input, select { padding:8px 12px; border:1px solid #ddd; border-radius:var(--border-radius); font-size:0.85rem; }
+        input, select { padding:8px 12px; border:1px solid #ddd; border-radius:var(--border-radius); font-size:0.85rem; width:100%; }
         
         .btn { display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:10px 16px; border-radius:var(--border-radius); font-weight:700; border:none; cursor:pointer; transition:var(--transition); font-size:0.85rem; }
         .btn-primary { background:var(--color-primary); color:var(--color-dark); }
@@ -50,9 +50,6 @@
         .legend-item:hover { background: #f0f0f0; }
         .legend-color { width:16px; height:16px; border-radius:3px; border:1px solid rgba(0,0,0,0.2); }
         
-        .boundary-legend { display:flex; gap:1rem; align-items:center; margin-left:auto; font-size:0.75rem; font-weight:700; border-left: 1px solid #ddd; padding-left: 15px; }
-        .boundary-swatch { width:12px; height:12px; border-radius:50%; display:inline-block; border:1px solid #000; }
-        
         #customMatPanel { background: #f9f9f9; padding: 15px; border-radius: 8px; border: 1px dashed #ccc; margin-bottom: 15px; display: none; }
         .result-card { display:none; background:#2e7d32; color:white; padding:20px; border-radius:var(--border-radius); margin-top:20px; text-align:center; }
     </style>
@@ -61,65 +58,85 @@
 
 <div class="container">
     <div class="header-container">
-        <div><span class="logo-aislan">AISLAN</span><span class="logo-tech">TECH</span> <small style="margin-left:10px; opacity:0.6; font-weight: 400;">Thermal Analysis 2.0</small></div>
-        <div id="solverStatus" style="font-weight: bold; color: #d32f2f; display:none;"><i class="fas fa-circle-notch fa-spin"></i> Procesando malla térmica...</div>
+        <div><span class="logo-aislan">AISLAN</span><span class="logo-tech">TECH</span> <small style="margin-left:10px; opacity:0.6; font-weight: 400;">Thermal Analysis Pro</small></div>
+        <div id="solverStatus" style="font-weight: bold; color: #d32f2f; display:none;"><i class="fas fa-circle-notch fa-spin"></i> Analizando flujo ISO 10077-2...</div>
     </div>
     
     <div class="card">
         <div class="card-body">
             <div class="controls-grid">
+                
+                <div class="control-group" style="flex: 1.2;">
+                    <label>1. Cargar DXF</label>
+                    <input type="file" id="dxfFile" accept=".dxf">
+                </div>
+
                 <div class="control-group" style="flex: 1.5;">
-                    <label>1. Herramienta Activa</label>
+                    <label>2. Modo de Edición</label>
                     <div class="mode-switch">
                         <button id="btnModeMat" class="mode-btn active"><i class="fas fa-fill-drip"></i> Materiales</button>
                         <button id="btnModeBound" class="mode-btn"><i class="fas fa-vector-square"></i> Contornos</button>
                     </div>
                 </div>
 
-                <div class="control-group">
-                    <label>2. Resolución</label>
-                    <select id="gridRes">
-                        <option value="80">Baja (80x80)</option>
-                        <option value="120" selected>Estándar (120x120)</option>
-                        <option value="200">Alta (200x200)</option>
+                <div class="control-group" style="flex: 2; border-left: 1px solid #ddd; padding-left: 15px;">
+                    <label id="brushLabel">3. Pincel Activo (Haz clic para pintar)</label>
+                    <div style="display:flex; gap:5px;" id="matBrushContainer">
+                        <select id="matSelect"></select>
+                    </div>
+                    <select id="boundSelect" style="display:none; font-weight:bold;">
+                        <option value="1" style="color:#1976d2;">Exterior (Frío + Rse)</option>
+                        <option value="2" style="color:#d32f2f;">Interior (Medir Uf + Rsi)</option>
+                        <option value="4" style="color:#ff9800;">Interior Secundario</option>
+                        <option value="3" style="color:#757575;">Adiabático</option>
+                        <option value="0" style="color:#000;">Borrar Contorno</option>
                     </select>
                 </div>
 
-                <div class="control-group">
-                    <label>3. Cargar DXF</label>
-                    <input type="file" id="dxfFile" accept=".dxf">
-                </div>
-
-                <div class="control-group">
-                    <label>bf (Ancho mm)</label>
-                    <input type="number" id="LpInput" value="100">
-                </div>
-
-                <div class="control-group" style="flex: 2;">
-                    <label>Acciones</label>
+                <div class="control-group" style="flex: 1.5; border-left: 1px solid #ddd; padding-left: 15px;">
+                    <label>Parámetros Análisis</label>
                     <div style="display:flex; gap:5px;">
-                        <button id="btnRotate" class="btn btn-outline btn-sm" title="Rotar 90º"><i class="fas fa-sync-alt"></i></button>
-                        <button id="btnZoomReset" class="btn btn-outline btn-sm" title="Centrar"><i class="fas fa-compress-arrows-alt"></i></button>
-                        <button id="btnBackToEdit" class="btn btn-edit" style="display:none;"><i class="fas fa-pencil-alt"></i> Editar</button>
-                        <button id="calcBtn" class="btn btn-success" disabled><i class="fas fa-play-circle"></i> CALCULAR Uf</button>
+                        <input type="number" id="LpInput" value="100" title="Ancho (bf) mm" placeholder="bf (mm)">
+                        <input type="number" id="tExt" value="0" title="Temp Exterior (ºC)">
+                        <input type="number" id="tInt" value="20" title="Temp Interior (ºC)">
                     </div>
+                </div>
+
+            </div>
+
+            <div id="customMatPanel">
+                <div style="display:flex; gap:15px; align-items:flex-end;">
+                    <div class="control-group"><label>Nombre del Material</label><input type="text" id="customMatName" placeholder="Espuma PUR"></div>
+                    <div class="control-group"><label>Conductividad (λ) W/m·K</label><input type="number" id="customMatK" step="0.001" value="0.035"></div>
+                    <div class="control-group" style="min-width:60px;"><label>Color</label><input type="color" id="customMatColor" value="#ff9800" style="height:38px; padding:0;"></div>
+                    <button id="btnAddCustomMat" class="btn btn-primary">Añadir a la lista</button>
+                    <button id="btnCancelCustomMat" class="btn btn-outline">Cancelar</button>
+                </div>
+            </div>
+            
+            <hr style="border:none; border-top:1px solid #ddd; margin: 15px 0;">
+
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <div style="display:flex; gap:10px;">
+                    <button id="btnRotate" class="btn btn-outline btn-sm" title="Rotar 90º"><i class="fas fa-sync-alt"></i> Rotar</button>
+                    <button id="btnZoomReset" class="btn btn-outline btn-sm" title="Centrar Vista"><i class="fas fa-compress-arrows-alt"></i> Centrar</button>
+                    <select id="gridRes" style="width:auto; height:34px;">
+                        <option value="80">Malla Baja (80x80)</option>
+                        <option value="120" selected>Malla Estándar (120x120)</option>
+                        <option value="200">Malla Alta (200x200)</option>
+                    </select>
+                </div>
+                
+                <div style="display:flex; gap:10px;">
+                    <button id="btnBackToEdit" class="btn btn-edit" style="display:none;"><i class="fas fa-pencil-alt"></i> Volver a Edición</button>
+                    <button id="calcBtn" class="btn btn-success" disabled style="padding:10px 30px; font-size:1rem;"><i class="fas fa-play-circle"></i> CALCULAR Uf</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <div id="customMatPanel">
-        <div style="display:flex; gap:15px; align-items:flex-end;">
-            <div class="control-group"><label>Nombre</label><input type="text" id="customMatName" placeholder="Material X"></div>
-            <div class="control-group"><label>Conductividad (λ)</label><input type="number" id="customMatK" step="0.001" value="0.050"></div>
-            <div class="control-group"><label>Color</label><input type="color" id="customMatColor" value="#ff9800" style="height:38px; padding:0;"></div>
-            <button id="btnAddCustomMat" class="btn btn-primary">Añadir Material</button>
-            <button onclick="document.getElementById('customMatPanel').style.display='none'" class="btn btn-outline">Cancelar</button>
-        </div>
-    </div>
-
     <div class="status-bar" id="status"><i class="fas fa-info-circle"></i> <span>Esperando archivo DXF...</span></div>
-
+    
     <div class="legend-panel" id="legend"></div>
 
     <div class="canvas-wrapper">
@@ -131,32 +148,32 @@
 
 <script>
 (function() {
-    // ──── MATERIALES Y CONSTANTES ────
+    // ──── MATERIALES Y CONSTANTES (ISO 6946) ────
     let materials = [
-        { name: "Cámara Aire", k: 0.026, color: "#ecf0f1" },
+        { name: "Cámara Aire (No ventilada)", k: 0.026, color: "#ecf0f1" },
         { name: "Aluminio", k: 160.0, color: "#95a5a6" },
         { name: "Acero Inox", k: 17.0, color: "#b0bec5" },
         { name: "Poliamida 25% FV", k: 0.30, color: "#d35400" },
         { name: "PVC Rígido", k: 0.17, color: "#9b59b6" },
         { name: "EPDM / Juntas", k: 0.25, color: "#2c3e50" },
         { name: "Silicona", k: 0.35, color: "#00bcd4" },
-        { name: "Aislante (XPS)", k: 0.035, color: "#f1c40f" },
+        { name: "Aislante (XPS/PUR)", k: 0.035, color: "#f1c40f" },
         { name: "Vidrio", k: 1.0, color: "#81d4fa" }
     ];
 
-    const Rse = 0.04; // Exterior ISO 6946
-    const Rsi = 0.13; // Interior ISO 6946
+    const Rse = 0.04; // Resistencia Superficial Exterior
+    const Rsi = 0.13; // Resistencia Superficial Interior
 
     let polygons = [], boundaryEdges = [], boundaryAdj = [];
     let minX, maxX, minY, maxY;
     let selectedPoly = -1, hoveredPolyIdx = -1, hoveredEdgeIdx = -1;
     let editMode = 'MATERIAL';
 
-    // Zoom y Pan
+    // Variables Zoom & Pan Absoluto
     let zoomLevel = 1, offsetX = 0, offsetY = 0, baseScale = 1;
     let isDragging = false, dragStartX = 0, dragStartY = 0, hasDragged = false;
 
-    // Thermal Engine
+    // Solver
     let T = null, kGrid = null, dx, dy, isExt, isIntMeas, isIntSec;
     let showThermalMap = false;
 
@@ -164,55 +181,64 @@
     const ctx = canvas.getContext('2d');
     const statusText = document.querySelector('#status span');
 
-    // ──── INTERFAZ Y MODOS ────
-    document.getElementById('btnModeMat').onclick = function() {
-        editMode = 'MATERIAL'; this.classList.add('active');
-        document.getElementById('btnModeBound').classList.remove('active');
-        setStatus("Modo Materiales: Selecciona un área y elige el material de la leyenda.");
-        draw();
-    };
-    document.getElementById('btnModeBound').onclick = function() {
-        editMode = 'BOUNDARY'; this.classList.add('active');
-        document.getElementById('btnModeMat').classList.remove('active');
-        setStatus("Modo Contornos: Haz clic en las líneas (Usa SHIFT+Clic para seleccionar tramos continuos).");
-        draw();
-    };
-    document.getElementById('btnBackToEdit').onclick = function() {
-        showThermalMap = false; this.style.display = 'none'; draw();
-    };
-
-    function updateLegend() {
-        const lp = document.getElementById('legend');
-        lp.innerHTML = materials.map((m, i) => `
-            <div class="legend-item" onclick="applyMaterial(${i})">
-                <div class="legend-color" style="background:${m.color}"></div>
+    // ──── INTERFAZ Y MODOS (El "Pincel") ────
+    function updateMaterialUI() {
+        const sel = document.getElementById('matSelect');
+        sel.innerHTML = materials.map((m,i) => `<option value="${i}">${m.name} (λ=${m.k})</option>`).join('');
+        sel.innerHTML += `<option value="CUSTOM" style="font-weight:bold; color:var(--color-primary-dark);">+ Crear Material Nuevo...</option>`;
+        
+        document.getElementById('legend').innerHTML = materials.map((m,i)=>
+            `<div class="legend-item" onclick="setBrushMaterial(${i})" title="Pincel: ${m.name}">
+                <div class="legend-color" style="background:${m.color}"></div> 
                 <span>${m.name}</span>
-            </div>
-        `).join('') + `
-            <div class="legend-item" onclick="document.getElementById('customMatPanel').style.display='block'">
-                <div class="legend-color" style="background:#fff; border:1px dashed #666; display:flex; align-items:center; justify-content:center; font-size:10px;">+</div>
-                <span style="color:var(--color-primary-dark); font-weight:bold;">Añadir...</span>
-            </div>
-            <div class="boundary-legend">
-                <span><span class="boundary-swatch" style="background:#1976d2"></span> Ext (Rse)</span>
-                <span><span class="boundary-swatch" style="background:#d32f2f"></span> Int (Uf)</span>
-                <span><span class="boundary-swatch" style="background:#ff9800"></span> Int Sec.</span>
-            </div>`;
+            </div>`).join('');
     }
 
-    window.applyMaterial = (idx) => {
-        if (selectedPoly !== -1) { polygons[selectedPoly].matIdx = idx; draw(); }
+    // Cambiar Modo de Edición
+    document.getElementById('btnModeMat').onclick = function() {
+        editMode = 'MATERIAL'; 
+        this.classList.add('active'); document.getElementById('btnModeBound').classList.remove('active');
+        document.getElementById('matBrushContainer').style.display = 'flex';
+        document.getElementById('boundSelect').style.display = 'none';
+        setStatus("Modo Materiales: Selecciona el material arriba o en la leyenda y haz clic en el perfil para pintarlo.");
+        draw();
     };
 
+    document.getElementById('btnModeBound').onclick = function() {
+        editMode = 'BOUNDARY'; 
+        this.classList.add('active'); document.getElementById('btnModeMat').classList.remove('active');
+        document.getElementById('matBrushContainer').style.display = 'none';
+        document.getElementById('boundSelect').style.display = 'block';
+        setStatus("Modo Contornos: Selecciona el tipo arriba y pinta las líneas. Mantén SHIFT y haz clic en una línea vacía para unir con la más cercana.");
+        draw();
+    };
+
+    // Crear Material Custom
+    document.getElementById('matSelect').onchange = function() {
+        if(this.value === 'CUSTOM') document.getElementById('customMatPanel').style.display = 'block';
+        else document.getElementById('customMatPanel').style.display = 'none';
+    };
+
+    document.getElementById('btnCancelCustomMat').onclick = () => {
+        document.getElementById('customMatPanel').style.display = 'none';
+        document.getElementById('matSelect').value = "0"; // Reset
+    };
+    
     document.getElementById('btnAddCustomMat').onclick = function() {
-        const name = document.getElementById('customMatName').value || "Nuevo Mat";
+        const name = document.getElementById('customMatName').value || "Material Especial";
         const k = parseFloat(document.getElementById('customMatK').value) || 0.1;
         const color = document.getElementById('customMatColor').value;
         materials.push({name, k, color});
-        updateLegend();
+        updateMaterialUI();
+        document.getElementById('matSelect').value = materials.length - 1; // Fija el pincel
         document.getElementById('customMatPanel').style.display = 'none';
-        if (selectedPoly !== -1) { polygons[selectedPoly].matIdx = materials.length - 1; draw(); }
-        setStatus(`Material "${name}" añadido a la biblioteca.`);
+        setStatus(`Material "${name}" añadido a la paleta de pinceles.`);
+    };
+
+    window.setBrushMaterial = (idx) => {
+        if (editMode !== 'MATERIAL') document.getElementById('btnModeMat').click();
+        document.getElementById('matSelect').value = idx;
+        setStatus(`Pincel cambiado a: ${materials[idx].name}`);
     };
 
     function setStatus(msg, type = 'info') {
@@ -222,26 +248,25 @@
         bar.querySelector('i').className = type === 'error' ? 'fas fa-exclamation-triangle' : type === 'success' ? 'fas fa-check-circle' : 'fas fa-info-circle';
     }
 
-    // ──── DXF PARSER ROBUSTO (RESTAURADO) ────
+    // ──── DXF PARSER Y TOPOLOGÍA ────
     document.getElementById('dxfFile').onchange = e => {
         const file = e.target.files[0]; if(!file) return;
         const reader = new FileReader();
         reader.onload = ev => {
             try {
                 const segments = parseDXF(ev.target.result);
-                if(segments.length === 0) throw new Error("No se encontraron entidades 2D válidas. (Asegúrate de explotar los bloques)");
+                if(segments.length === 0) throw new Error("No hay líneas válidas (recuerda explotar bloques en CAD).");
                 polygons = buildTopology(segments, 0.5);
                 if(polygons.length) {
                     recalcBounds();
                     boundaryEdges = extractBoundaryEdges(polygons);
                     document.getElementById('calcBtn').disabled = false;
                     showThermalMap = false;
-                    setStatus("✅ DXF Importado correctamente. Asigna materiales y contornos para calcular la transmitancia térmica.");
+                    document.getElementById('result').style.display = 'none';
+                    setStatus("✅ DXF Importado. Pinta los materiales y contornos.");
                     draw();
-                } else {
-                    throw new Error("No se detectaron áreas cerradas. Comprueba el DXF.");
-                }
-            } catch(err) { setStatus("Error al leer DXF: " + err.message, "error"); }
+                } else throw new Error("No se detectaron áreas cerradas.");
+            } catch(err) { setStatus("Error DXF: " + err.message, "error"); }
         };
         reader.readAsText(file);
     };
@@ -249,125 +274,68 @@
     function parseDXF(text) {
         const lines = text.split(/\r?\n/);
         let idx = 0, inEntities = false, segments = [];
-        let currentEntity = null, currentPolyline = null;
+        let curE = null;
 
-        function getPair() {
-            while (idx < lines.length - 1) {
-                const codeStr = lines[idx].trim();
-                const valueStr = lines[idx + 1].trim();
-                idx += 2;
-                if (codeStr !== '') return [parseInt(codeStr), valueStr];
-            }
-            return null;
-        }
+        const getP = () => {
+            if (idx >= lines.length - 1) return null;
+            const c = parseInt(lines[idx++].trim()), v = lines[idx++].trim(); return [c, v];
+        };
 
-        function addBulgeSegments(p1, p2, bulge) {
-            if (!bulge || Math.abs(bulge) < 1e-5) { segments.push({ x1: p1.x, y1: p1.y, x2: p2.x, y2: p2.y }); return; }
-            const dx = p2.x - p1.x, dy = p2.y - p1.y, dist = Math.hypot(dx, dy);
-            if (dist < 1e-6) return;
-            const theta = 4 * Math.atan(bulge);
-            const radius = Math.abs(dist / (2 * Math.sin(theta / 2)));
-            const dir = bulge > 0 ? 1 : -1;
-            const cx = (p1.x + p2.x) / 2 + (-dy / dist * dir) * radius * Math.cos(theta / 2);
-            const cy = (p1.y + p2.y) / 2 + (dx / dist * dir) * radius * Math.cos(theta / 2);
-            let a1 = Math.atan2(p1.y - cy, p1.x - cx), a2 = Math.atan2(p2.y - cy, p2.x - cx);
-            if (bulge > 0 && a2 <= a1) a2 += 2 * Math.PI;
-            if (bulge < 0 && a2 >= a1) a2 -= 2 * Math.PI;
-            const N = Math.max(6, Math.floor(Math.abs(a2 - a1) * radius / 2));
-            let prevX = p1.x, prevY = p1.y;
-            for (let i = 1; i <= N; i++) {
-                const a = a1 + (a2 - a1) * (i / N), x = cx + radius * Math.cos(a), y = cy + radius * Math.sin(a);
-                segments.push({ x1: prevX, y1: prevY, x2: x, y2: y }); prevX = x; prevY = y;
-            }
-        }
-
-        function flushEntity(ent) {
-            if (!ent || ent.ignore) return;
-            if (ent.type === 'VERTEX' && currentPolyline) {
-                currentPolyline.vertices.push({ x: ent.x, y: ent.y, bulge: ent.bulge });
-            }
-            if (ent.type === 'LINE' && ent.x1 !== undefined && ent.x2 !== undefined) {
-                segments.push({ x1: ent.x1, y1: ent.y1, x2: ent.x2, y2: ent.y2 });
-            }
-            if ((ent.type === 'CIRCLE' || ent.type === 'ARC') && ent.r > 0) {
-                let start = ent.startAngle !== undefined ? ent.startAngle : 0;
-                let end = ent.endAngle !== undefined ? ent.endAngle : 360;
-                let rs = start * Math.PI / 180, re = end * Math.PI / 180;
-                if (ent.type === 'ARC' && re <= rs) re += 2 * Math.PI;
-                const N = Math.max(12, Math.floor(Math.abs(re - rs) * ent.r / 2));
-                let px = ent.cx + ent.r * Math.cos(rs), py = ent.cy + ent.r * Math.sin(rs);
-                for (let i = 1; i <= N; i++) {
-                    const a = rs + (re - rs) * (i / N), x = ent.cx + ent.r * Math.cos(a), y = ent.cy + ent.r * Math.sin(a);
-                    segments.push({ x1: px, y1: py, x2: x, y2: y }); px = x; py = y;
-                }
-            }
-            if ((ent.type === 'LWPOLYLINE' || ent.type === 'POLYLINE') && ent.vertices && ent.vertices.length > 0) {
-                for (let i = 0; i < ent.vertices.length - 1; i++) {
-                    addBulgeSegments(ent.vertices[i], ent.vertices[i + 1], ent.vertices[i].bulge);
-                }
-                if (ent.closed && ent.vertices.length > 2) {
-                    addBulgeSegments(ent.vertices[ent.vertices.length - 1], ent.vertices[0], ent.vertices[ent.vertices.length - 1].bulge);
-                }
-            }
-            if (ent.type === 'SPLINE' && ent.pts && ent.pts.length > 1) {
-                for (let i = 0; i < ent.pts.length - 1; i++) {
-                    segments.push({ x1: ent.pts[i].x, y1: ent.pts[i].y, x2: ent.pts[i + 1].x, y2: ent.pts[i + 1].y });
-                }
-                if (ent.closed && ent.pts.length > 2) {
-                    segments.push({ x1: ent.pts[ent.pts.length - 1].x, y1: ent.pts[ent.pts.length - 1].y, x2: ent.pts[0].x, y2: ent.pts[0].y });
-                }
-            }
-        }
-
-        while (idx < lines.length) {
-            const pair = getPair(); if (!pair) break;
-            const [code, value] = pair;
-
-            if (code === 0 && value === 'SECTION') { const next = getPair(); if (next && next[1] === 'ENTITIES') inEntities = true; continue; }
-            if (code === 0 && value === 'ENDSEC') { inEntities = false; continue; }
+        while (idx < lines.length - 1) {
+            const pair = getP(); if (!pair) break;
+            const [c, v] = pair;
+            if (c === 0 && v === 'SECTION') { if (getP()[1] === 'ENTITIES') inEntities = true; continue; }
+            if (c === 0 && v === 'ENDSEC') { inEntities = false; continue; }
             if (!inEntities) continue;
 
-            if (code === 0) {
-                if (currentEntity && currentEntity.type !== 'POLYLINE') flushEntity(currentEntity);
-                
-                if (value === 'LWPOLYLINE') { currentEntity = { type: 'LWPOLYLINE', vertices: [], closed: false, ignore: false }; } 
-                else if (value === 'POLYLINE') {
-                    if (currentPolyline) flushEntity(currentPolyline);
-                    currentPolyline = { type: 'POLYLINE', vertices: [], closed: false, ignore: false }; currentEntity = currentPolyline;
-                } else if (value === 'VERTEX' && currentPolyline) { currentEntity = { type: 'VERTEX', x: 0, y: 0, bulge: 0, ignore: false }; } 
-                else if (value === 'SEQEND' && currentPolyline) { flushEntity(currentPolyline); currentPolyline = null; currentEntity = null; } 
-                else if (['LINE', 'CIRCLE', 'ARC'].includes(value)) { currentEntity = { type: value, ignore: false }; } 
-                else if (value === 'SPLINE') { currentEntity = { type: 'SPLINE', pts: [], ignore: false, closed: false }; } 
-                else { currentEntity = null; }
-            } else if (currentEntity) {
-                if (code === 67 && value === '1') currentEntity.ignore = true; 
-                
-                const v = parseFloat(value);
-                if (currentEntity.type === 'LWPOLYLINE') {
-                    if (code === 70) currentEntity.closed = (parseInt(value) & 1) !== 0;
-                    else if (code === 10) currentEntity.vertices.push({ x: v, y: 0, bulge: 0 });
-                    else if (code === 20 && currentEntity.vertices.length > 0) currentEntity.vertices[currentEntity.vertices.length - 1].y = v;
-                    else if (code === 42 && currentEntity.vertices.length > 0) currentEntity.vertices[currentEntity.vertices.length - 1].bulge = v;
-                } else if (currentEntity.type === 'POLYLINE') {
-                    if (code === 70) currentEntity.closed = (parseInt(value) & 1) !== 0;
-                } else if (currentEntity.type === 'VERTEX') {
-                    if (code === 10) currentEntity.x = v; else if (code === 20) currentEntity.y = v; else if (code === 42) currentEntity.bulge = v;
-                } else if (currentEntity.type === 'LINE') {
-                    if (code === 10) currentEntity.x1 = v; else if (code === 20) currentEntity.y1 = v; 
-                    else if (code === 11) currentEntity.x2 = v; else if (code === 21) currentEntity.y2 = v;
-                } else if (currentEntity.type === 'CIRCLE' || currentEntity.type === 'ARC') {
-                    if (code === 10) currentEntity.cx = v; else if (code === 20) currentEntity.cy = v; else if (code === 40) currentEntity.r = v;
-                    else if (code === 50) currentEntity.startAngle = v; else if (code === 51) currentEntity.endAngle = v;
-                } else if (currentEntity.type === 'SPLINE') {
-                    if (code === 70) currentEntity.closed = (parseInt(value) & 1) !== 0;
-                    else if (code === 10) currentEntity.pts.push({ x: v, y: 0 });
-                    else if (code === 20 && currentEntity.pts.length > 0) currentEntity.pts[currentEntity.pts.length - 1].y = v;
+            if (c === 0) {
+                if (curE) flushE(curE);
+                curE = (v === 'LINE' || v === 'LWPOLYLINE' || v === 'CIRCLE' || v === 'ARC') ? {type: v, vertices: []} : null;
+            } else if (curE) {
+                const val = parseFloat(v);
+                if (curE.type === 'LINE') {
+                    if (c === 10) curE.x1 = val; if (c === 20) curE.y1 = val; if (c === 11) curE.x2 = val; if (c === 21) curE.y2 = val;
+                } else if (curE.type === 'LWPOLYLINE') {
+                    if (c === 70) curE.closed = (parseInt(v) & 1) !== 0;
+                    if (c === 10) curE.vertices.push({x: val, y: 0, bulge: 0});
+                    if (c === 20) curE.vertices[curE.vertices.length-1].y = val;
+                    if (c === 42) curE.vertices[curE.vertices.length-1].bulge = val;
+                } else if (curE.type === 'CIRCLE' || curE.type === 'ARC') {
+                    if (c === 10) curE.cx = val; if (c === 20) curE.cy = val; if (c === 40) curE.r = val;
+                    if (c === 50) curE.start = val; if (c === 51) curE.end = val;
                 }
             }
         }
-        if (currentEntity && currentEntity.type !== 'POLYLINE') flushEntity(currentEntity);
-        if (currentPolyline) flushEntity(currentPolyline);
-        return segments.filter(s => Math.hypot(s.x2 - s.x1, s.y2 - s.y1) > 1e-9);
+        function flushE(e) {
+            if (e.type === 'LINE') segments.push({x1: e.x1, y1: e.y1, x2: e.x2, y2: e.y2});
+            else if (e.type === 'LWPOLYLINE') {
+                for (let i=0; i<e.vertices.length-1; i++) addB(e.vertices[i], e.vertices[i+1], e.vertices[i].bulge);
+                if (e.closed && e.vertices.length > 2) addB(e.vertices[e.vertices.length-1], e.vertices[0], e.vertices[e.vertices.length-1].bulge);
+            } else if (e.type === 'CIRCLE' || e.type === 'ARC') {
+                let rs = (e.start||0)*Math.PI/180, re = (e.end||360)*Math.PI/180;
+                if (re <= rs) re += 2*Math.PI;
+                const steps = Math.max(12, Math.floor(Math.abs(re-rs)*e.r/2));
+                for (let i=0; i<steps; i++) {
+                    const a1 = rs + (re-rs)*i/steps, a2 = rs + (re-rs)*(i+1)/steps;
+                    segments.push({x1: e.cx+e.r*Math.cos(a1), y1: e.cy+e.r*Math.sin(a1), x2: e.cx+e.r*Math.cos(a2), y2: e.cy+e.r*Math.sin(a2)});
+                }
+            }
+        }
+        function addB(p1, p2, b) {
+            if (!b || Math.abs(b) < 1e-4) segments.push({x1: p1.x, y1: p1.y, x2: p2.x, y2: p2.y});
+            else {
+                const d = Math.hypot(p2.x-p1.x, p2.y-p1.y), th = 4*Math.atan(b), r = Math.abs(d/(2*Math.sin(th/2)));
+                const cx = (p1.x+p2.x)/2 + (-(p2.y-p1.y)/d*(b>0?1:-1))*r*Math.cos(th/2), cy = (p1.y+p2.y)/2 + ((p2.x-p1.x)/d*(b>0?1:-1))*r*Math.cos(th/2);
+                let a1 = Math.atan2(p1.y-cy, p1.x-cx), a2 = Math.atan2(p2.y-cy, p2.x-cx);
+                if (b>0 && a2<=a1) a2+=2*Math.PI; if (b<0 && a2>=a1) a2-=2*Math.PI;
+                const steps = Math.max(6, Math.floor(Math.abs(a2-a1)*r/2));
+                for (let i=0; i<steps; i++) {
+                    const ang1 = a1+(a2-a1)*i/steps, ang2 = a1+(a2-a1)*(i+1)/steps;
+                    segments.push({x1: cx+r*Math.cos(ang1), y1: cy+r*Math.sin(ang1), x2: cx+r*Math.cos(ang2), y2: cy+r*Math.sin(ang2)});
+                }
+            }
+        }
+        return segments;
     }
 
     function buildTopology(raw, tol) {
@@ -403,6 +371,7 @@
             h1.rev = h2; h2.rev = h1; e.v1.adj.push(h1); e.v2.adj.push(h2); halfE.push(h1, h2);
         });
         vertices.forEach(v => v.adj.sort((a,b) => a.angle - b.angle));
+        
         const faces = [];
         halfE.forEach(h => {
             if (h.used) return;
@@ -410,12 +379,11 @@
             while (!cur.used && loops < 10000) { 
                 cur.used = true; p.push({x: cur.from.x, y: cur.from.y}); 
                 const idx = cur.to.adj.indexOf(cur.rev); 
-                cur = cur.to.adj[(idx-1+cur.to.adj.length)%cur.to.adj.length];
-                loops++;
+                cur = cur.to.adj[(idx-1+cur.to.adj.length)%cur.to.adj.length]; loops++;
             }
             if (p.length > 2) {
                 let a = 0; for(let i=0; i<p.length; i++) a += (p[i].x*p[(i+1)%p.length].y - p[(i+1)%p.length].x*p[i].y);
-                faces.push({pts: p, signedArea: a/2, area: Math.abs(a/2), matIdx: 1}); // Por defecto Aluminio
+                faces.push({pts: p, signedArea: a/2, area: Math.abs(a/2), matIdx: 1}); // Aluminio
             }
         });
         let maxA = -1, sign = 1; faces.forEach(f => { if(f.area > maxA){ maxA = f.area; sign = Math.sign(f.signedArea); } });
@@ -435,7 +403,7 @@
         });
         const edges = Array.from(m.values()).filter(e => e.count === 1).map(e => ({p1:e.p1, p2:e.p2, type:0}));
         
-        // Grafo de Adyacencia para Shift+Click
+        // Grafo de Adyacencia para el BFS
         boundaryAdj = edges.map(() => []);
         for(let i=0; i<edges.length; i++){
             for(let j=i+1; j<edges.length; j++){
@@ -450,7 +418,7 @@
         return edges;
     }
 
-    // ──── GESTIÓN DE VISTA (ZOOM AL PUNTERO ABSOLUTO) ────
+    // ──── GESTIÓN DE VISTA (ZOOM ANCLADO) ────
     function recalcBounds() {
         if(!polygons.length) return;
         const all = polygons.flatMap(p => p.pts);
@@ -493,19 +461,16 @@
         const factor = e.deltaY < 0 ? 1.15 : 1 / 1.15;
         zoomLevel = Math.max(0.1, Math.min(zoomLevel * factor, 50));
         
-        // Ajuste matemático exacto para anclar el zoom
         const cw = canvas.width, ch = canvas.height;
         const cxW = (minX + maxX) / 2, cyW = (minY + maxY) / 2;
-        
         offsetX = mx - cw / 2 - (wBefore.x - cxW) * baseScale * zoomLevel;
         offsetY = my - ch / 2 + (wBefore.y - cyW) * baseScale * zoomLevel;
-        
         draw();
     };
 
     document.getElementById('btnZoomReset').onclick = () => { zoomLevel = 1; offsetX = 0; offsetY = 0; draw(); };
 
-    // ──── INTERACCIONES (PAN Y CLIC) ────
+    // ──── INTERACCIONES (PINCEL Y PAN) ────
     canvas.onmousedown = e => {
         if(!polygons.length) return;
         const rect = canvas.getBoundingClientRect();
@@ -522,56 +487,73 @@
         if(isDragging){ offsetX = mx-dragStartX; offsetY = my-dragStartY; hasDragged = true; draw(); return; }
         
         const w = getWorld(mx, my);
+        let updated = false;
+
         if(editMode === 'BOUNDARY') {
-            let minD = Infinity; hoveredEdgeIdx = -1;
+            let minD = Infinity, hE = -1;
             boundaryEdges.forEach((edge, i) => {
                 const dx = edge.p2.x-edge.p1.x, dy = edge.p2.y-edge.p1.y, l2 = dx*dx+dy*dy;
                 let t = Math.max(0, Math.min(1, ((w.x-edge.p1.x)*dx+(w.y-edge.p1.y)*dy)/l2));
                 let dist = Math.hypot(w.x-(edge.p1.x+t*dx), w.y-(edge.p1.y+t*dy));
-                if(dist < minD){ minD = dist; hoveredEdgeIdx = i; }
+                if(dist < minD){ minD = dist; hE = i; }
             });
-            if(minD > 12/(baseScale*zoomLevel)) hoveredEdgeIdx = -1;
+            if(minD > 12/(baseScale*zoomLevel)) hE = -1;
+            if (hE !== hoveredEdgeIdx) { hoveredEdgeIdx = hE; updated = true; }
         } else {
-            hoveredPolyIdx = -1;
+            let hP = -1;
             for(let i=polygons.length-1; i>=0; i--){
                 let inside = false, pts = polygons[i].pts;
                 for (let k = 0, j = pts.length - 1; k < pts.length; j = k++) {
                     if (((pts[k].y > w.y) !== (pts[j].y > w.y)) && (w.x < (pts[j].x - pts[k].x) * (w.y - pts[k].y) / (pts[j].y - pts[k].y) + pts[k].x)) inside = !inside;
                 }
-                if(inside){ hoveredPolyIdx = i; break; }
+                if(inside){ hP = i; break; }
             }
+            if (hP !== hoveredPolyIdx) { hoveredPolyIdx = hP; updated = true; }
         }
-        draw();
+        if (updated) draw();
     };
 
     canvas.onmouseup = e => {
         isDragging = false; canvas.classList.remove('grabbing');
         if(hasDragged || !polygons.length || showThermalMap) return;
         
+        // Pincel de Contornos
         if(editMode === 'BOUNDARY' && hoveredEdgeIdx !== -1) {
+            const activeType = parseInt(document.getElementById('boundSelect').value);
+            
             if(e.shiftKey) {
                 let path = bfsFindNearestAssigned(hoveredEdgeIdx);
-                if(path){ let type = boundaryEdges[path[path.length-1]].type; path.forEach(id => boundaryEdges[id].type = type); }
+                if(path){ 
+                    // Pinta el camino encontrado con el color del pincel activo
+                    path.forEach(id => boundaryEdges[id].type = activeType); 
+                } else {
+                    boundaryEdges[hoveredEdgeIdx].type = activeType;
+                }
             } else {
-                boundaryEdges[hoveredEdgeIdx].type = (boundaryEdges[hoveredEdgeIdx].type + 1) % 5;
+                boundaryEdges[hoveredEdgeIdx].type = activeType;
             }
             draw(); return;
         }
         
-        if (editMode === 'MATERIAL') {
-            selectedPoly = hoveredPolyIdx;
-            if(selectedPoly !== -1) setStatus(`Región seleccionada. Elige el material en la leyenda.`);
-            draw();
+        // Pincel de Materiales
+        if (editMode === 'MATERIAL' && hoveredPolyIdx !== -1) {
+            const activeMat = parseInt(document.getElementById('matSelect').value);
+            if (!isNaN(activeMat)) {
+                polygons[hoveredPolyIdx].matIdx = activeMat;
+                selectedPoly = hoveredPolyIdx;
+                draw();
+            }
         }
     };
 
+    // Búsqueda inteligente de caminos
     function bfsFindNearestAssigned(startIdx) {
         let queue = [[startIdx, [startIdx]]];
         let visited = new Set([startIdx]);
 
         while(queue.length > 0) {
             let [curr, path] = queue.shift();
-            // Retorna si encuentra un borde coloreado
+            // Si tocamos un borde que ya tiene color (y no es el inicial), devolvemos la ruta
             if (boundaryEdges[curr].type !== 0 && curr !== startIdx) return path;
             for (let n of boundaryAdj[curr]) {
                 if (!visited.has(n)) { visited.add(n); queue.push([n, [...path, n]]); }
@@ -626,22 +608,22 @@
         if(!polygons.length) return;
         const cx = (minX+maxX)/2, cy = (minY+maxY)/2;
         polygons.forEach(p => p.pts.forEach(pt => {
-            const dxx = pt.x-cx, dyy = pt.y-cy;
-            pt.x = cx - dyy; pt.y = cy + dxx;
+            const dxx = pt.x-cx, dyy = pt.y-cy; pt.x = cx - dyy; pt.y = cy + dxx;
         }));
         recalcBounds(); boundaryEdges = extractBoundaryEdges(polygons); draw();
     };
 
-    // ──── SOLVER TÉRMICO Y CÁLCULO DE U ────
+    // ──── SOLVER TÉRMICO ISO 10077-2 ────
     document.getElementById('calcBtn').onclick = () => {
         if(!polygons.length) return;
         if(!boundaryEdges.some(e => e.type===1) || !boundaryEdges.some(e => e.type===2)) {
-            setStatus('❌ Falta marcar al menos un borde Exterior (azul) e Interior de Medición (rojo).', 'error'); return;
+            setStatus('❌ Falta marcar Borde Exterior (azul) e Interior de Medición (rojo).', 'error'); return;
         }
         
         const res = parseInt(document.getElementById('gridRes').value);
         const lp = (+document.getElementById('LpInput').value || 100) / 1000;
         document.getElementById('solverStatus').style.display = "block";
+        document.getElementById('calcBtn').disabled = true;
         
         setTimeout(() => {
             dx = (maxX-minX)/res; dy = (maxY-minY)/res;
@@ -708,19 +690,28 @@
             
             const deltaT = Math.abs(ti - te) || 1;
             const U = Math.abs(flux) / (lp * deltaT);
+            
             document.getElementById('result').style.display="block";
-            document.getElementById('result').innerHTML=`<h2>Uf = ${U.toFixed(3)} W/(m²·K)</h2><p>Flujo lineal (Q): ${Math.abs(flux).toFixed(3)} W/m | Malla: ${res}x${res}</p>`;
+            document.getElementById('result').innerHTML=`<h2>U<sub>f</sub> = ${U.toFixed(3)} W/(m²·K)</h2><p>Flujo lineal (Q): ${Math.abs(flux).toFixed(3)} W/m | Malla: ${res}x${res}</p>`;
             
             showThermalMap=true; 
             document.getElementById('btnBackToEdit').style.display="inline-flex";
             document.getElementById('solverStatus').style.display="none"; 
+            document.getElementById('calcBtn').disabled = false;
+            
+            // Centrar vista en el resultado
+            zoomLevel = 1; offsetX = 0; offsetY = 0;
             draw();
-            setStatus("✅ Análisis térmico completado con éxito.", "success");
+            setStatus("✅ Análisis completado con éxito.", "success");
         }, 50);
     };
 
+    document.getElementById('btnBackToEdit').onclick = function() {
+        showThermalMap = false; this.style.display = 'none'; draw();
+        setStatus("Modo de edición activado.");
+    }
+
     updateMaterialUI();
-    updateLegend();
 })();
 </script>
 </body>
