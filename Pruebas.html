@@ -32,7 +32,7 @@
         .card-title { font-size:1.1rem; }
         .card-body { padding:1.2rem; }
         .controls-grid { display:flex; flex-wrap:wrap; gap:1.2rem; align-items:flex-end;}
-        .control-group { display:flex; flex-direction:column; gap:6px; flex: 1; min-width: 180px;}
+        .control-group { display:flex; flex-direction:column; gap:6px; flex: 1; min-width: 150px;}
         label { font-size:0.7rem; font-weight:700; text-transform:uppercase; color:var(--color-secondary-dark); }
         input, select { padding:8px 12px; border:1px solid var(--color-secondary-light); border-radius:var(--border-radius); font-size:0.85rem; }
         input:focus, select:focus { border-color:var(--color-primary); outline:none; }
@@ -41,8 +41,6 @@
         .btn-primary:hover:not(:disabled) { background:var(--color-primary-dark); color:white; }
         .btn-success { background:#2e7d32; color:white; }
         .btn-success:hover:not(:disabled) { background:#1b5e20; }
-        .btn-action { background:#1976d2; color:white; }
-        .btn-action:hover:not(:disabled) { background:#1565c0; }
         .btn-outline { background:transparent; border:2px solid var(--color-secondary-light); color:var(--color-secondary); }
         .btn-outline:hover:not(:disabled) { border-color:var(--color-primary); background:var(--color-primary-light); }
         .btn.active { background: #e74c3c; color: white; border-color: #c0392b; box-shadow: inset 0 3px 5px rgba(0,0,0,0.2); }
@@ -61,7 +59,8 @@
         .boundary-swatch { width:14px; height:14px; border-radius:50%; display:inline-block; border:2px solid rgba(0,0,0,0.5); }
         
         .canvas-wrapper { position:relative; background:#fff; border-radius:var(--border-radius); box-shadow:var(--box-shadow); border:1px solid var(--color-secondary-light); overflow:hidden; }
-        canvas { display:block; width:100%; height:auto; cursor:crosshair; }
+        canvas { display:block; width:100%; height:auto; cursor:grab; }
+        canvas:active { cursor: grabbing; }
         
         .result-card { display:none; background:#2e7d32; color:white; padding:20px; border-radius:var(--border-radius); margin-top:20px; text-align:center; box-shadow:var(--box-shadow); }
         .result-card h2 { font-size: 2rem; margin-bottom: 5px; color:white;}
@@ -73,7 +72,7 @@
         <a href="#" class="logo-container">
             <div class="logo-text">
                 <div><span class="logo-aislan">AISLAN</span><span class="logo-tech">TECH</span></div>
-                <div class="logo-tagline">U-Value & Thermal Simulation</div>
+                <div class="logo-tagline">Simulación Térmica 2D (U-Value)</div>
             </div>
         </a>
     </div>
@@ -82,21 +81,28 @@
 <div class="container" style="margin-top:20px;">
     
     <div class="card">
-        <div class="card-header"><i class="fas fa-sliders-h"></i> <div class="card-title">Configuración del Perfil</div></div>
+        <div class="card-header"><i class="fas fa-sliders-h"></i> <div class="card-title">Configuración del Perfil y Análisis</div></div>
         <div class="card-body">
             <div class="controls-grid">
-                <div class="control-group" style="flex:2;">
+                <div class="control-group" style="flex:1.5;">
                     <label><i class="fas fa-file-dxf"></i> Cargar DXF</label>
                     <input type="file" id="dxfFile" accept=".dxf">
                 </div>
+
+                <div class="control-group">
+                    <label><i class="fas fa-search"></i> Vista / Zoom</label>
+                    <div style="display:flex; gap:5px;">
+                        <button id="btnZoomOut" class="btn btn-outline btn-sm" title="Alejar"><i class="fas fa-search-minus"></i></button>
+                        <button id="btnZoomReset" class="btn btn-outline btn-sm" title="Restablecer"><i class="fas fa-expand"></i></button>
+                        <button id="btnZoomIn" class="btn btn-outline btn-sm" title="Acercar"><i class="fas fa-search-plus"></i></button>
+                    </div>
+                </div>
                 
                 <div class="control-group">
-                    <label title="Herramientas espaciales para persianas y rotaciones"><i class="fas fa-tools"></i> Geometría & Cadena</label>
+                    <label><i class="fas fa-sync-alt"></i> Geometría</label>
                     <div style="display:flex; gap:5px;">
-                        <button id="btnSetRot" class="btn btn-outline btn-sm" title="Fijar Eje de Rotación libre"><i class="fas fa-crosshairs"></i> Eje</button>
-                        <button id="btnRotate" class="btn btn-outline btn-sm" title="Rotar 90º"><i class="fas fa-redo"></i></button>
-                        <button id="btnSetChain" class="btn btn-action btn-sm" title="Definir enganches para ensamblar lamas"><i class="fas fa-link"></i> Enganches</button>
-                        <button id="btnMultiply" class="btn btn-primary btn-sm" disabled title="Multiplicar perfil en cadena"><i class="fas fa-clone"></i> Multiplicar</button>
+                        <button id="btnSetRot" class="btn btn-outline btn-sm" title="Fijar Eje de Rotación"><i class="fas fa-crosshairs"></i> Eje</button>
+                        <button id="btnRotate" class="btn btn-outline btn-sm" title="Rotar 90º"><i class="fas fa-redo"></i> Rotar 90º</button>
                     </div>
                 </div>
 
@@ -125,7 +131,7 @@
     <div class="legend-panel" id="legend"></div>
 
     <div class="canvas-wrapper">
-        <canvas id="canvas" width="1000" height="600"></canvas>
+        <canvas id="canvas" width="1100" height="600"></canvas>
     </div>
 
     <div id="result" class="result-card"></div>
@@ -150,17 +156,23 @@
     let polygons = [];
     let boundaryEdges = []; 
     
-    // UI State
+    // UI State & Geometría
     let minX, maxX, minY, maxY;
     let selectedPoly = -1;
     let hoveredPolyIdx = -1;
     let hoveredEdgeIdx = -1;
-    let uiMode = 'DEFAULT'; // 'DEFAULT', 'SET_ROT', 'SET_HOOK', 'SET_GROOVE'
-    
-    // Geometric Markers
+    let uiMode = 'DEFAULT'; // 'DEFAULT', 'SET_ROT'
     let rotAxis = null; 
-    let hookPt = null; 
-    let groovePt = null;
+
+    // Zoom & Pan Variables
+    let zoomLevel = 1;
+    let offsetX = 0;
+    let offsetY = 0;
+    let baseScale = 1;
+    let isDragging = false;
+    let dragStartX = 0;
+    let dragStartY = 0;
+    let hasDragged = false;
 
     // Thermal Engine
     let T = null, kGrid = null, dx, dy;
@@ -191,7 +203,7 @@
         bar.querySelector('i').className = type === 'error' ? 'fas fa-exclamation-triangle' : type === 'success' ? 'fas fa-check-circle' : type==='warning'? 'fas fa-exclamation-circle' : 'fas fa-info-circle';
     }
 
-    // INTERACCIÓN LEYENDA (Click para pintar)
+    // LEYENDA (Click para pintar)
     document.getElementById('legend').addEventListener('click', e => {
         const item = e.target.closest('.legend-item');
         if (!item) return;
@@ -199,15 +211,14 @@
         if (selectedPoly !== -1 && polygons[selectedPoly]) {
             polygons[selectedPoly].matIdx = matIdx;
             if (!showThermalMap) draw();
-            setStatus(`Material asignado.`, 'success');
+            setStatus(`Material "${materials[matIdx].name}" asignado.`, 'success');
         } else {
             setStatus('Haz clic primero en un área del dibujo para seleccionarla.', 'warning');
         }
     });
 
-    // ──── PARSER DXF Y TOPOLOGÍA (Refinado) ────
+    // ──── PARSER DXF Y TOPOLOGÍA ────
     function parseDXF(text) {
-        // [Mantengo el parser compacto y robusto anterior]
         const lines = text.split(/\r?\n/);
         let idx = 0, inEntities = false, segments = [];
         let currentEntity = null, currentPolyline = null;
@@ -300,7 +311,6 @@
     }
 
     function buildTopology(rawSegments, tol) {
-        // Fractura e intersección de nodos T
         const points = [];
         rawSegments.forEach(s => { points.push({x: s.x1, y: s.y1}); points.push({x: s.x2, y: s.y2}); });
 
@@ -400,7 +410,7 @@
             if(pts.length > 2) {
                 let area = 0;
                 for(let i=0; i<pts.length; i++) area += (pts[i].x * pts[(i+1)%pts.length].y - pts[(i+1)%pts.length].x * pts[i].y);
-                rawFaces.push({pts, signedArea: area/2, area: Math.abs(area/2), matIdx: 1}); // Defecto: Material 1 (Aluminio)
+                rawFaces.push({pts, signedArea: area/2, area: Math.abs(area/2), matIdx: 1}); // Defecto: Aluminio
             }
         });
 
@@ -423,20 +433,192 @@
         return Array.from(map.values()).filter(e => e.count === 1).map(e => ({p1:e.p1, p2:e.p2, type:0}));
     }
 
+    // ──── GESTIÓN DE VISTA (ZOOM Y PAN) ────
     function recalcBounds() {
         if(!polygons.length) return;
         const all = polygons.flatMap(p=>p.pts);
         minX = Math.min(...all.map(p=>p.x)); maxX = Math.max(...all.map(p=>p.x));
         minY = Math.min(...all.map(p=>p.y)); maxY = Math.max(...all.map(p=>p.y));
-        // Auto-update Lp input
         document.getElementById('LpInput').value = Math.round(maxY - minY);
+        
+        const pad = 60, cw = canvas.width, ch = canvas.height;
+        baseScale = Math.min((cw-pad*2)/(maxX-minX||1), (ch-pad*2)/(maxY-minY||1));
+        
+        // Reset view
+        zoomLevel = 1;
+        offsetX = 0;
+        offsetY = 0;
     }
 
     function getTransform() {
-        const pad = 60, cw = canvas.width, ch = canvas.height;
-        const scale = Math.min((cw-pad*2)/(maxX-minX||1), (ch-pad*2)/(maxY-minY||1));
-        return { pad, scale, tx: x => pad + (x-minX)*scale, ty: y => ch - (pad + (y-minY)*scale) };
+        const pad = 60, ch = canvas.height;
+        return {
+            scale: baseScale * zoomLevel,
+            tx: x => offsetX + (pad + (x - minX) * baseScale) * zoomLevel,
+            ty: y => offsetY + (ch - (pad + (y - minY) * baseScale)) * zoomLevel
+        };
     }
+
+    function getWorldCoords(sx, sy) {
+        const pad = 60, ch = canvas.height;
+        const wx = minX + ((sx - offsetX) / zoomLevel - pad) / baseScale;
+        const wy = minY + (ch - pad - (sy - offsetY) / zoomLevel) / baseScale;
+        return { x: wx, y: wy };
+    }
+
+    function doZoom(factor, cx, cy) {
+        const newZoom = zoomLevel * factor;
+        // Evitar zooms extremos
+        if(newZoom > 50 || newZoom < 0.1) return;
+        
+        offsetX = cx - (cx - offsetX) * (newZoom / zoomLevel);
+        offsetY = cy - (cy - offsetY) * (newZoom / zoomLevel);
+        zoomLevel = newZoom;
+        draw();
+    }
+
+    document.getElementById('btnZoomIn').onclick = () => doZoom(1.2, canvas.width/2, canvas.height/2);
+    document.getElementById('btnZoomOut').onclick = () => doZoom(1/1.2, canvas.width/2, canvas.height/2);
+    document.getElementById('btnZoomReset').onclick = () => { zoomLevel = 1; offsetX = 0; offsetY = 0; draw(); };
+
+    canvas.addEventListener('wheel', e => {
+        e.preventDefault();
+        if(!polygons.length) return;
+        const rect = canvas.getBoundingClientRect();
+        const mouseX = (e.clientX - rect.left) * (canvas.width / rect.width);
+        const mouseY = (e.clientY - rect.top) * (canvas.height / rect.height);
+        const factor = e.deltaY < 0 ? 1.1 : 1/1.1;
+        doZoom(factor, mouseX, mouseY);
+    });
+
+    // ──── INTERACCIONES DE RATÓN (PAN Y CLICK) ────
+    function resetUIMode() {
+        uiMode = 'DEFAULT';
+        document.getElementById('btnSetRot').classList.remove('active');
+    }
+
+    document.getElementById('btnSetRot').onclick = function() {
+        resetUIMode(); uiMode = 'SET_ROT'; this.classList.add('active');
+        setStatus('📍 Haz clic en cualquier punto del área de dibujo para fijar el Centro de Rotación.', 'info');
+    };
+
+    function findNearestVertex(mx, my) {
+        let nearest = null, minDist = Infinity;
+        polygons.forEach(p => p.pts.forEach(pt => {
+            const dist = Math.hypot(pt.x - mx, pt.y - my);
+            if(dist < minDist) { minDist = dist; nearest = {x: pt.x, y: pt.y}; }
+        }));
+        // Tolerancia de ajuste dinámica según el zoom
+        return minDist < 15/(baseScale*zoomLevel) ? nearest : {x:mx, y:my};
+    }
+
+    canvas.addEventListener('mousedown', e => {
+        if(!polygons.length) return;
+        const rect = canvas.getBoundingClientRect();
+        isDragging = true;
+        hasDragged = false;
+        dragStartX = (e.clientX - rect.left) * (canvas.width / rect.width) - offsetX;
+        dragStartY = (e.clientY - rect.top) * (canvas.height / rect.height) - offsetY;
+    });
+
+    canvas.addEventListener('mousemove', e => {
+        if(!polygons.length || showThermalMap) return;
+        const rect = canvas.getBoundingClientRect();
+        const mouseX = (e.clientX - rect.left) * (canvas.width / rect.width);
+        const mouseY = (e.clientY - rect.top) * (canvas.height / rect.height);
+
+        // PAN (Desplazamiento)
+        if (isDragging) {
+            offsetX = mouseX - dragStartX;
+            offsetY = mouseY - dragStartY;
+            hasDragged = true;
+            draw();
+            return;
+        }
+        
+        if (uiMode !== 'DEFAULT') return;
+
+        // Hover con coordenadas de mundo
+        const {x: mxWorld, y: myWorld} = getWorldCoords(mouseX, mouseY);
+        
+        let minDEdge = Infinity, idxE = -1;
+        boundaryEdges.forEach((edge, i) => {
+            const dx = edge.p2.x - edge.p1.x, dy = edge.p2.y - edge.p1.y, len2 = dx*dx+dy*dy;
+            let t = Math.max(0, Math.min(1, ((mxWorld-edge.p1.x)*dx + (myWorld-edge.p1.y)*dy)/len2));
+            if(Math.hypot(mxWorld-(edge.p1.x+t*dx), myWorld-(edge.p1.y+t*dy)) < minDEdge) { minDEdge = Math.hypot(mxWorld-(edge.p1.x+t*dx), myWorld-(edge.p1.y+t*dy)); idxE = i; }
+        });
+        const nHEdge = (minDEdge < 10/(baseScale*zoomLevel)) ? idxE : -1;
+
+        let nHPoly = -1;
+        for (let i = polygons.length - 1; i >= 0; i--) {
+            let p = polygons[i], inside = false;
+            for(let k=0,j=p.pts.length-1; k<p.pts.length; j=k++) {
+                if((p.pts[k].y > myWorld) !== (p.pts[j].y > myWorld) && mxWorld < (p.pts[j].x-p.pts[k].x)*(myWorld-p.pts[k].y)/(p.pts[j].y-p.pts[k].y)+p.pts[k].x) inside = !inside;
+            }
+            if(inside) { nHPoly = i; break; }
+        }
+
+        if(nHEdge !== hoveredEdgeIdx || nHPoly !== hoveredPolyIdx) { 
+            hoveredEdgeIdx = nHEdge; 
+            hoveredPolyIdx = nHPoly; 
+            draw(); 
+        }
+    });
+
+    canvas.addEventListener('mouseup', e => {
+        if(!polygons.length) return;
+        isDragging = false;
+        
+        // Si arrastró el ratón, no hacer clic
+        if (hasDragged || showThermalMap) return;
+
+        const rect = canvas.getBoundingClientRect();
+        const mouseX = (e.clientX - rect.left) * (canvas.width / rect.width);
+        const mouseY = (e.clientY - rect.top) * (canvas.height / rect.height);
+        const {x: mxWorld, y: myWorld} = getWorldCoords(mouseX, mouseY);
+
+        if (uiMode === 'SET_ROT') {
+            rotAxis = findNearestVertex(mxWorld, myWorld); resetUIMode();
+            setStatus('Eje de rotación fijado.', 'success'); draw(); return;
+        }
+
+        // Selección de bordes
+        if(boundaryEdges.length) {
+            let minDist = Infinity, idx = -1;
+            boundaryEdges.forEach((edge, i) => {
+                const dx = edge.p2.x - edge.p1.x, dy = edge.p2.y - edge.p1.y, len2 = dx*dx+dy*dy;
+                let t = Math.max(0, Math.min(1, ((mxWorld-edge.p1.x)*dx + (myWorld-edge.p1.y)*dy)/len2));
+                if(Math.hypot(mxWorld-(edge.p1.x+t*dx), myWorld-(edge.p1.y+t*dy)) < minDist) { minDist = Math.hypot(mxWorld-(edge.p1.x+t*dx), myWorld-(edge.p1.y+t*dy)); idx = i; }
+            });
+            if(minDist < 10/(baseScale*zoomLevel) && idx !== -1) {
+                boundaryEdges[idx].type = (boundaryEdges[idx].type + 1) % 4; draw(); return;
+            }
+        }
+
+        // Selección de áreas (Z-index inverso)
+        selectedPoly = -1;
+        for (let i = polygons.length - 1; i >= 0; i--) {
+            let p = polygons[i], inside = false;
+            for(let k=0,j=p.pts.length-1; k<p.pts.length; j=k++) {
+                if((p.pts[k].y > myWorld) !== (p.pts[j].y > myWorld) && mxWorld < (p.pts[j].x-p.pts[k].x)*(myWorld-p.pts[k].y)/(p.pts[j].y-p.pts[k].y)+p.pts[k].x) inside = !inside;
+            }
+            if(inside) { selectedPoly = i; break; }
+        }
+        if(selectedPoly !== -1) setStatus(`Área seleccionada. Elige el material en la leyenda.`);
+        draw();
+    });
+
+    document.getElementById('btnRotate').onclick = () => {
+        if(!polygons.length) return;
+        const ang = 90 * Math.PI/180;
+        const cx = rotAxis ? rotAxis.x : (minX+maxX)/2, cy = rotAxis ? rotAxis.y : (minY+maxY)/2;
+        polygons.forEach(p => p.pts.forEach(pt => {
+            const dx = pt.x-cx, dy = pt.y-cy;
+            pt.x = cx + dx*Math.cos(ang) - dy*Math.sin(ang); pt.y = cy + dx*Math.sin(ang) + dy*Math.cos(ang);
+        }));
+        recalcBounds(); boundaryEdges = extractBoundaryEdges(polygons); showThermalMap = false; T = null;
+        document.getElementById('result').style.display = 'none'; draw();
+    };
 
     function draw() {
         ctx.clearRect(0,0,canvas.width,canvas.height);
@@ -451,6 +633,7 @@
                     const f = (T[i][j]-te)/(ti-te||1);
                     const hue = (1 - Math.min(1,Math.max(0,f))) * 240;
                     ctx.fillStyle = `hsl(${hue},75%,50%)`;
+                    // Sumamos una pequeña fracción (0.6) al ancho/alto para evitar líneas blancas de sub-píxeles
                     ctx.fillRect(tx(minX+j*dx), ty(minY+i*dy)-ch, cw+0.6, ch+0.6);
                 }
             }
@@ -468,161 +651,27 @@
             });
         }
         
-        // Dibujar bordes (Si estamos en default)
+        // Dibujar bordes
         if(uiMode === 'DEFAULT' || uiMode === 'SET_ROT' || showThermalMap) {
             boundaryEdges.forEach((edge, idx) => {
                 ctx.beginPath(); ctx.moveTo(tx(edge.p1.x), ty(edge.p1.y)); ctx.lineTo(tx(edge.p2.x), ty(edge.p2.y));
                 let color = 'rgba(0,0,0,0.1)';
                 if(edge.type === 1) color = '#1976d2'; else if(edge.type === 2) color = '#d32f2f'; else if(edge.type === 3) color = '#757575'; 
-                ctx.strokeStyle = color; ctx.lineWidth = (idx === hoveredEdgeIdx && uiMode==='DEFAULT') ? 5 : 3;
+                ctx.strokeStyle = color; ctx.lineWidth = (idx === hoveredEdgeIdx && uiMode==='DEFAULT') ? 6 : 3;
                 ctx.stroke();
             });
         }
 
-        // Dibujar marcadores espaciales
-        if (rotAxis) drawMarker(tx(rotAxis.x), ty(rotAxis.y), '#e67e22', 'Eje');
-        if (hookPt) drawMarker(tx(hookPt.x), ty(hookPt.y), '#27ae60', 'Enganche 1');
-        if (groovePt) drawMarker(tx(groovePt.x), ty(groovePt.y), '#8e44ad', 'Enganche 2');
+        // Dibujar marcador de eje
+        if (rotAxis) {
+            const rx = tx(rotAxis.x), ry = ty(rotAxis.y);
+            ctx.beginPath(); ctx.arc(rx, ry, 6, 0, Math.PI*2); ctx.fillStyle = '#e67e22'; ctx.fill();
+            ctx.strokeStyle = 'white'; ctx.lineWidth = 2; ctx.stroke();
+            ctx.font = "bold 12px sans-serif"; ctx.fillText('Eje', rx+10, ry-10);
+        }
     }
 
-    function drawMarker(x, y, color, label) {
-        ctx.beginPath(); ctx.arc(x, y, 6, 0, Math.PI*2); ctx.fillStyle = color; ctx.fill();
-        ctx.strokeStyle = 'white'; ctx.lineWidth = 2; ctx.stroke();
-        ctx.fillStyle = color; ctx.font = "bold 12px sans-serif"; ctx.fillText(label, x+10, y-10);
-    }
-
-    // ──── INTERACCIONES DE RATÓN Y BOTONES ────
-    function resetUIMode() {
-        uiMode = 'DEFAULT';
-        document.querySelectorAll('.btn-action, .btn-outline').forEach(b => b.classList.remove('active'));
-    }
-
-    document.getElementById('btnSetRot').onclick = function() {
-        resetUIMode(); uiMode = 'SET_ROT'; this.classList.add('active');
-        setStatus('📍 Haz clic en cualquier punto del área de dibujo para fijar el Centro de Rotación.', 'info');
-    };
-
-    document.getElementById('btnSetChain').onclick = function() {
-        resetUIMode(); uiMode = 'SET_HOOK'; hookPt = null; groovePt = null; this.classList.add('active');
-        setStatus('🔗 Ensamblaje: Haz clic en el PUNTO 1 (Macho / Origen de la lama).', 'info');
-        document.getElementById('btnMultiply').disabled = true;
-        draw();
-    };
-
-    function findNearestVertex(mx, my) {
-        let nearest = null, minDist = Infinity;
-        polygons.forEach(p => p.pts.forEach(pt => {
-            const dist = Math.hypot(pt.x - mx, pt.y - my);
-            if(dist < minDist) { minDist = dist; nearest = {x: pt.x, y: pt.y}; }
-        }));
-        return minDist < 15/getTransform().scale ? nearest : {x:mx, y:my};
-    }
-
-    canvas.onclick = e => {
-        if(!polygons.length || showThermalMap) return;
-        const rect = canvas.getBoundingClientRect(), {pad, scale} = getTransform();
-        const mxWorld = ((e.clientX-rect.left)*(canvas.width/rect.width) - pad)/scale + minX;
-        const myWorld = (canvas.height - (e.clientY-rect.top)*(canvas.height/rect.height) - pad)/scale + minY;
-
-        if (uiMode === 'SET_ROT') {
-            rotAxis = findNearestVertex(mxWorld, myWorld); resetUIMode();
-            setStatus('Eje de rotación fijado.', 'success'); draw(); return;
-        }
-        if (uiMode === 'SET_HOOK') {
-            hookPt = findNearestVertex(mxWorld, myWorld); uiMode = 'SET_GROOVE';
-            setStatus('Punto 1 fijado. Ahora haz clic en el PUNTO 2 (Hembra / Destino del enganche).', 'info'); draw(); return;
-        }
-        if (uiMode === 'SET_GROOVE') {
-            groovePt = findNearestVertex(mxWorld, myWorld); resetUIMode();
-            document.getElementById('btnMultiply').disabled = false;
-            setStatus('Puntos de enganche fijados. Ya puedes Multiplicar lamas.', 'success'); draw(); return;
-        }
-
-        // Selección de bordes
-        if(boundaryEdges.length) {
-            let minDist = Infinity, idx = -1;
-            boundaryEdges.forEach((edge, i) => {
-                const dx = edge.p2.x - edge.p1.x, dy = edge.p2.y - edge.p1.y, len2 = dx*dx+dy*dy;
-                let t = Math.max(0, Math.min(1, ((mxWorld-edge.p1.x)*dx + (myWorld-edge.p1.y)*dy)/len2));
-                if(Math.hypot(mxWorld-(edge.p1.x+t*dx), myWorld-(edge.p1.y+t*dy)) < minDist) { minDist = Math.hypot(mxWorld-(edge.p1.x+t*dx), myWorld-(edge.p1.y+t*dy)); idx = i; }
-            });
-            if(minDist < 10/scale && idx !== -1) {
-                boundaryEdges[idx].type = (boundaryEdges[idx].type + 1) % 4; draw(); return;
-            }
-        }
-
-        // Selección de áreas (Z-index inverso)
-        selectedPoly = -1;
-        for (let i = polygons.length - 1; i >= 0; i--) {
-            let p = polygons[i], inside = false;
-            for(let k=0,j=p.pts.length-1; k<p.pts.length; j=k++) {
-                if((p.pts[k].y > myWorld) !== (p.pts[j].y > myWorld) && mxWorld < (p.pts[j].x-p.pts[k].x)*(myWorld-p.pts[k].y)/(p.pts[j].y-p.pts[k].y)+p.pts[k].x) inside = !inside;
-            }
-            if(inside) { selectedPoly = i; break; }
-        }
-        if(selectedPoly !== -1) setStatus(`Área seleccionada. Elige el material en la leyenda.`);
-        draw();
-    };
-
-    canvas.onmousemove = e => {
-        if(!polygons.length || showThermalMap || uiMode !== 'DEFAULT') return;
-        const rect = canvas.getBoundingClientRect(), {pad, scale} = getTransform();
-        const mxWorld = ((e.clientX-rect.left)*(canvas.width/rect.width) - pad)/scale + minX;
-        const myWorld = (canvas.height - (e.clientY-rect.top)*(canvas.height/rect.height) - pad)/scale + minY;
-        
-        let minDEdge = Infinity, idxE = -1;
-        boundaryEdges.forEach((edge, i) => {
-            const dx = edge.p2.x - edge.p1.x, dy = edge.p2.y - edge.p1.y, len2 = dx*dx+dy*dy;
-            let t = Math.max(0, Math.min(1, ((mxWorld-edge.p1.x)*dx + (myWorld-edge.p1.y)*dy)/len2));
-            if(Math.hypot(mxWorld-(edge.p1.x+t*dx), myWorld-(edge.p1.y+t*dy)) < minDEdge) { minDEdge = Math.hypot(mxWorld-(edge.p1.x+t*dx), myWorld-(edge.p1.y+t*dy)); idxE = i; }
-        });
-        const nHEdge = (minDEdge < 10/scale) ? idxE : -1;
-
-        let nHPoly = -1;
-        for (let i = polygons.length - 1; i >= 0; i--) {
-            let p = polygons[i], inside = false;
-            for(let k=0,j=p.pts.length-1; k<p.pts.length; j=k++) {
-                if((p.pts[k].y > myWorld) !== (p.pts[j].y > myWorld) && mxWorld < (p.pts[j].x-p.pts[k].x)*(myWorld-p.pts[k].y)/(p.pts[j].y-p.pts[k].y)+p.pts[k].x) inside = !inside;
-            }
-            if(inside) { nHPoly = i; break; }
-        }
-
-        if(nHEdge !== hoveredEdgeIdx || nHPoly !== hoveredPolyIdx) { hoveredEdgeIdx = nHEdge; hoveredPolyIdx = nHPoly; draw(); }
-    };
-
-    document.getElementById('btnRotate').onclick = () => {
-        if(!polygons.length) return;
-        const ang = 90 * Math.PI/180;
-        const cx = rotAxis ? rotAxis.x : (minX+maxX)/2, cy = rotAxis ? rotAxis.y : (minY+maxY)/2;
-        polygons.forEach(p => p.pts.forEach(pt => {
-            const dx = pt.x-cx, dy = pt.y-cy;
-            pt.x = cx + dx*Math.cos(ang) - dy*Math.sin(ang); pt.y = cy + dx*Math.sin(ang) + dy*Math.cos(ang);
-        }));
-        if(hookPt) { const hdx=hookPt.x-cx, hdy=hookPt.y-cy; hookPt = {x: cx+hdx*Math.cos(ang)-hdy*Math.sin(ang), y: cy+hdx*Math.sin(ang)+hdy*Math.cos(ang)}; }
-        if(groovePt) { const gdx=groovePt.x-cx, gdy=groovePt.y-cy; groovePt = {x: cx+gdx*Math.cos(ang)-gdy*Math.sin(ang), y: cy+gdx*Math.sin(ang)+gdy*Math.cos(ang)}; }
-        recalcBounds(); boundaryEdges = extractBoundaryEdges(polygons); showThermalMap = false; T = null;
-        document.getElementById('result').style.display = 'none'; draw();
-    };
-
-    document.getElementById('btnMultiply').onclick = () => {
-        if(!hookPt || !groovePt || !polygons.length) return;
-        const count = parseInt(prompt("¿Cuántas lamas totales quieres en el ensamblaje?", "3"));
-        if(isNaN(count) || count <= 1) return;
-        
-        const shiftX = groovePt.x - hookPt.x, shiftY = groovePt.y - hookPt.y;
-        const originalPolys = JSON.parse(JSON.stringify(polygons));
-        
-        for(let i=1; i<count; i++) {
-            originalPolys.forEach(op => {
-                let nPts = op.pts.map(pt => ({ x: pt.x + shiftX*i, y: pt.y + shiftY*i }));
-                polygons.push({ pts: nPts, area: op.area, matIdx: op.matIdx });
-            });
-        }
-        recalcBounds(); boundaryEdges = extractBoundaryEdges(polygons);
-        setStatus(`Ensamblaje completado con ${count} lamas.`, 'success'); draw();
-    };
-
-    // ──── SOLVER TÉRMICO Y CÁLCULO DE U (CORREGIDO) ────
+    // ──── SOLVER TÉRMICO Y CÁLCULO DE U ────
     document.getElementById('dxfFile').onchange = e => {
         const file = e.target.files[0]; if(!file) return;
         const reader = new FileReader();
@@ -633,9 +682,9 @@
                 polygons = buildTopology(segments, 0.5);
                 if(polygons.length) {
                     recalcBounds(); boundaryEdges = extractBoundaryEdges(polygons);
-                    setStatus(`✅ DXF cargado. Modifica geometría o asigna contornos.`, 'success');
+                    setStatus(`✅ DXF cargado. Modifica la geometría o asigna contornos.`, 'success');
                     document.getElementById('calcBtn').disabled = false;
-                    selectedPoly = hoveredPolyIdx = -1; showThermalMap = false; T = null; hookPt=groovePt=rotAxis=null;
+                    selectedPoly = hoveredPolyIdx = -1; showThermalMap = false; T = null; rotAxis = null;
                     document.getElementById('result').style.display = 'none'; draw();
                 } else throw new Error("Fallo en tolerancia de unión.");
             } catch(err) { setStatus('Error: '+err.message, 'error'); }
@@ -653,7 +702,6 @@
         setTimeout(()=> runSolver(0), 50);
     };
 
-    // Variables de máscara para el solver
     let isExt, isInt; 
 
     function runSolver(step) {
@@ -661,7 +709,6 @@
         if(step === 0) {
             dx = (maxX-minX)/NX; dy = (maxY-minY)/NY;
             
-            // Rasterizar Materiales
             kGrid = Array.from({length:NY}, (_,i)=> Array.from({length:NX}, (_,j)=> {
                 const x = minX + j*dx + dx/2, y = minY + i*dy + dy/2;
                 let p = null;
@@ -672,14 +719,13 @@
                     }
                     if(inside) { p = poly; break; }
                 }
-                return p ? materials[p.matIdx].k : 0.026; // Aire si está fuera
+                return p ? materials[p.matIdx].k : 0.026; 
             }));
             
             T = Array.from({length:NY}, ()=> new Array(NX).fill((te+ti)/2));
             isExt = Array.from({length:NY}, ()=> new Array(NX).fill(false));
             isInt = Array.from({length:NY}, ()=> new Array(NX).fill(false));
             
-            // Rasterizar Condiciones de Contorno Directas (Solución al error del Flux 0)
             boundaryEdges.forEach(edge => {
                 if(edge.type !== 1 && edge.type !== 2) return;
                 const steps = Math.ceil(Math.hypot(edge.p2.x-edge.p1.x, edge.p2.y-edge.p1.y) / Math.min(dx,dy) * 2);
@@ -726,7 +772,6 @@
             for(let i=0; i<NY; i++) {
                 for(let j=0; j<NX; j++) {
                     if(isInt[i][j]) {
-                        // Sumar flujo hacia las celdas vecinas que NO son borde interior
                         if(j>0 && !isInt[i][j-1]) flux += ((kGrid[i][j]+kGrid[i][j-1])/2) * (ti - T[i][j-1]) * (dy/dx);
                         if(j<NX-1 && !isInt[i][j+1]) flux += ((kGrid[i][j]+kGrid[i][j+1])/2) * (ti - T[i][j+1]) * (dy/dx);
                         if(i>0 && !isInt[i-1][j]) flux += ((kGrid[i][j]+kGrid[i-1][j])/2) * (ti - T[i-1][j]) * (dx/dy);
@@ -735,7 +780,6 @@
                 }
             }
             
-            // Fórmula U = Q / (L_p * ΔT)
             let Lp = parseFloat(document.getElementById('LpInput').value) || (maxY - minY);
             let Lp_metros = Lp / 1000;
             const deltaT = Math.abs(ti - te) || 1;
@@ -744,6 +788,9 @@
             document.getElementById('result').style.display = 'block';
             document.getElementById('result').innerHTML = `<h2>U = ${U.toFixed(3)} W/m²·K</h2><small>Flujo lineal (Q): ${Math.abs(flux).toFixed(2)} W/m | Longitud (Lp): ${Lp.toFixed(1)} mm | ΔT: ${deltaT} K</small>`;
             setStatus(`✅ Cálculo completado.`, 'success');
+            
+            // Centramos la vista para ver el mapa entero
+            zoomLevel = 1; offsetX = 0; offsetY = 0;
             showThermalMap = true; draw();
             document.getElementById('calcBtn').disabled = false;
         }
