@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simulador Cinemático DEFINITIVO</title>
+    <title>Simulador Cinemático de Persianas - Versión Industrial</title>
     <script src="https://cdn.jsdelivr.net/npm/dxf-parser@1.1.2/dist/dxf-parser.min.js"></script>
     <style>
         :root { --bg: #0f172a; --panel: #1e293b; --text: #f8fafc; --border: #334155; --accent: #3b82f6; }
@@ -58,7 +58,7 @@
     </div>
 
     <div>
-        <h3>2. Motor de Cálculo Tridireccional</h3>
+        <h3>2. Geometría y Cálculo Inverso</h3>
         
         <div class="grid-2">
             <div>
@@ -106,21 +106,21 @@
     const canvas = document.getElementById('simCanvas');
     const ctx = canvas.getContext('2d');
     
-    // Almacenamiento DXF
     let dxfPoligons = []; 
     let bbox = { minX: 0, maxX: 0, minY: 0, maxY: 0 };
     
-    // Máquina de Estados
     let appState = 'IDLE'; 
     let pSup = null; let pInf = null; let pEje = null; 
     let cursorPoint = null; 
 
-    // Configuración de Cámara 
     let calibConfig = { cx: 0, cy: 0, scale: 1, midX: 0, midY: 0 };
     let simCam = { x: 0, y: 0, zoom: 1 };
     let isDragging = false;
     let lastMouse = { x: 0, y: 0 };
     let altoLama = 45; 
+    
+    // Parámetro de diseño: Número fijo de lamas que caen verticalmente
+    const LAMAS_COLGANTES = 2;
 
     window.addEventListener('resize', () => {
         canvas.width = canvas.parentElement.clientWidth;
@@ -135,10 +135,8 @@
     const inputAltura = document.getElementById('valAlturaTotal');
     const inputLamas = document.getElementById('valLamas');
     const inputDiametroObj = document.getElementById('valDiametroObjetivo');
-
     let ignoreNextEvent = false;
 
-    // 1. Cambia Altura -> Calcula Lamas
     inputAltura.addEventListener('input', function() {
         if (appState !== 'SIMULATING' || ignoreNextEvent) return;
         let lamas = Math.ceil(parseFloat(this.value) / altoLama);
@@ -147,7 +145,6 @@
         simular();
     });
 
-    // 2. Cambian Lamas -> Calcula Altura
     inputLamas.addEventListener('input', function() {
         if (appState !== 'SIMULATING' || ignoreNextEvent) return;
         let lamas = parseInt(this.value);
@@ -156,7 +153,7 @@
         simular();
     });
 
-    // 3. Cambia Diámetro Objetivo -> Itera y recalcula lamas hacia atrás
+    // Motor Inverso desde el Diámetro
     inputDiametroObj.addEventListener('input', function() {
         if (appState !== 'SIMULATING' || ignoreNextEvent || !pSup || !pInf || !pEje) return;
         
@@ -164,12 +161,11 @@
         let eLama = parseFloat(document.getElementById('valEspesor').value);
         let radioEje = parseFloat(document.getElementById('valEje').value) / 2;
         
-        // El Offset inicial de la lama ahora es solo la MITAD del espesor (eLama / 2)
         let rActual = radioEje + (eLama / 2); 
         
         if (targetMaxRadius <= rActual) {
-            inputLamas.value = 1;
-            inputAltura.value = altoLama.toFixed(0);
+            inputLamas.value = LAMAS_COLGANTES;
+            inputAltura.value = (LAMAS_COLGANTES * altoLama).toFixed(0);
             simular();
             return;
         }
@@ -193,13 +189,13 @@
             pAnt = { x: targetX, y: targetY, thetaGlobal: testTheta };
         }
 
-        if (rActual + (eLama/2) > targetMaxRadius && lamasCalculadas > 1) {
-            lamasCalculadas--;
-        }
+        if (rActual + (eLama/2) > targetMaxRadius && lamasCalculadas > 1) lamasCalculadas--;
 
         ignoreNextEvent = true;
-        inputLamas.value = lamasCalculadas;
-        inputAltura.value = (lamasCalculadas * altoLama).toFixed(0);
+        // Le sumamos las lamas colgantes verticales al recuento
+        let lamasTotales = lamasCalculadas + LAMAS_COLGANTES;
+        inputLamas.value = lamasTotales;
+        inputAltura.value = (lamasTotales * altoLama).toFixed(0);
         ignoreNextEvent = false;
         
         simular();
@@ -275,13 +271,11 @@
         return poligonos.sort((a, b) => b.area - a.area);
     }
 
-    // --- 2. SISTEMA DE CALIBRACIÓN ---
+    // --- 2. SISTEMA DE CALIBRACIÓN Y EVENTOS DE RATÓN ---
     function updateCalibConfig() {
-        calibConfig.cx = canvas.width / 2;
-        calibConfig.cy = canvas.height / 2;
+        calibConfig.cx = canvas.width / 2; calibConfig.cy = canvas.height / 2;
         calibConfig.scale = Math.min(canvas.width / (bbox.maxX - bbox.minX), canvas.height / (bbox.maxY - bbox.minY)) * 0.4; 
-        calibConfig.midX = (bbox.minX + bbox.maxX) / 2;
-        calibConfig.midY = (bbox.minY + bbox.maxY) / 2;
+        calibConfig.midX = (bbox.minX + bbox.maxX) / 2; calibConfig.midY = (bbox.minY + bbox.maxY) / 2;
     }
 
     function toScreen(pt) { return { x: calibConfig.cx + (pt.x - calibConfig.midX) * calibConfig.scale, y: calibConfig.cy - (pt.y - calibConfig.midY) * calibConfig.scale }; }
@@ -289,9 +283,7 @@
 
     function iniciarCalibracion() {
         if(dxfPoligons.length === 0) return;
-        appState = 'CALIBRATING_P1';
-        pSup = null; pInf = null; pEje = null;
-        simCam = { x: 0, y: 0, zoom: 1 }; 
+        appState = 'CALIBRATING_P1'; pSup = null; pInf = null; pEje = null; simCam = { x: 0, y: 0, zoom: 1 }; 
         
         let overlay = document.getElementById('instructionOverlay');
         overlay.style.display = 'block';
@@ -299,11 +291,9 @@
         overlay.style.backgroundColor = '#3b82f6';
         
         document.getElementById('btnRecalibrar').style.display = 'none';
-        updateCalibConfig();
-        renderCalibracion();
+        updateCalibConfig(); renderCalibracion();
     }
 
-    // Controles de Cámara y Clics
     canvas.addEventListener('wheel', (e) => {
         e.preventDefault();
         const zoomFactor = e.deltaY < 0 ? 1.1 : 0.9;
@@ -315,9 +305,7 @@
         const rect = canvas.getBoundingClientRect();
         const mx = e.clientX - rect.left; const my = e.clientY - rect.top;
 
-        if (e.button === 1 || e.button === 2) {
-            isDragging = true; lastMouse = { x: mx, y: my }; return;
-        }
+        if (e.button === 1 || e.button === 2) { isDragging = true; lastMouse = { x: mx, y: my }; return; }
 
         if (appState !== 'SIMULATING' && cursorPoint) {
             let overlay = document.getElementById('instructionOverlay');
@@ -328,7 +316,7 @@
             } 
             else if (appState === 'CALIBRATING_P2') {
                 pInf = cursorPoint; appState = 'CALIBRATING_AXIS';
-                overlay.innerHTML = "⚙️ Paso 3:<br><span style='font-size:0.9rem; font-weight:normal;'>Coloca el CENTRO DEL EJE</span>";
+                overlay.innerHTML = "⚙️ Paso 3:<br><span style='font-size:0.9rem; font-weight:normal;'>Coloca la DIRECCIÓN DEL EJE</span>";
                 overlay.style.backgroundColor = '#8b5cf6';
             }
             else if (appState === 'CALIBRATING_AXIS') {
@@ -336,17 +324,14 @@
                 overlay.style.display = 'none';
                 document.getElementById('btnRecalibrar').style.display = 'block';
                 
-                // --- CÁLCULO TRAS CALIBRAR ---
                 altoLama = Math.hypot(pInf.x - pSup.x, pInf.y - pSup.y);
-                let radioHinge = Math.hypot(pEje.x - pSup.x, pEje.y - pSup.y);
-                let eLama = parseFloat(document.getElementById('valEspesor').value);
                 
-                // Descontamos la MITAD del espesor para saber dónde está la pared del tubo
-                let radioEjeFisico = radioHinge - (eLama / 2);
-                if(radioEjeFisico < 10) radioEjeFisico = 10; 
+                // AUTOMATIZACIÓN DE DEFAULTS: Eje = 60 y Espesor = -30%
+                document.getElementById('valEje').value = "60";
+                let minDim = Math.min(bbox.maxX - bbox.minX, bbox.maxY - bbox.minY);
+                document.getElementById('valEspesor').value = (minDim * 0.7).toFixed(1);
                 
                 document.getElementById('infoAlto').innerText = altoLama.toFixed(2) + " mm";
-                document.getElementById('valEje').value = (radioEjeFisico * 2).toFixed(1); 
                 
                 let lamasActuales = parseInt(inputLamas.value);
                 inputAltura.value = (lamasActuales * altoLama).toFixed(0);
@@ -412,7 +397,7 @@
         if (pInf) { let ip = toScreen(pInf); ctx.beginPath(); ctx.arc(ip.x, ip.y, 4, 0, Math.PI*2); ctx.fillStyle = '#ef4444'; ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth=1; ctx.stroke(); }
     }
 
-    // --- 3. MOTOR CINEMÁTICO: OFFSET (1/2 Espesor) Y AUTO-ROTACIÓN A LAS 3 ---
+    // --- 3. MOTOR CINEMÁTICO: AUTO-RELOJERÍA Y CAÍDA VERTICAL ---
     function simular() {
         if(appState !== 'SIMULATING' || !pSup || !pInf || !pEje) return;
 
@@ -423,17 +408,21 @@
 
         const radioEjeFisico = dEje / 2; 
         
-        // REQUERIMIENTO 1: Separar la primera lama exactamente la MITAD del espesor (eLama / 2)
+        // El Offset inicial es estrictamente eLama / 2
         const radioArranqueBisagra = radioEjeFisico + (eLama / 2); 
 
-        // -- PASO 1: Calcular la Espiral Invisible para obtener la posición final --
+        // Definimos cuántas lamas forman la espiral y cuántas caen libres
+        let lamasEnRollo = Math.max(1, numLamas - LAMAS_COLGANTES);
+        let lamasRealesColgantes = numLamas - lamasEnRollo;
+
+        // --- PASO 1: Generar la Espiral del Cajón ---
         let bisagras = [];
         let radioMaximoEnrollado = radioArranqueBisagra;
         let anguloInicial = Math.atan2(pSup.y - pEje.y, pSup.x - pEje.x);
         
         bisagras.push({ x: radioArranqueBisagra * Math.cos(anguloInicial), y: radioArranqueBisagra * Math.sin(anguloInicial), thetaGlobal: anguloInicial });
 
-        for (let i = 0; i < numLamas; i++) {
+        for (let i = 0; i < lamasEnRollo; i++) {
             let pAnt = bisagras[i];
             let rActual = Math.hypot(pAnt.x, pAnt.y);
             let dTheta = 0.005, dist = 0, targetX = 0, targetY = 0;
@@ -451,12 +440,31 @@
             if (Math.hypot(pNuevo.x, pNuevo.y) > radioMaximoEnrollado) radioMaximoEnrollado = Math.hypot(pNuevo.x, pNuevo.y);
         }
 
-        // REQUERIMIENTO 2: Rote el conjunto desde el centro para que la última lama quede a las 3 en punto
-        let ultimoPunto = bisagras[numLamas];
-        let anguloUltimaBisagra = Math.atan2(ultimoPunto.y, ultimoPunto.x);
-        let correccionRelojeria = -anguloUltimaBisagra; // Restamos el ángulo para ponerla a 0 radianes (Derecha)
+        // --- PASO 2: Auto-Relojería a las 3 en punto ---
+        // Extraemos la última bisagra calculada en la espiral
+        let ultimoPuntoEspiral = bisagras[bisagras.length - 1];
+        let anguloCorreccion = -Math.atan2(ultimoPuntoEspiral.y, ultimoPuntoEspiral.x);
+        
+        let cosC = Math.cos(anguloCorreccion);
+        let sinC = Math.sin(anguloCorreccion);
+        
+        // Rotamos físicamente todos los puntos para que la espiral termine a la derecha del cajón
+        for (let i = 0; i < bisagras.length; i++) {
+            let rx = bisagras[i].x * cosC - bisagras[i].y * sinC;
+            let ry = bisagras[i].x * sinC + bisagras[i].y * cosC;
+            bisagras[i].x = rx; bisagras[i].y = ry; bisagras[i].thetaGlobal += anguloCorreccion;
+        }
 
-        // -- PASO 2: RENDERIZADO VISUAL --
+        // --- PASO 3: Generar Caída Vertical (Paño Desplegado) ---
+        let xFijo = bisagras[bisagras.length - 1].x;
+        let yFijo = bisagras[bisagras.length - 1].y;
+        
+        for (let i = 0; i < lamasRealesColgantes; i++) {
+            yFijo += altoLama;
+            bisagras.push({ x: xFijo, y: yFijo, thetaGlobal: 0 }); 
+        }
+
+        // --- PASO 4: Renderizado Visual ---
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
         const radioEstimado = radioArranqueBisagra + (numLamas * eLama / 2) + 20;
@@ -464,14 +472,10 @@
         let scale = baseScale * simCam.zoom;
 
         ctx.save();
-        // Cámara del usuario
         ctx.translate((canvas.width / 2) + simCam.x, (canvas.height / 2) + simCam.y);
         ctx.scale(scale, scale);
 
-        // ¡MAGIA DE RELOJERÍA!: Rotamos todo el universo para que el final acabe a la derecha
-        ctx.rotate(correccionRelojeria);
-
-        // Dibujar Eje Físico Central
+        // Dibujar Eje Físico
         ctx.beginPath(); ctx.arc(0, 0, radioEjeFisico, 0, Math.PI * 2);
         ctx.fillStyle = "#1e293b"; ctx.fill();
         ctx.lineWidth = 1.5 / scale; ctx.strokeStyle = "#475569"; ctx.stroke();
@@ -503,7 +507,6 @@
 
         ctx.restore();
         
-        // Actualizar UI - El diámetro exterior considera la mitad del espesor que sobresale por fuera de la bisagra final
         let diametroFinal = (radioMaximoEnrollado * 2) + eLama;
         document.getElementById('infoDiam').innerText = diametroFinal.toFixed(1) + " mm";
         
