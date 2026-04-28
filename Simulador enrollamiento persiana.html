@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simulador de Persianas PRO - Estable</title>
+    <title>Simulador de Persianas PRO - Estable y Exportación DXF</title>
     <script src="https://cdn.jsdelivr.net/npm/dxf-parser@1.1.2/dist/dxf-parser.min.js"></script>
     <style>
         :root { --bg: #0f172a; --panel: #1e293b; --text: #f8fafc; --border: #334155; --accent: #3b82f6; --success: #10b981; }
@@ -13,266 +13,24 @@
         h3 { margin: 10px 0 5px 0; color: #94a3b8; font-size: 0.9rem; text-transform: uppercase; }
         label { font-size: 0.85rem; color: #cbd5e1; font-weight: 600; display: block; margin-bottom: 4px; }
         input[type="file"], input[type="number"] { width: 100%; padding: 8px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg); color: white; box-sizing: border-box; }
+        input[type="number"]:focus { outline: none; border-color: var(--accent); }
         
         .control-box { background: #0f172a; border: 1px solid var(--accent); border-radius: 6px; padding: 10px; }
         .btn-action { background: var(--accent); color: white; border: none; padding: 10px; border-radius: 6px; width: 100%; font-weight: bold; cursor: pointer; transition: 0.2s; margin-bottom: 10px; }
-        .btn-export { background: var(--success); color: white; border: none; padding: 12px; border-radius: 6px; width: 100%; font-weight: bold; cursor: pointer; transition: 0.2s; margin-top: 10px; display: none; }
+        .btn-action:hover { background: #2563eb; }
+        .btn-export { background: var(--success); color: white; border: none; padding: 12px; border-radius: 6px; width: 100%; font-weight: bold; cursor: pointer; transition: 0.2s; margin-top: 5px; display: none; }
+        .btn-export:hover { background: #059669; }
         
-        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .input-group { background: #1e293b; padding: 10px; border-radius: 6px; border: 1px solid #334155; margin-bottom: 10px; }
-        #canvas-container { flex-grow: 1; position: relative; background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%); cursor: crosshair; overflow: hidden; }
+        .checkbox-group { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
+        .checkbox-group input { width: 16px; height: 16px; cursor: pointer; }
+        .checkbox-group label { margin: 0; cursor: pointer; font-size: 0.8rem; font-weight: normal; }
+        
+        .data-panel { background: var(--bg); padding: 15px; border-radius: 6px; border: 1px solid var(--border); font-size: 0.9rem; margin-top: auto; }
+        .highlight { color: #10b981; font-weight: bold; font-size: 1.1rem; }
+        .status { padding: 8px; border-radius: 4px; font-size: 0.8rem; background: #334155; color: #94a3b8; text-align: center; margin-top: 5px; }
+        .status.ok { background: #064e3b; color: #34d399; }
+        
+        #canvas-container { flex-grow: 1; position: relative; display: flex; background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%); cursor: crosshair; overflow: hidden; }
         canvas { width: 100%; height: 100%; display: block; }
-        #instructionOverlay { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); background: var(--accent); color: white; padding: 12px 24px; border-radius: 30px; font-weight: bold; display: none; pointer-events: none; z-index: 20; border: 2px solid #fff; }
-    </style>
-</head>
-<body>
-
-<div id="sidebar">
-    <h2>Motor de Fabricación</h2>
-    <div>
-        <h3>1. Diseño DXF</h3>
-        <input type="file" id="fileDxf" accept=".dxf">
-        <div id="dxfStatus" class="status">Esperando archivo...</div>
-    </div>
-
-    <div class="control-box">
-        <button id="btnRecalibrar" class="btn-action" onclick="iniciarCalibracion()" style="display:none;">📍 Re-Calibrar Puntos</button>
-        <div style="display:flex; align-items:center; gap:8px;">
-            <input type="checkbox" id="chkFlipX" onchange="if(appState==='SIMULATING') simular();">
-            <label for="chkFlipX" style="margin:0; font-weight:normal;">Invertir Cara (Flip)</label>
-        </div>
-    </div>
-
-    <div>
-        <h3>2. Geometría</h3>
-        <div class="grid-2">
-            <div>
-                <label>Diámetro Eje (mm)</label>
-                <input type="number" id="valEje" value="60" oninput="if(appState==='SIMULATING') simular();">
-            </div>
-            <div>
-                <label>Espesor Rollo (e)</label>
-                <input type="number" id="valEspesor" value="9" step="0.1" oninput="if(appState==='SIMULATING') simular();">
-            </div>
-        </div>
-        <div class="input-group" style="margin-top:15px;">
-            <label>Nº de Lamas</label>
-            <input type="number" id="valLamas" value="30" oninput="if(appState==='SIMULATING') simular();">
-        </div>
-    </div>
-
-    <button id="btnExportar" class="btn-export" onclick="exportarADXF()">💾 Exportar Simulación a DXF</button>
-
-    <div class="data-panel" style="margin-top:auto; background:#0f172a; padding:10px; border-radius:6px;">
-        <div style="display:flex; justify-content:space-between;">
-            <span>Ø Resultante:</span> <strong id="infoDiam" style="color:#10b981;">-- mm</strong>
-        </div>
-    </div>
-</div>
-
-<div id="canvas-container">
-    <div id="instructionOverlay"></div>
-    <canvas id="simCanvas"></canvas>
-</div>
-
-<script>
-    const canvas = document.getElementById('simCanvas');
-    const ctx = canvas.getContext('2d');
-    let dxfPoligons = [], allVertices = [], bbox = { minX: 0, maxX: 0, minY: 0, maxY: 0 };
-    let appState = 'IDLE', pSup = null, pInf = null, pEje = null, cursorPoint = null; 
-    let calibConfig = { cx: 0, cy: 0, scale: 1, midX: 0, midY: 0 };
-    let simCam = { x: 0, y: 0, zoom: 1 }, isDragging = false, lastMouse = { x: 0, y: 0 };
-    let altoLama = 45; 
-    let bisagrasFinales = []; 
-    const LAMAS_COLGANTES = 2;
-
-    // --- IMPORTACIÓN DXF ---
-    document.getElementById('fileDxf').addEventListener('change', function(e) {
-        const file = e.target.files[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = function(evt) {
-            try {
-                const dxfData = new DxfParser().parseSync(evt.target.result);
-                let segs = extraerSegmentos(dxfData.entities, dxfData.blocks);
-                dxfPoligons = construirPoligonos(segs);
-                
-                allVertices = [];
-                let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-                dxfPoligons.forEach(pol => pol.pts.forEach(p => {
-                    allVertices.push(p);
-                    minX = Math.min(minX, p.x); maxX = Math.max(maxX, p.x);
-                    minY = Math.min(minY, p.y); maxY = Math.max(maxY, p.y);
-                }));
-                bbox = { minX, maxX, minY, maxY };
-                document.getElementById('dxfStatus').innerText = "Geometría Cargada";
-                iniciarCalibracion(); 
-            } catch(err) { alert("Error al leer DXF"); }
-        };
-        reader.readAsText(file);
-    });
-
-    function extraerSegmentos(entities, blocks, offX = 0, offY = 0) {
-        let segs = []; if(!entities) return segs;
-        entities.forEach(ent => {
-            if (ent.type === 'LINE') segs.push({ p1: {x: ent.vertices[0].x+offX, y: ent.vertices[0].y+offY}, p2: {x: ent.vertices[1].x+offX, y: ent.vertices[1].y+offY} });
-            else if (ent.type === 'LWPOLYLINE' || ent.type === 'POLYLINE') {
-                for(let i=0; i<ent.vertices.length-1; i++) segs.push({ p1: {x: ent.vertices[i].x+offX, y: ent.vertices[i].y+offY}, p2: {x: ent.vertices[i+1].x+offX, y: ent.vertices[i+1].y+offY} });
-                if (ent.closed) segs.push({ p1: {x: ent.vertices[ent.vertices.length-1].x+offX, y: ent.vertices[ent.vertices.length-1].y+offY}, p2: {x: ent.vertices[0].x+offX, y: ent.vertices[0].y+offY} });
-            } else if (ent.type === 'ARC' || ent.type === 'CIRCLE') {
-                let cx = ent.center.x + offX, cy = ent.center.y + offY, r = ent.radius, sa = ent.startAngle || 0, ea = ent.endAngle || (Math.PI*2);
-                if (ea < sa) ea += Math.PI * 2;
-                let steps = 16, lastP = {x: cx + r*Math.cos(sa), y: cy + r*Math.sin(sa)};
-                for(let i=1; i<=steps; i++) { let newP = {x: cx + r*Math.cos(sa + (ea-sa)*(i/steps)), y: cy + r*Math.sin(sa + (ea-sa)*(i/steps))}; segs.push({ p1: lastP, p2: newP }); lastP = newP; }
-            } else if (ent.type === 'INSERT' && blocks[ent.name]) {
-                segs = segs.concat(extraerSegmentos(blocks[ent.name].entities, blocks, ent.position.x + offX, ent.position.y + offY));
-            }
-        });
-        return segs;
-    }
-
-    function construirPoligonos(segs) {
-        let pool = [...segs], pols = [];
-        while(pool.length > 0) {
-            let path = [pool.shift().p1, segs[0].p2], c = true; // Fallback simple
-            path = [segs[0].p1, segs[0].p2]; // Start over for robustness
-            let currentPath = [pool[0].p1, pool[0].p2]; pool.shift();
-            let connecting = true;
-            while(connecting && pool.length > 0) {
-                connecting = false; let tail = currentPath[currentPath.length-1];
-                for(let i=0; i<pool.length; i++) {
-                    if(Math.hypot(tail.x-pool[i].p1.x, tail.y-pool[i].p1.y)<0.1){ currentPath.push(pool[i].p2); pool.splice(i,1); connecting=true; break; }
-                    if(Math.hypot(tail.x-pool[i].p2.x, tail.y-pool[i].p2.y)<0.1){ currentPath.push(pool[i].p1); pool.splice(i,1); connecting=true; break; }
-                }
-            }
-            pols.push({ pts: currentPath, closed: Math.hypot(currentPath[0].x-currentPath[currentPath.length-1].x, currentPath[0].y-currentPath[currentPath.length-1].y)<0.5 });
-        }
-        return pols;
-    }
-
-    // --- CÁMARA Y CALIBRACIÓN ---
-    function updateCalibConfig() {
-        calibConfig.cx = canvas.width/2; calibConfig.cy = canvas.height/2;
-        calibConfig.scale = Math.min(canvas.width/(bbox.maxX-bbox.minX+10), canvas.height/(bbox.maxY-bbox.minY+10))*0.6;
-        calibConfig.midX = (bbox.minX+bbox.maxX)/2; calibConfig.midY = (bbox.minY+bbox.maxY)/2;
-    }
-    function toScreen(p) { return { x: calibConfig.cx + (p.x - calibConfig.midX) * calibConfig.scale, y: calibConfig.cy - (p.y - calibConfig.midY) * calibConfig.scale }; }
-    function fromScreen(sx, sy) { return { x: calibConfig.midX + (sx - calibConfig.cx) / calibConfig.scale, y: calibConfig.midY - (sy - calibConfig.cy) / -calibConfig.scale }; }
-
-    function iniciarCalibracion() {
-        appState = 'CALIBRATING_P1'; pSup = pInf = pEje = null;
-        document.getElementById('instructionOverlay').style.display = 'block';
-        document.getElementById('instructionOverlay').innerText = "Paso 1: Clic en Bisagra Superior";
-        updateCalibConfig(); renderCalibracion();
-    }
-
-    canvas.addEventListener('wheel', e => { e.preventDefault(); let z = e.deltaY < 0 ? 1.1 : 0.9; if(appState==='SIMULATING'){ simCam.zoom*=z; simular(); } else { calibConfig.scale*=z; renderCalibracion(); } });
-    canvas.addEventListener('mousedown', e => {
-        let r = canvas.getBoundingClientRect(); let mx = e.clientX-r.left, my = e.clientY-r.top;
-        if(e.button>0){ isDragging=true; lastMouse={x:mx, y:my}; return; }
-        if(appState==='CALIBRATING_P1'){ pSup=fromScreen(mx,my); appState='CALIBRATING_P2'; document.getElementById('instructionOverlay').innerText="Paso 2: Clic en Bisagra Inferior"; }
-        else if(appState==='CALIBRATING_P2'){ pInf=fromScreen(mx,my); appState='CALIBRATING_AXIS'; document.getElementById('instructionOverlay').innerText="Paso 3: Clic en Centro Eje"; }
-        else if(appState==='CALIBRATING_AXIS'){
-            pEje=fromScreen(mx,my); appState='SIMULATING'; document.getElementById('instructionOverlay').style.display='none';
-            document.getElementById('btnExportar').style.display='block'; document.getElementById('btnRecalibrar').style.display='block';
-            altoLama = Math.hypot(pInf.x-pSup.x, pInf.y-pSup.y);
-            // Default 60mm y Grosor -30%
-            document.getElementById('valEje').value = "60";
-            let anchoLama = (bbox.maxX - bbox.minX);
-            document.getElementById('valEspesor').value = (anchoLama * 0.7).toFixed(1);
-            simular();
-        } else { isDragging=true; lastMouse={x:mx, y:my}; }
-    });
-    canvas.addEventListener('mousemove', e => {
-        let r = canvas.getBoundingClientRect(); let mx = e.clientX-r.left, my = e.clientY-r.top;
-        if(isDragging){ let dx=mx-lastMouse.x, dy=my-lastMouse.y; if(appState==='SIMULATING'){ simCam.x+=dx; simCam.y+=dy; simular(); } else { calibConfig.cx+=dx; calibConfig.cy+=dy; renderCalibracion(); } lastMouse={x:mx, y:my}; }
-        else if(appState.startsWith('CALIBRATING')) renderCalibracion(fromScreen(mx,my));
-    });
-    window.addEventListener('mouseup', () => isDragging=false);
-
-    function renderCalibracion(hover=null) {
-        ctx.clearRect(0,0,canvas.width,canvas.height);
-        ctx.save(); ctx.translate(calibConfig.cx, calibConfig.cy); ctx.scale(calibConfig.scale, -calibConfig.scale); ctx.translate(-calibConfig.midX, -calibConfig.midY);
-        dxfPoligons.forEach(pol => { ctx.beginPath(); ctx.moveTo(pol.pts[0].x, pol.pts[0].y); pol.pts.forEach(p=>ctx.lineTo(p.x, p.y)); ctx.strokeStyle="rgba(255,255,255,0.4)"; ctx.lineWidth=1/calibConfig.scale; ctx.stroke(); });
-        ctx.restore();
-        if(hover){ let p=toScreen(hover); ctx.strokeStyle="white"; ctx.beginPath(); ctx.moveTo(p.x-10,p.y); ctx.lineTo(p.x+10,p.y); ctx.moveTo(p.x,p.y-10); ctx.lineTo(p.x,p.y+10); ctx.stroke(); }
-        if(pSup){ let p=toScreen(pSup); ctx.fillStyle="blue"; ctx.beginPath(); ctx.arc(p.x,p.y,5,0,7); ctx.fill(); }
-        if(pInf){ let p=toScreen(pInf); ctx.fillStyle="red"; ctx.beginPath(); ctx.arc(p.x,p.y,5,0,7); ctx.fill(); }
-    }
-
-    // --- SIMULACIÓN Y EXPORTACIÓN ---
-    function simular() {
-        const dEje = parseFloat(document.getElementById('valEje').value), eLama = parseFloat(document.getElementById('valEspesor').value), nL = parseInt(document.getElementById('valLamas').value);
-        let rB = (dEje/2) + (eLama/2), lRoll = Math.max(1, nL - LAMAS_COLGANTES), bis = [];
-        let ang = Math.atan2(pSup.y-pEje.y, pSup.x-pEje.x);
-        bis.push({ x: rB*Math.cos(ang), y: rB*Math.sin(ang), t: ang });
         
-        for(let i=0; i<lRoll; i++){
-            let pA = bis[i], rA = Math.hypot(pA.x, pA.y), tT = pA.t, d = 0;
-            while(d < altoLama){
-                tT += 0.005; 
-                let rT = rA + (eLama*(tT-pA.t)/(2*Math.PI));
-                d = Math.hypot(rT*Math.cos(tT)-pA.x, rT*Math.sin(tT)-pA.y);
-            }
-            bis.push({ x: (rA + (eLama*(tT-pA.t)/(2*Math.PI)))*Math.cos(tT), y: (rA + (eLama*(tT-pA.t)/(2*Math.PI)))*Math.sin(tT), t: tT });
-        }
-        
-        // Rotar para que la penúltima (final de espiral) esté a las 3
-        let pU = bis[bis.length-1], pP = bis[bis.length-2];
-        let corr = (Math.PI/2) - Math.atan2(pU.y - pP.y, pU.x - pP.x);
-        bis.forEach(b => { let nx = b.x*Math.cos(corr)-b.y*Math.sin(corr), ny = b.x*Math.sin(corr)+b.y*Math.cos(corr); b.x=nx; b.y=ny; });
-        
-        // Caída Vertical
-        let xV = bis[bis.length-1].x, yV = bis[bis.length-1].y;
-        for(let i=0; i<LAMAS_COLGANTES; i++){ yV += altoLama; bis.push({ x: xV, y: yV }); }
-        bisagrasFinales = bis;
-
-        ctx.clearRect(0,0,canvas.width,canvas.height);
-        let s = Math.min(canvas.width/(dEje*4), canvas.height/(dEje*4)) * simCam.zoom;
-        ctx.save(); ctx.translate(canvas.width/2+simCam.x, canvas.height/2+simCam.y); ctx.scale(s,s);
-        ctx.beginPath(); ctx.arc(0,0,dEje/2,0,7); ctx.strokeStyle="#475569"; ctx.stroke();
-        
-        let dA = Math.atan2(pInf.y-pSup.y, pInf.x-pSup.x), flip = document.getElementById('chkFlipX').checked?-1:1;
-        for(let i=0; i<nL; i++){
-            let b1=bis[i], b2=bis[i+1]; ctx.save(); ctx.translate(b1.x, b1.y); ctx.rotate(Math.atan2(b2.y-b1.y, b2.x-b1.x));
-            ctx.scale(1, flip*-1); ctx.rotate(-dA); ctx.translate(-pSup.x, -pSup.y);
-            dxfPoligons.forEach((pol,idx)=>{ ctx.beginPath(); ctx.moveTo(pol.pts[0].x, pol.pts[0].y); pol.pts.forEach(p=>ctx.lineTo(p.x,p.y)); 
-            if(pol.closed){ctx.fillStyle=idx==0?"#94a3b8":"#fef08a"; ctx.fill();} ctx.strokeStyle="#475569"; ctx.lineWidth=1/s; ctx.stroke(); });
-            ctx.restore();
-        }
-        ctx.restore();
-        document.getElementById('infoDiam').innerText = (Math.hypot(bis[lRoll].x, bis[lRoll].y)*2 + eLama).toFixed(1) + " mm";
-    }
-
-    function exportarADXF() {
-        let dxf = "  0\nSECTION\n  2\nENTITIES\n";
-        const dEje = parseFloat(document.getElementById('valEje').value);
-        dxf += `  0\nCIRCLE\n  8\nEJE\n 10\n0.0\n 20\n0.0\n 40\n${dEje/2}\n`;
-        let dA = Math.atan2(pInf.y-pSup.y, pInf.x-pSup.x), flip = document.getElementById('chkFlipX').checked?-1:1;
-        for (let i = 0; i < bisagrasFinales.length - 1; i++) {
-            let b1 = bisagrasFinales[i], b2 = bisagrasFinales[i+1], rotP = Math.atan2(b2.y-b1.y, b2.x-b1.x);
-            dxfPoligons.forEach(pol => {
-                for (let j = 0; j < pol.pts.length; j++) {
-                    let pA = pol.pts[j], pB = pol.pts[(j+1)%pol.pts.length];
-                    if(!pol.closed && j === pol.pts.length-1) continue;
-                    let t1 = transf(pA, b1, rotP, dA, flip), t2 = transf(pB, b1, rotP, dA, flip);
-                    dxf += `  0\nLINE\n  8\nLAMA_${i+1}\n 10\n${t1.x}\n 20\n${t1.y}\n 11\n${t2.x}\n 21\n${t2.y}\n`;
-                }
-            });
-        }
-        dxf += "  0\nENDSEC\n  0\nEOF";
-        let link = document.createElement('a');
-        link.href = URL.createObjectURL(new Blob([dxf], {type:'application/dxf'}));
-        link.download = "persiana_calculada.dxf"; link.click();
-    }
-
-    function transf(pt, b1, rotP, dA, flip) {
-        let x = pt.x - pSup.x, y = pt.y - pSup.y;
-        let cA = Math.cos(-dA), sA = Math.sin(-dA);
-        let nx = x*cA - y*sA, ny = (x*sA + y*cA) * flip * -1;
-        let cP = Math.cos(rotP), sP = Math.sin(rotP);
-        return { x: b1.x + (nx*cP - ny*sP), y: b1.y + (nx*sP + ny*cP) };
-    }
-</script>
-</body>
-</html>
+        #instructionOverlay { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); background: var(--accent); color: white; padding: 12px 24px
