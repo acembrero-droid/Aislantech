@@ -153,7 +153,7 @@
     let showThermalMap = false;
 
     // Bordes del contorno exterior
-    let boundaryEdges = []; // {p1, p2, type: 0=no,1=ext,2=int,3=neu}
+    let boundaryEdges = []; 
     let hoveredEdgeIdx = -1;
 
     const canvas = document.getElementById('canvas');
@@ -186,7 +186,7 @@
         bar.querySelector('i').className = isError ? 'fas fa-exclamation-triangle' : 'fas fa-info-circle';
     }
 
-    // ──── Parser DXF Totalmente Refactorizado (Soporte Bulge y Filtro de Espacios) ────
+    // ──── Parser DXF (Manejo de Arcos y Bloques) ────
     function parseDXF(text) {
         const lines = text.split(/\r?\n/);
         let idx = 0;
@@ -205,7 +205,7 @@
             return null;
         }
 
-        // Calcula segmentos intermedios para arcos en polilíneas (bulges)
+        // Calcula segmentos para arcos en polilíneas (bulges)
         function addBulgeSegments(p1, p2, bulge) {
             if (!bulge || Math.abs(bulge) < 1e-5) {
                 segments.push({ x1: p1.x, y1: p1.y, x2: p2.x, y2: p2.y });
@@ -315,8 +315,7 @@
                     currentEntity = null;
                 }
             } else if (currentEntity) {
-                // Code 67 = 1 significa Espacio Papel (Layout), lo ignoramos para no ensuciar el modelo
-                if (code === 67 && value === '1') currentEntity.ignore = true;
+                if (code === 67 && value === '1') currentEntity.ignore = true; // Ignorar PaperSpace
                 
                 const v = parseFloat(value);
                 if (currentEntity.type === 'LWPOLYLINE') {
@@ -349,99 +348,180 @@
         return segments.filter(s => Math.hypot(s.x2 - s.x1, s.y2 - s.y1) > 1e-9);
     }
 
-    // ──── Topología robusta: Planarización previa para corregir cruces ────
+    // ──── Topología robusta: Planarización, Nodos T y Eliminación de líneas fantasma ────
     function buildTopology(rawSegments, tol) {
-        let segments = [];
-        const eps = 1e-6;
-        const splits = new Map();
-        
-        // Fase 1: Planarización (fractura líneas donde se cruzan para generar nodos limpios)
-        for(let i=0; i<rawSegments.length; i++) splits.set(i, [0, 1]);
-        
+        // 1. Recopilar todos los puntos explícitos e intersecciones
+        const points = [];
+        rawSegments.forEach(s => { points.push({x: s.x1, y: s.y1}); points.push({x: s.x2, y: s.y2}); });
+
         for(let i=0; i<rawSegments.length; i++) {
             const s1 = rawSegments[i];
+            const minX1 = Math.min(s1.x1, s1.x2), maxX1 = Math.max(s1.x1, s1.x2);
+            const minY1 = Math.min(s1.y1, s1.y2), maxY1 = Math.max(s1.y1, s1.y2);
+
             for(let j=i+1; j<rawSegments.length; j++) {
                 const s2 = rawSegments[j];
-                const d = (s1.x2 - s1.x1) * (s2.y2 - s2.y1) - (s1.y2 - s1.y1) * (s2.x2 - s2.x1);
-                if (Math.abs(d) < eps) continue; 
-                
-                const u = ((s2.x1 - s1.x1) * (s2.y2 - s2.y1) - (s2.y1 - s1.y1) * (s2.x2 - s2.x1)) / d;
-                const v = ((s2.x1 - s1.x1) * (s1.y2 - s1.y1) - (s2.y1 - s1.y1) * (s1.x2 - s1.x1)) / d;
-                
-                if (u > eps && u < 1 - eps && v > eps && v < 1 - eps) {
-                    splits.get(i).push(u);
-                    splits.get(j).push(v);
+                const minX2 = Math.min(s2.x1, s2.x2), maxX2 = Math.max(s2.x1, s2.x2);
+                const minY2 = Math.min(s2.y1, s2.y2), maxY2 = Math.max(s2.y1, s2.y2);
+
+                // Filtro AABB rápido
+                if (maxX1 < minX2 - 1e-5 || minX1 > maxX2 + 1e-5) continue;
+                if (maxY1 < minY2 - 1e-5 || minY1 > maxY2 + 1e-5) continue;
+
+                const den = (s1.x2 - s1.x1) * (s2.y2 - s2.y1) - (s1.y2 - s1.y1) * (s2.x2 - s2.x1);
+                if (Math.abs(den) > 1e-7) { // No son paralelas
+                    const u = ((s2.x1 - s1.x1) * (s2.y2 - s2.y1) - (s2.y1 - s1.y1) * (s2.x2 - s2.x1)) / den;
+                    const v = ((s2.x1 - s1.x1) * (s1.y2 - s1.y1) - (s2.y1 - s1.y1) * (s1.x2 - s1.x1)) / den;
+                    if (u > -1e-5 && u < 1 + 1e-5 && v > -1e-5 && v < 1 + 1e-5) {
+                        points.push({ x: s1.x1 + u * (s1.x2 - s1.x1), y: s1.y1 + u * (s1.y2 - s1.y1) });
+                    }
                 }
             }
         }
-        
+
+        // 2. Partir líneas en cada punto para resolver T-junctions
+        const segments = [];
         for(let i=0; i<rawSegments.length; i++) {
             const s = rawSegments[i];
-            const tVals = splits.get(i).sort((a,b)=>a-b);
-            let prevX = s.x1, prevY = s.y1;
+            const len2 = (s.x2 - s.x1)**2 + (s.y2 - s.y1)**2;
+            if (len2 < 1e-7) continue;
+
+            const tVals = [0, 1];
+            points.forEach(p => {
+                const t = ((p.x - s.x1) * (s.x2 - s.x1) + (p.y - s.y1) * (s.y2 - s.y1)) / len2;
+                if (t > 1e-5 && t < 1 - 1e-5) { // Proyección dentro del segmento
+                    const projX = s.x1 + t * (s.x2 - s.x1);
+                    const projY = s.y1 + t * (s.y2 - s.y1);
+                    if ((p.x - projX)**2 + (p.y - projY)**2 < tol * tol) { // Está tocando la línea
+                        tVals.push(t);
+                    }
+                }
+            });
+
+            tVals.sort((a,b) => a - b);
+            let prevT = tVals[0];
             for(let k=1; k<tVals.length; k++) {
-                if (tVals[k] - tVals[k-1] < 1e-5) continue;
-                const px = s.x1 + tVals[k] * (s.x2 - s.x1);
-                const py = s.y1 + tVals[k] * (s.y2 - s.y1);
-                segments.push({x1: prevX, y1: prevY, x2: px, y2: py});
-                prevX = px; prevY = py;
+                if (tVals[k] - prevT < 1e-5) continue;
+                segments.push({
+                    x1: s.x1 + prevT * (s.x2 - s.x1), y1: s.y1 + prevT * (s.y2 - s.y1),
+                    x2: s.x1 + tVals[k] * (s.x2 - s.x1), y2: s.y1 + tVals[k] * (s.y2 - s.y1)
+                });
+                prevT = tVals[k];
             }
         }
 
-        // Fase 2: Construcción de grafo y caras
-        const vertices = new Map();
-        const getV = (x,y) => {
-            const key = `${Math.round(x/tol)}|${Math.round(y/tol)}`;
-            if(!vertices.has(key)) vertices.set(key, {x,y,adj:[]});
-            return vertices.get(key);
+        // 3. Grid Espacial (Hashing) para unir vértices cercanos
+        const vertices = [];
+        const grid = new Map();
+        const getV = (x, y) => {
+            const gx = Math.round(x / tol), gy = Math.round(y / tol);
+            for(let dx=-1; dx<=1; dx++) {
+                for(let dy=-1; dy<=1; dy++) {
+                    const key = `${gx+dx},${gy+dy}`;
+                    if(grid.has(key)) {
+                        for(const v of grid.get(key)) {
+                            if (Math.hypot(v.x - x, v.y - y) < tol) return v;
+                        }
+                    }
+                }
+            }
+            const newV = {id: vertices.length, x, y, adj: []};
+            vertices.push(newV);
+            const key = `${gx},${gy}`;
+            if(!grid.has(key)) grid.set(key, []);
+            grid.get(key).push(newV);
+            return newV;
         };
-        
-        const edges = [];
+
+        // 4. Eliminar aristas duplicadas y de longitud cero
+        const uniqueEdges = new Map();
         segments.forEach(s => {
-            const v1 = getV(s.x1, s.y1), v2 = getV(s.x2, s.y2);
-            if(v1 === v2) return;
-            const a1 = Math.atan2(v2.y-v1.y, v2.x-v1.x), a2 = Math.atan2(v1.y-v2.y, v1.x-v2.x);
-            const e1 = {from:v1, to:v2, angle:a1, used:false}, e2 = {from:v2, to:v1, angle:a2, used:false};
-            e1.rev = e2; e2.rev = e1;
-            v1.adj.push(e1); v2.adj.push(e2);
-            edges.push(e1, e2);
+            const v1 = getV(s.x1, s.y1);
+            const v2 = getV(s.x2, s.y2);
+            if (v1.id === v2.id) return;
+            const id1 = Math.min(v1.id, v2.id);
+            const id2 = Math.max(v1.id, v2.id);
+            uniqueEdges.set(`${id1}-${id2}`, {v1, v2}); // Mapeo único elimina líneas encimadas
         });
-        
-        vertices.forEach(v => v.adj.sort((a,b)=> a.angle - b.angle));
-        
+
+        // 5. Podar ramas "muertas" (líneas colgadas o guía) que no cierran polígonos
+        const adjUndirected = new Map();
+        uniqueEdges.forEach((_, key) => {
+            const [id1, id2] = key.split('-').map(Number);
+            if(!adjUndirected.has(id1)) adjUndirected.set(id1, new Set());
+            if(!adjUndirected.has(id2)) adjUndirected.set(id2, new Set());
+            adjUndirected.get(id1).add(id2);
+            adjUndirected.get(id2).add(id1);
+        });
+
+        let pruned = true;
+        while(pruned) {
+            pruned = false;
+            adjUndirected.forEach((neighbors, vId) => {
+                if(neighbors.size === 1) {
+                    const nId = Array.from(neighbors)[0];
+                    neighbors.delete(nId);
+                    if(adjUndirected.has(nId)) adjUndirected.get(nId).delete(vId);
+                    uniqueEdges.delete(`${Math.min(vId, nId)}-${Math.max(vId, nId)}`);
+                    pruned = true;
+                }
+            });
+        }
+
+        // 6. Construir Grafo Half-Edge
+        const halfEdges = [];
+        uniqueEdges.forEach(e => {
+            const a1 = Math.atan2(e.v2.y - e.v1.y, e.v2.x - e.v1.x);
+            const a2 = Math.atan2(e.v1.y - e.v2.y, e.v1.x - e.v2.x);
+            const he1 = {from: e.v1, to: e.v2, angle: a1, used: false};
+            const he2 = {from: e.v2, to: e.v1, angle: a2, used: false};
+            he1.rev = he2; he2.rev = he1;
+            e.v1.adj.push(he1); e.v2.adj.push(he2);
+            halfEdges.push(he1, he2);
+        });
+
+        vertices.forEach(v => v.adj.sort((a, b) => a.angle - b.angle));
+
+        // 7. Búsqueda de ciclos (Caras topológicas)
         const faces = [];
-        edges.forEach(edge => {
-            if(edge.used) return;
+        halfEdges.forEach(he => {
+            if(he.used) return;
             const pts = [];
-            let curr = edge;
-            while(!curr.used) {
+            let curr = he;
+            let loops = 0;
+            while(!curr.used && loops < 10000) {
                 curr.used = true;
-                pts.push({x:curr.from.x, y:curr.from.y});
+                pts.push({x: curr.from.x, y: curr.from.y});
                 const idx = curr.to.adj.indexOf(curr.rev);
                 const nextIdx = (idx - 1 + curr.to.adj.length) % curr.to.adj.length;
                 curr = curr.to.adj[nextIdx];
+                loops++;
             }
             if(pts.length > 2) {
-                const area = pts.reduce((a,p,i)=> a + (p.x*pts[(i+1)%pts.length].y - pts[(i+1)%pts.length].x*p.y), 0)/2;
-                if(area > 0) faces.push({pts, area, matIdx:3});
+                let area = 0;
+                for(let i=0; i<pts.length; i++) {
+                    const p1 = pts[i], p2 = pts[(i+1)%pts.length];
+                    area += (p1.x * p2.y - p2.x * p1.y);
+                }
+                area /= 2;
+                if(area > 1e-5) faces.push({pts, area, matIdx: 3}); // >0 detecta áreas internas en ejes estandar
             }
         });
-        
-        // Fase 3: Ordenar por área de menor a mayor.
-        // Esto asegura que al hacer click, los huecos pequeños sean seleccionables por encima de las caras grandes.
-        faces.sort((a,b) => a.area - b.area);
-        
-        return faces;
+
+        // Ordenar de menor a mayor asegura que los polígonos chicos queden sobre los grandes
+        return faces.sort((a,b) => a.area - b.area);
     }
 
-    // Extrae bordes únicos del contorno exterior
-    function extractBoundaryEdges(polygons, tol) {
+    // Extrae bordes de contorno (Afinado sin depender de tol)
+    function extractBoundaryEdges(polygons) {
         const edgeMap = new Map();
         polygons.forEach(poly => {
             for(let i=0; i<poly.pts.length; i++) {
                 const p1 = poly.pts[i], p2 = poly.pts[(i+1)%poly.pts.length];
-                const key = `${Math.round(p1.x/tol)},${Math.round(p1.y/tol)}-${Math.round(p2.x/tol)},${Math.round(p2.y/tol)}`;
-                const revKey = `${Math.round(p2.x/tol)},${Math.round(p2.y/tol)}-${Math.round(p1.x/tol)},${Math.round(p1.y/tol)}`;
+                const x1 = p1.x.toFixed(4), y1 = p1.y.toFixed(4);
+                const x2 = p2.x.toFixed(4), y2 = p2.y.toFixed(4);
+                const key = `${x1},${y1}-${x2},${y2}`;
+                const revKey = `${x2},${y2}-${x1},${y1}`;
                 const existing = edgeMap.get(key) || edgeMap.get(revKey);
                 if(existing) existing.count++;
                 else edgeMap.set(key, {p1, p2, count:1, type:0});
@@ -481,7 +561,7 @@
                 }
             }
         } else {
-            // Dibujar polígonos con colores de material
+            // Dibujar polígonos
             polygons.forEach((p,i) => {
                 ctx.beginPath();
                 ctx.moveTo(tx(p.pts[0].x), ty(p.pts[0].y));
@@ -554,7 +634,7 @@
                 polygons = buildTopology(segments, tol);
                 if(polygons.length) {
                     recalcBounds();
-                    boundaryEdges = extractBoundaryEdges(polygons, tol);
+                    boundaryEdges = extractBoundaryEdges(polygons); // Ahora sin tolerancias aquí
                     setStatus(`✅ ${polygons.length} regiones. ${boundaryEdges.length} bordes exteriores. Asigna condiciones.`);
                     document.getElementById('calcBtn').disabled = false;
                     document.getElementById('rotateBtn').disabled = false;
@@ -562,8 +642,8 @@
                     selectedPoly = -1; showThermalMap = false; T = null;
                     document.getElementById('result').style.display = 'none';
                     draw();
-                } else setStatus('❌ No se cerraron polígonos. Ajusta tolerancia.', true);
-            } catch(err) { setStatus('Error al leer: '+err.message, true); }
+                } else setStatus('❌ No se cerraron polígonos. Revisa las líneas o ajusta la tolerancia.', true);
+            } catch(err) { setStatus('Error al procesar: '+err.message, true); }
         };
         reader.readAsText(file);
     };
@@ -637,7 +717,7 @@
             pt.y = cy + dx*Math.sin(ang) + dy*Math.cos(ang);
         }));
         recalcBounds();
-        boundaryEdges = extractBoundaryEdges(polygons, +document.getElementById('tolInput').value||0.5);
+        boundaryEdges = extractBoundaryEdges(polygons);
         showThermalMap = false; T = null;
         document.getElementById('result').style.display = 'none';
         draw();
@@ -645,7 +725,7 @@
 
     document.getElementById('autoBoundaryBtn').onclick = autoAssignBoundaries;
 
-    // ──── Solver con condiciones de contorno basadas en bordes ────
+    // ──── Solver con condiciones de contorno ────
     document.getElementById('calcBtn').onclick = () => {
         if(!polygons.length) return;
         if(!boundaryEdges.some(e => e.type===1) || !boundaryEdges.some(e => e.type===2)) {
@@ -675,15 +755,14 @@
                 });
                 return p ? materials[p.matIdx].k : 0.026;
             }));
-            // Inicializar temperaturas
+            
             T = Array.from({length:NY}, ()=> new Array(NX).fill((te+ti)/2));
-            // Precalcular condiciones de cara
-            window.faceBC = Array.from({length:NY}, ()=> Array.from({length:NX}, ()=> [0,0,0,0])); // izquierda,derecha,abajo,arriba: 0 libre, 1 ext, 2 int, 3 adia
+            window.faceBC = Array.from({length:NY}, ()=> Array.from({length:NX}, ()=> [0,0,0,0])); 
             const threshold = Math.max(dx,dy)*0.6;
+            
             boundaryEdges.forEach(edge => {
                 if(edge.type === 0) return;
-                const bcType = edge.type; // 1 ext, 2 int, 3 neu -> mapeamos: 1->1, 2->2, 3->3 (adiabático)
-                // Discretizar el borde y marcar caras de celdas cercanas
+                const bcType = edge.type; 
                 const steps = Math.ceil(Math.hypot(edge.p2.x-edge.p1.x, edge.p2.y-edge.p1.y) / (Math.min(dx,dy)*0.5));
                 for(let s=0; s<=steps; s++) {
                     const t = s/steps;
@@ -692,7 +771,6 @@
                     const j = Math.floor((px - minX)/dx);
                     const i = Math.floor((py - minY)/dy);
                     if(i>=0 && i<NY && j>=0 && j<NX) {
-                        // Determinar qué cara toca: comprobar distancias a las cuatro caras
                         const cellLeft = minX + j*dx, cellRight = cellLeft+dx;
                         const cellBottom = minY + i*dy, cellTop = cellBottom+dy;
                         const distLeft = Math.abs(px - cellLeft);
@@ -721,34 +799,16 @@
                     for(let i=0; i<NY; i++) {
                         for(let j=0; j<NX; j++) {
                             const bc = window.faceBC[i][j];
-                            // Si alguna cara es Dirichlet, fijamos temperatura y saltamos
                             if(bc.includes(1) || bc.includes(2)) {
                                 if(bc.includes(1)) T[i][j] = te;
                                 else if(bc.includes(2)) T[i][j] = ti;
                                 continue;
                             }
-                            // Contribuciones de vecinos
                             let num = 0, den = 0;
-                            // izquierda
-                            if(j>0) {
-                                if(bc[0] === 3) { /* adiabático: sin flujo, omitir */ }
-                                else { num += kGrid[i][j-1]*T[i][j-1]; den += kGrid[i][j-1]; }
-                            }
-                            // derecha
-                            if(j<NX-1) {
-                                if(bc[1] === 3) { }
-                                else { num += kGrid[i][j+1]*T[i][j+1]; den += kGrid[i][j+1]; }
-                            }
-                            // abajo
-                            if(i>0) {
-                                if(bc[2] === 3) { }
-                                else { num += kGrid[i-1][j]*T[i-1][j]; den += kGrid[i-1][j]; }
-                            }
-                            // arriba
-                            if(i<NY-1) {
-                                if(bc[3] === 3) { }
-                                else { num += kGrid[i+1][j]*T[i+1][j]; den += kGrid[i+1][j]; }
-                            }
+                            if(j>0 && bc[0] !== 3) { num += kGrid[i][j-1]*T[i][j-1]; den += kGrid[i][j-1]; }
+                            if(j<NX-1 && bc[1] !== 3) { num += kGrid[i][j+1]*T[i][j+1]; den += kGrid[i][j+1]; }
+                            if(i>0 && bc[2] !== 3) { num += kGrid[i-1][j]*T[i-1][j]; den += kGrid[i-1][j]; }
+                            if(i<NY-1 && bc[3] !== 3) { num += kGrid[i+1][j]*T[i+1][j]; den += kGrid[i+1][j]; }
                             if(den > 0) T[i][j] = num/den;
                         }
                     }
@@ -762,7 +822,6 @@
         }
         if(step === 2) {
             let flux = 0;
-            // Flujo en caras interiores (tipo 2)
             for(let i=0; i<NY; i++) {
                 for(let j=0; j<NX; j++) {
                     if(window.faceBC[i][j][1] === 2 && j<NX-1) {
