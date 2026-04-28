@@ -186,99 +186,151 @@
         bar.querySelector('i').className = isError ? 'fas fa-exclamation-triangle' : 'fas fa-info-circle';
     }
 
-    // ──── Parser DXF mejorado (Máquina de estados robusta) ────
+    // ──── Parser DXF Totalmente Refactorizado (Soporte Bulge y Filtro de Espacios) ────
     function parseDXF(text) {
         const lines = text.split(/\r?\n/);
         let idx = 0;
+        let inEntities = false;
         const segments = [];
         let currentEntity = null;
         let currentPolyline = null;
 
         function getPair() {
-            while(idx < lines.length - 1) {
+            while (idx < lines.length - 1) {
                 const codeStr = lines[idx].trim();
-                const valueStr = lines[idx+1].trim();
+                const valueStr = lines[idx + 1].trim();
                 idx += 2;
-                if(codeStr !== '') return [parseInt(codeStr), valueStr];
+                if (codeStr !== '') return [parseInt(codeStr), valueStr];
             }
             return null;
         }
 
-        function flushEntity() {
-            if(!currentEntity) return;
+        // Calcula segmentos intermedios para arcos en polilíneas (bulges)
+        function addBulgeSegments(p1, p2, bulge) {
+            if (!bulge || Math.abs(bulge) < 1e-5) {
+                segments.push({ x1: p1.x, y1: p1.y, x2: p2.x, y2: p2.y });
+                return;
+            }
+            const dx = p2.x - p1.x, dy = p2.y - p1.y;
+            const dist = Math.hypot(dx, dy);
+            if (dist < 1e-6) return;
+            
+            const theta = 4 * Math.atan(bulge);
+            const radius = Math.abs(dist / (2 * Math.sin(theta / 2)));
+            const dir = bulge > 0 ? 1 : -1;
+            const midX = (p1.x + p2.x) / 2, midY = (p1.y + p2.y) / 2;
+            const apothem = radius * Math.cos(theta / 2);
+            
+            const perpX = -dy / dist * dir;
+            const perpY = dx / dist * dir;
+            const cx = midX + perpX * apothem;
+            const cy = midY + perpY * apothem;
+            
+            let startAngle = Math.atan2(p1.y - cy, p1.x - cx);
+            let endAngle = Math.atan2(p2.y - cy, p2.x - cx);
+            
+            if (bulge > 0 && endAngle <= startAngle) endAngle += 2 * Math.PI;
+            if (bulge < 0 && endAngle >= startAngle) endAngle -= 2 * Math.PI;
+            
+            const N = Math.max(6, Math.floor(Math.abs(endAngle - startAngle) * radius / 2));
+            let prevX = p1.x, prevY = p1.y;
+            for (let i = 1; i <= N; i++) {
+                const a = startAngle + (endAngle - startAngle) * (i / N);
+                const x = cx + radius * Math.cos(a);
+                const y = cy + radius * Math.sin(a);
+                segments.push({ x1: prevX, y1: prevY, x2: x, y2: y });
+                prevX = x; prevY = y;
+            }
+        }
 
-            if (currentEntity.type === 'VERTEX' && currentPolyline) {
-                currentPolyline.vertices.push({x: currentEntity.x || 0, y: currentEntity.y || 0});
-            } else if(currentEntity.type === 'LINE') {
-                if(currentEntity.x1!==undefined && currentEntity.y1!==undefined && currentEntity.x2!==undefined && currentEntity.y2!==undefined) {
-                    segments.push({x1: currentEntity.x1, y1: currentEntity.y1, x2: currentEntity.x2, y2: currentEntity.y2});
+        function flushEntity(ent) {
+            if (!ent || ent.ignore) return;
+            if (ent.type === 'VERTEX' && currentPolyline) {
+                currentPolyline.vertices.push({ x: ent.x, y: ent.y, bulge: ent.bulge });
+            }
+            if (ent.type === 'LINE' && ent.x1 !== undefined && ent.x2 !== undefined) {
+                segments.push({ x1: ent.x1, y1: ent.y1, x2: ent.x2, y2: ent.y2 });
+            }
+            if ((ent.type === 'CIRCLE' || ent.type === 'ARC') && ent.r > 0) {
+                const start = ent.startAngle !== undefined ? ent.startAngle : 0;
+                const end = ent.endAngle !== undefined ? ent.endAngle : 360;
+                let radStart = start * Math.PI / 180;
+                let radEnd = end * Math.PI / 180;
+                if (ent.type === 'ARC' && radEnd <= radStart) radEnd += 2 * Math.PI;
+                const N = Math.max(12, Math.floor(Math.abs(radEnd - radStart) * ent.r / 2));
+                let prevX = ent.cx + ent.r * Math.cos(radStart);
+                let prevY = ent.cy + ent.r * Math.sin(radStart);
+                for (let i = 1; i <= N; i++) {
+                    const a = radStart + (radEnd - radStart) * (i / N);
+                    const x = ent.cx + ent.r * Math.cos(a);
+                    const y = ent.cy + ent.r * Math.sin(a);
+                    segments.push({ x1: prevX, y1: prevY, x2: x, y2: y });
+                    prevX = x; prevY = y;
                 }
-            } else if((currentEntity.type === 'CIRCLE' || currentEntity.type === 'ARC') && currentEntity.r > 0) {
-                const cx = currentEntity.cx || 0;
-                const cy = currentEntity.cy || 0;
-                const r = currentEntity.r;
-                const startAngle = currentEntity.startAngle !== undefined ? currentEntity.startAngle : 0;
-                const endAngle = currentEntity.endAngle !== undefined ? currentEntity.endAngle : 360;
-
-                const N = Math.max(16, Math.floor(2 * Math.PI * r / 2)); 
-                let totalAngle = endAngle - startAngle;
-                if (totalAngle <= 0 && currentEntity.type === 'ARC') totalAngle += 360;
-
-                const radStart = startAngle * Math.PI / 180;
-                const radTotal = totalAngle * Math.PI / 180;
-
-                for(let i=0; i<N; i++) {
-                    const a1 = radStart + radTotal * (i/N);
-                    const a2 = radStart + radTotal * ((i+1)/N);
-                    segments.push({
-                        x1: cx + r * Math.cos(a1), y1: cy + r * Math.sin(a1),
-                        x2: cx + r * Math.cos(a2), y2: cy + r * Math.sin(a2)
-                    });
+            }
+            if ((ent.type === 'LWPOLYLINE' || ent.type === 'POLYLINE') && ent.vertices.length > 0) {
+                for (let i = 0; i < ent.vertices.length - 1; i++) {
+                    addBulgeSegments(ent.vertices[i], ent.vertices[i + 1], ent.vertices[i].bulge);
                 }
-            } else if(currentEntity.type === 'LWPOLYLINE' && currentEntity.vertices.length >= 2) {
-                for(let i=0; i<currentEntity.vertices.length-1; i++) {
-                    segments.push({
-                        x1: currentEntity.vertices[i].x, y1: currentEntity.vertices[i].y,
-                        x2: currentEntity.vertices[i+1].x, y2: currentEntity.vertices[i+1].y
-                    });
-                }
-                if(currentEntity.closed && currentEntity.vertices.length > 2) {
-                    const last = currentEntity.vertices[currentEntity.vertices.length-1];
-                    const first = currentEntity.vertices[0];
-                    segments.push({x1: last.x, y1: last.y, x2: first.x, y2: first.y});
+                if (ent.closed && ent.vertices.length > 2) {
+                    addBulgeSegments(ent.vertices[ent.vertices.length - 1], ent.vertices[0], ent.vertices[ent.vertices.length - 1].bulge);
                 }
             }
         }
 
-        while(idx < lines.length) {
+        while (idx < lines.length) {
             const pair = getPair();
-            if(!pair) break;
+            if (!pair) break;
             const [code, value] = pair;
 
-            if(code === 0) {
-                flushEntity();
+            if (code === 0 && value === 'SECTION') {
+                const next = getPair();
+                inEntities = (next && next[1] === 'ENTITIES');
+                continue;
+            }
+            if (code === 0 && value === 'ENDSEC') {
+                inEntities = false;
+                continue;
+            }
+            if (!inEntities) continue;
+
+            if (code === 0) {
+                if (currentEntity && currentEntity.type !== 'POLYLINE') flushEntity(currentEntity);
                 
-                if (value === 'LINE' || value === 'CIRCLE' || value === 'ARC' || value === 'LWPOLYLINE') {
-                    currentEntity = { type: value, vertices: [] };
+                if (value === 'LWPOLYLINE') {
+                    currentEntity = { type: 'LWPOLYLINE', vertices: [], closed: false, ignore: false };
                 } else if (value === 'POLYLINE') {
-                    currentEntity = { type: value, vertices: [], closed: false };
-                    currentPolyline = currentEntity;
-                } else if (value === 'VERTEX') {
-                    currentEntity = { type: 'VERTEX', x: 0, y: 0 };
-                } else if (value === 'SEQEND') {
-                    if (currentPolyline) {
-                        currentEntity = currentPolyline; 
-                        currentEntity.type = 'LWPOLYLINE'; 
-                        flushEntity();
-                        currentPolyline = null;
-                        currentEntity = null;
-                    }
+                    if (currentPolyline) flushEntity(currentPolyline);
+                    currentPolyline = { type: 'POLYLINE', vertices: [], closed: false, ignore: false };
+                    currentEntity = currentPolyline;
+                } else if (value === 'VERTEX' && currentPolyline) {
+                    currentEntity = { type: 'VERTEX', x: 0, y: 0, bulge: 0, ignore: false };
+                } else if (value === 'SEQEND' && currentPolyline) {
+                    flushEntity(currentPolyline);
+                    currentPolyline = null;
+                    currentEntity = null;
+                } else if (['LINE', 'CIRCLE', 'ARC'].includes(value)) {
+                    currentEntity = { type: value, ignore: false };
                 } else {
                     currentEntity = null;
                 }
             } else if (currentEntity) {
+                // Code 67 = 1 significa Espacio Papel (Layout), lo ignoramos para no ensuciar el modelo
+                if (code === 67 && value === '1') currentEntity.ignore = true;
+                
                 const v = parseFloat(value);
-                if (currentEntity.type === 'LINE') {
+                if (currentEntity.type === 'LWPOLYLINE') {
+                    if (code === 70) currentEntity.closed = (parseInt(value) & 1) !== 0;
+                    else if (code === 10) currentEntity.vertices.push({ x: v, y: 0, bulge: 0 });
+                    else if (code === 20 && currentEntity.vertices.length > 0) currentEntity.vertices[currentEntity.vertices.length - 1].y = v;
+                    else if (code === 42 && currentEntity.vertices.length > 0) currentEntity.vertices[currentEntity.vertices.length - 1].bulge = v;
+                } else if (currentEntity.type === 'POLYLINE') {
+                    if (code === 70) currentEntity.closed = (parseInt(value) & 1) !== 0;
+                } else if (currentEntity.type === 'VERTEX') {
+                    if (code === 10) currentEntity.x = v;
+                    else if (code === 20) currentEntity.y = v;
+                    else if (code === 42) currentEntity.bulge = v;
+                } else if (currentEntity.type === 'LINE') {
                     if (code === 10) currentEntity.x1 = v;
                     else if (code === 20) currentEntity.y1 = v;
                     else if (code === 11) currentEntity.x2 = v;
@@ -289,30 +341,61 @@
                     else if (code === 40) currentEntity.r = v;
                     else if (code === 50) currentEntity.startAngle = v;
                     else if (code === 51) currentEntity.endAngle = v;
-                } else if (currentEntity.type === 'LWPOLYLINE' || currentEntity.type === 'POLYLINE') {
-                    if (code === 70) currentEntity.closed = (parseInt(value) & 1) !== 0;
-                    else if (code === 10 && currentEntity.type === 'LWPOLYLINE') currentEntity.vertices.push({ x: v, y: 0 });
-                    else if (code === 20 && currentEntity.type === 'LWPOLYLINE' && currentEntity.vertices.length > 0) {
-                        currentEntity.vertices[currentEntity.vertices.length - 1].y = v;
-                    }
-                } else if (currentEntity.type === 'VERTEX') {
-                    if (code === 10) currentEntity.x = v;
-                    else if (code === 20) currentEntity.y = v;
                 }
             }
         }
-        flushEntity();
-
-        return segments.filter(s => Math.hypot(s.x2-s.x1, s.y2-s.y1) > 1e-9);
+        if (currentEntity && currentEntity.type !== 'POLYLINE') flushEntity(currentEntity);
+        if (currentPolyline) flushEntity(currentPolyline);
+        return segments.filter(s => Math.hypot(s.x2 - s.x1, s.y2 - s.y1) > 1e-9);
     }
 
-    function buildTopology(segments, tol) {
+    // ──── Topología robusta: Planarización previa para corregir cruces ────
+    function buildTopology(rawSegments, tol) {
+        let segments = [];
+        const eps = 1e-6;
+        const splits = new Map();
+        
+        // Fase 1: Planarización (fractura líneas donde se cruzan para generar nodos limpios)
+        for(let i=0; i<rawSegments.length; i++) splits.set(i, [0, 1]);
+        
+        for(let i=0; i<rawSegments.length; i++) {
+            const s1 = rawSegments[i];
+            for(let j=i+1; j<rawSegments.length; j++) {
+                const s2 = rawSegments[j];
+                const d = (s1.x2 - s1.x1) * (s2.y2 - s2.y1) - (s1.y2 - s1.y1) * (s2.x2 - s2.x1);
+                if (Math.abs(d) < eps) continue; 
+                
+                const u = ((s2.x1 - s1.x1) * (s2.y2 - s2.y1) - (s2.y1 - s1.y1) * (s2.x2 - s2.x1)) / d;
+                const v = ((s2.x1 - s1.x1) * (s1.y2 - s1.y1) - (s2.y1 - s1.y1) * (s1.x2 - s1.x1)) / d;
+                
+                if (u > eps && u < 1 - eps && v > eps && v < 1 - eps) {
+                    splits.get(i).push(u);
+                    splits.get(j).push(v);
+                }
+            }
+        }
+        
+        for(let i=0; i<rawSegments.length; i++) {
+            const s = rawSegments[i];
+            const tVals = splits.get(i).sort((a,b)=>a-b);
+            let prevX = s.x1, prevY = s.y1;
+            for(let k=1; k<tVals.length; k++) {
+                if (tVals[k] - tVals[k-1] < 1e-5) continue;
+                const px = s.x1 + tVals[k] * (s.x2 - s.x1);
+                const py = s.y1 + tVals[k] * (s.y2 - s.y1);
+                segments.push({x1: prevX, y1: prevY, x2: px, y2: py});
+                prevX = px; prevY = py;
+            }
+        }
+
+        // Fase 2: Construcción de grafo y caras
         const vertices = new Map();
         const getV = (x,y) => {
             const key = `${Math.round(x/tol)}|${Math.round(y/tol)}`;
             if(!vertices.has(key)) vertices.set(key, {x,y,adj:[]});
             return vertices.get(key);
         };
+        
         const edges = [];
         segments.forEach(s => {
             const v1 = getV(s.x1, s.y1), v2 = getV(s.x2, s.y2);
@@ -323,7 +406,9 @@
             v1.adj.push(e1); v2.adj.push(e2);
             edges.push(e1, e2);
         });
+        
         vertices.forEach(v => v.adj.sort((a,b)=> a.angle - b.angle));
+        
         const faces = [];
         edges.forEach(edge => {
             if(edge.used) return;
@@ -341,6 +426,11 @@
                 if(area > 0) faces.push({pts, area, matIdx:3});
             }
         });
+        
+        // Fase 3: Ordenar por área de menor a mayor.
+        // Esto asegura que al hacer click, los huecos pequeños sean seleccionables por encima de las caras grandes.
+        faces.sort((a,b) => a.area - b.area);
+        
         return faces;
     }
 
@@ -459,7 +549,7 @@
         reader.onload = ev => {
             try {
                 const segments = parseDXF(ev.target.result);
-                if(segments.length === 0) { setStatus('❌ No se encontraron entidades 2D.', true); return; }
+                if(segments.length === 0) { setStatus('❌ No se encontraron entidades 2D válidas o están en bloque cerrado.', true); return; }
                 const tol = +document.getElementById('tolInput').value || 0.5;
                 polygons = buildTopology(segments, tol);
                 if(polygons.length) {
@@ -473,7 +563,7 @@
                     document.getElementById('result').style.display = 'none';
                     draw();
                 } else setStatus('❌ No se cerraron polígonos. Ajusta tolerancia.', true);
-            } catch(err) { setStatus('Error: '+err.message, true); }
+            } catch(err) { setStatus('Error al leer: '+err.message, true); }
         };
         reader.readAsText(file);
     };
