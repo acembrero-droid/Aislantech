@@ -12,7 +12,7 @@
             --color-primary: #EDD00E; --color-primary-dark: #B8860B; --color-primary-light: #FFF8DC;
             --color-secondary: #3E3E3E; --color-secondary-dark: #696969; --color-secondary-light: #D3D3D3;
             --color-accent: #EDD00E; --color-light: #F5F5F5; --color-dark: #333333; --color-gray: #666666; --color-white: #FFFFFF;
-            --transition: all 0.3s ease; --border-radius: 8px;
+            --transition: all 0.2s ease; --border-radius: 8px;
             --box-shadow: 0 5px 15px rgba(0,0,0,0.05); --box-shadow-hover: 0 15px 30px rgba(0,0,0,0.1);
         }
         * { margin:0; padding:0; box-sizing:border-box; }
@@ -47,11 +47,13 @@
         .btn-outline:hover:not(:disabled) { border-color:var(--color-primary); color:var(--color-primary-dark); background:var(--color-primary-light); }
         .btn-sm { padding:6px 12px; font-size:0.75rem; }
         button:disabled, .btn:disabled { opacity:0.5; cursor:not-allowed; }
-        .status-bar { background:var(--color-primary-light); border-left:4px solid var(--color-primary); padding:12px 16px; border-radius:var(--border-radius); margin:15px 0; display:flex; align-items:center; gap:8px; }
+        .status-bar { background:var(--color-primary-light); border-left:4px solid var(--color-primary); padding:12px 16px; border-radius:var(--border-radius); margin:15px 0; display:flex; align-items:center; gap:8px; transition: var(--transition); }
         .status-bar.error { background:#ffebee; border-left-color:#e53935; color:#b71c1c; }
+        .status-bar.success { background:#e8f5e9; border-left-color:#2e7d32; color:#1b5e20; }
         .legend-panel { display:flex; flex-wrap:wrap; gap:1rem; background:var(--color-light); padding:12px 16px; border-radius:var(--border-radius); margin:15px 0; align-items:center; }
-        .legend-item { display:flex; align-items:center; gap:8px; font-size:0.8rem; cursor:pointer; }
-        .legend-color { width:20px; height:20px; border-radius:4px; border:1px solid rgba(0,0,0,0.1); }
+        .legend-item { display:flex; align-items:center; gap:8px; font-size:0.8rem; cursor:pointer; padding: 4px 8px; border-radius: 4px; transition: background 0.2s; }
+        .legend-item:hover { background: rgba(0,0,0,0.05); transform: scale(1.02); }
+        .legend-color { width:20px; height:20px; border-radius:4px; border:1px solid rgba(0,0,0,0.2); box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
         .canvas-wrapper { position:relative; background:#fff; border-radius:var(--border-radius); box-shadow:var(--box-shadow); border:1px solid var(--color-secondary-light); }
         canvas { display:block; width:100%; height:auto; cursor:crosshair; }
         footer { background:var(--color-dark); color:white; padding:60px 0 30px; margin-top:60px; }
@@ -97,7 +99,7 @@
                 <div class="control-group"><label><i class="fas fa-file-dxf"></i> Archivo DXF</label><input type="file" id="dxfFile" accept=".dxf"></div>
                 <div class="control-group"><label><i class="fas fa-ruler-combined"></i> Tolerancia unión</label><input type="number" id="tolInput" value="0.5" step="0.1" min="0.0001"></div>
                 <div class="control-group"><label><i class="fas fa-sync-alt"></i> Rotar (°)</label><div style="display:flex; gap:8px;"><input type="number" id="rotInput" value="0" step="1"><button id="rotateBtn" class="btn btn-primary btn-sm" disabled><i class="fas fa-undo-alt"></i></button></div></div>
-                <div class="control-group"><label><i class="fas fa-cube"></i> Material</label><select id="matSelect"></select><small>Click en región para asignar</small></div>
+                <div class="control-group"><label><i class="fas fa-cube"></i> Material seleccionado</label><select id="matSelect"></select><small>Se aplica a la región marcada en rojo</small></div>
                 <div class="control-group"><label><i class="fas fa-temperature-low"></i> Temp. Ext / Int (°C)</label><div style="display:flex; gap:8px;"><input type="number" id="tExt" value="0" step="1"><input type="number" id="tInt" value="20" step="1"></div></div>
                 <div class="control-group"><label>&nbsp;</label><div style="display:flex; gap:8px;"><button id="autoBoundaryBtn" class="btn btn-outline btn-sm" disabled><i class="fas fa-magic"></i> Auto asignar</button><button id="calcBtn" class="btn btn-success" disabled><i class="fas fa-chart-line"></i> CALCULAR U</button></div></div>
             </div>
@@ -107,13 +109,7 @@
     <div class="status-bar" id="status"><i class="fas fa-info-circle"></i> <span id="statusText">Esperando archivo DXF...</span></div>
 
     <div class="legend-panel" id="legend">
-        <div class="boundary-legend">
-            <span><span class="boundary-swatch" style="background:#1976d2;"></span> Exterior</span>
-            <span><span class="boundary-swatch" style="background:#d32f2f;"></span> Interior</span>
-            <span><span class="boundary-swatch" style="background:#757575;"></span> Neutro</span>
-            <span><span class="boundary-swatch" style="background:#000;"></span> Sin asignar</span>
         </div>
-    </div>
 
     <div class="canvas-wrapper">
         <canvas id="canvas" width="900" height="550"></canvas>
@@ -148,7 +144,7 @@
     let polygons = [];
     let minX, maxX, minY, maxY;
     let selectedPoly = -1;
-    let hoveredPolyIdx = -1; // Nuevo: Para iluminar el área donde está el ratón
+    let hoveredPolyIdx = -1;
     let T = null, kGrid = null, dx, dy;
     const NX = 120, NY = 120;
     let showThermalMap = false;
@@ -167,10 +163,13 @@
         materials.forEach((m,i)=> sel.add(new Option(`${m.name} (k=${m.k})`, i)));
         if(selectedPoly>=0 && polygons[selectedPoly]) sel.value = polygons[selectedPoly].matIdx;
     }
+
     function updateLegend() {
         document.getElementById('legend').innerHTML = materials.map((m,i)=>
-            `<div class="legend-item" data-idx="${i}" title="Seleccionar material">
-                <div class="legend-color" style="background:${m.color}"></div> ${m.name} <small>(k=${m.k})</small>
+            `<div class="legend-item" data-idx="${i}" title="Aplicar ${m.name}">
+                <div class="legend-color" style="background:${m.color}"></div> 
+                <span style="font-weight:600; color:var(--color-dark);">${m.name}</span> 
+                <small>(k=${m.k})</small>
             </div>`).join('') +
             `<div class="boundary-legend" style="margin-left:auto;">
                 <span><span class="boundary-swatch" style="background:#1976d2;"></span> Exterior</span>
@@ -179,12 +178,45 @@
                 <span><span class="boundary-swatch" style="background:#000;"></span> Sin asignar</span>
             </div>`;
     }
-    function setStatus(msg, isError=false) {
+
+    function setStatus(msg, statusType = 'info') {
         statusText.textContent = msg;
         const bar = document.getElementById('status');
-        bar.className = 'status-bar' + (isError ? ' error' : '');
-        bar.querySelector('i').className = isError ? 'fas fa-exclamation-triangle' : 'fas fa-info-circle';
+        bar.className = 'status-bar'; // reset
+        if (statusType === 'error') bar.classList.add('error');
+        if (statusType === 'success') bar.classList.add('success');
+        
+        const icon = bar.querySelector('i');
+        icon.className = statusType === 'error' ? 'fas fa-exclamation-triangle' : 
+                         statusType === 'success' ? 'fas fa-check-circle' : 'fas fa-info-circle';
     }
+
+    // ──── INTERACCIÓN DE LEYENDA (La clave para seleccionar materiales) ────
+    document.getElementById('legend').addEventListener('click', e => {
+        const item = e.target.closest('.legend-item');
+        if (!item) return;
+        
+        const matIdx = parseInt(item.getAttribute('data-idx'));
+        
+        if (selectedPoly !== -1 && polygons[selectedPoly]) {
+            polygons[selectedPoly].matIdx = matIdx;
+            document.getElementById('matSelect').value = matIdx; // Sincronizar select
+            if (!showThermalMap) draw();
+            setStatus(`Material "${materials[matIdx].name}" aplicado a la región seleccionada.`, 'success');
+        } else {
+            setStatus('⚠️ Primero haz clic en una parte del dibujo para seleccionarla.', 'error');
+        }
+    });
+
+    // Sincronizar también si usan el select tradicional
+    document.getElementById('matSelect').onchange = function() {
+        if(selectedPoly >= 0 && polygons[selectedPoly]) {
+            polygons[selectedPoly].matIdx = +this.value;
+            setStatus(`Material cambiado a "${materials[this.value].name}".`, 'success');
+            if(!showThermalMap) draw();
+        }
+    };
+
 
     function parseDXF(text) {
         const lines = text.split(/\r?\n/);
@@ -527,7 +559,6 @@
             }
         });
 
-        // IMPORTANTE: Ordenar de MAYOR a MENOR área (Fondo abajo, detalles arriba)
         return faces.sort((a,b) => b.area - a.area);
     }
 
@@ -579,7 +610,6 @@
                 }
             }
         } else {
-            // Dibujar polígonos (los más grandes se dibujan primero por estar ordenados mayor a menor)
             polygons.forEach((p,i) => {
                 ctx.beginPath();
                 ctx.moveTo(tx(p.pts[0].x), ty(p.pts[0].y));
@@ -588,7 +618,6 @@
                 
                 ctx.fillStyle = materials[p.matIdx]?.color || '#ccc';
                 
-                // Efecto hover (iluminación visual sobre el área donde está el ratón)
                 if (i === hoveredPolyIdx && i !== selectedPoly) {
                     ctx.globalAlpha = 0.6;
                     ctx.fill();
@@ -655,21 +684,21 @@
         reader.onload = ev => {
             try {
                 const segments = parseDXF(ev.target.result);
-                if(segments.length === 0) { setStatus('❌ No se encontraron entidades válidas (Asegúrate de explotar los bloques).', true); return; }
+                if(segments.length === 0) { setStatus('❌ No se encontraron entidades válidas.', 'error'); return; }
                 const tol = +document.getElementById('tolInput').value || 0.5;
                 polygons = buildTopology(segments, tol);
                 if(polygons.length) {
                     recalcBounds();
                     boundaryEdges = extractBoundaryEdges(polygons);
-                    setStatus(`✅ ${polygons.length} regiones creadas. ${boundaryEdges.length} bordes exteriores listos.`);
+                    setStatus(`✅ ${polygons.length} regiones creadas. Selecciona una región y pincha un material en la leyenda.`, 'success');
                     document.getElementById('calcBtn').disabled = false;
                     document.getElementById('rotateBtn').disabled = false;
                     document.getElementById('autoBoundaryBtn').disabled = false;
                     selectedPoly = -1; hoveredPolyIdx = -1; showThermalMap = false; T = null;
                     document.getElementById('result').style.display = 'none';
                     draw();
-                } else setStatus('❌ Ocurrió un error leyendo el polígono. Trata de ajustar la "Tolerancia unión".', true);
-            } catch(err) { setStatus('Error al procesar: '+err.message, true); }
+                } else setStatus('❌ Ocurrió un error leyendo el polígono. Trata de ajustar la "Tolerancia unión".', 'error');
+            } catch(err) { setStatus('Error al procesar: '+err.message, 'error'); }
         };
         reader.readAsText(file);
     };
@@ -693,8 +722,7 @@
             }
         }
 
-        // IMPORTANTE: Buscar de atrás hacia adelante para seleccionar los detalles pequeños primero
-        selectedPoly = -1;
+        let clickedPoly = -1;
         for (let i = polygons.length - 1; i >= 0; i--) {
             let p = polygons[i];
             let inside = false;
@@ -704,14 +732,18 @@
                     inside = !inside;
             }
             if(inside) { 
-                selectedPoly = i; 
+                clickedPoly = i; 
                 break; 
             }
         }
 
+        selectedPoly = clickedPoly; // Si pinchas fuera, se deselecciona (-1)
+
         if(selectedPoly !== -1) {
             document.getElementById('matSelect').value = polygons[selectedPoly].matIdx;
-            setStatus(`Región ${selectedPoly+1} seleccionada.`);
+            setStatus(`Región seleccionada (marcada en rojo). Ahora haz clic en un material de la leyenda para pintarla.`);
+        } else {
+            setStatus(`Ninguna región seleccionada.`);
         }
         draw();
     };
@@ -728,7 +760,6 @@
         const thresholdWorld = 10 / scale;
         const newHoverEdge = (minDist < thresholdWorld) ? idx : -1;
 
-        // Búsqueda inversa para iluminar visualmente (efecto hover) el polígono a clickear
         let newHoverPoly = -1;
         for (let i = polygons.length - 1; i >= 0; i--) {
             let p = polygons[i];
@@ -746,11 +777,6 @@
             hoveredPolyIdx = newHoverPoly;
             draw();
         }
-    };
-
-    document.getElementById('matSelect').onchange = function() {
-        if(selectedPoly>=0 && polygons[selectedPoly]) polygons[selectedPoly].matIdx = +this.value;
-        if(!showThermalMap) draw();
     };
 
     document.getElementById('rotateBtn').onclick = () => {
@@ -774,7 +800,7 @@
     document.getElementById('calcBtn').onclick = () => {
         if(!polygons.length) return;
         if(!boundaryEdges.some(e => e.type===1) || !boundaryEdges.some(e => e.type===2)) {
-            setStatus('❌ Debes marcar al menos un borde Exterior y uno Interior.', true);
+            setStatus('❌ Debes marcar al menos un borde Exterior y uno Interior.', 'error');
             return;
         }
         setStatus('Calculando...');
@@ -790,7 +816,6 @@
             kGrid = Array.from({length:NY}, (_,i)=> Array.from({length:NX}, (_,j)=> {
                 const x = minX + j*dx + dx/2, y = minY + i*dy + dy/2;
                 
-                // Mismo sistema inverso para calcular el mapa térmico basado en los materiales correctos
                 let p = null;
                 for (let idx = polygons.length - 1; idx >= 0; idx--) {
                     let poly = polygons[idx];
@@ -881,7 +906,7 @@
             const U = Math.abs(flux / ((maxY-minY)*(ti-te)));
             document.getElementById('result').style.display = 'block';
             document.getElementById('result').innerHTML = `<i class="fas fa-chart-simple"></i> <strong>U = ${U.toFixed(4)} W/m²·K</strong><br><small>Malla ${NX}×${NY} | Flujo: ${flux.toFixed(3)} W</small>`;
-            setStatus(`✅ U = ${U.toFixed(3)} W/m²·K`);
+            setStatus(`✅ U = ${U.toFixed(3)} W/m²·K`, 'success');
             showThermalMap = true;
             draw();
             document.getElementById('calcBtn').disabled = false;
