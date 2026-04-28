@@ -60,7 +60,7 @@
         .legend-color { width:18px; height:18px; border-radius:3px; border:1px solid rgba(0,0,0,0.2); }
         
         .boundary-legend { display:flex; gap:1rem; align-items:center; margin-left:auto; font-size:0.75rem; font-weight:700; padding-left:15px; border-left:2px solid var(--color-light); }
-        .boundary-swatch { width:14px; height:14px; border-radius:50%; display:inline-block; border:2px solid rgba(0,0,0,0.5); cursor:pointer;}
+        .boundary-swatch { width:14px; height:14px; border-radius:50%; display:inline-block; border:2px solid rgba(0,0,0,0.5); }
         
         .canvas-wrapper { position:relative; background:#fff; border-radius:var(--border-radius); box-shadow:var(--box-shadow); border:1px solid var(--color-secondary-light); overflow:hidden; }
         canvas { display:block; width:100%; height:auto; cursor:crosshair; }
@@ -113,7 +113,7 @@
 
                 <div class="control-group">
                     <label><i class="fas fa-arrows-alt-h"></i> Ancho Proyectado (bf)</label>
-                    <input type="number" id="LpInput" value="100" step="1" title="Ancho proyectado en mm">
+                    <input type="number" id="LpInput" value="100" step="1" title="Ancho proyectado en mm para dividir el flujo (Q)">
                 </div>
                 
                 <div class="control-group">
@@ -214,7 +214,7 @@
     document.getElementById('btnModeBound').onclick = function() {
         editMode = 'BOUNDARY';
         this.classList.add('active'); document.getElementById('btnModeMat').classList.remove('active');
-        setStatus('Modo Contornos: Haz clic en las líneas para cambiar su frontera (Azul/Rojo). Usa SHIFT+Clic para seleccionar en cadena.');
+        setStatus('Modo Contornos: Haz clic en las líneas (Shift+Clic para línea continua). Asigna "Int. (Medir U)" a la zona a evaluar.');
         draw();
     };
 
@@ -229,8 +229,9 @@
                 <span>${m.name}</span>
             </div>`).join('') +
             `<div class="boundary-legend">
-                <span><span class="boundary-swatch" style="background:#1976d2"></span> Exterior</span>
-                <span><span class="boundary-swatch" style="background:#d32f2f"></span> Interior</span>
+                <span><span class="boundary-swatch" style="background:#1976d2"></span> Ext.</span>
+                <span><span class="boundary-swatch" style="background:#d32f2f"></span> Int. (Medir U)</span>
+                <span><span class="boundary-swatch" style="background:#ff9800"></span> Int. (Secundario)</span>
                 <span><span class="boundary-swatch" style="background:#757575"></span> Adiabático</span>
             </div>`;
     }
@@ -280,7 +281,7 @@
         }
     });
 
-    // ──── PARSER DXF Y TOPOLOGÍA (Resumido y robusto) ────
+    // ──── PARSER DXF Y TOPOLOGÍA ────
     function parseDXF(text) {
         const lines = text.split(/\r?\n/);
         let idx = 0, inEntities = false, segments = [];
@@ -459,7 +460,7 @@
             if(pts.length > 2) {
                 let area = 0;
                 for(let i=0; i<pts.length; i++) area += (pts[i].x * pts[(i+1)%pts.length].y - pts[(i+1)%pts.length].x * pts[i].y);
-                rawFaces.push({pts, signedArea: area/2, area: Math.abs(area/2), matIdx: 1}); // Aluminio por defecto
+                rawFaces.push({pts, signedArea: area/2, area: Math.abs(area/2), matIdx: 1}); // Aluminio
             }
         });
 
@@ -481,7 +482,7 @@
         });
         const edges = Array.from(map.values()).filter(e => e.count === 1).map(e => ({p1:e.p1, p2:e.p2, type:0}));
         
-        // Construir Grafo de Adyacencia para el BFS (Shift+Click)
+        // Grafo de Adyacencia para el BFS (Shift+Click)
         boundaryAdj = edges.map(() => []);
         for(let i=0; i<edges.length; i++) {
             for(let j=i+1; j<edges.length; j++) {
@@ -533,19 +534,16 @@
 
         // Anclar el punto del mundo que está bajo el ratón
         const {x: wx, y: wy} = getWorldCoords(screenX, screenY);
-        
         zoomLevel = newZoom;
         
-        // Calcular dónde caería ese punto del mundo con el nuevo zoom
+        // Ajustar el offset para que vuelva a caer bajo el ratón
         const cw = canvas.width, ch = canvas.height;
         const cxWorld = (minX + maxX) / 2, cyWorld = (minY + maxY) / 2;
         const projectedX = offsetX + cw/2 + (wx - cxWorld) * baseScale * zoomLevel;
         const projectedY = offsetY + ch/2 - (wy - cyWorld) * baseScale * zoomLevel;
         
-        // Ajustar el offset para que vuelva a caer bajo el ratón
         offsetX += screenX - projectedX;
         offsetY += screenY - projectedY;
-        
         draw();
     }
 
@@ -585,7 +583,6 @@
         
         const {x: mxWorld, y: myWorld} = getWorldCoords(mouseX, mouseY);
         
-        // Hover Bordes (Solo en modo BOUNDARY)
         let nHEdge = -1;
         if (editMode === 'BOUNDARY') {
             let minDEdge = Infinity;
@@ -598,7 +595,6 @@
             if (minDEdge > 10/(baseScale*zoomLevel)) nHEdge = -1;
         }
 
-        // Hover Polígonos (Solo en modo MATERIAL)
         let nHPoly = -1;
         if (editMode === 'MATERIAL') {
             for (let i = polygons.length - 1; i >= 0; i--) {
@@ -617,8 +613,7 @@
 
     canvas.addEventListener('mouseup', e => {
         if(!polygons.length) return;
-        isDragging = false;
-        canvas.classList.remove('grabbing');
+        isDragging = false; canvas.classList.remove('grabbing');
         if (hasDragged || showThermalMap) return;
 
         const rect = canvas.getBoundingClientRect();
@@ -626,7 +621,6 @@
         const mouseY = (e.clientY - rect.top) * (canvas.height / rect.height);
         const {x: mxWorld, y: myWorld} = getWorldCoords(mouseX, mouseY);
 
-        // MODO CONTORNOS
         if (editMode === 'BOUNDARY') {
             let minDist = Infinity, idx = -1;
             boundaryEdges.forEach((edge, i) => {
@@ -637,25 +631,24 @@
             });
             
             if(minDist < 15/(baseScale*zoomLevel) && idx !== -1) {
-                // SHIFT + CLIC: Pathfinding (BFS)
+                // BFS para Shift+Clic
                 if (e.shiftKey) {
                     let path = bfsFindNearestAssigned(idx);
                     if (path && path.length > 0) {
                         let targetType = boundaryEdges[path[path.length-1]].type;
                         path.forEach(pIdx => boundaryEdges[pIdx].type = targetType);
-                        setStatus(`Cadena de contornos asignada.`, 'success');
+                        setStatus(`Cadena de contornos rellenada automáticamente.`, 'success');
                     } else {
-                        boundaryEdges[idx].type = (boundaryEdges[idx].type + 1) % 4; // Fallback
+                        boundaryEdges[idx].type = (boundaryEdges[idx].type + 1) % 5;
                     }
                 } else {
-                    boundaryEdges[idx].type = (boundaryEdges[idx].type + 1) % 4;
+                    boundaryEdges[idx].type = (boundaryEdges[idx].type + 1) % 5; // Cambia entre 0,1,2,3,4
                 }
                 draw(); 
             }
             return;
         }
 
-        // MODO MATERIALES
         if (editMode === 'MATERIAL') {
             selectedPoly = -1;
             for (let i = polygons.length - 1; i >= 0; i--) {
@@ -667,22 +660,19 @@
             }
             if(selectedPoly !== -1) {
                 document.getElementById('matSelect').value = polygons[selectedPoly].matIdx;
-                setStatus(`Región seleccionada. Elige el material en el panel o leyenda.`);
+                setStatus(`Región seleccionada. Elige el material en el panel superior o leyenda.`);
             }
             draw();
         }
     });
 
-    // BFS (Breadth-First Search) para la selección de bordes en cadena
     function bfsFindNearestAssigned(startIdx) {
         let queue = [[startIdx, [startIdx]]];
         let visited = new Set([startIdx]);
 
         while(queue.length > 0) {
             let [curr, path] = queue.shift();
-            // Si el borde tiene un color asignado (y no es el de inicio)
             if (boundaryEdges[curr].type !== 0 && curr !== startIdx) return path;
-
             for (let n of boundaryAdj[curr]) {
                 if (!visited.has(n)) { visited.add(n); queue.push([n, [...path, n]]); }
             }
@@ -703,11 +693,13 @@
                     const f = (T[i][j]-te)/(ti-te||1);
                     const hue = (1 - Math.min(1,Math.max(0,f))) * 240;
                     ctx.fillStyle = `hsl(${hue},75%,50%)`;
-                    ctx.fillRect(tx(minX+j*dx), ty(minY+i*dy)-ch, cw+0.6, ch+0.6);
+                    // Evitar dibujar rectángulos fuera de la malla (donde k=0) para no pintar aire inútil.
+                    if(kGrid[i][j] > 0 || isExt[i][j] || isIntMeas[i][j] || isIntSec[i][j]) {
+                        ctx.fillRect(tx(minX+j*dx), ty(minY+i*dy)-ch, cw+0.6, ch+0.6);
+                    }
                 }
             }
         } else {
-            // Dibujar polígonos
             polygons.forEach((p,i) => {
                 ctx.beginPath(); ctx.moveTo(tx(p.pts[0].x), ty(p.pts[0].y));
                 p.pts.forEach(pt => ctx.lineTo(tx(pt.x), ty(pt.y))); ctx.closePath();
@@ -720,12 +712,15 @@
             });
         }
         
-        // Dibujar bordes (Siempre visibles, pero destacan más en BOUNDARY)
         if(!showThermalMap) {
             boundaryEdges.forEach((edge, idx) => {
                 ctx.beginPath(); ctx.moveTo(tx(edge.p1.x), ty(edge.p1.y)); ctx.lineTo(tx(edge.p2.x), ty(edge.p2.y));
                 let color = 'rgba(0,0,0,0.1)';
-                if(edge.type === 1) color = '#1976d2'; else if(edge.type === 2) color = '#d32f2f'; else if(edge.type === 3) color = '#757575'; 
+                if(edge.type === 1) color = '#1976d2'; // Exterior
+                else if(edge.type === 2) color = '#d32f2f'; // Interior Medida
+                else if(edge.type === 3) color = '#757575'; // Adiabático
+                else if(edge.type === 4) color = '#ff9800'; // Interior Secundario
+
                 ctx.strokeStyle = color; 
                 ctx.lineWidth = (editMode === 'BOUNDARY' && idx === hoveredEdgeIdx) ? 8 : (edge.type !== 0 ? 4 : 2);
                 ctx.stroke();
@@ -744,7 +739,7 @@
                 polygons = buildTopology(segments, 0.5);
                 if(polygons.length) {
                     recalcBounds(); boundaryEdges = extractBoundaryEdges(polygons);
-                    setStatus(`✅ DXF cargado. Asigna materiales y contornos para calcular la U.`, 'success');
+                    setStatus(`✅ DXF cargado. Usa los Modos de arriba para configurar el análisis.`, 'success');
                     document.getElementById('calcBtn').disabled = false;
                     selectedPoly = hoveredPolyIdx = -1; showThermalMap = false; T = null;
                     document.getElementById('result').style.display = 'none'; draw();
@@ -757,20 +752,21 @@
     document.getElementById('calcBtn').onclick = () => {
         if(!polygons.length) return;
         if(!boundaryEdges.some(e => e.type===1) || !boundaryEdges.some(e => e.type===2)) {
-            setStatus('❌ Falta marcar al menos un borde Exterior (azul) e Interior (rojo).', 'error'); return;
+            setStatus('❌ Falta marcar al menos un borde Exterior (azul) e Interior de Medición (rojo).', 'error'); return;
         }
-        setStatus('Calculando Matriz Térmica...', 'warning');
+        setStatus('Calculando Matriz Térmica ISO 10077-2...', 'warning');
         document.getElementById('calcBtn').disabled = true;
         setTimeout(()=> runSolver(0), 50);
     };
 
-    let isExt, isInt; 
+    let isExt, isIntMeas, isIntSec; 
 
     function runSolver(step) {
         const te = +document.getElementById('tExt').value, ti = +document.getElementById('tInt').value;
         if(step === 0) {
             dx = (maxX-minX)/NX; dy = (maxY-minY)/NY;
             
+            // Rasterizar Material (Con máscara de ceros fuera)
             kGrid = Array.from({length:NY}, (_,i)=> Array.from({length:NX}, (_,j)=> {
                 const x = minX + j*dx + dx/2, y = minY + i*dy + dy/2;
                 let p = null;
@@ -781,43 +777,63 @@
                     }
                     if(inside) { p = poly; break; }
                 }
-                return p ? materials[p.matIdx].k : 0.026; 
+                return p ? materials[p.matIdx].k : 0.0; // 0.0 anula el aire infinito exterior
             }));
             
             T = Array.from({length:NY}, ()=> new Array(NX).fill((te+ti)/2));
             isExt = Array.from({length:NY}, ()=> new Array(NX).fill(false));
-            isInt = Array.from({length:NY}, ()=> new Array(NX).fill(false));
+            isIntMeas = Array.from({length:NY}, ()=> new Array(NX).fill(false));
+            isIntSec = Array.from({length:NY}, ()=> new Array(NX).fill(false));
             
             boundaryEdges.forEach(edge => {
-                if(edge.type !== 1 && edge.type !== 2) return;
+                if(edge.type === 0 || edge.type === 3) return; // 0=Vacio, 3=Adiabatico
                 const steps = Math.ceil(Math.hypot(edge.p2.x-edge.p1.x, edge.p2.y-edge.p1.y) / Math.min(dx,dy) * 2);
                 for(let s=0; s<=steps; s++) {
                     const px = edge.p1.x + (s/steps)*(edge.p2.x-edge.p1.x), py = edge.p1.y + (s/steps)*(edge.p2.y-edge.p1.y);
                     const j = Math.floor((px - minX)/dx), i = Math.floor((py - minY)/dy);
                     if(i>=0 && i<NY && j>=0 && j<NX) {
                         if(edge.type === 1) isExt[i][j] = true;
-                        if(edge.type === 2) isInt[i][j] = true;
+                        if(edge.type === 2) isIntMeas[i][j] = true;
+                        if(edge.type === 4) isIntSec[i][j] = true;
                     }
                 }
             });
+
+            // Dar continuidad conductiva a los nodos de borde que caen "fuera" por redondeo
+            for(let i=0; i<NY; i++) {
+                for(let j=0; j<NX; j++) {
+                    if((isExt[i][j] || isIntMeas[i][j] || isIntSec[i][j]) && kGrid[i][j] === 0) {
+                        let maxK = 0;
+                        if(j>0) maxK = Math.max(maxK, kGrid[i][j-1]);
+                        if(j<NX-1) maxK = Math.max(maxK, kGrid[i][j+1]);
+                        if(i>0) maxK = Math.max(maxK, kGrid[i-1][j]);
+                        if(i<NY-1) maxK = Math.max(maxK, kGrid[i+1][j]);
+                        kGrid[i][j] = maxK > 0 ? maxK : 0.026;
+                    }
+                }
+            }
+
             setTimeout(()=> runSolver(1), 10); return;
         }
         
         if(step === 1) {
-            const iter = 1500; let done = 0;
+            const iter = 1800; let done = 0;
+            const rx = dy/dx, ry = dx/dy;
             function chunk() {
                 const end = Math.min(done+300, iter);
                 for(let it=done; it<end; it++) {
                     for(let i=0; i<NY; i++) {
                         for(let j=0; j<NX; j++) {
+                            if(kGrid[i][j] === 0 && !isExt[i][j] && !isIntMeas[i][j] && !isIntSec[i][j]) continue;
+
                             if(isExt[i][j]) { T[i][j] = te; continue; }
-                            if(isInt[i][j]) { T[i][j] = ti; continue; }
+                            if(isIntMeas[i][j] || isIntSec[i][j]) { T[i][j] = ti; continue; }
                             
                             let num = 0, den = 0;
-                            if(j>0) { num += kGrid[i][j-1]*T[i][j-1]; den += kGrid[i][j-1]; }
-                            if(j<NX-1) { num += kGrid[i][j+1]*T[i][j+1]; den += kGrid[i][j+1]; }
-                            if(i>0) { num += kGrid[i-1][j]*T[i-1][j]; den += kGrid[i-1][j]; }
-                            if(i<NY-1) { num += kGrid[i+1][j]*T[i+1][j]; den += kGrid[i+1][j]; }
+                            if(j>0 && kGrid[i][j-1] > 0) { let k_eff = (kGrid[i][j]+kGrid[i][j-1])/2 * rx; num += k_eff*T[i][j-1]; den += k_eff; }
+                            if(j<NX-1 && kGrid[i][j+1] > 0) { let k_eff = (kGrid[i][j]+kGrid[i][j+1])/2 * rx; num += k_eff*T[i][j+1]; den += k_eff; }
+                            if(i>0 && kGrid[i-1][j] > 0) { let k_eff = (kGrid[i][j]+kGrid[i-1][j])/2 * ry; num += k_eff*T[i-1][j]; den += k_eff; }
+                            if(i<NY-1 && kGrid[i+1][j] > 0) { let k_eff = (kGrid[i][j]+kGrid[i+1][j])/2 * ry; num += k_eff*T[i+1][j]; den += k_eff; }
                             if(den > 0) T[i][j] = num/den;
                         }
                     }
@@ -830,13 +846,14 @@
         
         if(step === 2) {
             let flux = 0;
+            const rx = dy/dx, ry = dx/dy;
             for(let i=0; i<NY; i++) {
                 for(let j=0; j<NX; j++) {
-                    if(isInt[i][j]) {
-                        if(j>0 && !isInt[i][j-1]) flux += ((kGrid[i][j]+kGrid[i][j-1])/2) * (ti - T[i][j-1]) * (dy/dx);
-                        if(j<NX-1 && !isInt[i][j+1]) flux += ((kGrid[i][j]+kGrid[i][j+1])/2) * (ti - T[i][j+1]) * (dy/dx);
-                        if(i>0 && !isInt[i-1][j]) flux += ((kGrid[i][j]+kGrid[i-1][j])/2) * (ti - T[i-1][j]) * (dx/dy);
-                        if(i<NY-1 && !isInt[i+1][j]) flux += ((kGrid[i][j]+kGrid[i+1][j])/2) * (ti - T[i+1][j]) * (dx/dy);
+                    if(isIntMeas[i][j]) {
+                        if(j>0 && kGrid[i][j-1] > 0 && !isIntMeas[i][j-1] && !isIntSec[i][j-1]) flux += ((kGrid[i][j]+kGrid[i][j-1])/2) * (ti - T[i][j-1]) * rx;
+                        if(j<NX-1 && kGrid[i][j+1] > 0 && !isIntMeas[i][j+1] && !isIntSec[i][j+1]) flux += ((kGrid[i][j]+kGrid[i][j+1])/2) * (ti - T[i][j+1]) * rx;
+                        if(i>0 && kGrid[i-1][j] > 0 && !isIntMeas[i-1][j] && !isIntSec[i-1][j]) flux += ((kGrid[i][j]+kGrid[i-1][j])/2) * (ti - T[i-1][j]) * ry;
+                        if(i<NY-1 && kGrid[i+1][j] > 0 && !isIntMeas[i+1][j] && !isIntSec[i+1][j]) flux += ((kGrid[i][j]+kGrid[i+1][j])/2) * (ti - T[i+1][j]) * ry;
                     }
                 }
             }
@@ -848,9 +865,9 @@
             
             document.getElementById('result').style.display = 'block';
             document.getElementById('result').innerHTML = `
-                <h2>U<sub>f</sub> = ${U.toFixed(3)} W/m²·K</h2>
-                <p>Cálculo basado en UNE-EN ISO 10077-2</p>
-                <p style="opacity:0.9; margin-top:5px; font-size:0.85rem;"><small>Flujo (Q): ${Math.abs(flux).toFixed(3)} W/m &nbsp;|&nbsp; Ancho (b<sub>f</sub>): ${Lp.toFixed(1)} mm &nbsp;|&nbsp; ΔT: ${deltaT} K</small></p>
+                <h2>U<sub>f</sub> = ${U.toFixed(3)} W/(m²·K)</h2>
+                <p>Cálculo analítico ISO 10077-2</p>
+                <p style="opacity:0.9; margin-top:5px; font-size:0.85rem;"><small>Flujo extraído (Q): ${Math.abs(flux).toFixed(3)} W/m &nbsp;|&nbsp; Borde proyectado (b<sub>f</sub>): ${Lp.toFixed(1)} mm</small></p>
             `;
             setStatus(`✅ Cálculo completado.`, 'success');
             
