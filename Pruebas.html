@@ -43,7 +43,6 @@
         .btn-success:hover:not(:disabled) { background:#1b5e20; }
         .btn-outline { background:transparent; border:2px solid var(--color-secondary-light); color:var(--color-secondary); }
         .btn-outline:hover:not(:disabled) { border-color:var(--color-primary); background:var(--color-primary-light); }
-        .btn.active { background: #e74c3c; color: white; border-color: #c0392b; box-shadow: inset 0 3px 5px rgba(0,0,0,0.2); }
         button:disabled { opacity:0.5; cursor:not-allowed; }
         
         .status-bar { background:var(--color-primary-light); border-left:4px solid var(--color-primary); padding:12px 16px; border-radius:var(--border-radius); margin:15px 0; display:flex; align-items:center; gap:8px; font-weight:600;}
@@ -64,6 +63,7 @@
         
         .result-card { display:none; background:#2e7d32; color:white; padding:20px; border-radius:var(--border-radius); margin-top:20px; text-align:center; box-shadow:var(--box-shadow); }
         .result-card h2 { font-size: 2rem; margin-bottom: 5px; color:white;}
+        .result-card p { opacity: 0.9; font-size: 0.85rem; margin-top: 10px; }
     </style>
 </head>
 <body>
@@ -72,7 +72,7 @@
         <a href="#" class="logo-container">
             <div class="logo-text">
                 <div><span class="logo-aislan">AISLAN</span><span class="logo-tech">TECH</span></div>
-                <div class="logo-tagline">Simulación Térmica 2D (U-Value)</div>
+                <div class="logo-tagline">Simulación Térmica 2D (UNE-EN ISO 10077-2)</div>
             </div>
         </a>
     </div>
@@ -93,22 +93,19 @@
                     <label><i class="fas fa-search"></i> Vista / Zoom</label>
                     <div style="display:flex; gap:5px;">
                         <button id="btnZoomOut" class="btn btn-outline btn-sm" title="Alejar"><i class="fas fa-search-minus"></i></button>
-                        <button id="btnZoomReset" class="btn btn-outline btn-sm" title="Restablecer"><i class="fas fa-expand"></i></button>
+                        <button id="btnZoomReset" class="btn btn-outline btn-sm" title="Restablecer (Centrar)"><i class="fas fa-expand"></i></button>
                         <button id="btnZoomIn" class="btn btn-outline btn-sm" title="Acercar"><i class="fas fa-search-plus"></i></button>
                     </div>
                 </div>
                 
                 <div class="control-group">
                     <label><i class="fas fa-sync-alt"></i> Geometría</label>
-                    <div style="display:flex; gap:5px;">
-                        <button id="btnSetRot" class="btn btn-outline btn-sm" title="Fijar Eje de Rotación"><i class="fas fa-crosshairs"></i> Eje</button>
-                        <button id="btnRotate" class="btn btn-outline btn-sm" title="Rotar 90º"><i class="fas fa-redo"></i> Rotar 90º</button>
-                    </div>
+                    <button id="btnRotate" class="btn btn-outline btn-sm" title="Rotar 90º sobre el centro"><i class="fas fa-redo"></i> Rotar 90º</button>
                 </div>
 
                 <div class="control-group">
-                    <label><i class="fas fa-ruler-vertical"></i> Longitud Análisis (Lp) mm</label>
-                    <input type="number" id="LpInput" value="100" step="1" title="Longitud proyectada para el cálculo de la U">
+                    <label><i class="fas fa-arrows-alt-h"></i> Ancho Proyectado (bf) mm</label>
+                    <input type="number" id="LpInput" value="100" step="1" title="Ancho en línea recta de la cara del perfil (perpendicular al flujo)">
                 </div>
                 
                 <div class="control-group">
@@ -120,7 +117,7 @@
                 </div>
 
                 <div class="control-group" style="flex:1; align-items:flex-end;">
-                    <button id="calcBtn" class="btn btn-success" disabled style="padding:10px 30px; font-size:1rem;"><i class="fas fa-play-circle"></i> CALCULAR U</button>
+                    <button id="calcBtn" class="btn btn-success" disabled style="padding:10px 30px; font-size:1rem;"><i class="fas fa-play-circle"></i> CALCULAR Uf</button>
                 </div>
             </div>
         </div>
@@ -156,13 +153,10 @@
     let polygons = [];
     let boundaryEdges = []; 
     
-    // UI State & Geometría
     let minX, maxX, minY, maxY;
     let selectedPoly = -1;
     let hoveredPolyIdx = -1;
     let hoveredEdgeIdx = -1;
-    let uiMode = 'DEFAULT'; // 'DEFAULT', 'SET_ROT'
-    let rotAxis = null; 
 
     // Zoom & Pan Variables
     let zoomLevel = 1;
@@ -203,7 +197,6 @@
         bar.querySelector('i').className = type === 'error' ? 'fas fa-exclamation-triangle' : type === 'success' ? 'fas fa-check-circle' : type==='warning'? 'fas fa-exclamation-circle' : 'fas fa-info-circle';
     }
 
-    // LEYENDA (Click para pintar)
     document.getElementById('legend').addEventListener('click', e => {
         const item = e.target.closest('.legend-item');
         if (!item) return;
@@ -217,7 +210,7 @@
         }
     });
 
-    // ──── PARSER DXF Y TOPOLOGÍA ────
+    // ──── PARSER DXF Y TOPOLOGÍA (Resumido) ────
     function parseDXF(text) {
         const lines = text.split(/\r?\n/);
         let idx = 0, inEntities = false, segments = [];
@@ -433,46 +426,56 @@
         return Array.from(map.values()).filter(e => e.count === 1).map(e => ({p1:e.p1, p2:e.p2, type:0}));
     }
 
-    // ──── GESTIÓN DE VISTA (ZOOM Y PAN) ────
+    // ──── GESTIÓN DE VISTA (CENTRADO ABSOLUTO Y ZOOM) ────
     function recalcBounds() {
         if(!polygons.length) return;
         const all = polygons.flatMap(p=>p.pts);
         minX = Math.min(...all.map(p=>p.x)); maxX = Math.max(...all.map(p=>p.x));
         minY = Math.min(...all.map(p=>p.y)); maxY = Math.max(...all.map(p=>p.y));
+        
+        // El ancho proyectado suele coincidir con la altura total en Y (si el calor fluye en X) o viceversa.
+        // Asignamos por defecto la altura de la bounding box.
         document.getElementById('LpInput').value = Math.round(maxY - minY);
         
         const pad = 60, cw = canvas.width, ch = canvas.height;
         baseScale = Math.min((cw-pad*2)/(maxX-minX||1), (ch-pad*2)/(maxY-minY||1));
         
-        // Reset view
         zoomLevel = 1;
         offsetX = 0;
         offsetY = 0;
     }
 
     function getTransform() {
-        const pad = 60, ch = canvas.height;
+        const cw = canvas.width, ch = canvas.height;
+        const cxWorld = (minX + maxX) / 2;
+        const cyWorld = (minY + maxY) / 2;
+        const cxCanvas = cw / 2;
+        const cyCanvas = ch / 2;
+        
         return {
             scale: baseScale * zoomLevel,
-            tx: x => offsetX + (pad + (x - minX) * baseScale) * zoomLevel,
-            ty: y => offsetY + (ch - (pad + (y - minY) * baseScale)) * zoomLevel
+            tx: x => offsetX + cxCanvas + (x - cxWorld) * baseScale * zoomLevel,
+            ty: y => offsetY + cyCanvas - (y - cyWorld) * baseScale * zoomLevel
         };
     }
 
     function getWorldCoords(sx, sy) {
-        const pad = 60, ch = canvas.height;
-        const wx = minX + ((sx - offsetX) / zoomLevel - pad) / baseScale;
-        const wy = minY + (ch - pad - (sy - offsetY) / zoomLevel) / baseScale;
+        const cw = canvas.width, ch = canvas.height;
+        const cxWorld = (minX + maxX) / 2;
+        const cyWorld = (minY + maxY) / 2;
+        const cxCanvas = cw / 2;
+        const cyCanvas = ch / 2;
+
+        const wx = cxWorld + (sx - offsetX - cxCanvas) / (baseScale * zoomLevel);
+        const wy = cyWorld - (sy - offsetY - cyCanvas) / (baseScale * zoomLevel);
         return { x: wx, y: wy };
     }
 
-    function doZoom(factor, cx, cy) {
+    function doZoom(factor, mx, my) {
         const newZoom = zoomLevel * factor;
-        // Evitar zooms extremos
         if(newZoom > 50 || newZoom < 0.1) return;
-        
-        offsetX = cx - (cx - offsetX) * (newZoom / zoomLevel);
-        offsetY = cy - (cy - offsetY) * (newZoom / zoomLevel);
+        offsetX = mx - (mx - offsetX) * (newZoom / zoomLevel);
+        offsetY = my - (my - offsetY) * (newZoom / zoomLevel);
         zoomLevel = newZoom;
         draw();
     }
@@ -492,26 +495,6 @@
     });
 
     // ──── INTERACCIONES DE RATÓN (PAN Y CLICK) ────
-    function resetUIMode() {
-        uiMode = 'DEFAULT';
-        document.getElementById('btnSetRot').classList.remove('active');
-    }
-
-    document.getElementById('btnSetRot').onclick = function() {
-        resetUIMode(); uiMode = 'SET_ROT'; this.classList.add('active');
-        setStatus('📍 Haz clic en cualquier punto del área de dibujo para fijar el Centro de Rotación.', 'info');
-    };
-
-    function findNearestVertex(mx, my) {
-        let nearest = null, minDist = Infinity;
-        polygons.forEach(p => p.pts.forEach(pt => {
-            const dist = Math.hypot(pt.x - mx, pt.y - my);
-            if(dist < minDist) { minDist = dist; nearest = {x: pt.x, y: pt.y}; }
-        }));
-        // Tolerancia de ajuste dinámica según el zoom
-        return minDist < 15/(baseScale*zoomLevel) ? nearest : {x:mx, y:my};
-    }
-
     canvas.addEventListener('mousedown', e => {
         if(!polygons.length) return;
         const rect = canvas.getBoundingClientRect();
@@ -536,9 +519,7 @@
             return;
         }
         
-        if (uiMode !== 'DEFAULT') return;
-
-        // Hover con coordenadas de mundo
+        // Hover
         const {x: mxWorld, y: myWorld} = getWorldCoords(mouseX, mouseY);
         
         let minDEdge = Infinity, idxE = -1;
@@ -569,18 +550,12 @@
         if(!polygons.length) return;
         isDragging = false;
         
-        // Si arrastró el ratón, no hacer clic
         if (hasDragged || showThermalMap) return;
 
         const rect = canvas.getBoundingClientRect();
         const mouseX = (e.clientX - rect.left) * (canvas.width / rect.width);
         const mouseY = (e.clientY - rect.top) * (canvas.height / rect.height);
         const {x: mxWorld, y: myWorld} = getWorldCoords(mouseX, mouseY);
-
-        if (uiMode === 'SET_ROT') {
-            rotAxis = findNearestVertex(mxWorld, myWorld); resetUIMode();
-            setStatus('Eje de rotación fijado.', 'success'); draw(); return;
-        }
 
         // Selección de bordes
         if(boundaryEdges.length) {
@@ -611,7 +586,8 @@
     document.getElementById('btnRotate').onclick = () => {
         if(!polygons.length) return;
         const ang = 90 * Math.PI/180;
-        const cx = rotAxis ? rotAxis.x : (minX+maxX)/2, cy = rotAxis ? rotAxis.y : (minY+maxY)/2;
+        // Rotar siempre sobre el centro exacto del dibujo
+        const cx = (minX+maxX)/2, cy = (minY+maxY)/2;
         polygons.forEach(p => p.pts.forEach(pt => {
             const dx = pt.x-cx, dy = pt.y-cy;
             pt.x = cx + dx*Math.cos(ang) - dy*Math.sin(ang); pt.y = cy + dx*Math.sin(ang) + dy*Math.cos(ang);
@@ -633,7 +609,6 @@
                     const f = (T[i][j]-te)/(ti-te||1);
                     const hue = (1 - Math.min(1,Math.max(0,f))) * 240;
                     ctx.fillStyle = `hsl(${hue},75%,50%)`;
-                    // Sumamos una pequeña fracción (0.6) al ancho/alto para evitar líneas blancas de sub-píxeles
                     ctx.fillRect(tx(minX+j*dx), ty(minY+i*dy)-ch, cw+0.6, ch+0.6);
                 }
             }
@@ -652,22 +627,14 @@
         }
         
         // Dibujar bordes
-        if(uiMode === 'DEFAULT' || uiMode === 'SET_ROT' || showThermalMap) {
+        if(!showThermalMap) {
             boundaryEdges.forEach((edge, idx) => {
                 ctx.beginPath(); ctx.moveTo(tx(edge.p1.x), ty(edge.p1.y)); ctx.lineTo(tx(edge.p2.x), ty(edge.p2.y));
                 let color = 'rgba(0,0,0,0.1)';
                 if(edge.type === 1) color = '#1976d2'; else if(edge.type === 2) color = '#d32f2f'; else if(edge.type === 3) color = '#757575'; 
-                ctx.strokeStyle = color; ctx.lineWidth = (idx === hoveredEdgeIdx && uiMode==='DEFAULT') ? 6 : 3;
+                ctx.strokeStyle = color; ctx.lineWidth = (idx === hoveredEdgeIdx) ? 6 : 3;
                 ctx.stroke();
             });
-        }
-
-        // Dibujar marcador de eje
-        if (rotAxis) {
-            const rx = tx(rotAxis.x), ry = ty(rotAxis.y);
-            ctx.beginPath(); ctx.arc(rx, ry, 6, 0, Math.PI*2); ctx.fillStyle = '#e67e22'; ctx.fill();
-            ctx.strokeStyle = 'white'; ctx.lineWidth = 2; ctx.stroke();
-            ctx.font = "bold 12px sans-serif"; ctx.fillText('Eje', rx+10, ry-10);
         }
     }
 
@@ -682,9 +649,9 @@
                 polygons = buildTopology(segments, 0.5);
                 if(polygons.length) {
                     recalcBounds(); boundaryEdges = extractBoundaryEdges(polygons);
-                    setStatus(`✅ DXF cargado. Modifica la geometría o asigna contornos.`, 'success');
+                    setStatus(`✅ DXF cargado con éxito. Ahora centra, rota y asigna materiales y bordes.`, 'success');
                     document.getElementById('calcBtn').disabled = false;
-                    selectedPoly = hoveredPolyIdx = -1; showThermalMap = false; T = null; rotAxis = null;
+                    selectedPoly = hoveredPolyIdx = -1; showThermalMap = false; T = null;
                     document.getElementById('result').style.display = 'none'; draw();
                 } else throw new Error("Fallo en tolerancia de unión.");
             } catch(err) { setStatus('Error: '+err.message, 'error'); }
@@ -697,7 +664,7 @@
         if(!boundaryEdges.some(e => e.type===1) || !boundaryEdges.some(e => e.type===2)) {
             setStatus('❌ Falta marcar al menos un borde Exterior (azul) e Interior (rojo).', 'error'); return;
         }
-        setStatus('Calculando Matriz Térmica...', 'warning');
+        setStatus('Calculando Matriz Térmica según ISO 10077-2...', 'warning');
         document.getElementById('calcBtn').disabled = true;
         setTimeout(()=> runSolver(0), 50);
     };
@@ -767,7 +734,6 @@
         }
         
         if(step === 2) {
-            // CÁLCULO ESTRICTO DE FLUJO TÉRMICO (W/m)
             let flux = 0;
             for(let i=0; i<NY; i++) {
                 for(let j=0; j<NX; j++) {
@@ -786,7 +752,11 @@
             const U = Math.abs(flux) / (Lp_metros * deltaT);
             
             document.getElementById('result').style.display = 'block';
-            document.getElementById('result').innerHTML = `<h2>U = ${U.toFixed(3)} W/m²·K</h2><small>Flujo lineal (Q): ${Math.abs(flux).toFixed(2)} W/m | Longitud (Lp): ${Lp.toFixed(1)} mm | ΔT: ${deltaT} K</small>`;
+            document.getElementById('result').innerHTML = `
+                <h2>U<sub>f</sub> = ${U.toFixed(3)} W/m²·K</h2>
+                <p>Cálculo basado en UNE-EN ISO 10077-2</p>
+                <p><small>Flujo lineal térmico (Q): ${Math.abs(flux).toFixed(3)} W/m &nbsp;|&nbsp; Ancho Proyectado (b<sub>f</sub>): ${Lp.toFixed(1)} mm &nbsp;|&nbsp; ΔT: ${deltaT} K</small></p>
+            `;
             setStatus(`✅ Cálculo completado.`, 'success');
             
             // Centramos la vista para ver el mapa entero
