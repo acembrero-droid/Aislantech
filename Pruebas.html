@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Aislantech · Análisis Térmico 2D (U-value) · Marcado de bordes</title>
+    <title>Aislantech · Análisis Térmico 2D (U-value)</title>
     <link rel="icon" type="image/x-icon" href="favicon.ico">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Open+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -11,64 +11,60 @@
         :root {
             --color-primary: #EDD00E; --color-primary-dark: #B8860B; --color-primary-light: #FFF8DC;
             --color-secondary: #3E3E3E; --color-secondary-dark: #696969; --color-secondary-light: #D3D3D3;
-            --color-accent: #EDD00E; --color-light: #F5F5F5; --color-dark: #333333; --color-gray: #666666; --color-white: #FFFFFF;
+            --color-light: #F5F5F5; --color-dark: #333333; --color-gray: #666666; 
             --transition: all 0.2s ease; --border-radius: 8px;
             --box-shadow: 0 5px 15px rgba(0,0,0,0.05); --box-shadow-hover: 0 15px 30px rgba(0,0,0,0.1);
         }
         * { margin:0; padding:0; box-sizing:border-box; }
         body { font-family:'Open Sans',sans-serif; background:var(--color-light); color:var(--color-gray); }
         h1,h2,h3,.card-title,.btn,.logo-text { font-family:'Montserrat',sans-serif; font-weight:600; color:var(--color-dark); }
-        .container { width:100%; max-width:1350px; margin:0 auto; padding:0 20px; }
+        .container { width:100%; max-width:1450px; margin:0 auto; padding:0 20px; }
         header { position:sticky; top:0; z-index:1000; background:rgba(255,255,255,0.97); box-shadow:0 2px 10px rgba(0,0,0,0.05); }
         .header-container { display:flex; justify-content:space-between; align-items:center; padding:15px 20px; }
         .logo-container { display:flex; align-items:center; text-decoration:none; }
         .logo-text { display:flex; flex-direction:column; line-height:1.1; }
         .logo-aislan { color:var(--color-secondary); font-size:1.5rem; font-weight:700; }
         .logo-tech { color:var(--color-primary); font-size:1.5rem; font-weight:800; }
-        .logo-tagline { font-size:0.7rem; color:var(--color-gray); }
         .btn-yellow { background:var(--color-primary); color:var(--color-dark); font-weight:700; padding:10px 20px; border-radius:var(--border-radius); text-decoration:none; display:inline-flex; align-items:center; gap:8px; font-size:0.85rem; border:none; cursor:pointer; }
         .btn-yellow:hover { background:var(--color-primary-dark); color:white; transform:translateY(-3px); }
-        .card { background:white; border-radius:var(--border-radius); box-shadow:var(--box-shadow); margin-bottom:30px; border-top:4px solid var(--color-primary); }
-        .card:hover { transform:translateY(-3px); box-shadow:var(--box-shadow-hover); }
+        .card { background:white; border-radius:var(--border-radius); box-shadow:var(--box-shadow); margin-bottom:20px; border-top:4px solid var(--color-primary); }
         .card-header { background:var(--color-primary-light); padding:1rem 1.5rem; display:flex; align-items:center; gap:0.8rem; }
         .card-title { font-size:1.1rem; }
-        .card-body { padding:1.5rem; }
-        .controls-grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:1.2rem; }
-        .control-group { display:flex; flex-direction:column; gap:6px; }
-        label { font-size:0.7rem; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; color:var(--color-secondary-dark); }
-        input, select { padding:10px 12px; border:1px solid var(--color-secondary-light); border-radius:var(--border-radius); font-size:0.85rem; }
+        .card-body { padding:1.2rem; }
+        .controls-grid { display:flex; flex-wrap:wrap; gap:1.2rem; align-items:flex-end;}
+        .control-group { display:flex; flex-direction:column; gap:6px; flex: 1; min-width: 180px;}
+        label { font-size:0.7rem; font-weight:700; text-transform:uppercase; color:var(--color-secondary-dark); }
+        input, select { padding:8px 12px; border:1px solid var(--color-secondary-light); border-radius:var(--border-radius); font-size:0.85rem; }
         input:focus, select:focus { border-color:var(--color-primary); outline:none; }
-        .btn { display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:10px 20px; border-radius:var(--border-radius); font-weight:700; border:none; cursor:pointer; transition:var(--transition); font-family:'Montserrat',sans-serif; font-size:0.85rem; }
+        .btn { display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:8px 16px; border-radius:var(--border-radius); font-weight:700; border:none; cursor:pointer; transition:var(--transition); font-family:'Montserrat',sans-serif; font-size:0.85rem; }
         .btn-primary { background:var(--color-primary); color:var(--color-dark); }
         .btn-primary:hover:not(:disabled) { background:var(--color-primary-dark); color:white; }
         .btn-success { background:#2e7d32; color:white; }
         .btn-success:hover:not(:disabled) { background:#1b5e20; }
+        .btn-action { background:#1976d2; color:white; }
+        .btn-action:hover:not(:disabled) { background:#1565c0; }
         .btn-outline { background:transparent; border:2px solid var(--color-secondary-light); color:var(--color-secondary); }
-        .btn-outline:hover:not(:disabled) { border-color:var(--color-primary); color:var(--color-primary-dark); background:var(--color-primary-light); }
-        .btn-sm { padding:6px 12px; font-size:0.75rem; }
-        button:disabled, .btn:disabled { opacity:0.5; cursor:not-allowed; }
-        .status-bar { background:var(--color-primary-light); border-left:4px solid var(--color-primary); padding:12px 16px; border-radius:var(--border-radius); margin:15px 0; display:flex; align-items:center; gap:8px; transition: var(--transition); }
+        .btn-outline:hover:not(:disabled) { border-color:var(--color-primary); background:var(--color-primary-light); }
+        .btn.active { background: #e74c3c; color: white; border-color: #c0392b; box-shadow: inset 0 3px 5px rgba(0,0,0,0.2); }
+        button:disabled { opacity:0.5; cursor:not-allowed; }
+        
+        .status-bar { background:var(--color-primary-light); border-left:4px solid var(--color-primary); padding:12px 16px; border-radius:var(--border-radius); margin:15px 0; display:flex; align-items:center; gap:8px; font-weight:600;}
         .status-bar.error { background:#ffebee; border-left-color:#e53935; color:#b71c1c; }
         .status-bar.success { background:#e8f5e9; border-left-color:#2e7d32; color:#1b5e20; }
-        .legend-panel { display:flex; flex-wrap:wrap; gap:1rem; background:var(--color-light); padding:12px 16px; border-radius:var(--border-radius); margin:15px 0; align-items:center; }
-        .legend-item { display:flex; align-items:center; gap:8px; font-size:0.8rem; cursor:pointer; padding: 4px 8px; border-radius: 4px; transition: background 0.2s; }
-        .legend-item:hover { background: rgba(0,0,0,0.05); transform: scale(1.02); }
-        .legend-color { width:20px; height:20px; border-radius:4px; border:1px solid rgba(0,0,0,0.2); box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        .canvas-wrapper { position:relative; background:#fff; border-radius:var(--border-radius); box-shadow:var(--box-shadow); border:1px solid var(--color-secondary-light); }
+        .status-bar.warning { background:#fff3e0; border-left-color:#f57c00; color:#e65100; }
+        
+        .legend-panel { display:flex; flex-wrap:wrap; gap:0.5rem; background:white; padding:12px; border-radius:var(--border-radius); box-shadow:var(--box-shadow); margin:15px 0; align-items:center; border:1px solid var(--color-secondary-light); }
+        .legend-item { display:flex; align-items:center; gap:8px; font-size:0.75rem; cursor:pointer; padding: 6px 10px; border-radius: 4px; border: 1px solid transparent; transition: all 0.2s; }
+        .legend-item:hover { background: var(--color-light); border-color: var(--color-secondary-light); transform: translateY(-2px); }
+        .legend-color { width:18px; height:18px; border-radius:3px; border:1px solid rgba(0,0,0,0.2); }
+        .boundary-legend { display:flex; gap:1rem; align-items:center; margin-left:auto; font-size:0.75rem; font-weight:700; padding-left:15px; border-left:2px solid var(--color-light); }
+        .boundary-swatch { width:14px; height:14px; border-radius:50%; display:inline-block; border:2px solid rgba(0,0,0,0.5); }
+        
+        .canvas-wrapper { position:relative; background:#fff; border-radius:var(--border-radius); box-shadow:var(--box-shadow); border:1px solid var(--color-secondary-light); overflow:hidden; }
         canvas { display:block; width:100%; height:auto; cursor:crosshair; }
-        footer { background:var(--color-dark); color:white; padding:60px 0 30px; margin-top:60px; }
-        .footer-content { display:flex; flex-wrap:wrap; justify-content:space-between; gap:40px; margin-bottom:40px; }
-        .footer-about { flex:1; min-width:250px; }
-        .footer-logo { font-family:'Montserrat',sans-serif; font-size:1.8rem; margin-bottom:15px; }
-        .footer-logo .logo-aislan { color:white; } .footer-logo .logo-tech { color:var(--color-primary); }
-        .footer-description { color:rgba(255,255,255,0.8); }
-        .footer-legal { display:flex; justify-content:center; gap:30px; flex-wrap:wrap; }
-        .footer-legal a { color:rgba(255,255,255,0.7); text-decoration:none; font-size:0.85rem; }
-        .footer-legal a:hover { color:var(--color-primary); }
-        .footer-bottom { text-align:center; padding-top:30px; border-top:1px solid rgba(255,255,255,0.1); font-size:0.9rem; color:rgba(255,255,255,0.7); }
-        .boundary-legend { display:flex; gap:1.5rem; align-items:center; margin-left:auto; font-size:0.8rem; }
-        .boundary-legend span { display:flex; align-items:center; gap:5px; }
-        .boundary-swatch { width:14px; height:14px; border-radius:3px; display:inline-block; border:1px solid rgba(0,0,0,0.2); }
+        
+        .result-card { display:none; background:#2e7d32; color:white; padding:20px; border-radius:var(--border-radius); margin-top:20px; text-align:center; box-shadow:var(--box-shadow); }
+        .result-card h2 { font-size: 2rem; margin-bottom: 5px; color:white;}
     </style>
 </head>
 <body>
@@ -77,154 +73,144 @@
         <a href="#" class="logo-container">
             <div class="logo-text">
                 <div><span class="logo-aislan">AISLAN</span><span class="logo-tech">TECH</span></div>
-                <div class="logo-tagline">Soluciones Técnicas Avanzadas</div>
+                <div class="logo-tagline">U-Value & Thermal Simulation</div>
             </div>
         </a>
-        <a href="mailto:info@aislantech.es" class="btn-yellow"><i class="fas fa-envelope"></i> Contacto técnico</a>
     </div>
 </header>
 
-<div style="background: linear-gradient(135deg, #3E3E3E 0%, #333333 100%); color:white; padding:2rem 0; margin-bottom:2rem;">
-    <div class="container">
-        <h1 style="color:white;"><i class="fas fa-drafting-compass" style="color:var(--color-primary);"></i> Análisis Térmico 2D · Bordes personalizables</h1>
-        <p style="opacity:0.9;">Carga DXF, marca bordes Exterior/Interior/Neutro y calcula la transmitancia U</p>
-    </div>
-</div>
-
-<div class="container">
+<div class="container" style="margin-top:20px;">
+    
     <div class="card">
-        <div class="card-header"><i class="fas fa-upload"></i> <div class="card-title">Carga y parámetros</div></div>
+        <div class="card-header"><i class="fas fa-sliders-h"></i> <div class="card-title">Configuración del Perfil</div></div>
         <div class="card-body">
             <div class="controls-grid">
-                <div class="control-group"><label><i class="fas fa-file-dxf"></i> Archivo DXF</label><input type="file" id="dxfFile" accept=".dxf"></div>
-                <div class="control-group"><label><i class="fas fa-ruler-combined"></i> Tolerancia unión</label><input type="number" id="tolInput" value="0.5" step="0.1" min="0.0001"></div>
-                <div class="control-group"><label><i class="fas fa-sync-alt"></i> Rotar (°)</label><div style="display:flex; gap:8px;"><input type="number" id="rotInput" value="0" step="1"><button id="rotateBtn" class="btn btn-primary btn-sm" disabled><i class="fas fa-undo-alt"></i></button></div></div>
-                <div class="control-group"><label><i class="fas fa-cube"></i> Material seleccionado</label><select id="matSelect"></select><small>Se aplica a la región marcada en rojo</small></div>
-                <div class="control-group"><label><i class="fas fa-temperature-low"></i> Temp. Ext / Int (°C)</label><div style="display:flex; gap:8px;"><input type="number" id="tExt" value="0" step="1"><input type="number" id="tInt" value="20" step="1"></div></div>
-                <div class="control-group"><label>&nbsp;</label><div style="display:flex; gap:8px;"><button id="autoBoundaryBtn" class="btn btn-outline btn-sm" disabled><i class="fas fa-magic"></i> Auto asignar</button><button id="calcBtn" class="btn btn-success" disabled><i class="fas fa-chart-line"></i> CALCULAR U</button></div></div>
+                <div class="control-group" style="flex:2;">
+                    <label><i class="fas fa-file-dxf"></i> Cargar DXF</label>
+                    <input type="file" id="dxfFile" accept=".dxf">
+                </div>
+                
+                <div class="control-group">
+                    <label title="Herramientas espaciales para persianas y rotaciones"><i class="fas fa-tools"></i> Geometría & Cadena</label>
+                    <div style="display:flex; gap:5px;">
+                        <button id="btnSetRot" class="btn btn-outline btn-sm" title="Fijar Eje de Rotación libre"><i class="fas fa-crosshairs"></i> Eje</button>
+                        <button id="btnRotate" class="btn btn-outline btn-sm" title="Rotar 90º"><i class="fas fa-redo"></i></button>
+                        <button id="btnSetChain" class="btn btn-action btn-sm" title="Definir enganches para ensamblar lamas"><i class="fas fa-link"></i> Enganches</button>
+                        <button id="btnMultiply" class="btn btn-primary btn-sm" disabled title="Multiplicar perfil en cadena"><i class="fas fa-clone"></i> Multiplicar</button>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label><i class="fas fa-ruler-vertical"></i> Longitud Análisis (Lp) mm</label>
+                    <input type="number" id="LpInput" value="100" step="1" title="Longitud proyectada para el cálculo de la U">
+                </div>
+                
+                <div class="control-group">
+                    <label><i class="fas fa-temperature-low"></i> Temp. Ext / Int (°C)</label>
+                    <div style="display:flex; gap:5px;">
+                        <input type="number" id="tExt" value="0" step="1" style="width:60px;">
+                        <input type="number" id="tInt" value="20" step="1" style="width:60px;">
+                    </div>
+                </div>
+
+                <div class="control-group" style="flex:1; align-items:flex-end;">
+                    <button id="calcBtn" class="btn btn-success" disabled style="padding:10px 30px; font-size:1rem;"><i class="fas fa-play-circle"></i> CALCULAR U</button>
+                </div>
             </div>
         </div>
     </div>
 
-    <div class="status-bar" id="status"><i class="fas fa-info-circle"></i> <span id="statusText">Esperando archivo DXF...</span></div>
+    <div class="status-bar" id="status"><i class="fas fa-info-circle"></i> <span id="statusText">Por favor, carga un archivo DXF para comenzar.</span></div>
 
-    <div class="legend-panel" id="legend">
-        </div>
+    <div class="legend-panel" id="legend"></div>
 
     <div class="canvas-wrapper">
-        <canvas id="canvas" width="900" height="550"></canvas>
+        <canvas id="canvas" width="1000" height="600"></canvas>
     </div>
 
     <div id="result" class="result-card"></div>
 </div>
 
-<footer>
-    <div class="container">
-        <div class="footer-content">
-            <div class="footer-about">
-                <div class="footer-logo"><span class="logo-aislan">AISLAN</span><span class="logo-tech">TECH</span></div>
-                <p class="footer-description">Simulación térmica 2D conforme a ISO 10211.</p>
-            </div>
-        </div>
-        <div class="footer-legal"><a href="#">Privacidad</a> <a href="#">Cookies</a> <a href="#">Aviso Legal</a></div>
-        <div class="footer-bottom"><p>&copy; 2025 Aislantech</p></div>
-    </div>
-</footer>
-
 <script>
 (function() {
-    // Materiales
-    let materials = [
-        { name: "Muro / Hormigón", k: 1.2, color: "#95a5a6" },
-        { name: "Aluminio", k: 160, color: "#bdc3c7" },
-        { name: "Rotura Térmica", k: 0.25, color: "#d35400" },
-        { name: "Aire (cámara)", k: 0.026, color: "#ecf0f1" },
-        { name: "Aislante", k: 0.035, color: "#f1c40f" }
+    // MATERIALES NORMATIVOS ISO 10077-2 / ESTÁNDAR
+    const materials = [
+        { name: "Cámara Aire", k: 0.026, color: "#ecf0f1" },
+        { name: "Aluminio", k: 160.0, color: "#95a5a6" },
+        { name: "Poliamida (Rotura)", k: 0.30, color: "#d35400" },
+        { name: "EPDM / Juntas", k: 0.25, color: "#2c3e50" },
+        { name: "PVC Rígido", k: 0.17, color: "#9b59b6" },
+        { name: "Madera (Blanda)", k: 0.13, color: "#d3a36a" },
+        { name: "Madera (Dura)", k: 0.18, color: "#8d6e63" },
+        { name: "Aislante (XPS/PUR)", k: 0.035, color: "#f1c40f" },
+        { name: "Vidrio", k: 1.0, color: "#81d4fa" },
+        { name: "Acero", k: 50.0, color: "#7f8c8d" }
     ];
+
     let polygons = [];
+    let boundaryEdges = []; 
+    
+    // UI State
     let minX, maxX, minY, maxY;
     let selectedPoly = -1;
     let hoveredPolyIdx = -1;
+    let hoveredEdgeIdx = -1;
+    let uiMode = 'DEFAULT'; // 'DEFAULT', 'SET_ROT', 'SET_HOOK', 'SET_GROOVE'
+    
+    // Geometric Markers
+    let rotAxis = null; 
+    let hookPt = null; 
+    let groovePt = null;
+
+    // Thermal Engine
     let T = null, kGrid = null, dx, dy;
     const NX = 120, NY = 120;
     let showThermalMap = false;
-
-    // Bordes del contorno exterior
-    let boundaryEdges = []; 
-    let hoveredEdgeIdx = -1;
 
     const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
     const statusText = document.getElementById('statusText');
 
-    function rebuildMaterialSelect() {
-        const sel = document.getElementById('matSelect');
-        sel.innerHTML = '';
-        materials.forEach((m,i)=> sel.add(new Option(`${m.name} (k=${m.k})`, i)));
-        if(selectedPoly>=0 && polygons[selectedPoly]) sel.value = polygons[selectedPoly].matIdx;
-    }
-
     function updateLegend() {
         document.getElementById('legend').innerHTML = materials.map((m,i)=>
-            `<div class="legend-item" data-idx="${i}" title="Aplicar ${m.name}">
+            `<div class="legend-item" data-idx="${i}" title="Aplicar material">
                 <div class="legend-color" style="background:${m.color}"></div> 
-                <span style="font-weight:600; color:var(--color-dark);">${m.name}</span> 
-                <small>(k=${m.k})</small>
+                <span>${m.name}</span>
             </div>`).join('') +
-            `<div class="boundary-legend" style="margin-left:auto;">
-                <span><span class="boundary-swatch" style="background:#1976d2;"></span> Exterior</span>
-                <span><span class="boundary-swatch" style="background:#d32f2f;"></span> Interior</span>
-                <span><span class="boundary-swatch" style="background:#757575;"></span> Neutro</span>
-                <span><span class="boundary-swatch" style="background:#000;"></span> Sin asignar</span>
+            `<div class="boundary-legend">
+                <span><span class="boundary-swatch" style="background:#1976d2; border-color:#0d47a1"></span> Borde Exterior</span>
+                <span><span class="boundary-swatch" style="background:#d32f2f; border-color:#b71c1c"></span> Borde Interior</span>
+                <span><span class="boundary-swatch" style="background:#757575; border-color:#424242"></span> Adiabático</span>
             </div>`;
     }
 
-    function setStatus(msg, statusType = 'info') {
+    function setStatus(msg, type = 'info') {
         statusText.textContent = msg;
         const bar = document.getElementById('status');
-        bar.className = 'status-bar'; // reset
-        if (statusType === 'error') bar.classList.add('error');
-        if (statusType === 'success') bar.classList.add('success');
-        
-        const icon = bar.querySelector('i');
-        icon.className = statusType === 'error' ? 'fas fa-exclamation-triangle' : 
-                         statusType === 'success' ? 'fas fa-check-circle' : 'fas fa-info-circle';
+        bar.className = `status-bar ${type}`;
+        bar.querySelector('i').className = type === 'error' ? 'fas fa-exclamation-triangle' : type === 'success' ? 'fas fa-check-circle' : type==='warning'? 'fas fa-exclamation-circle' : 'fas fa-info-circle';
     }
 
-    // ──── INTERACCIÓN DE LEYENDA (La clave para seleccionar materiales) ────
+    // INTERACCIÓN LEYENDA (Click para pintar)
     document.getElementById('legend').addEventListener('click', e => {
         const item = e.target.closest('.legend-item');
         if (!item) return;
-        
         const matIdx = parseInt(item.getAttribute('data-idx'));
-        
         if (selectedPoly !== -1 && polygons[selectedPoly]) {
             polygons[selectedPoly].matIdx = matIdx;
-            document.getElementById('matSelect').value = matIdx; // Sincronizar select
             if (!showThermalMap) draw();
-            setStatus(`Material "${materials[matIdx].name}" aplicado a la región seleccionada.`, 'success');
+            setStatus(`Material asignado.`, 'success');
         } else {
-            setStatus('⚠️ Primero haz clic en una parte del dibujo para seleccionarla.', 'error');
+            setStatus('Haz clic primero en un área del dibujo para seleccionarla.', 'warning');
         }
     });
 
-    // Sincronizar también si usan el select tradicional
-    document.getElementById('matSelect').onchange = function() {
-        if(selectedPoly >= 0 && polygons[selectedPoly]) {
-            polygons[selectedPoly].matIdx = +this.value;
-            setStatus(`Material cambiado a "${materials[this.value].name}".`, 'success');
-            if(!showThermalMap) draw();
-        }
-    };
-
-
+    // ──── PARSER DXF Y TOPOLOGÍA (Refinado) ────
     function parseDXF(text) {
+        // [Mantengo el parser compacto y robusto anterior]
         const lines = text.split(/\r?\n/);
-        let idx = 0;
-        let inEntities = false;
-        const segments = [];
-        let currentEntity = null;
-        let currentPolyline = null;
+        let idx = 0, inEntities = false, segments = [];
+        let currentEntity = null, currentPolyline = null;
 
         function getPair() {
             while (idx < lines.length - 1) {
@@ -237,153 +223,74 @@
         }
 
         function addBulgeSegments(p1, p2, bulge) {
-            if (!bulge || Math.abs(bulge) < 1e-5) {
-                segments.push({ x1: p1.x, y1: p1.y, x2: p2.x, y2: p2.y });
-                return;
-            }
-            const dx = p2.x - p1.x, dy = p2.y - p1.y;
-            const dist = Math.hypot(dx, dy);
+            if (!bulge || Math.abs(bulge) < 1e-5) { segments.push({ x1: p1.x, y1: p1.y, x2: p2.x, y2: p2.y }); return; }
+            const dx = p2.x - p1.x, dy = p2.y - p1.y, dist = Math.hypot(dx, dy);
             if (dist < 1e-6) return;
-            
-            const theta = 4 * Math.atan(bulge);
-            const radius = Math.abs(dist / (2 * Math.sin(theta / 2)));
-            const dir = bulge > 0 ? 1 : -1;
-            const midX = (p1.x + p2.x) / 2, midY = (p1.y + p2.y) / 2;
-            const apothem = radius * Math.cos(theta / 2);
-            
-            const perpX = -dy / dist * dir;
-            const perpY = dx / dist * dir;
-            const cx = midX + perpX * apothem;
-            const cy = midY + perpY * apothem;
-            
-            let startAngle = Math.atan2(p1.y - cy, p1.x - cx);
-            let endAngle = Math.atan2(p2.y - cy, p2.x - cx);
-            
-            if (bulge > 0 && endAngle <= startAngle) endAngle += 2 * Math.PI;
-            if (bulge < 0 && endAngle >= startAngle) endAngle -= 2 * Math.PI;
-            
-            const N = Math.max(6, Math.floor(Math.abs(endAngle - startAngle) * radius / 2));
+            const theta = 4 * Math.atan(bulge), radius = Math.abs(dist / (2 * Math.sin(theta / 2))), dir = bulge > 0 ? 1 : -1;
+            const cx = (p1.x + p2.x)/2 + (-dy/dist*dir) * radius*Math.cos(theta/2);
+            const cy = (p1.y + p2.y)/2 + (dx/dist*dir) * radius*Math.cos(theta/2);
+            let a1 = Math.atan2(p1.y - cy, p1.x - cx), a2 = Math.atan2(p2.y - cy, p2.x - cx);
+            if (bulge > 0 && a2 <= a1) a2 += 2 * Math.PI;
+            if (bulge < 0 && a2 >= a1) a2 -= 2 * Math.PI;
+            const N = Math.max(6, Math.floor(Math.abs(a2 - a1) * radius / 2));
             let prevX = p1.x, prevY = p1.y;
             for (let i = 1; i <= N; i++) {
-                const a = startAngle + (endAngle - startAngle) * (i / N);
-                const x = cx + radius * Math.cos(a);
-                const y = cy + radius * Math.sin(a);
-                segments.push({ x1: prevX, y1: prevY, x2: x, y2: y });
-                prevX = x; prevY = y;
+                const a = a1 + (a2 - a1) * (i / N), x = cx + radius * Math.cos(a), y = cy + radius * Math.sin(a);
+                segments.push({ x1: prevX, y1: prevY, x2: x, y2: y }); prevX = x; prevY = y;
             }
         }
 
         function flushEntity(ent) {
             if (!ent || ent.ignore) return;
-            if (ent.type === 'VERTEX' && currentPolyline) {
-                currentPolyline.vertices.push({ x: ent.x, y: ent.y, bulge: ent.bulge });
-            }
-            if (ent.type === 'LINE' && ent.x1 !== undefined && ent.x2 !== undefined) {
-                segments.push({ x1: ent.x1, y1: ent.y1, x2: ent.x2, y2: ent.y2 });
-            }
+            if (ent.type === 'VERTEX' && currentPolyline) currentPolyline.vertices.push({ x: ent.x, y: ent.y, bulge: ent.bulge });
+            if (ent.type === 'LINE' && ent.x1 !== undefined) segments.push({ x1: ent.x1, y1: ent.y1, x2: ent.x2, y2: ent.y2 });
             if ((ent.type === 'CIRCLE' || ent.type === 'ARC') && ent.r > 0) {
-                const start = ent.startAngle !== undefined ? ent.startAngle : 0;
-                const end = ent.endAngle !== undefined ? ent.endAngle : 360;
-                let radStart = start * Math.PI / 180;
-                let radEnd = end * Math.PI / 180;
-                if (ent.type === 'ARC' && radEnd <= radStart) radEnd += 2 * Math.PI;
-                const N = Math.max(12, Math.floor(Math.abs(radEnd - radStart) * ent.r / 2));
-                let prevX = ent.cx + ent.r * Math.cos(radStart);
-                let prevY = ent.cy + ent.r * Math.sin(radStart);
+                let start = ent.startAngle || 0, end = ent.endAngle || 360;
+                let rs = start*Math.PI/180, re = end*Math.PI/180;
+                if (ent.type === 'ARC' && re <= rs) re += 2 * Math.PI;
+                const N = Math.max(12, Math.floor(Math.abs(re - rs) * ent.r / 2));
+                let px = ent.cx + ent.r*Math.cos(rs), py = ent.cy + ent.r*Math.sin(rs);
                 for (let i = 1; i <= N; i++) {
-                    const a = radStart + (radEnd - radStart) * (i / N);
-                    const x = ent.cx + ent.r * Math.cos(a);
-                    const y = ent.cy + ent.r * Math.sin(a);
-                    segments.push({ x1: prevX, y1: prevY, x2: x, y2: y });
-                    prevX = x; prevY = y;
+                    const a = rs + (re - rs)*(i/N), x = ent.cx + ent.r*Math.cos(a), y = ent.cy + ent.r*Math.sin(a);
+                    segments.push({ x1: px, y1: py, x2: x, y2: y }); px = x; py = y;
                 }
             }
             if ((ent.type === 'LWPOLYLINE' || ent.type === 'POLYLINE') && ent.vertices.length > 0) {
-                for (let i = 0; i < ent.vertices.length - 1; i++) {
-                    addBulgeSegments(ent.vertices[i], ent.vertices[i + 1], ent.vertices[i].bulge);
-                }
-                if (ent.closed && ent.vertices.length > 2) {
-                    addBulgeSegments(ent.vertices[ent.vertices.length - 1], ent.vertices[0], ent.vertices[ent.vertices.length - 1].bulge);
-                }
-            }
-            if (ent.type === 'SPLINE' && ent.pts.length > 1) {
-                for (let i = 0; i < ent.pts.length - 1; i++) {
-                    segments.push({ x1: ent.pts[i].x, y1: ent.pts[i].y, x2: ent.pts[i + 1].x, y2: ent.pts[i + 1].y });
-                }
-                if (ent.closed && ent.pts.length > 2) {
-                    segments.push({ x1: ent.pts[ent.pts.length - 1].x, y1: ent.pts[ent.pts.length - 1].y, x2: ent.pts[0].x, y2: ent.pts[0].y });
-                }
+                for (let i = 0; i < ent.vertices.length - 1; i++) addBulgeSegments(ent.vertices[i], ent.vertices[i+1], ent.vertices[i].bulge);
+                if (ent.closed && ent.vertices.length > 2) addBulgeSegments(ent.vertices[ent.vertices.length-1], ent.vertices[0], ent.vertices[ent.vertices.length-1].bulge);
             }
         }
 
         while (idx < lines.length) {
-            const pair = getPair();
-            if (!pair) break;
+            const pair = getPair(); if (!pair) break;
             const [code, value] = pair;
-
-            if (code === 0 && value === 'SECTION') {
-                const next = getPair();
-                inEntities = (next && next[1] === 'ENTITIES');
-                continue;
-            }
-            if (code === 0 && value === 'ENDSEC') {
-                inEntities = false;
-                continue;
-            }
+            if (code === 0 && value === 'SECTION') { inEntities = (getPair()[1] === 'ENTITIES'); continue; }
+            if (code === 0 && value === 'ENDSEC') { inEntities = false; continue; }
             if (!inEntities) continue;
 
             if (code === 0) {
                 if (currentEntity && currentEntity.type !== 'POLYLINE') flushEntity(currentEntity);
-                
-                if (value === 'LWPOLYLINE') {
-                    currentEntity = { type: 'LWPOLYLINE', vertices: [], closed: false, ignore: false };
-                } else if (value === 'POLYLINE') {
-                    if (currentPolyline) flushEntity(currentPolyline);
-                    currentPolyline = { type: 'POLYLINE', vertices: [], closed: false, ignore: false };
-                    currentEntity = currentPolyline;
-                } else if (value === 'VERTEX' && currentPolyline) {
-                    currentEntity = { type: 'VERTEX', x: 0, y: 0, bulge: 0, ignore: false };
-                } else if (value === 'SEQEND' && currentPolyline) {
-                    flushEntity(currentPolyline);
-                    currentPolyline = null;
-                    currentEntity = null;
-                } else if (['LINE', 'CIRCLE', 'ARC'].includes(value)) {
-                    currentEntity = { type: value, ignore: false };
-                } else if (value === 'SPLINE') {
-                    currentEntity = { type: 'SPLINE', pts: [], ignore: false, closed: false };
-                } else {
-                    currentEntity = null;
-                }
+                if (value === 'LWPOLYLINE') currentEntity = { type: 'LWPOLYLINE', vertices: [], closed: false, ignore: false };
+                else if (value === 'POLYLINE') { if(currentPolyline) flushEntity(currentPolyline); currentPolyline = { type: 'POLYLINE', vertices: [], closed: false, ignore: false }; currentEntity = currentPolyline; }
+                else if (value === 'VERTEX' && currentPolyline) currentEntity = { type: 'VERTEX', x: 0, y: 0, bulge: 0, ignore: false };
+                else if (value === 'SEQEND' && currentPolyline) { flushEntity(currentPolyline); currentPolyline = currentEntity = null; }
+                else if (['LINE', 'CIRCLE', 'ARC'].includes(value)) currentEntity = { type: value, ignore: false };
+                else currentEntity = null;
             } else if (currentEntity) {
                 if (code === 67 && value === '1') currentEntity.ignore = true; 
-                
                 const v = parseFloat(value);
                 if (currentEntity.type === 'LWPOLYLINE') {
                     if (code === 70) currentEntity.closed = (parseInt(value) & 1) !== 0;
                     else if (code === 10) currentEntity.vertices.push({ x: v, y: 0, bulge: 0 });
-                    else if (code === 20 && currentEntity.vertices.length > 0) currentEntity.vertices[currentEntity.vertices.length - 1].y = v;
-                    else if (code === 42 && currentEntity.vertices.length > 0) currentEntity.vertices[currentEntity.vertices.length - 1].bulge = v;
-                } else if (currentEntity.type === 'POLYLINE') {
-                    if (code === 70) currentEntity.closed = (parseInt(value) & 1) !== 0;
-                } else if (currentEntity.type === 'VERTEX') {
-                    if (code === 10) currentEntity.x = v;
-                    else if (code === 20) currentEntity.y = v;
-                    else if (code === 42) currentEntity.bulge = v;
+                    else if (code === 20) currentEntity.vertices[currentEntity.vertices.length - 1].y = v;
+                    else if (code === 42) currentEntity.vertices[currentEntity.vertices.length - 1].bulge = v;
+                } else if (currentEntity.type === 'POLYLINE' && code === 70) currentEntity.closed = (parseInt(value) & 1) !== 0;
+                else if (currentEntity.type === 'VERTEX') {
+                    if (code === 10) currentEntity.x = v; else if (code === 20) currentEntity.y = v; else if (code === 42) currentEntity.bulge = v;
                 } else if (currentEntity.type === 'LINE') {
-                    if (code === 10) currentEntity.x1 = v;
-                    else if (code === 20) currentEntity.y1 = v;
-                    else if (code === 11) currentEntity.x2 = v;
-                    else if (code === 21) currentEntity.y2 = v;
-                } else if (currentEntity.type === 'CIRCLE' || currentEntity.type === 'ARC') {
-                    if (code === 10) currentEntity.cx = v;
-                    else if (code === 20) currentEntity.cy = v;
-                    else if (code === 40) currentEntity.r = v;
-                    else if (code === 50) currentEntity.startAngle = v;
-                    else if (code === 51) currentEntity.endAngle = v;
-                } else if (currentEntity.type === 'SPLINE') {
-                    if (code === 70) currentEntity.closed = (parseInt(value) & 1) !== 0;
-                    else if (code === 10) currentEntity.pts.push({ x: v, y: 0 });
-                    else if (code === 20 && currentEntity.pts.length > 0) currentEntity.pts[currentEntity.pts.length - 1].y = v;
+                    if (code === 10) currentEntity.x1 = v; else if (code === 20) currentEntity.y1 = v; else if (code === 11) currentEntity.x2 = v; else if (code === 21) currentEntity.y2 = v;
+                } else if (['CIRCLE','ARC'].includes(currentEntity.type)) {
+                    if (code === 10) currentEntity.cx = v; else if (code === 20) currentEntity.cy = v; else if (code === 40) currentEntity.r = v; else if (code === 50) currentEntity.startAngle = v; else if (code === 51) currentEntity.endAngle = v;
                 }
             }
         }
@@ -393,112 +300,76 @@
     }
 
     function buildTopology(rawSegments, tol) {
+        // Fractura e intersección de nodos T
         const points = [];
         rawSegments.forEach(s => { points.push({x: s.x1, y: s.y1}); points.push({x: s.x2, y: s.y2}); });
 
         for(let i=0; i<rawSegments.length; i++) {
             const s1 = rawSegments[i];
-            const minX1 = Math.min(s1.x1, s1.x2), maxX1 = Math.max(s1.x1, s1.x2);
-            const minY1 = Math.min(s1.y1, s1.y2), maxY1 = Math.max(s1.y1, s1.y2);
-
             for(let j=i+1; j<rawSegments.length; j++) {
                 const s2 = rawSegments[j];
-                const minX2 = Math.min(s2.x1, s2.x2), maxX2 = Math.max(s2.x1, s2.x2);
-                const minY2 = Math.min(s2.y1, s2.y2), maxY2 = Math.max(s2.y1, s2.y2);
-
-                if (maxX1 < minX2 - 1e-5 || minX1 > maxX2 + 1e-5) continue;
-                if (maxY1 < minY2 - 1e-5 || minY1 > maxY2 + 1e-5) continue;
-
-                const den = (s1.x2 - s1.x1) * (s2.y2 - s2.y1) - (s1.y2 - s1.y1) * (s2.x2 - s2.x1);
+                const den = (s1.x2 - s1.x1)*(s2.y2 - s2.y1) - (s1.y2 - s1.y1)*(s2.x2 - s2.x1);
                 if (Math.abs(den) > 1e-7) {
-                    const u = ((s2.x1 - s1.x1) * (s2.y2 - s2.y1) - (s2.y1 - s1.y1) * (s2.x2 - s2.x1)) / den;
-                    const v = ((s2.x1 - s1.x1) * (s1.y2 - s1.y1) - (s2.y1 - s1.y1) * (s1.x2 - s1.x1)) / den;
-                    if (u > -1e-5 && u < 1 + 1e-5 && v > -1e-5 && v < 1 + 1e-5) {
-                        points.push({ x: s1.x1 + u * (s1.x2 - s1.x1), y: s1.y1 + u * (s1.y2 - s1.y1) });
-                    }
+                    const u = ((s2.x1 - s1.x1)*(s2.y2 - s2.y1) - (s2.y1 - s1.y1)*(s2.x2 - s2.x1)) / den;
+                    const v = ((s2.x1 - s1.x1)*(s1.y2 - s1.y1) - (s2.y1 - s1.y1)*(s1.x2 - s1.x1)) / den;
+                    if (u > -1e-5 && u < 1+1e-5 && v > -1e-5 && v < 1+1e-5) points.push({ x: s1.x1 + u*(s1.x2 - s1.x1), y: s1.y1 + u*(s1.y2 - s1.y1) });
                 }
             }
         }
 
         const segments = [];
         for(let i=0; i<rawSegments.length; i++) {
-            const s = rawSegments[i];
-            const len2 = (s.x2 - s.x1)**2 + (s.y2 - s.y1)**2;
+            const s = rawSegments[i], len2 = (s.x2 - s.x1)**2 + (s.y2 - s.y1)**2;
             if (len2 < 1e-7) continue;
-
             const tVals = [0, 1];
             points.forEach(p => {
-                const t = ((p.x - s.x1) * (s.x2 - s.x1) + (p.y - s.y1) * (s.y2 - s.y1)) / len2;
-                if (t > 1e-5 && t < 1 - 1e-5) {
-                    const projX = s.x1 + t * (s.x2 - s.x1);
-                    const projY = s.y1 + t * (s.y2 - s.y1);
-                    if ((p.x - projX)**2 + (p.y - projY)**2 <= tol * tol) { 
-                        tVals.push(t);
-                    }
-                }
+                const t = ((p.x - s.x1)*(s.x2 - s.x1) + (p.y - s.y1)*(s.y2 - s.y1)) / len2;
+                if (t > 1e-5 && t < 1-1e-5 && (p.x - (s.x1+t*(s.x2-s.x1)))**2 + (p.y - (s.y1+t*(s.y2-s.y1)))**2 <= tol*tol) tVals.push(t);
             });
-
             tVals.sort((a,b) => a - b);
             let prevT = tVals[0];
             for(let k=1; k<tVals.length; k++) {
                 if (tVals[k] - prevT < 1e-5) continue;
-                segments.push({
-                    x1: s.x1 + prevT * (s.x2 - s.x1), y1: s.y1 + prevT * (s.y2 - s.y1),
-                    x2: s.x1 + tVals[k] * (s.x2 - s.x1), y2: s.y1 + tVals[k] * (s.y2 - s.y1)
-                });
+                segments.push({ x1: s.x1+prevT*(s.x2-s.x1), y1: s.y1+prevT*(s.y2-s.y1), x2: s.x1+tVals[k]*(s.x2-s.x1), y2: s.y1+tVals[k]*(s.y2-s.y1) });
                 prevT = tVals[k];
             }
         }
 
-        const vertices = [];
-        const grid = new Map();
+        const vertices = [], grid = new Map();
         const getV = (x, y) => {
-            const gx = Math.round(x / tol), gy = Math.round(y / tol);
-            for(let dx=-1; dx<=1; dx++) {
-                for(let dy=-1; dy<=1; dy++) {
-                    const key = `${gx+dx},${gy+dy}`;
-                    if(grid.has(key)) {
-                        for(const v of grid.get(key)) {
-                            if (Math.hypot(v.x - x, v.y - y) <= tol) return v;
-                        }
-                    }
-                }
+            const gx = Math.round(x/tol), gy = Math.round(y/tol);
+            for(let dx=-1; dx<=1; dx++) for(let dy=-1; dy<=1; dy++) {
+                const k = `${gx+dx},${gy+dy}`;
+                if(grid.has(k)) for(const v of grid.get(k)) if (Math.hypot(v.x-x, v.y-y) <= tol) return v;
             }
             const newV = {id: vertices.length, x, y, adj: []};
             vertices.push(newV);
             const key = `${gx},${gy}`;
             if(!grid.has(key)) grid.set(key, []);
-            grid.get(key).push(newV);
-            return newV;
+            grid.get(key).push(newV); return newV;
         };
 
         const uniqueEdges = new Map();
         segments.forEach(s => {
-            const v1 = getV(s.x1, s.y1);
-            const v2 = getV(s.x2, s.y2);
+            const v1 = getV(s.x1, s.y1), v2 = getV(s.x2, s.y2);
             if (v1.id === v2.id) return;
-            const id1 = Math.min(v1.id, v2.id);
-            const id2 = Math.max(v1.id, v2.id);
-            uniqueEdges.set(`${id1}-${id2}`, {v1, v2}); 
+            uniqueEdges.set(`${Math.min(v1.id, v2.id)}-${Math.max(v1.id, v2.id)}`, {v1, v2}); 
         });
 
-        const adjUndirected = new Map();
+        const adj = new Map();
         uniqueEdges.forEach((_, key) => {
             const [id1, id2] = key.split('-').map(Number);
-            if(!adjUndirected.has(id1)) adjUndirected.set(id1, new Set());
-            if(!adjUndirected.has(id2)) adjUndirected.set(id2, new Set());
-            adjUndirected.get(id1).add(id2);
-            adjUndirected.get(id2).add(id1);
+            if(!adj.has(id1)) adj.set(id1, new Set()); if(!adj.has(id2)) adj.set(id2, new Set());
+            adj.get(id1).add(id2); adj.get(id2).add(id1);
         });
 
         let pruned = true;
         while(pruned) {
             pruned = false;
-            for (const [vId, neighbors] of adjUndirected.entries()) {
+            for (const [vId, neighbors] of adj.entries()) {
                 if(neighbors.size === 1) {
                     const nId = Array.from(neighbors)[0];
-                    neighbors.delete(nId);
-                    if(adjUndirected.has(nId)) adjUndirected.get(nId).delete(vId);
+                    neighbors.delete(nId); if(adj.has(nId)) adj.get(nId).delete(vId);
                     uniqueEdges.delete(`${Math.min(vId, nId)}-${Math.max(vId, nId)}`);
                     pruned = true;
                 }
@@ -507,10 +378,8 @@
 
         const halfEdges = [];
         uniqueEdges.forEach(e => {
-            const a1 = Math.atan2(e.v2.y - e.v1.y, e.v2.x - e.v1.x);
-            const a2 = Math.atan2(e.v1.y - e.v2.y, e.v1.x - e.v2.x);
-            const he1 = {from: e.v1, to: e.v2, angle: a1, used: false};
-            const he2 = {from: e.v2, to: e.v1, angle: a2, used: false};
+            const he1 = {from: e.v1, to: e.v2, angle: Math.atan2(e.v2.y - e.v1.y, e.v2.x - e.v1.x), used: false};
+            const he2 = {from: e.v2, to: e.v1, angle: Math.atan2(e.v1.y - e.v2.y, e.v1.x - e.v2.x), used: false};
             he1.rev = he2; he2.rev = he1;
             e.v1.adj.push(he1); e.v2.adj.push(he2);
             halfEdges.push(he1, he2);
@@ -521,75 +390,50 @@
         const rawFaces = [];
         halfEdges.forEach(he => {
             if(he.used) return;
-            const pts = [];
-            let curr = he;
-            let loops = 0;
+            const pts = []; let curr = he, loops = 0;
             while(!curr.used && loops < 10000) {
-                curr.used = true;
-                pts.push({x: curr.from.x, y: curr.from.y});
+                curr.used = true; pts.push({x: curr.from.x, y: curr.from.y});
                 const idx = curr.to.adj.indexOf(curr.rev);
-                const nextIdx = (idx - 1 + curr.to.adj.length) % curr.to.adj.length;
-                curr = curr.to.adj[nextIdx];
+                curr = curr.to.adj[(idx - 1 + curr.to.adj.length) % curr.to.adj.length];
                 loops++;
             }
             if(pts.length > 2) {
                 let area = 0;
-                for(let i=0; i<pts.length; i++) {
-                    const p1 = pts[i], p2 = pts[(i+1)%pts.length];
-                    area += (p1.x * p2.y - p2.x * p1.y);
-                }
-                area /= 2;
-                rawFaces.push({pts, signedArea: area, area: Math.abs(area), matIdx: 3}); 
+                for(let i=0; i<pts.length; i++) area += (pts[i].x * pts[(i+1)%pts.length].y - pts[(i+1)%pts.length].x * pts[i].y);
+                rawFaces.push({pts, signedArea: area/2, area: Math.abs(area/2), matIdx: 1}); // Defecto: Material 1 (Aluminio)
             }
         });
 
-        let maxArea = -1;
-        let universeSign = 1;
-        rawFaces.forEach(f => {
-            if (f.area > maxArea) {
-                maxArea = f.area;
-                universeSign = Math.sign(f.signedArea);
-            }
-        });
-
-        const faces = [];
-        rawFaces.forEach(f => {
-            if (Math.sign(f.signedArea) !== universeSign && f.area > 1e-5) {
-                faces.push(f);
-            }
-        });
-
-        return faces.sort((a,b) => b.area - a.area);
+        let maxA = -1, sign = 1;
+        rawFaces.forEach(f => { if (f.area > maxA) { maxA = f.area; sign = Math.sign(f.signedArea); } });
+        return rawFaces.filter(f => Math.sign(f.signedArea) !== sign && f.area > 1e-5).sort((a,b) => b.area - a.area);
     }
 
-    function extractBoundaryEdges(polygons) {
-        const edgeMap = new Map();
-        polygons.forEach(poly => {
+    function extractBoundaryEdges(polys) {
+        const map = new Map();
+        polys.forEach(poly => {
             for(let i=0; i<poly.pts.length; i++) {
                 const p1 = poly.pts[i], p2 = poly.pts[(i+1)%poly.pts.length];
-                const x1 = p1.x.toFixed(4), y1 = p1.y.toFixed(4);
-                const x2 = p2.x.toFixed(4), y2 = p2.y.toFixed(4);
-                const key = `${x1},${y1}-${x2},${y2}`;
-                const revKey = `${x2},${y2}-${x1},${y1}`;
-                const existing = edgeMap.get(key) || edgeMap.get(revKey);
-                if(existing) existing.count++;
-                else edgeMap.set(key, {p1, p2, count:1, type:0});
+                const key = `${p1.x.toFixed(4)},${p1.y.toFixed(4)}-${p2.x.toFixed(4)},${p2.y.toFixed(4)}`;
+                const rev = `${p2.x.toFixed(4)},${p2.y.toFixed(4)}-${p1.x.toFixed(4)},${p1.y.toFixed(4)}`;
+                if(map.has(key)) map.get(key).count++; else if(map.has(rev)) map.get(rev).count++;
+                else map.set(key, {p1, p2, count:1, type:0});
             }
         });
-        return Array.from(edgeMap.values()).filter(e => e.count === 1).map(e => ({p1:e.p1, p2:e.p2, type:0}));
+        return Array.from(map.values()).filter(e => e.count === 1).map(e => ({p1:e.p1, p2:e.p2, type:0}));
     }
 
     function recalcBounds() {
         if(!polygons.length) return;
         const all = polygons.flatMap(p=>p.pts);
-        minX = Math.min(...all.map(p=>p.x));
-        maxX = Math.max(...all.map(p=>p.x));
-        minY = Math.min(...all.map(p=>p.y));
-        maxY = Math.max(...all.map(p=>p.y));
+        minX = Math.min(...all.map(p=>p.x)); maxX = Math.max(...all.map(p=>p.x));
+        minY = Math.min(...all.map(p=>p.y)); maxY = Math.max(...all.map(p=>p.y));
+        // Auto-update Lp input
+        document.getElementById('LpInput').value = Math.round(maxY - minY);
     }
 
     function getTransform() {
-        const pad = 45, cw = canvas.width, ch = canvas.height;
+        const pad = 60, cw = canvas.width, ch = canvas.height;
         const scale = Math.min((cw-pad*2)/(maxX-minX||1), (ch-pad*2)/(maxY-minY||1));
         return { pad, scale, tx: x => pad + (x-minX)*scale, ty: y => ch - (pad + (y-minY)*scale) };
     }
@@ -598,6 +442,7 @@
         ctx.clearRect(0,0,canvas.width,canvas.height);
         if(!polygons.length) return;
         const {tx, ty, scale} = getTransform();
+        
         if(showThermalMap && T) {
             const te = +document.getElementById('tExt').value, ti = +document.getElementById('tInt').value;
             const cw = (maxX-minX)/NX*scale, ch = (maxY-minY)/NY*scale;
@@ -610,312 +455,301 @@
                 }
             }
         } else {
+            // Dibujar polígonos
             polygons.forEach((p,i) => {
-                ctx.beginPath();
-                ctx.moveTo(tx(p.pts[0].x), ty(p.pts[0].y));
-                p.pts.forEach(pt => ctx.lineTo(tx(pt.x), ty(pt.y)));
-                ctx.closePath();
-                
+                ctx.beginPath(); ctx.moveTo(tx(p.pts[0].x), ty(p.pts[0].y));
+                p.pts.forEach(pt => ctx.lineTo(tx(pt.x), ty(pt.y))); ctx.closePath();
                 ctx.fillStyle = materials[p.matIdx]?.color || '#ccc';
-                
-                if (i === hoveredPolyIdx && i !== selectedPoly) {
-                    ctx.globalAlpha = 0.6;
-                    ctx.fill();
-                    ctx.globalAlpha = 1.0;
-                } else {
-                    ctx.fill();
-                }
-                
-                ctx.strokeStyle = i===selectedPoly ? '#e74c3c' : '#2c3e50';
+                if (i === hoveredPolyIdx && i !== selectedPoly) { ctx.globalAlpha = 0.6; ctx.fill(); ctx.globalAlpha = 1.0; } 
+                else ctx.fill();
+                ctx.strokeStyle = i===selectedPoly ? '#e74c3c' : 'rgba(0,0,0,0.4)';
                 ctx.lineWidth = i===selectedPoly ? 3 : 1;
                 ctx.stroke();
             });
         }
         
-        boundaryEdges.forEach((edge, idx) => {
-            ctx.beginPath();
-            ctx.moveTo(tx(edge.p1.x), ty(edge.p1.y));
-            ctx.lineTo(tx(edge.p2.x), ty(edge.p2.y));
-            let color = '#000';
-            if(edge.type === 1) color = '#1976d2'; 
-            else if(edge.type === 2) color = '#d32f2f'; 
-            else if(edge.type === 3) color = '#757575'; 
-            ctx.strokeStyle = color;
-            ctx.lineWidth = (idx === hoveredEdgeIdx) ? 4 : 2.5;
-            ctx.stroke();
-        });
+        // Dibujar bordes (Si estamos en default)
+        if(uiMode === 'DEFAULT' || uiMode === 'SET_ROT' || showThermalMap) {
+            boundaryEdges.forEach((edge, idx) => {
+                ctx.beginPath(); ctx.moveTo(tx(edge.p1.x), ty(edge.p1.y)); ctx.lineTo(tx(edge.p2.x), ty(edge.p2.y));
+                let color = 'rgba(0,0,0,0.1)';
+                if(edge.type === 1) color = '#1976d2'; else if(edge.type === 2) color = '#d32f2f'; else if(edge.type === 3) color = '#757575'; 
+                ctx.strokeStyle = color; ctx.lineWidth = (idx === hoveredEdgeIdx && uiMode==='DEFAULT') ? 5 : 3;
+                ctx.stroke();
+            });
+        }
+
+        // Dibujar marcadores espaciales
+        if (rotAxis) drawMarker(tx(rotAxis.x), ty(rotAxis.y), '#e67e22', 'Eje');
+        if (hookPt) drawMarker(tx(hookPt.x), ty(hookPt.y), '#27ae60', 'Enganche 1');
+        if (groovePt) drawMarker(tx(groovePt.x), ty(groovePt.y), '#8e44ad', 'Enganche 2');
     }
 
-    function autoAssignBoundaries() {
-        if(!boundaryEdges.length) return;
-        const midXarr = boundaryEdges.map(e => (e.p1.x+e.p2.x)/2);
-        const minMid = Math.min(...midXarr), maxMid = Math.max(...midXarr);
-        const range = maxMid - minMid || 1;
-        boundaryEdges.forEach(e => {
-            const mid = (e.p1.x+e.p2.x)/2;
-            if(mid < minMid + 0.1*range) e.type = 1; 
-            else if(mid > maxMid - 0.1*range) e.type = 2; 
-            else e.type = 3; 
-        });
-        draw();
-        setStatus('Bordes asignados automáticamente. Puedes ajustarlos haciendo clic sobre ellos.');
+    function drawMarker(x, y, color, label) {
+        ctx.beginPath(); ctx.arc(x, y, 6, 0, Math.PI*2); ctx.fillStyle = color; ctx.fill();
+        ctx.strokeStyle = 'white'; ctx.lineWidth = 2; ctx.stroke();
+        ctx.fillStyle = color; ctx.font = "bold 12px sans-serif"; ctx.fillText(label, x+10, y-10);
     }
 
-    function findNearestEdge(mxWorld, myWorld) {
-        let minDist = Infinity, idx = -1;
-        boundaryEdges.forEach((edge, i) => {
-            const {p1, p2} = edge;
-            const dx = p2.x - p1.x, dy = p2.y - p1.y;
-            const len2 = dx*dx+dy*dy;
-            let t = ((mxWorld-p1.x)*dx + (myWorld-p1.y)*dy) / len2;
-            t = Math.max(0, Math.min(1, t));
-            const projx = p1.x + t*dx, projy = p1.y + t*dy;
-            const dist = Math.hypot(mxWorld-projx, myWorld-projy);
-            if(dist < minDist) { minDist = dist; idx = i; }
-        });
-        return { idx, minDist };
+    // ──── INTERACCIONES DE RATÓN Y BOTONES ────
+    function resetUIMode() {
+        uiMode = 'DEFAULT';
+        document.querySelectorAll('.btn-action, .btn-outline').forEach(b => b.classList.remove('active'));
     }
 
-    // Eventos
-    document.getElementById('dxfFile').onchange = e => {
-        const file = e.target.files[0];
-        if(!file) return;
-        const reader = new FileReader();
-        reader.onload = ev => {
-            try {
-                const segments = parseDXF(ev.target.result);
-                if(segments.length === 0) { setStatus('❌ No se encontraron entidades válidas.', 'error'); return; }
-                const tol = +document.getElementById('tolInput').value || 0.5;
-                polygons = buildTopology(segments, tol);
-                if(polygons.length) {
-                    recalcBounds();
-                    boundaryEdges = extractBoundaryEdges(polygons);
-                    setStatus(`✅ ${polygons.length} regiones creadas. Selecciona una región y pincha un material en la leyenda.`, 'success');
-                    document.getElementById('calcBtn').disabled = false;
-                    document.getElementById('rotateBtn').disabled = false;
-                    document.getElementById('autoBoundaryBtn').disabled = false;
-                    selectedPoly = -1; hoveredPolyIdx = -1; showThermalMap = false; T = null;
-                    document.getElementById('result').style.display = 'none';
-                    draw();
-                } else setStatus('❌ Ocurrió un error leyendo el polígono. Trata de ajustar la "Tolerancia unión".', 'error');
-            } catch(err) { setStatus('Error al procesar: '+err.message, 'error'); }
-        };
-        reader.readAsText(file);
+    document.getElementById('btnSetRot').onclick = function() {
+        resetUIMode(); uiMode = 'SET_ROT'; this.classList.add('active');
+        setStatus('📍 Haz clic en cualquier punto del área de dibujo para fijar el Centro de Rotación.', 'info');
     };
+
+    document.getElementById('btnSetChain').onclick = function() {
+        resetUIMode(); uiMode = 'SET_HOOK'; hookPt = null; groovePt = null; this.classList.add('active');
+        setStatus('🔗 Ensamblaje: Haz clic en el PUNTO 1 (Macho / Origen de la lama).', 'info');
+        document.getElementById('btnMultiply').disabled = true;
+        draw();
+    };
+
+    function findNearestVertex(mx, my) {
+        let nearest = null, minDist = Infinity;
+        polygons.forEach(p => p.pts.forEach(pt => {
+            const dist = Math.hypot(pt.x - mx, pt.y - my);
+            if(dist < minDist) { minDist = dist; nearest = {x: pt.x, y: pt.y}; }
+        }));
+        return minDist < 15/getTransform().scale ? nearest : {x:mx, y:my};
+    }
 
     canvas.onclick = e => {
         if(!polygons.length || showThermalMap) return;
-        const rect = canvas.getBoundingClientRect();
-        const {tx, ty, pad, scale} = getTransform();
-        const cssX = canvas.width / rect.width, cssY = canvas.height / rect.height;
-        const mxWorld = ((e.clientX-rect.left)*cssX - pad)/scale + minX;
-        const myWorld = (canvas.height - (e.clientY-rect.top)*cssY - pad)/scale + minY;
+        const rect = canvas.getBoundingClientRect(), {pad, scale} = getTransform();
+        const mxWorld = ((e.clientX-rect.left)*(canvas.width/rect.width) - pad)/scale + minX;
+        const myWorld = (canvas.height - (e.clientY-rect.top)*(canvas.height/rect.height) - pad)/scale + minY;
 
+        if (uiMode === 'SET_ROT') {
+            rotAxis = findNearestVertex(mxWorld, myWorld); resetUIMode();
+            setStatus('Eje de rotación fijado.', 'success'); draw(); return;
+        }
+        if (uiMode === 'SET_HOOK') {
+            hookPt = findNearestVertex(mxWorld, myWorld); uiMode = 'SET_GROOVE';
+            setStatus('Punto 1 fijado. Ahora haz clic en el PUNTO 2 (Hembra / Destino del enganche).', 'info'); draw(); return;
+        }
+        if (uiMode === 'SET_GROOVE') {
+            groovePt = findNearestVertex(mxWorld, myWorld); resetUIMode();
+            document.getElementById('btnMultiply').disabled = false;
+            setStatus('Puntos de enganche fijados. Ya puedes Multiplicar lamas.', 'success'); draw(); return;
+        }
+
+        // Selección de bordes
         if(boundaryEdges.length) {
-            const {idx, minDist} = findNearestEdge(mxWorld, myWorld);
-            const thresholdWorld = 10 / scale; 
-            if(minDist < thresholdWorld && idx !== -1) {
-                boundaryEdges[idx].type = (boundaryEdges[idx].type + 1) % 4;
-                draw();
-                setStatus(`Borde ${idx+1}: ${['Sin asignar','Exterior','Interior','Neutro'][boundaryEdges[idx].type]}`);
-                return;
+            let minDist = Infinity, idx = -1;
+            boundaryEdges.forEach((edge, i) => {
+                const dx = edge.p2.x - edge.p1.x, dy = edge.p2.y - edge.p1.y, len2 = dx*dx+dy*dy;
+                let t = Math.max(0, Math.min(1, ((mxWorld-edge.p1.x)*dx + (myWorld-edge.p1.y)*dy)/len2));
+                if(Math.hypot(mxWorld-(edge.p1.x+t*dx), myWorld-(edge.p1.y+t*dy)) < minDist) { minDist = Math.hypot(mxWorld-(edge.p1.x+t*dx), myWorld-(edge.p1.y+t*dy)); idx = i; }
+            });
+            if(minDist < 10/scale && idx !== -1) {
+                boundaryEdges[idx].type = (boundaryEdges[idx].type + 1) % 4; draw(); return;
             }
         }
 
-        let clickedPoly = -1;
+        // Selección de áreas (Z-index inverso)
+        selectedPoly = -1;
         for (let i = polygons.length - 1; i >= 0; i--) {
-            let p = polygons[i];
-            let inside = false;
+            let p = polygons[i], inside = false;
             for(let k=0,j=p.pts.length-1; k<p.pts.length; j=k++) {
-                if((p.pts[k].y > myWorld) !== (p.pts[j].y > myWorld) &&
-                    mxWorld < (p.pts[j].x-p.pts[k].x)*(myWorld-p.pts[k].y)/(p.pts[j].y-p.pts[k].y)+p.pts[k].x)
-                    inside = !inside;
+                if((p.pts[k].y > myWorld) !== (p.pts[j].y > myWorld) && mxWorld < (p.pts[j].x-p.pts[k].x)*(myWorld-p.pts[k].y)/(p.pts[j].y-p.pts[k].y)+p.pts[k].x) inside = !inside;
             }
-            if(inside) { 
-                clickedPoly = i; 
-                break; 
-            }
+            if(inside) { selectedPoly = i; break; }
         }
-
-        selectedPoly = clickedPoly; // Si pinchas fuera, se deselecciona (-1)
-
-        if(selectedPoly !== -1) {
-            document.getElementById('matSelect').value = polygons[selectedPoly].matIdx;
-            setStatus(`Región seleccionada (marcada en rojo). Ahora haz clic en un material de la leyenda para pintarla.`);
-        } else {
-            setStatus(`Ninguna región seleccionada.`);
-        }
+        if(selectedPoly !== -1) setStatus(`Área seleccionada. Elige el material en la leyenda.`);
         draw();
     };
 
     canvas.onmousemove = e => {
-        if(!polygons.length || showThermalMap) return;
-        const rect = canvas.getBoundingClientRect();
-        const {tx, ty, pad, scale} = getTransform();
-        const cssX = canvas.width / rect.width, cssY = canvas.height / rect.height;
-        const mxWorld = ((e.clientX-rect.left)*cssX - pad)/scale + minX;
-        const myWorld = (canvas.height - (e.clientY-rect.top)*cssY - pad)/scale + minY;
+        if(!polygons.length || showThermalMap || uiMode !== 'DEFAULT') return;
+        const rect = canvas.getBoundingClientRect(), {pad, scale} = getTransform();
+        const mxWorld = ((e.clientX-rect.left)*(canvas.width/rect.width) - pad)/scale + minX;
+        const myWorld = (canvas.height - (e.clientY-rect.top)*(canvas.height/rect.height) - pad)/scale + minY;
         
-        const {idx, minDist} = findNearestEdge(mxWorld, myWorld);
-        const thresholdWorld = 10 / scale;
-        const newHoverEdge = (minDist < thresholdWorld) ? idx : -1;
+        let minDEdge = Infinity, idxE = -1;
+        boundaryEdges.forEach((edge, i) => {
+            const dx = edge.p2.x - edge.p1.x, dy = edge.p2.y - edge.p1.y, len2 = dx*dx+dy*dy;
+            let t = Math.max(0, Math.min(1, ((mxWorld-edge.p1.x)*dx + (myWorld-edge.p1.y)*dy)/len2));
+            if(Math.hypot(mxWorld-(edge.p1.x+t*dx), myWorld-(edge.p1.y+t*dy)) < minDEdge) { minDEdge = Math.hypot(mxWorld-(edge.p1.x+t*dx), myWorld-(edge.p1.y+t*dy)); idxE = i; }
+        });
+        const nHEdge = (minDEdge < 10/scale) ? idxE : -1;
 
-        let newHoverPoly = -1;
+        let nHPoly = -1;
         for (let i = polygons.length - 1; i >= 0; i--) {
-            let p = polygons[i];
-            let inside = false;
+            let p = polygons[i], inside = false;
             for(let k=0,j=p.pts.length-1; k<p.pts.length; j=k++) {
-                if((p.pts[k].y > myWorld) !== (p.pts[j].y > myWorld) &&
-                    mxWorld < (p.pts[j].x-p.pts[k].x)*(myWorld-p.pts[k].y)/(p.pts[j].y-p.pts[k].y)+p.pts[k].x)
-                    inside = !inside;
+                if((p.pts[k].y > myWorld) !== (p.pts[j].y > myWorld) && mxWorld < (p.pts[j].x-p.pts[k].x)*(myWorld-p.pts[k].y)/(p.pts[j].y-p.pts[k].y)+p.pts[k].x) inside = !inside;
             }
-            if(inside) { newHoverPoly = i; break; }
+            if(inside) { nHPoly = i; break; }
         }
 
-        if(newHoverEdge !== hoveredEdgeIdx || newHoverPoly !== hoveredPolyIdx) {
-            hoveredEdgeIdx = newHoverEdge;
-            hoveredPolyIdx = newHoverPoly;
-            draw();
-        }
+        if(nHEdge !== hoveredEdgeIdx || nHPoly !== hoveredPolyIdx) { hoveredEdgeIdx = nHEdge; hoveredPolyIdx = nHPoly; draw(); }
     };
 
-    document.getElementById('rotateBtn').onclick = () => {
+    document.getElementById('btnRotate').onclick = () => {
         if(!polygons.length) return;
-        const ang = (+document.getElementById('rotInput').value) * Math.PI/180;
-        const cx = (minX+maxX)/2, cy = (minY+maxY)/2;
+        const ang = 90 * Math.PI/180;
+        const cx = rotAxis ? rotAxis.x : (minX+maxX)/2, cy = rotAxis ? rotAxis.y : (minY+maxY)/2;
         polygons.forEach(p => p.pts.forEach(pt => {
             const dx = pt.x-cx, dy = pt.y-cy;
-            pt.x = cx + dx*Math.cos(ang) - dy*Math.sin(ang);
-            pt.y = cy + dx*Math.sin(ang) + dy*Math.cos(ang);
+            pt.x = cx + dx*Math.cos(ang) - dy*Math.sin(ang); pt.y = cy + dx*Math.sin(ang) + dy*Math.cos(ang);
         }));
-        recalcBounds();
-        boundaryEdges = extractBoundaryEdges(polygons);
-        showThermalMap = false; T = null;
-        document.getElementById('result').style.display = 'none';
-        draw();
+        if(hookPt) { const hdx=hookPt.x-cx, hdy=hookPt.y-cy; hookPt = {x: cx+hdx*Math.cos(ang)-hdy*Math.sin(ang), y: cy+hdx*Math.sin(ang)+hdy*Math.cos(ang)}; }
+        if(groovePt) { const gdx=groovePt.x-cx, gdy=groovePt.y-cy; groovePt = {x: cx+gdx*Math.cos(ang)-gdy*Math.sin(ang), y: cy+gdx*Math.sin(ang)+gdy*Math.cos(ang)}; }
+        recalcBounds(); boundaryEdges = extractBoundaryEdges(polygons); showThermalMap = false; T = null;
+        document.getElementById('result').style.display = 'none'; draw();
     };
 
-    document.getElementById('autoBoundaryBtn').onclick = autoAssignBoundaries;
+    document.getElementById('btnMultiply').onclick = () => {
+        if(!hookPt || !groovePt || !polygons.length) return;
+        const count = parseInt(prompt("¿Cuántas lamas totales quieres en el ensamblaje?", "3"));
+        if(isNaN(count) || count <= 1) return;
+        
+        const shiftX = groovePt.x - hookPt.x, shiftY = groovePt.y - hookPt.y;
+        const originalPolys = JSON.parse(JSON.stringify(polygons));
+        
+        for(let i=1; i<count; i++) {
+            originalPolys.forEach(op => {
+                let nPts = op.pts.map(pt => ({ x: pt.x + shiftX*i, y: pt.y + shiftY*i }));
+                polygons.push({ pts: nPts, area: op.area, matIdx: op.matIdx });
+            });
+        }
+        recalcBounds(); boundaryEdges = extractBoundaryEdges(polygons);
+        setStatus(`Ensamblaje completado con ${count} lamas.`, 'success'); draw();
+    };
+
+    // ──── SOLVER TÉRMICO Y CÁLCULO DE U (CORREGIDO) ────
+    document.getElementById('dxfFile').onchange = e => {
+        const file = e.target.files[0]; if(!file) return;
+        const reader = new FileReader();
+        reader.onload = ev => {
+            try {
+                const segments = parseDXF(ev.target.result);
+                if(segments.length === 0) throw new Error("No hay líneas válidas.");
+                polygons = buildTopology(segments, 0.5);
+                if(polygons.length) {
+                    recalcBounds(); boundaryEdges = extractBoundaryEdges(polygons);
+                    setStatus(`✅ DXF cargado. Modifica geometría o asigna contornos.`, 'success');
+                    document.getElementById('calcBtn').disabled = false;
+                    selectedPoly = hoveredPolyIdx = -1; showThermalMap = false; T = null; hookPt=groovePt=rotAxis=null;
+                    document.getElementById('result').style.display = 'none'; draw();
+                } else throw new Error("Fallo en tolerancia de unión.");
+            } catch(err) { setStatus('Error: '+err.message, 'error'); }
+        };
+        reader.readAsText(file);
+    };
 
     document.getElementById('calcBtn').onclick = () => {
         if(!polygons.length) return;
         if(!boundaryEdges.some(e => e.type===1) || !boundaryEdges.some(e => e.type===2)) {
-            setStatus('❌ Debes marcar al menos un borde Exterior y uno Interior.', 'error');
-            return;
+            setStatus('❌ Falta marcar al menos un borde Exterior (azul) e Interior (rojo).', 'error'); return;
         }
-        setStatus('Calculando...');
+        setStatus('Calculando Matriz Térmica...', 'warning');
         document.getElementById('calcBtn').disabled = true;
-        setTimeout(()=> runSolver(0), 30);
+        setTimeout(()=> runSolver(0), 50);
     };
 
+    // Variables de máscara para el solver
+    let isExt, isInt; 
+
     function runSolver(step) {
-        const te = +document.getElementById('tExt').value;
-        const ti = +document.getElementById('tInt').value;
+        const te = +document.getElementById('tExt').value, ti = +document.getElementById('tInt').value;
         if(step === 0) {
             dx = (maxX-minX)/NX; dy = (maxY-minY)/NY;
+            
+            // Rasterizar Materiales
             kGrid = Array.from({length:NY}, (_,i)=> Array.from({length:NX}, (_,j)=> {
                 const x = minX + j*dx + dx/2, y = minY + i*dy + dy/2;
-                
                 let p = null;
                 for (let idx = polygons.length - 1; idx >= 0; idx--) {
-                    let poly = polygons[idx];
-                    let inside = false;
+                    let poly = polygons[idx], inside = false;
                     for(let k=0,l=poly.pts.length-1; k<poly.pts.length; l=k++) {
-                        if((poly.pts[k].y > y) !== (poly.pts[l].y > y) &&
-                            x < (poly.pts[l].x-poly.pts[k].x)*(y-poly.pts[k].y)/(poly.pts[l].y-poly.pts[k].y)+poly.pts[k].x)
-                            inside = !inside;
+                        if((poly.pts[k].y > y) !== (poly.pts[l].y > y) && x < (poly.pts[l].x-poly.pts[k].x)*(y-poly.pts[k].y)/(poly.pts[l].y-poly.pts[k].y)+poly.pts[k].x) inside = !inside;
                     }
                     if(inside) { p = poly; break; }
                 }
-                return p ? materials[p.matIdx].k : 0.026;
+                return p ? materials[p.matIdx].k : 0.026; // Aire si está fuera
             }));
             
             T = Array.from({length:NY}, ()=> new Array(NX).fill((te+ti)/2));
-            window.faceBC = Array.from({length:NY}, ()=> Array.from({length:NX}, ()=> [0,0,0,0])); 
-            const threshold = Math.max(dx,dy)*0.6;
+            isExt = Array.from({length:NY}, ()=> new Array(NX).fill(false));
+            isInt = Array.from({length:NY}, ()=> new Array(NX).fill(false));
             
+            // Rasterizar Condiciones de Contorno Directas (Solución al error del Flux 0)
             boundaryEdges.forEach(edge => {
-                if(edge.type === 0) return;
-                const bcType = edge.type; 
-                const steps = Math.ceil(Math.hypot(edge.p2.x-edge.p1.x, edge.p2.y-edge.p1.y) / (Math.min(dx,dy)*0.5));
+                if(edge.type !== 1 && edge.type !== 2) return;
+                const steps = Math.ceil(Math.hypot(edge.p2.x-edge.p1.x, edge.p2.y-edge.p1.y) / Math.min(dx,dy) * 2);
                 for(let s=0; s<=steps; s++) {
-                    const t = s/steps;
-                    const px = edge.p1.x + t*(edge.p2.x-edge.p1.x);
-                    const py = edge.p1.y + t*(edge.p2.y-edge.p1.y);
-                    const j = Math.floor((px - minX)/dx);
-                    const i = Math.floor((py - minY)/dy);
+                    const px = edge.p1.x + (s/steps)*(edge.p2.x-edge.p1.x), py = edge.p1.y + (s/steps)*(edge.p2.y-edge.p1.y);
+                    const j = Math.floor((px - minX)/dx), i = Math.floor((py - minY)/dy);
                     if(i>=0 && i<NY && j>=0 && j<NX) {
-                        const cellLeft = minX + j*dx, cellRight = cellLeft+dx;
-                        const cellBottom = minY + i*dy, cellTop = cellBottom+dy;
-                        const distLeft = Math.abs(px - cellLeft);
-                        const distRight = Math.abs(px - cellRight);
-                        const distBottom = Math.abs(py - cellBottom);
-                        const distTop = Math.abs(py - cellTop);
-                        const minDist = Math.min(distLeft, distRight, distBottom, distTop);
-                        if(minDist < threshold) {
-                            if(minDist === distLeft) window.faceBC[i][j][0] = bcType;
-                            else if(minDist === distRight) window.faceBC[i][j][1] = bcType;
-                            else if(minDist === distBottom) window.faceBC[i][j][2] = bcType;
-                            else if(minDist === distTop) window.faceBC[i][j][3] = bcType;
-                        }
+                        if(edge.type === 1) isExt[i][j] = true;
+                        if(edge.type === 2) isInt[i][j] = true;
                     }
                 }
             });
-            setTimeout(()=> runSolver(1), 20);
-            return;
+            setTimeout(()=> runSolver(1), 10); return;
         }
+        
         if(step === 1) {
-            const iter = 1200;
-            let done = 0;
+            const iter = 1500; let done = 0;
             function chunk() {
                 const end = Math.min(done+300, iter);
                 for(let it=done; it<end; it++) {
                     for(let i=0; i<NY; i++) {
                         for(let j=0; j<NX; j++) {
-                            const bc = window.faceBC[i][j];
-                            if(bc.includes(1) || bc.includes(2)) {
-                                if(bc.includes(1)) T[i][j] = te;
-                                else if(bc.includes(2)) T[i][j] = ti;
-                                continue;
-                            }
+                            if(isExt[i][j]) { T[i][j] = te; continue; }
+                            if(isInt[i][j]) { T[i][j] = ti; continue; }
+                            
                             let num = 0, den = 0;
-                            if(j>0 && bc[0] !== 3) { num += kGrid[i][j-1]*T[i][j-1]; den += kGrid[i][j-1]; }
-                            if(j<NX-1 && bc[1] !== 3) { num += kGrid[i][j+1]*T[i][j+1]; den += kGrid[i][j+1]; }
-                            if(i>0 && bc[2] !== 3) { num += kGrid[i-1][j]*T[i-1][j]; den += kGrid[i-1][j]; }
-                            if(i<NY-1 && bc[3] !== 3) { num += kGrid[i+1][j]*T[i+1][j]; den += kGrid[i+1][j]; }
+                            if(j>0) { num += kGrid[i][j-1]*T[i][j-1]; den += kGrid[i][j-1]; }
+                            if(j<NX-1) { num += kGrid[i][j+1]*T[i][j+1]; den += kGrid[i][j+1]; }
+                            if(i>0) { num += kGrid[i-1][j]*T[i-1][j]; den += kGrid[i-1][j]; }
+                            if(i<NY-1) { num += kGrid[i+1][j]*T[i+1][j]; den += kGrid[i+1][j]; }
                             if(den > 0) T[i][j] = num/den;
                         }
                     }
                 }
                 done = end;
-                if(done < iter) setTimeout(chunk, 1);
-                else setTimeout(()=> runSolver(2), 10);
+                if(done < iter) setTimeout(chunk, 1); else setTimeout(()=> runSolver(2), 10);
             }
-            chunk();
-            return;
+            chunk(); return;
         }
+        
         if(step === 2) {
+            // CÁLCULO ESTRICTO DE FLUJO TÉRMICO (W/m)
             let flux = 0;
             for(let i=0; i<NY; i++) {
                 for(let j=0; j<NX; j++) {
-                    if(window.faceBC[i][j][1] === 2 && j<NX-1) {
-                        flux += kGrid[i][j] * (T[i][j+1] - T[i][j]) / dx * dy;
+                    if(isInt[i][j]) {
+                        // Sumar flujo hacia las celdas vecinas que NO son borde interior
+                        if(j>0 && !isInt[i][j-1]) flux += ((kGrid[i][j]+kGrid[i][j-1])/2) * (ti - T[i][j-1]) * (dy/dx);
+                        if(j<NX-1 && !isInt[i][j+1]) flux += ((kGrid[i][j]+kGrid[i][j+1])/2) * (ti - T[i][j+1]) * (dy/dx);
+                        if(i>0 && !isInt[i-1][j]) flux += ((kGrid[i][j]+kGrid[i-1][j])/2) * (ti - T[i-1][j]) * (dx/dy);
+                        if(i<NY-1 && !isInt[i+1][j]) flux += ((kGrid[i][j]+kGrid[i+1][j])/2) * (ti - T[i+1][j]) * (dx/dy);
                     }
                 }
             }
-            const U = Math.abs(flux / ((maxY-minY)*(ti-te)));
+            
+            // Fórmula U = Q / (L_p * ΔT)
+            let Lp = parseFloat(document.getElementById('LpInput').value) || (maxY - minY);
+            let Lp_metros = Lp / 1000;
+            const deltaT = Math.abs(ti - te) || 1;
+            const U = Math.abs(flux) / (Lp_metros * deltaT);
+            
             document.getElementById('result').style.display = 'block';
-            document.getElementById('result').innerHTML = `<i class="fas fa-chart-simple"></i> <strong>U = ${U.toFixed(4)} W/m²·K</strong><br><small>Malla ${NX}×${NY} | Flujo: ${flux.toFixed(3)} W</small>`;
-            setStatus(`✅ U = ${U.toFixed(3)} W/m²·K`, 'success');
-            showThermalMap = true;
-            draw();
+            document.getElementById('result').innerHTML = `<h2>U = ${U.toFixed(3)} W/m²·K</h2><small>Flujo lineal (Q): ${Math.abs(flux).toFixed(2)} W/m | Longitud (Lp): ${Lp.toFixed(1)} mm | ΔT: ${deltaT} K</small>`;
+            setStatus(`✅ Cálculo completado.`, 'success');
+            showThermalMap = true; draw();
             document.getElementById('calcBtn').disabled = false;
         }
     }
 
-    rebuildMaterialSelect();
-    updateLegend();
-    draw();
+    updateLegend(); draw();
 })();
 </script>
 </body>
