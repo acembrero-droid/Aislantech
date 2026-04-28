@@ -160,7 +160,6 @@
     const ctx = canvas.getContext('2d');
     const statusText = document.getElementById('statusText');
 
-    // UI helpers
     function rebuildMaterialSelect() {
         const sel = document.getElementById('matSelect');
         sel.innerHTML = '';
@@ -186,7 +185,7 @@
         bar.querySelector('i').className = isError ? 'fas fa-exclamation-triangle' : 'fas fa-info-circle';
     }
 
-    // ──── Parser DXF (Manejo de Arcos y Bloques) ────
+    // ──── Parser DXF Avanzado (Soporte Line, Arc, Circle, Polylines y Splines) ────
     function parseDXF(text) {
         const lines = text.split(/\r?\n/);
         let idx = 0;
@@ -205,7 +204,6 @@
             return null;
         }
 
-        // Calcula segmentos para arcos en polilíneas (bulges)
         function addBulgeSegments(p1, p2, bulge) {
             if (!bulge || Math.abs(bulge) < 1e-5) {
                 segments.push({ x1: p1.x, y1: p1.y, x2: p2.x, y2: p2.y });
@@ -276,6 +274,15 @@
                     addBulgeSegments(ent.vertices[ent.vertices.length - 1], ent.vertices[0], ent.vertices[ent.vertices.length - 1].bulge);
                 }
             }
+            // Aproximación básica de Splines (unimos sus puntos de control)
+            if (ent.type === 'SPLINE' && ent.pts.length > 1) {
+                for (let i = 0; i < ent.pts.length - 1; i++) {
+                    segments.push({ x1: ent.pts[i].x, y1: ent.pts[i].y, x2: ent.pts[i + 1].x, y2: ent.pts[i + 1].y });
+                }
+                if (ent.closed && ent.pts.length > 2) {
+                    segments.push({ x1: ent.pts[ent.pts.length - 1].x, y1: ent.pts[ent.pts.length - 1].y, x2: ent.pts[0].x, y2: ent.pts[0].y });
+                }
+            }
         }
 
         while (idx < lines.length) {
@@ -311,11 +318,13 @@
                     currentEntity = null;
                 } else if (['LINE', 'CIRCLE', 'ARC'].includes(value)) {
                     currentEntity = { type: value, ignore: false };
+                } else if (value === 'SPLINE') {
+                    currentEntity = { type: 'SPLINE', pts: [], ignore: false, closed: false };
                 } else {
                     currentEntity = null;
                 }
             } else if (currentEntity) {
-                if (code === 67 && value === '1') currentEntity.ignore = true; // Ignorar PaperSpace
+                if (code === 67 && value === '1') currentEntity.ignore = true; // Ignorar Layouts
                 
                 const v = parseFloat(value);
                 if (currentEntity.type === 'LWPOLYLINE') {
@@ -340,6 +349,10 @@
                     else if (code === 40) currentEntity.r = v;
                     else if (code === 50) currentEntity.startAngle = v;
                     else if (code === 51) currentEntity.endAngle = v;
+                } else if (currentEntity.type === 'SPLINE') {
+                    if (code === 70) currentEntity.closed = (parseInt(value) & 1) !== 0;
+                    else if (code === 10) currentEntity.pts.push({ x: v, y: 0 });
+                    else if (code === 20 && currentEntity.pts.length > 0) currentEntity.pts[currentEntity.pts.length - 1].y = v;
                 }
             }
         }
@@ -348,9 +361,9 @@
         return segments.filter(s => Math.hypot(s.x2 - s.x1, s.y2 - s.y1) > 1e-9);
     }
 
-    // ──── Topología robusta: Planarización, Nodos T y Eliminación de líneas fantasma ────
+    // ──── Topología robusta: Identificación perfecta de polígonos cerrados ────
     function buildTopology(rawSegments, tol) {
-        // 1. Recopilar todos los puntos explícitos e intersecciones
+        // 1. Encontrar todos los puntos de intersección matemáticos
         const points = [];
         rawSegments.forEach(s => { points.push({x: s.x1, y: s.y1}); points.push({x: s.x2, y: s.y2}); });
 
@@ -364,12 +377,11 @@
                 const minX2 = Math.min(s2.x1, s2.x2), maxX2 = Math.max(s2.x1, s2.x2);
                 const minY2 = Math.min(s2.y1, s2.y2), maxY2 = Math.max(s2.y1, s2.y2);
 
-                // Filtro AABB rápido
                 if (maxX1 < minX2 - 1e-5 || minX1 > maxX2 + 1e-5) continue;
                 if (maxY1 < minY2 - 1e-5 || minY1 > maxY2 + 1e-5) continue;
 
                 const den = (s1.x2 - s1.x1) * (s2.y2 - s2.y1) - (s1.y2 - s1.y1) * (s2.x2 - s2.x1);
-                if (Math.abs(den) > 1e-7) { // No son paralelas
+                if (Math.abs(den) > 1e-7) {
                     const u = ((s2.x1 - s1.x1) * (s2.y2 - s2.y1) - (s2.y1 - s1.y1) * (s2.x2 - s2.x1)) / den;
                     const v = ((s2.x1 - s1.x1) * (s1.y2 - s1.y1) - (s2.y1 - s1.y1) * (s1.x2 - s1.x1)) / den;
                     if (u > -1e-5 && u < 1 + 1e-5 && v > -1e-5 && v < 1 + 1e-5) {
@@ -379,7 +391,7 @@
             }
         }
 
-        // 2. Partir líneas en cada punto para resolver T-junctions
+        // 2. Partir líneas donde haya Nodos T (T-Junctions) o Intersecciones
         const segments = [];
         for(let i=0; i<rawSegments.length; i++) {
             const s = rawSegments[i];
@@ -389,10 +401,10 @@
             const tVals = [0, 1];
             points.forEach(p => {
                 const t = ((p.x - s.x1) * (s.x2 - s.x1) + (p.y - s.y1) * (s.y2 - s.y1)) / len2;
-                if (t > 1e-5 && t < 1 - 1e-5) { // Proyección dentro del segmento
+                if (t > 1e-5 && t < 1 - 1e-5) {
                     const projX = s.x1 + t * (s.x2 - s.x1);
                     const projY = s.y1 + t * (s.y2 - s.y1);
-                    if ((p.x - projX)**2 + (p.y - projY)**2 < tol * tol) { // Está tocando la línea
+                    if ((p.x - projX)**2 + (p.y - projY)**2 <= tol * tol) { 
                         tVals.push(t);
                     }
                 }
@@ -410,7 +422,7 @@
             }
         }
 
-        // 3. Grid Espacial (Hashing) para unir vértices cercanos
+        // 3. Grid espacial para fusionar vértices adyacentes
         const vertices = [];
         const grid = new Map();
         const getV = (x, y) => {
@@ -420,7 +432,7 @@
                     const key = `${gx+dx},${gy+dy}`;
                     if(grid.has(key)) {
                         for(const v of grid.get(key)) {
-                            if (Math.hypot(v.x - x, v.y - y) < tol) return v;
+                            if (Math.hypot(v.x - x, v.y - y) <= tol) return v;
                         }
                     }
                 }
@@ -433,7 +445,7 @@
             return newV;
         };
 
-        // 4. Eliminar aristas duplicadas y de longitud cero
+        // 4. Eliminar líneas superpuestas y fusionarlas en aristas únicas
         const uniqueEdges = new Map();
         segments.forEach(s => {
             const v1 = getV(s.x1, s.y1);
@@ -441,10 +453,10 @@
             if (v1.id === v2.id) return;
             const id1 = Math.min(v1.id, v2.id);
             const id2 = Math.max(v1.id, v2.id);
-            uniqueEdges.set(`${id1}-${id2}`, {v1, v2}); // Mapeo único elimina líneas encimadas
+            uniqueEdges.set(`${id1}-${id2}`, {v1, v2}); 
         });
 
-        // 5. Podar ramas "muertas" (líneas colgadas o guía) que no cierran polígonos
+        // 5. Podar "ramas muertas" (líneas sueltas que no cierran ningún polígono)
         const adjUndirected = new Map();
         uniqueEdges.forEach((_, key) => {
             const [id1, id2] = key.split('-').map(Number);
@@ -457,7 +469,7 @@
         let pruned = true;
         while(pruned) {
             pruned = false;
-            adjUndirected.forEach((neighbors, vId) => {
+            for (const [vId, neighbors] of adjUndirected.entries()) {
                 if(neighbors.size === 1) {
                     const nId = Array.from(neighbors)[0];
                     neighbors.delete(nId);
@@ -465,10 +477,10 @@
                     uniqueEdges.delete(`${Math.min(vId, nId)}-${Math.max(vId, nId)}`);
                     pruned = true;
                 }
-            });
+            }
         }
 
-        // 6. Construir Grafo Half-Edge
+        // 6. Grafo dirigido (Half-Edge) ordenado por ángulo
         const halfEdges = [];
         uniqueEdges.forEach(e => {
             const a1 = Math.atan2(e.v2.y - e.v1.y, e.v2.x - e.v1.x);
@@ -482,8 +494,8 @@
 
         vertices.forEach(v => v.adj.sort((a, b) => a.angle - b.angle));
 
-        // 7. Búsqueda de ciclos (Caras topológicas)
-        const faces = [];
+        // 7. Extracción de ciclos topológicos y cálculo de Signo Vectorial
+        const rawFaces = [];
         halfEdges.forEach(he => {
             if(he.used) return;
             const pts = [];
@@ -503,16 +515,35 @@
                     const p1 = pts[i], p2 = pts[(i+1)%pts.length];
                     area += (p1.x * p2.y - p2.x * p1.y);
                 }
-                area /= 2;
-                if(area > 1e-5) faces.push({pts, area, matIdx: 3}); // >0 detecta áreas internas en ejes estandar
+                area /= 2; // Área direccional de Gauss
+                rawFaces.push({pts, signedArea: area, area: Math.abs(area), matIdx: 3}); 
             }
         });
 
-        // Ordenar de menor a mayor asegura que los polígonos chicos queden sobre los grandes
+        // 8. Descartar matemáticamente las caras "Universo" (el exterior del perfil)
+        // La cara del universo siempre tiene el área absoluta más grande y un signo vectorial OPUESTO a los huecos internos.
+        let maxArea = -1;
+        let universeSign = 1;
+        rawFaces.forEach(f => {
+            if (f.area > maxArea) {
+                maxArea = f.area;
+                universeSign = Math.sign(f.signedArea);
+            }
+        });
+
+        const faces = [];
+        rawFaces.forEach(f => {
+            // Guardar solo regiones con el signo de las caras internas y con área válida
+            if (Math.sign(f.signedArea) !== universeSign && f.area > 1e-5) {
+                faces.push(f);
+            }
+        });
+
+        // Asegurar que al hacer click los polígonos chicos queden seleccionables encima de los grandes
         return faces.sort((a,b) => a.area - b.area);
     }
 
-    // Extrae bordes de contorno (Afinado sin depender de tol)
+    // Extrae los bordes del contorno exterior con alta precisión
     function extractBoundaryEdges(polygons) {
         const edgeMap = new Map();
         polygons.forEach(poly => {
@@ -605,7 +636,6 @@
         setStatus('Bordes asignados automáticamente. Puedes ajustarlos haciendo clic sobre ellos.');
     }
 
-    // Hit test de bordes
     function findNearestEdge(mxWorld, myWorld) {
         let minDist = Infinity, idx = -1;
         boundaryEdges.forEach((edge, i) => {
@@ -629,20 +659,20 @@
         reader.onload = ev => {
             try {
                 const segments = parseDXF(ev.target.result);
-                if(segments.length === 0) { setStatus('❌ No se encontraron entidades 2D válidas o están en bloque cerrado.', true); return; }
+                if(segments.length === 0) { setStatus('❌ No se encontraron entidades válidas (Asegúrate de explotar los bloques).', true); return; }
                 const tol = +document.getElementById('tolInput').value || 0.5;
                 polygons = buildTopology(segments, tol);
                 if(polygons.length) {
                     recalcBounds();
-                    boundaryEdges = extractBoundaryEdges(polygons); // Ahora sin tolerancias aquí
-                    setStatus(`✅ ${polygons.length} regiones. ${boundaryEdges.length} bordes exteriores. Asigna condiciones.`);
+                    boundaryEdges = extractBoundaryEdges(polygons);
+                    setStatus(`✅ ${polygons.length} regiones creadas. ${boundaryEdges.length} bordes exteriores listos.`);
                     document.getElementById('calcBtn').disabled = false;
                     document.getElementById('rotateBtn').disabled = false;
                     document.getElementById('autoBoundaryBtn').disabled = false;
                     selectedPoly = -1; showThermalMap = false; T = null;
                     document.getElementById('result').style.display = 'none';
                     draw();
-                } else setStatus('❌ No se cerraron polígonos. Revisa las líneas o ajusta la tolerancia.', true);
+                } else setStatus('❌ Ocurrió un error leyendo el polígono. Trata de ajustar la "Tolerancia unión".', true);
             } catch(err) { setStatus('Error al procesar: '+err.message, true); }
         };
         reader.readAsText(file);
@@ -656,12 +686,10 @@
         const mxWorld = ((e.clientX-rect.left)*cssX - pad)/scale + minX;
         const myWorld = (canvas.height - (e.clientY-rect.top)*cssY - pad)/scale + minY;
 
-        // Primero comprobar si click en un borde
         if(boundaryEdges.length) {
             const {idx, minDist} = findNearestEdge(mxWorld, myWorld);
-            const thresholdWorld = 10 / scale; // 10 píxeles de tolerancia
+            const thresholdWorld = 10 / scale; 
             if(minDist < thresholdWorld && idx !== -1) {
-                // Ciclar tipo: 0->1->2->3->0
                 boundaryEdges[idx].type = (boundaryEdges[idx].type + 1) % 4;
                 draw();
                 setStatus(`Borde ${idx+1}: ${['Sin asignar','Exterior','Interior','Neutro'][boundaryEdges[idx].type]}`);
@@ -669,7 +697,6 @@
             }
         }
 
-        // Si no, selección de polígono
         selectedPoly = polygons.findIndex(p => {
             let inside = false;
             for(let i=0,j=p.pts.length-1; i<p.pts.length; j=i++) {
