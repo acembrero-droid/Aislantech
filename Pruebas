@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Aislantech · Análisis Térmico 2D (U-value) · Marcado de bordes</title>
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Open+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --color-primary: #EDD00E; --color-primary-dark: #B8860B; --color-primary-light: #FFF8DC;
+            --color-secondary: #3E3E3E; --color-secondary-dark: #696969; --color-secondary-light: #D3D3D3;
+            --color-accent: #EDD00E; --color-light: #F5F5F5; --color-dark: #333333; --color-gray: #666666; --color-white: #FFFFFF;
+            --transition: all 0.3s ease; --border-radius: 8px;
+            --box-shadow: 0 5px 15px rgba(0,0,0,0.05); --box-shadow-hover: 0 15px 30px rgba(0,0,0,0.1);
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family:'Open Sans',sans-serif; background:var(--color-light); color:var(--color-gray); }
+        h1,h2,h3,.card-title,.btn,.logo-text { font-family:'Montserrat',sans-serif; font-weight:600; color:var(--color-dark); }
+        .container { width:100%; max-width:1350px; margin:0 auto; padding:0 20px; }
+        header { position:sticky; top:0; z-index:1000; background:rgba(255,255,255,0.97); box-shadow:0 2px 10px rgba(0,0,0,0.05); }
+        .header-container { display:flex; justify-content:space-between; align-items:center; padding:15px 20px; }
+        .logo-container { display:flex; align-items:center; text-decoration:none; }
+        .logo-text { display:flex; flex-direction:column; line-height:1.1; }
+        .logo-aislan { color:var(--color-secondary); font-size:1.5rem; font-weight:700; }
+        .logo-tech { color:var(--color-primary); font-size:1.5rem; font-weight:800; }
+        .logo-tagline { font-size:0.7rem; color:var(--color-gray); }
+        .btn-yellow { background:var(--color-primary); color:var(--color-dark); font-weight:700; padding:10px 20px; border-radius:var(--border-radius); text-decoration:none; display:inline-flex; align-items:center; gap:8px; font-size:0.85rem; border:none; cursor:pointer; }
+        .btn-yellow:hover { background:var(--color-primary-dark); color:white; transform:translateY(-3px); }
+        .card { background:white; border-radius:var(--border-radius); box-shadow:var(--box-shadow); margin-bottom:30px; border-top:4px solid var(--color-primary); }
+        .card:hover { transform:translateY(-3px); box-shadow:var(--box-shadow-hover); }
+        .card-header { background:var(--color-primary-light); padding:1rem 1.5rem; display:flex; align-items:center; gap:0.8rem; }
+        .card-title { font-size:1.1rem; }
+        .card-body { padding:1.5rem; }
+        .controls-grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:1.2rem; }
+        .control-group { display:flex; flex-direction:column; gap:6px; }
+        label { font-size:0.7rem; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; color:var(--color-secondary-dark); }
+        input, select { padding:10px 12px; border:1px solid var(--color-secondary-light); border-radius:var(--border-radius); font-size:0.85rem; }
+        input:focus, select:focus { border-color:var(--color-primary); outline:none; }
+        .btn { display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:10px 20px; border-radius:var(--border-radius); font-weight:700; border:none; cursor:pointer; transition:var(--transition); font-family:'Montserrat',sans-serif; font-size:0.85rem; }
+        .btn-primary { background:var(--color-primary); color:var(--color-dark); }
+        .btn-primary:hover:not(:disabled) { background:var(--color-primary-dark); color:white; }
+        .btn-success { background:#2e7d32; color:white; }
+        .btn-success:hover:not(:disabled) { background:#1b5e20; }
+        .btn-outline { background:transparent; border:2px solid var(--color-secondary-light); color:var(--color-secondary); }
+        .btn-outline:hover:not(:disabled) { border-color:var(--color-primary); color:var(--color-primary-dark); background:var(--color-primary-light); }
+        .btn-sm { padding:6px 12px; font-size:0.75rem; }
+        button:disabled, .btn:disabled { opacity:0.5; cursor:not-allowed; }
+        .status-bar { background:var(--color-primary-light); border-left:4px solid var(--color-primary); padding:12px 16px; border-radius:var(--border-radius); margin:15px 0; display:flex; align-items:center; gap:8px; }
+        .status-bar.error { background:#ffebee; border-left-color:#e53935; color:#b71c1c; }
+        .legend-panel { display:flex; flex-wrap:wrap; gap:1rem; background:var(--color-light); padding:12px 16px; border-radius:var(--border-radius); margin:15px 0; align-items:center; }
+        .legend-item { display:flex; align-items:center; gap:8px; font-size:0.8rem; cursor:pointer; }
+        .legend-color { width:20px; height:20px; border-radius:4px; border:1px solid rgba(0,0,0,0.1); }
+        .canvas-wrapper { position:relative; background:#fff; border-radius:var(--border-radius); box-shadow:var(--box-shadow); border:1px solid var(--color-secondary-light); }
+        canvas { display:block; width:100%; height:auto; cursor:crosshair; }
+        footer { background:var(--color-dark); color:white; padding:60px 0 30px; margin-top:60px; }
+        .footer-content { display:flex; flex-wrap:wrap; justify-content:space-between; gap:40px; margin-bottom:40px; }
+        .footer-about { flex:1; min-width:250px; }
+        .footer-logo { font-family:'Montserrat',sans-serif; font-size:1.8rem; margin-bottom:15px; }
+        .footer-logo .logo-aislan { color:white; } .footer-logo .logo-tech { color:var(--color-primary); }
+        .footer-description { color:rgba(255,255,255,0.8); }
+        .footer-legal { display:flex; justify-content:center; gap:30px; flex-wrap:wrap; }
+        .footer-legal a { color:rgba(255,255,255,0.7); text-decoration:none; font-size:0.85rem; }
+        .footer-legal a:hover { color:var(--color-primary); }
+        .footer-bottom { text-align:center; padding-top:30px; border-top:1px solid rgba(255,255,255,0.1); font-size:0.9rem; color:rgba(255,255,255,0.7); }
+        .boundary-legend { display:flex; gap:1.5rem; align-items:center; margin-left:auto; font-size:0.8rem; }
+        .boundary-legend span { display:flex; align-items:center; gap:5px; }
+        .boundary-swatch { width:14px; height:14px; border-radius:3px; display:inline-block; border:1px solid rgba(0,0,0,0.2); }
+    </style>
+</head>
+<body>
+<header>
+    <div class="container header-container">
+        <a href="#" class="logo-container">
+            <div class="logo-text">
+                <div><span class="logo-aislan">AISLAN</span><span class="logo-tech">TECH</span></div>
+                <div class="logo-tagline">Soluciones Técnicas Avanzadas</div>
+            </div>
+        </a>
+        <a href="mailto:info@aislantech.es" class="btn-yellow"><i class="fas fa-envelope"></i> Contacto técnico</a>
+    </div>
+</header>
+
+<div style="background: linear-gradient(135deg, #3E3E3E 0%, #333333 100%); color:white; padding:2rem 0; margin-bottom:2rem;">
+    <div class="container">
+        <h1 style="color:white;"><i class="fas fa-drafting-compass" style="color:var(--color-primary);"></i> Análisis Térmico 2D · Bordes personalizables</h1>
+        <p style="opacity:0.9;">Carga DXF, marca bordes Exterior/Interior/Neutro y calcula la transmitancia U</p>
+    </div>
+</div>
+
+<div class="container">
+    <div class="card">
+        <div class="card-header"><i class="fas fa-upload"></i> <div class="card-title">Carga y parámetros</div></div>
+        <div class="card-body">
+            <div class="controls-grid">
+                <div class="control-group"><label><i class="fas fa-file-dxf"></i> Archivo DXF</label><input type="file" id="dxfFile" accept=".dxf"></div>
+                <div class="control-group"><label><i class="fas fa-ruler-combined"></i> Tolerancia unión</label><input type="number" id="tolInput" value="0.5" step="0.1" min="0.0001"></div>
+                <div class="control-group"><label><i class="fas fa-sync-alt"></i> Rotar (°)</label><div style="display:flex; gap:8px;"><input type="number" id="rotInput" value="0" step="1"><button id="rotateBtn" class="btn btn-primary btn-sm" disabled><i class="fas fa-undo-alt"></i></button></div></div>
+                <div class="control-group"><label><i class="fas fa-cube"></i> Material</label><select id="matSelect"></select><small>Click en región para asignar</small></div>
+                <div class="control-group"><label><i class="fas fa-temperature-low"></i> Temp. Ext / Int (°C)</label><div style="display:flex; gap:8px;"><input type="number" id="tExt" value="0" step="1"><input type="number" id="tInt" value="20" step="1"></div></div>
+                <div class="control-group"><label>&nbsp;</label><div style="display:flex; gap:8px;"><button id="autoBoundaryBtn" class="btn btn-outline btn-sm" disabled><i class="fas fa-magic"></i> Auto asignar</button><button id="calcBtn" class="btn btn-success" disabled><i class="fas fa-chart-line"></i> CALCULAR U</button></div></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="status-bar" id="status"><i class="fas fa-info-circle"></i> <span id="statusText">Esperando archivo DXF...</span></div>
+
+    <div class="legend-panel" id="legend">
+        <div class="boundary-legend">
+            <span><span class="boundary-swatch" style="background:#1976d2;"></span> Exterior</span>
+            <span><span class="boundary-swatch" style="background:#d32f2f;"></span> Interior</span>
+            <span><span class="boundary-swatch" style="background:#757575;"></span> Neutro</span>
+            <span><span class="boundary-swatch" style="background:#000;"></span> Sin asignar</span>
+        </div>
+    </div>
+
+    <div class="canvas-wrapper">
+        <canvas id="canvas" width="900" height="550"></canvas>
+    </div>
+
+    <div id="result" class="result-card"></div>
+</div>
+
+<footer>
+    <div class="container">
+        <div class="footer-content">
+            <div class="footer-about">
+                <div class="footer-logo"><span class="logo-aislan">AISLAN</span><span class="logo-tech">TECH</span></div>
+                <p class="footer-description">Simulación térmica 2D conforme a ISO 10211.</p>
+            </div>
+        </div>
+        <div class="footer-legal"><a href="#">Privacidad</a> <a href="#">Cookies</a> <a href="#">Aviso Legal</a></div>
+        <div class="footer-bottom"><p>&copy; 2025 Aislantech</p></div>
+    </div>
+</footer>
+
+<script>
+(function() {
+    // Materiales
+    let materials = [
+        { name: "Muro / Hormigón", k: 1.2, color: "#95a5a6" },
+        { name: "Aluminio", k: 160, color: "#bdc3c7" },
+        { name: "Rotura Térmica", k: 0.25, color: "#d35400" },
+        { name: "Aire (cámara)", k: 0.026, color: "#ecf0f1" },
+        { name: "Aislante", k: 0.035, color: "#f1c40f" }
+    ];
+    let polygons = [];
+    let minX, maxX, minY, maxY;
+    let selectedPoly = -1;
+    let T = null, kGrid = null, dx, dy;
+    const NX = 120, NY = 120;
+    let showThermalMap = false;
+
+    // Bordes del contorno exterior
+    let boundaryEdges = []; // {p1, p2, type: 0=no,1=ext,2=int,3=neu}
+    let hoveredEdgeIdx = -1;
+
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const statusText = document.getElementById('statusText');
+
+    // UI helpers
+    function rebuildMaterialSelect() {
+        const sel = document.getElementById('matSelect');
+        sel.innerHTML = '';
+        materials.forEach((m,i)=> sel.add(new Option(`${m.name} (k=${m.k})`, i)));
+        if(selectedPoly>=0 && polygons[selectedPoly]) sel.value = polygons[selectedPoly].matIdx;
+    }
+    function updateLegend() {
+        document.getElementById('legend').innerHTML = materials.map((m,i)=>
+            `<div class="legend-item" data-idx="${i}" title="Seleccionar material">
+                <div class="legend-color" style="background:${m.color}"></div> ${m.name} <small>(k=${m.k})</small>
+            </div>`).join('') +
+            `<div class="boundary-legend" style="margin-left:auto;">
+                <span><span class="boundary-swatch" style="background:#1976d2;"></span> Exterior</span>
+                <span><span class="boundary-swatch" style="background:#d32f2f;"></span> Interior</span>
+                <span><span class="boundary-swatch" style="background:#757575;"></span> Neutro</span>
+                <span><span class="boundary-swatch" style="background:#000;"></span> Sin asignar</span>
+            </div>`;
+    }
+    function setStatus(msg, isError=false) {
+        statusText.textContent = msg;
+        const bar = document.getElementById('status');
+        bar.className = 'status-bar' + (isError ? ' error' : '');
+        bar.querySelector('i').className = isError ? 'fas fa-exclamation-triangle' : 'fas fa-info-circle';
+    }
+
+    // ──── Parser DXF mejorado (Máquina de estados robusta) ────
+    function parseDXF(text) {
+        const lines = text.split(/\r?\n/);
+        let idx = 0;
+        const segments = [];
+        let currentEntity = null;
+        let currentPolyline = null;
+
+        function getPair() {
+            while(idx < lines.length - 1) {
+                const codeStr = lines[idx].trim();
+                const valueStr = lines[idx+1].trim();
+                idx += 2;
+                if(codeStr !== '') return [parseInt(codeStr), valueStr];
+            }
+            return null;
+        }
+
+        function flushEntity() {
+            if(!currentEntity) return;
+
+            if (currentEntity.type === 'VERTEX' && currentPolyline) {
+                currentPolyline.vertices.push({x: currentEntity.x || 0, y: currentEntity.y || 0});
+            } else if(currentEntity.type === 'LINE') {
+                if(currentEntity.x1!==undefined && currentEntity.y1!==undefined && currentEntity.x2!==undefined && currentEntity.y2!==undefined) {
+                    segments.push({x1: currentEntity.x1, y1: currentEntity.y1, x2: currentEntity.x2, y2: currentEntity.y2});
+                }
+            } else if((currentEntity.type === 'CIRCLE' || currentEntity.type === 'ARC') && currentEntity.r > 0) {
+                const cx = currentEntity.cx || 0;
+                const cy = currentEntity.cy || 0;
+                const r = currentEntity.r;
+                const startAngle = currentEntity.startAngle !== undefined ? currentEntity.startAngle : 0;
+                const endAngle = currentEntity.endAngle !== undefined ? currentEntity.endAngle : 360;
+
+                const N = Math.max(16, Math.floor(2 * Math.PI * r / 2)); 
+                let totalAngle = endAngle - startAngle;
+                if (totalAngle <= 0 && currentEntity.type === 'ARC') totalAngle += 360;
+
+                const radStart = startAngle * Math.PI / 180;
+                const radTotal = totalAngle * Math.PI / 180;
+
+                for(let i=0; i<N; i++) {
+                    const a1 = radStart + radTotal * (i/N);
+                    const a2 = radStart + radTotal * ((i+1)/N);
+                    segments.push({
+                        x1: cx + r * Math.cos(a1), y1: cy + r * Math.sin(a1),
+                        x2: cx + r * Math.cos(a2), y2: cy + r * Math.sin(a2)
+                    });
+                }
+            } else if(currentEntity.type === 'LWPOLYLINE' && currentEntity.vertices.length >= 2) {
+                for(let i=0; i<currentEntity.vertices.length-1; i++) {
+                    segments.push({
+                        x1: currentEntity.vertices[i].x, y1: currentEntity.vertices[i].y,
+                        x2: currentEntity.vertices[i+1].x, y2: currentEntity.vertices[i+1].y
+                    });
+                }
+                if(currentEntity.closed && currentEntity.vertices.length > 2) {
+                    const last = currentEntity.vertices[currentEntity.vertices.length-1];
+                    const first = currentEntity.vertices[0];
+                    segments.push({x1: last.x, y1: last.y, x2: first.x, y2: first.y});
+                }
+            }
+        }
+
+        while(idx < lines.length) {
+            const pair = getPair();
+            if(!pair) break;
+            const [code, value] = pair;
+
+            if(code === 0) {
+                flushEntity();
+                
+                if (value === 'LINE' || value === 'CIRCLE' || value === 'ARC' || value === 'LWPOLYLINE') {
+                    currentEntity = { type: value, vertices: [] };
+                } else if (value === 'POLYLINE') {
+                    currentEntity = { type: value, vertices: [], closed: false };
+                    currentPolyline = currentEntity;
+                } else if (value === 'VERTEX') {
+                    currentEntity = { type: 'VERTEX', x: 0, y: 0 };
+                } else if (value === 'SEQEND') {
+                    if (currentPolyline) {
+                        currentEntity = currentPolyline; 
+                        currentEntity.type = 'LWPOLYLINE'; 
+                        flushEntity();
+                        currentPolyline = null;
+                        currentEntity = null;
+                    }
+                } else {
+                    currentEntity = null;
+                }
+            } else if (currentEntity) {
+                const v = parseFloat(value);
+                if (currentEntity.type === 'LINE') {
+                    if (code === 10) currentEntity.x1 = v;
+                    else if (code === 20) currentEntity.y1 = v;
+                    else if (code === 11) currentEntity.x2 = v;
+                    else if (code === 21) currentEntity.y2 = v;
+                } else if (currentEntity.type === 'CIRCLE' || currentEntity.type === 'ARC') {
+                    if (code === 10) currentEntity.cx = v;
+                    else if (code === 20) currentEntity.cy = v;
+                    else if (code === 40) currentEntity.r = v;
+                    else if (code === 50) currentEntity.startAngle = v;
+                    else if (code === 51) currentEntity.endAngle = v;
+                } else if (currentEntity.type === 'LWPOLYLINE' || currentEntity.type === 'POLYLINE') {
+                    if (code === 70) currentEntity.closed = (parseInt(value) & 1) !== 0;
+                    else if (code === 10 && currentEntity.type === 'LWPOLYLINE') currentEntity.vertices.push({ x: v, y: 0 });
+                    else if (code === 20 && currentEntity.type === 'LWPOLYLINE' && currentEntity.vertices.length > 0) {
+                        currentEntity.vertices[currentEntity.vertices.length - 1].y = v;
+                    }
+                } else if (currentEntity.type === 'VERTEX') {
+                    if (code === 10) currentEntity.x = v;
+                    else if (code === 20) currentEntity.y = v;
+                }
+            }
+        }
+        flushEntity();
+
+        return segments.filter(s => Math.hypot(s.x2-s.x1, s.y2-s.y1) > 1e-9);
+    }
+
+    function buildTopology(segments, tol) {
+        const vertices = new Map();
+        const getV = (x,y) => {
+            const key = `${Math.round(x/tol)}|${Math.round(y/tol)}`;
+            if(!vertices.has(key)) vertices.set(key, {x,y,adj:[]});
+            return vertices.get(key);
+        };
+        const edges = [];
+        segments.forEach(s => {
+            const v1 = getV(s.x1, s.y1), v2 = getV(s.x2, s.y2);
+            if(v1 === v2) return;
+            const a1 = Math.atan2(v2.y-v1.y, v2.x-v1.x), a2 = Math.atan2(v1.y-v2.y, v1.x-v2.x);
+            const e1 = {from:v1, to:v2, angle:a1, used:false}, e2 = {from:v2, to:v1, angle:a2, used:false};
+            e1.rev = e2; e2.rev = e1;
+            v1.adj.push(e1); v2.adj.push(e2);
+            edges.push(e1, e2);
+        });
+        vertices.forEach(v => v.adj.sort((a,b)=> a.angle - b.angle));
+        const faces = [];
+        edges.forEach(edge => {
+            if(edge.used) return;
+            const pts = [];
+            let curr = edge;
+            while(!curr.used) {
+                curr.used = true;
+                pts.push({x:curr.from.x, y:curr.from.y});
+                const idx = curr.to.adj.indexOf(curr.rev);
+                const nextIdx = (idx - 1 + curr.to.adj.length) % curr.to.adj.length;
+                curr = curr.to.adj[nextIdx];
+            }
+            if(pts.length > 2) {
+                const area = pts.reduce((a,p,i)=> a + (p.x*pts[(i+1)%pts.length].y - pts[(i+1)%pts.length].x*p.y), 0)/2;
+                if(area > 0) faces.push({pts, area, matIdx:3});
+            }
+        });
+        return faces;
+    }
+
+    // Extrae bordes únicos del contorno exterior
+    function extractBoundaryEdges(polygons, tol) {
+        const edgeMap = new Map();
+        polygons.forEach(poly => {
+            for(let i=0; i<poly.pts.length; i++) {
+                const p1 = poly.pts[i], p2 = poly.pts[(i+1)%poly.pts.length];
+                const key = `${Math.round(p1.x/tol)},${Math.round(p1.y/tol)}-${Math.round(p2.x/tol)},${Math.round(p2.y/tol)}`;
+                const revKey = `${Math.round(p2.x/tol)},${Math.round(p2.y/tol)}-${Math.round(p1.x/tol)},${Math.round(p1.y/tol)}`;
+                const existing = edgeMap.get(key) || edgeMap.get(revKey);
+                if(existing) existing.count++;
+                else edgeMap.set(key, {p1, p2, count:1, type:0});
+            }
+        });
+        return Array.from(edgeMap.values()).filter(e => e.count === 1).map(e => ({p1:e.p1, p2:e.p2, type:0}));
+    }
+
+    function recalcBounds() {
+        if(!polygons.length) return;
+        const all = polygons.flatMap(p=>p.pts);
+        minX = Math.min(...all.map(p=>p.x));
+        maxX = Math.max(...all.map(p=>p.x));
+        minY = Math.min(...all.map(p=>p.y));
+        maxY = Math.max(...all.map(p=>p.y));
+    }
+
+    function getTransform() {
+        const pad = 45, cw = canvas.width, ch = canvas.height;
+        const scale = Math.min((cw-pad*2)/(maxX-minX||1), (ch-pad*2)/(maxY-minY||1));
+        return { pad, scale, tx: x => pad + (x-minX)*scale, ty: y => ch - (pad + (y-minY)*scale) };
+    }
+
+    function draw() {
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+        if(!polygons.length) return;
+        const {tx, ty, scale} = getTransform();
+        if(showThermalMap && T) {
+            const te = +document.getElementById('tExt').value, ti = +document.getElementById('tInt').value;
+            const cw = (maxX-minX)/NX*scale, ch = (maxY-minY)/NY*scale;
+            for(let i=0; i<NY; i++) {
+                for(let j=0; j<NX; j++) {
+                    const f = (T[i][j]-te)/(ti-te||1);
+                    const hue = (1 - Math.min(1,Math.max(0,f))) * 240;
+                    ctx.fillStyle = `hsl(${hue},75%,50%)`;
+                    ctx.fillRect(tx(minX+j*dx), ty(minY+i*dy)-ch, cw+0.6, ch+0.6);
+                }
+            }
+        } else {
+            // Dibujar polígonos con colores de material
+            polygons.forEach((p,i) => {
+                ctx.beginPath();
+                ctx.moveTo(tx(p.pts[0].x), ty(p.pts[0].y));
+                p.pts.forEach(pt => ctx.lineTo(tx(pt.x), ty(pt.y)));
+                ctx.closePath();
+                ctx.fillStyle = materials[p.matIdx]?.color || '#ccc';
+                ctx.fill();
+                ctx.strokeStyle = i===selectedPoly ? '#e74c3c' : '#2c3e50';
+                ctx.lineWidth = i===selectedPoly ? 3 : 1;
+                ctx.stroke();
+            });
+        }
+        // Dibujar bordes del contorno exterior
+        boundaryEdges.forEach((edge, idx) => {
+            ctx.beginPath();
+            ctx.moveTo(tx(edge.p1.x), ty(edge.p1.y));
+            ctx.lineTo(tx(edge.p2.x), ty(edge.p2.y));
+            let color = '#000';
+            if(edge.type === 1) color = '#1976d2'; // exterior
+            else if(edge.type === 2) color = '#d32f2f'; // interior
+            else if(edge.type === 3) color = '#757575'; // neutro
+            ctx.strokeStyle = color;
+            ctx.lineWidth = (idx === hoveredEdgeIdx) ? 4 : 2.5;
+            ctx.stroke();
+        });
+    }
+
+    // Autoasignación de bordes
+    function autoAssignBoundaries() {
+        if(!boundaryEdges.length) return;
+        const midXarr = boundaryEdges.map(e => (e.p1.x+e.p2.x)/2);
+        const minMid = Math.min(...midXarr), maxMid = Math.max(...midXarr);
+        const range = maxMid - minMid || 1;
+        boundaryEdges.forEach(e => {
+            const mid = (e.p1.x+e.p2.x)/2;
+            if(mid < minMid + 0.1*range) e.type = 1; // exterior
+            else if(mid > maxMid - 0.1*range) e.type = 2; // interior
+            else e.type = 3; // neutro
+        });
+        draw();
+        setStatus('Bordes asignados automáticamente. Puedes ajustarlos haciendo clic sobre ellos.');
+    }
+
+    // Hit test de bordes
+    function findNearestEdge(mxWorld, myWorld) {
+        let minDist = Infinity, idx = -1;
+        boundaryEdges.forEach((edge, i) => {
+            const {p1, p2} = edge;
+            const dx = p2.x - p1.x, dy = p2.y - p1.y;
+            const len2 = dx*dx+dy*dy;
+            let t = ((mxWorld-p1.x)*dx + (myWorld-p1.y)*dy) / len2;
+            t = Math.max(0, Math.min(1, t));
+            const projx = p1.x + t*dx, projy = p1.y + t*dy;
+            const dist = Math.hypot(mxWorld-projx, myWorld-projy);
+            if(dist < minDist) { minDist = dist; idx = i; }
+        });
+        return { idx, minDist };
+    }
+
+    // Eventos
+    document.getElementById('dxfFile').onchange = e => {
+        const file = e.target.files[0];
+        if(!file) return;
+        const reader = new FileReader();
+        reader.onload = ev => {
+            try {
+                const segments = parseDXF(ev.target.result);
+                if(segments.length === 0) { setStatus('❌ No se encontraron entidades 2D.', true); return; }
+                const tol = +document.getElementById('tolInput').value || 0.5;
+                polygons = buildTopology(segments, tol);
+                if(polygons.length) {
+                    recalcBounds();
+                    boundaryEdges = extractBoundaryEdges(polygons, tol);
+                    setStatus(`✅ ${polygons.length} regiones. ${boundaryEdges.length} bordes exteriores. Asigna condiciones.`);
+                    document.getElementById('calcBtn').disabled = false;
+                    document.getElementById('rotateBtn').disabled = false;
+                    document.getElementById('autoBoundaryBtn').disabled = false;
+                    selectedPoly = -1; showThermalMap = false; T = null;
+                    document.getElementById('result').style.display = 'none';
+                    draw();
+                } else setStatus('❌ No se cerraron polígonos. Ajusta tolerancia.', true);
+            } catch(err) { setStatus('Error: '+err.message, true); }
+        };
+        reader.readAsText(file);
+    };
+
+    canvas.onclick = e => {
+        if(!polygons.length || showThermalMap) return;
+        const rect = canvas.getBoundingClientRect();
+        const {tx, ty, pad, scale} = getTransform();
+        const cssX = canvas.width / rect.width, cssY = canvas.height / rect.height;
+        const mxWorld = ((e.clientX-rect.left)*cssX - pad)/scale + minX;
+        const myWorld = (canvas.height - (e.clientY-rect.top)*cssY - pad)/scale + minY;
+
+        // Primero comprobar si click en un borde
+        if(boundaryEdges.length) {
+            const {idx, minDist} = findNearestEdge(mxWorld, myWorld);
+            const thresholdWorld = 10 / scale; // 10 píxeles de tolerancia
+            if(minDist < thresholdWorld && idx !== -1) {
+                // Ciclar tipo: 0->1->2->3->0
+                boundaryEdges[idx].type = (boundaryEdges[idx].type + 1) % 4;
+                draw();
+                setStatus(`Borde ${idx+1}: ${['Sin asignar','Exterior','Interior','Neutro'][boundaryEdges[idx].type]}`);
+                return;
+            }
+        }
+
+        // Si no, selección de polígono
+        selectedPoly = polygons.findIndex(p => {
+            let inside = false;
+            for(let i=0,j=p.pts.length-1; i<p.pts.length; j=i++) {
+                if((p.pts[i].y > myWorld) !== (p.pts[j].y > myWorld) &&
+                    mxWorld < (p.pts[j].x-p.pts[i].x)*(myWorld-p.pts[i].y)/(p.pts[j].y-p.pts[i].y)+p.pts[i].x)
+                    inside = !inside;
+            }
+            return inside;
+        });
+        if(selectedPoly !== -1) {
+            document.getElementById('matSelect').value = polygons[selectedPoly].matIdx;
+            setStatus(`Región ${selectedPoly+1} seleccionada.`);
+        }
+        draw();
+    };
+
+    canvas.onmousemove = e => {
+        if(!polygons.length || showThermalMap) return;
+        const rect = canvas.getBoundingClientRect();
+        const {tx, ty, pad, scale} = getTransform();
+        const cssX = canvas.width / rect.width, cssY = canvas.height / rect.height;
+        const mxWorld = ((e.clientX-rect.left)*cssX - pad)/scale + minX;
+        const myWorld = (canvas.height - (e.clientY-rect.top)*cssY - pad)/scale + minY;
+        const {idx, minDist} = findNearestEdge(mxWorld, myWorld);
+        const thresholdWorld = 10 / scale;
+        const newHover = (minDist < thresholdWorld) ? idx : -1;
+        if(newHover !== hoveredEdgeIdx) {
+            hoveredEdgeIdx = newHover;
+            draw();
+        }
+    };
+
+    document.getElementById('matSelect').onchange = function() {
+        if(selectedPoly>=0 && polygons[selectedPoly]) polygons[selectedPoly].matIdx = +this.value;
+        if(!showThermalMap) draw();
+    };
+
+    document.getElementById('rotateBtn').onclick = () => {
+        if(!polygons.length) return;
+        const ang = (+document.getElementById('rotInput').value) * Math.PI/180;
+        const cx = (minX+maxX)/2, cy = (minY+maxY)/2;
+        polygons.forEach(p => p.pts.forEach(pt => {
+            const dx = pt.x-cx, dy = pt.y-cy;
+            pt.x = cx + dx*Math.cos(ang) - dy*Math.sin(ang);
+            pt.y = cy + dx*Math.sin(ang) + dy*Math.cos(ang);
+        }));
+        recalcBounds();
+        boundaryEdges = extractBoundaryEdges(polygons, +document.getElementById('tolInput').value||0.5);
+        showThermalMap = false; T = null;
+        document.getElementById('result').style.display = 'none';
+        draw();
+    };
+
+    document.getElementById('autoBoundaryBtn').onclick = autoAssignBoundaries;
+
+    // ──── Solver con condiciones de contorno basadas en bordes ────
+    document.getElementById('calcBtn').onclick = () => {
+        if(!polygons.length) return;
+        if(!boundaryEdges.some(e => e.type===1) || !boundaryEdges.some(e => e.type===2)) {
+            setStatus('❌ Debes marcar al menos un borde Exterior y uno Interior.', true);
+            return;
+        }
+        setStatus('Calculando...');
+        document.getElementById('calcBtn').disabled = true;
+        setTimeout(()=> runSolver(0), 30);
+    };
+
+    function runSolver(step) {
+        const te = +document.getElementById('tExt').value;
+        const ti = +document.getElementById('tInt').value;
+        if(step === 0) {
+            dx = (maxX-minX)/NX; dy = (maxY-minY)/NY;
+            kGrid = Array.from({length:NY}, (_,i)=> Array.from({length:NX}, (_,j)=> {
+                const x = minX + j*dx + dx/2, y = minY + i*dy + dy/2;
+                const p = polygons.find(poly => {
+                    let inside = false;
+                    for(let k=0,l=poly.pts.length-1; k<poly.pts.length; l=k++) {
+                        if((poly.pts[k].y > y) !== (poly.pts[l].y > y) &&
+                            x < (poly.pts[l].x-poly.pts[k].x)*(y-poly.pts[k].y)/(poly.pts[l].y-poly.pts[k].y)+poly.pts[k].x)
+                            inside = !inside;
+                    }
+                    return inside;
+                });
+                return p ? materials[p.matIdx].k : 0.026;
+            }));
+            // Inicializar temperaturas
+            T = Array.from({length:NY}, ()=> new Array(NX).fill((te+ti)/2));
+            // Precalcular condiciones de cara
+            window.faceBC = Array.from({length:NY}, ()=> Array.from({length:NX}, ()=> [0,0,0,0])); // izquierda,derecha,abajo,arriba: 0 libre, 1 ext, 2 int, 3 adia
+            const threshold = Math.max(dx,dy)*0.6;
+            boundaryEdges.forEach(edge => {
+                if(edge.type === 0) return;
+                const bcType = edge.type; // 1 ext, 2 int, 3 neu -> mapeamos: 1->1, 2->2, 3->3 (adiabático)
+                // Discretizar el borde y marcar caras de celdas cercanas
+                const steps = Math.ceil(Math.hypot(edge.p2.x-edge.p1.x, edge.p2.y-edge.p1.y) / (Math.min(dx,dy)*0.5));
+                for(let s=0; s<=steps; s++) {
+                    const t = s/steps;
+                    const px = edge.p1.x + t*(edge.p2.x-edge.p1.x);
+                    const py = edge.p1.y + t*(edge.p2.y-edge.p1.y);
+                    const j = Math.floor((px - minX)/dx);
+                    const i = Math.floor((py - minY)/dy);
+                    if(i>=0 && i<NY && j>=0 && j<NX) {
+                        // Determinar qué cara toca: comprobar distancias a las cuatro caras
+                        const cellLeft = minX + j*dx, cellRight = cellLeft+dx;
+                        const cellBottom = minY + i*dy, cellTop = cellBottom+dy;
+                        const distLeft = Math.abs(px - cellLeft);
+                        const distRight = Math.abs(px - cellRight);
+                        const distBottom = Math.abs(py - cellBottom);
+                        const distTop = Math.abs(py - cellTop);
+                        const minDist = Math.min(distLeft, distRight, distBottom, distTop);
+                        if(minDist < threshold) {
+                            if(minDist === distLeft) window.faceBC[i][j][0] = bcType;
+                            else if(minDist === distRight) window.faceBC[i][j][1] = bcType;
+                            else if(minDist === distBottom) window.faceBC[i][j][2] = bcType;
+                            else if(minDist === distTop) window.faceBC[i][j][3] = bcType;
+                        }
+                    }
+                }
+            });
+            setTimeout(()=> runSolver(1), 20);
+            return;
+        }
+        if(step === 1) {
+            const iter = 1200;
+            let done = 0;
+            function chunk() {
+                const end = Math.min(done+300, iter);
+                for(let it=done; it<end; it++) {
+                    for(let i=0; i<NY; i++) {
+                        for(let j=0; j<NX; j++) {
+                            const bc = window.faceBC[i][j];
+                            // Si alguna cara es Dirichlet, fijamos temperatura y saltamos
+                            if(bc.includes(1) || bc.includes(2)) {
+                                if(bc.includes(1)) T[i][j] = te;
+                                else if(bc.includes(2)) T[i][j] = ti;
+                                continue;
+                            }
+                            // Contribuciones de vecinos
+                            let num = 0, den = 0;
+                            // izquierda
+                            if(j>0) {
+                                if(bc[0] === 3) { /* adiabático: sin flujo, omitir */ }
+                                else { num += kGrid[i][j-1]*T[i][j-1]; den += kGrid[i][j-1]; }
+                            }
+                            // derecha
+                            if(j<NX-1) {
+                                if(bc[1] === 3) { }
+                                else { num += kGrid[i][j+1]*T[i][j+1]; den += kGrid[i][j+1]; }
+                            }
+                            // abajo
+                            if(i>0) {
+                                if(bc[2] === 3) { }
+                                else { num += kGrid[i-1][j]*T[i-1][j]; den += kGrid[i-1][j]; }
+                            }
+                            // arriba
+                            if(i<NY-1) {
+                                if(bc[3] === 3) { }
+                                else { num += kGrid[i+1][j]*T[i+1][j]; den += kGrid[i+1][j]; }
+                            }
+                            if(den > 0) T[i][j] = num/den;
+                        }
+                    }
+                }
+                done = end;
+                if(done < iter) setTimeout(chunk, 1);
+                else setTimeout(()=> runSolver(2), 10);
+            }
+            chunk();
+            return;
+        }
+        if(step === 2) {
+            let flux = 0;
+            // Flujo en caras interiores (tipo 2)
+            for(let i=0; i<NY; i++) {
+                for(let j=0; j<NX; j++) {
+                    if(window.faceBC[i][j][1] === 2 && j<NX-1) {
+                        flux += kGrid[i][j] * (T[i][j+1] - T[i][j]) / dx * dy;
+                    }
+                }
+            }
+            const U = Math.abs(flux / ((maxY-minY)*(ti-te)));
+            document.getElementById('result').style.display = 'block';
+            document.getElementById('result').innerHTML = `<i class="fas fa-chart-simple"></i> <strong>U = ${U.toFixed(4)} W/m²·K</strong><br><small>Malla ${NX}×${NY} | Flujo: ${flux.toFixed(3)} W</small>`;
+            setStatus(`✅ U = ${U.toFixed(3)} W/m²·K`);
+            showThermalMap = true;
+            draw();
+            document.getElementById('calcBtn').disabled = false;
+        }
+    }
+
+    rebuildMaterialSelect();
+    updateLegend();
+    draw();
+})();
+</script>
+</body>
+</html>
