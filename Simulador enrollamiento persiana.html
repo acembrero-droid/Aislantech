@@ -5,10 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Simulador Cinemático de Persianas - Versión Industrial</title>
     <script src="https://cdn.jsdelivr.net/npm/dxf-parser@1.1.2/dist/dxf-parser.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root { --bg: #0f172a; --panel: #1e293b; --text: #f8fafc; --border: #334155; --accent: #3b82f6; }
         body { font-family: system-ui, -apple-system, sans-serif; margin: 0; display: flex; height: 100vh; background: var(--bg); color: var(--text); overflow: hidden; }
-        #sidebar { width: 380px; background: var(--panel); padding: 20px; display: flex; flex-direction: column; gap: 15px; border-right: 1px solid var(--border); overflow-y: auto; z-index: 10; box-shadow: 2px 0 10px rgba(0,0,0,0.5); }
+        #sidebar { width: 420px; background: var(--panel); padding: 20px; display: flex; flex-direction: column; gap: 15px; border-right: 1px solid var(--border); overflow-y: auto; z-index: 10; box-shadow: 2px 0 10px rgba(0,0,0,0.5); }
+        
+        /* Ajuste de scrollbar para el sidebar */
+        #sidebar::-webkit-scrollbar { width: 8px; }
+        #sidebar::-webkit-scrollbar-track { background: var(--bg); }
+        #sidebar::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
+
         h2 { margin: 0; color: #60a5fa; font-size: 1.2rem; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
         h3 { margin: 10px 0 5px 0; color: #94a3b8; font-size: 0.9rem; text-transform: uppercase; }
         label { font-size: 0.85rem; color: #cbd5e1; font-weight: 600; display: block; margin-bottom: 4px; }
@@ -19,7 +26,7 @@
         .btn-action { background: var(--accent); color: white; border: none; padding: 10px; border-radius: 6px; width: 100%; font-weight: bold; cursor: pointer; transition: 0.2s; margin-bottom: 10px; }
         .btn-action:hover { background: #2563eb; }
         
-        .btn-export { background: #10b981; color: white; border: none; padding: 12px 10px; border-radius: 6px; width: 100%; font-weight: bold; cursor: pointer; transition: 0.2s; margin-top: 15px; }
+        .btn-export { background: #10b981; color: white; border: none; padding: 12px 10px; border-radius: 6px; width: 100%; font-weight: bold; cursor: pointer; transition: 0.2s; margin-top: 10px; }
         .btn-export:hover { background: #059669; }
         
         .checkbox-group { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
@@ -30,6 +37,8 @@
         .highlight { color: #10b981; font-weight: bold; font-size: 1.1rem; }
         .status { padding: 8px; border-radius: 4px; font-size: 0.8rem; background: #334155; color: #94a3b8; text-align: center; margin-top: 5px; }
         .status.ok { background: #064e3b; color: #34d399; }
+        
+        .chart-wrapper { background: #0f172a; border: 1px solid #334155; border-radius: 6px; padding: 10px; margin-top: 5px; height: 260px; position: relative; }
         
         #canvas-container { flex-grow: 1; position: relative; display: flex; background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%); cursor: crosshair; overflow: hidden; }
         canvas { width: 100%; height: 100%; display: block; }
@@ -62,7 +71,6 @@
 
     <div>
         <h3>2. Geometría y Cálculo Inverso</h3>
-        
         <div class="grid-2">
             <div>
                 <label>Diámetro Eje (mm)</label>
@@ -87,6 +95,13 @@
         <div class="input-group">
             <label>3. Número de Lamas</label>
             <input type="number" id="valLamas" value="30" step="1">
+        </div>
+    </div>
+
+    <div>
+        <h3>📊 Evolución de Enrollamiento</h3>
+        <div class="chart-wrapper">
+            <canvas id="chartEvolucion"></canvas>
         </div>
     </div>
 
@@ -117,7 +132,7 @@
     let appState = 'IDLE'; 
     let pSup = null; let pInf = null; let pEje = null; 
     let cursorPoint = null; 
-    let renderData = null; // Guardará el estado para exportar DXF
+    let renderData = null; 
 
     let calibConfig = { cx: 0, cy: 0, scale: 1, midX: 0, midY: 0 };
     let simCam = { x: 0, y: 0, zoom: 1 };
@@ -125,7 +140,6 @@
     let lastMouse = { x: 0, y: 0 };
     let altoLama = 45; 
     
-    // Configuración: Cuántas lamas caen verticales (paño recto)
     const LAMAS_COLGANTES = 2;
 
     window.addEventListener('resize', () => {
@@ -137,7 +151,7 @@
     canvas.width = document.getElementById('canvas-container').clientWidth;
     canvas.height = document.getElementById('canvas-container').clientHeight;
 
-    // --- LÓGICA DE CÁLCULO TRIDIRECCIONAL ---
+    // --- LOGICA DE FORMULARIOS ---
     const inputAltura = document.getElementById('valAlturaTotal');
     const inputLamas = document.getElementById('valLamas');
     const inputDiametroObj = document.getElementById('valDiametroObjetivo');
@@ -159,7 +173,6 @@
         simular();
     });
 
-    // Motor Inverso desde el Diámetro
     inputDiametroObj.addEventListener('input', function() {
         if (appState !== 'SIMULATING' || ignoreNextEvent || !pSup || !pInf || !pEje) return;
         
@@ -206,7 +219,7 @@
         simular();
     });
 
-    // --- 1. EXTRACTOR DXF ---
+    // --- LECTURA DXF ---
     document.getElementById('fileDxf').addEventListener('change', function(e) {
         const file = e.target.files[0];
         if (!file) return;
@@ -276,7 +289,7 @@
         return poligonos.sort((a, b) => b.area - a.area);
     }
 
-    // --- 2. SISTEMA DE CALIBRACIÓN Y EVENTOS ---
+    // --- CALIBRACIÓN ---
     function updateCalibConfig() {
         calibConfig.cx = canvas.width / 2; calibConfig.cy = canvas.height / 2;
         calibConfig.scale = Math.min(canvas.width / (bbox.maxX - bbox.minX), canvas.height / (bbox.maxY - bbox.minY)) * 0.4; 
@@ -330,31 +343,22 @@
                 document.getElementById('btnRecalibrar').style.display = 'block';
                 
                 altoLama = Math.hypot(pInf.x - pSup.x, pInf.y - pSup.y);
-                
-                // --- DEFAULTS ---
-                // Eje por defecto a 60mm
                 document.getElementById('valEje').value = "60";
                 
-                // CÁLCULO VECTORIAL DEL ANCHO REAL (Perpendicularidad Exacta)
                 let dx = pInf.x - pSup.x;
                 let dy = pInf.y - pSup.y;
-                let maxDist = -Infinity;
-                let minDist = Infinity;
+                let maxDist = -Infinity; let minDist = Infinity;
                 
                 dxfPoligons.forEach(pol => {
                     pol.pts.forEach(p => {
-                        // Ecuación de distancia perpendicular a la línea de bisagras
                         let distPerp = (dx * (pSup.y - p.y) - (pSup.x - p.x) * dy) / altoLama;
                         if(distPerp > maxDist) maxDist = distPerp;
                         if(distPerp < minDist) minDist = distPerp;
                     });
                 });
                 
-                let anchoRealDXF = maxDist - minDist;
-                // Un 30% menos equivale a multiplicarlo por 0.70
-                let espesorOptimo = anchoRealDXF * 0.70;
+                let espesorOptimo = (maxDist - minDist) * 0.70;
                 document.getElementById('valEspesor').value = espesorOptimo.toFixed(1);
-                
                 document.getElementById('infoAlto').innerText = altoLama.toFixed(2) + " mm";
                 
                 let lamasActuales = parseInt(inputLamas.value);
@@ -383,7 +387,6 @@
 
     canvas.addEventListener('mouseup', () => isDragging = false);
     canvas.addEventListener('mouseleave', () => isDragging = false);
-    canvas.addEventListener('contextmenu', e => e.preventDefault());
 
     function renderCalibracion() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -406,22 +409,20 @@
             ctx.strokeStyle = "rgba(255,255,255,0.9)"; ctx.lineWidth = 1; ctx.stroke();
 
             if (pSup && appState === 'CALIBRATING_P2') {
-                let sp = toScreen(pSup);
-                ctx.beginPath(); ctx.moveTo(sp.x, sp.y); ctx.lineTo(hp.x, hp.y);
+                let sp = toScreen(pSup); ctx.beginPath(); ctx.moveTo(sp.x, sp.y); ctx.lineTo(hp.x, hp.y);
                 ctx.strokeStyle = "#ef4444"; ctx.lineWidth = 2; ctx.setLineDash([5, 5]); ctx.stroke(); ctx.setLineDash([]);
             }
             if (pSup && appState === 'CALIBRATING_AXIS') {
-                let sp = toScreen(pSup);
-                ctx.beginPath(); ctx.moveTo(sp.x, sp.y); ctx.lineTo(hp.x, hp.y);
+                let sp = toScreen(pSup); ctx.beginPath(); ctx.moveTo(sp.x, sp.y); ctx.lineTo(hp.x, hp.y);
                 ctx.strokeStyle = "#8b5cf6"; ctx.lineWidth = 2; ctx.setLineDash([5, 5]); ctx.stroke(); ctx.setLineDash([]);
             }
         }
 
-        if (pSup) { let sp = toScreen(pSup); ctx.beginPath(); ctx.arc(sp.x, sp.y, 4, 0, Math.PI*2); ctx.fillStyle = '#3b82f6'; ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth=1; ctx.stroke(); }
-        if (pInf) { let ip = toScreen(pInf); ctx.beginPath(); ctx.arc(ip.x, ip.y, 4, 0, Math.PI*2); ctx.fillStyle = '#ef4444'; ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth=1; ctx.stroke(); }
+        if (pSup) { let sp = toScreen(pSup); ctx.beginPath(); ctx.arc(sp.x, sp.y, 4, 0, Math.PI*2); ctx.fillStyle = '#3b82f6'; ctx.fill(); ctx.strokeStyle='#fff'; ctx.stroke(); }
+        if (pInf) { let ip = toScreen(pInf); ctx.beginPath(); ctx.arc(ip.x, ip.y, 4, 0, Math.PI*2); ctx.fillStyle = '#ef4444'; ctx.fill(); ctx.strokeStyle='#fff'; ctx.stroke(); }
     }
 
-    // --- 3. MOTOR CINEMÁTICO RENDERIZADO VISUAL ---
+    // --- MOTOR PRINCIPAL ---
     function simular() {
         if(appState !== 'SIMULATING' || !pSup || !pInf || !pEje) return;
 
@@ -433,11 +434,9 @@
         const radioEjeFisico = dEje / 2; 
         const radioArranqueBisagra = radioEjeFisico + (eLama / 2); 
 
-        // Definimos las partes del paño
         let lamasEnRollo = Math.max(1, numLamas - LAMAS_COLGANTES);
         let lamasRealesColgantes = numLamas - lamasEnRollo;
 
-        // --- PASO 1: Calcular Geometría de la Espiral ---
         let bisagras = [];
         let radioMaximoEnrollado = radioArranqueBisagra;
         let anguloInicial = Math.atan2(pSup.y - pEje.y, pSup.x - pEje.x);
@@ -462,28 +461,20 @@
             if (Math.hypot(pNuevo.x, pNuevo.y) > radioMaximoEnrollado) radioMaximoEnrollado = Math.hypot(pNuevo.x, pNuevo.y);
         }
 
-        // --- PASO 2: Auto-Relojería Tangencial a las 3 ---
-        // Buscamos el ángulo natural de la última lama del cajón
         let pUltimo = bisagras[bisagras.length - 1];
         let pPenultimo = bisagras[bisagras.length - 2];
         let anguloUltimaLama = Math.atan2(pUltimo.y - pPenultimo.y, pUltimo.x - pPenultimo.x);
         
-        // En un Canvas Web, el eje Y positivo va hacia abajo. Math.PI/2 = 90º (Apunta abajo exacto)
         let anguloCorreccion = (Math.PI / 2) - anguloUltimaLama;
-        
         let cosC = Math.cos(anguloCorreccion);
         let sinC = Math.sin(anguloCorreccion);
         
-        // Rotamos TODAS las bisagras para asegurar que la espiral finaliza en el cuadrante exacto
         for (let i = 0; i < bisagras.length; i++) {
             let rx = bisagras[i].x * cosC - bisagras[i].y * sinC;
             let ry = bisagras[i].x * sinC + bisagras[i].y * cosC;
-            bisagras[i].x = rx; 
-            bisagras[i].y = ry; 
+            bisagras[i].x = rx; bisagras[i].y = ry; 
         }
 
-        // --- PASO 3: Caída Libre Vertical ---
-        // Las últimas lamas simplemente descienden rectas por la guía (eje +Y)
         let xFijo = bisagras[bisagras.length - 1].x;
         let yFijo = bisagras[bisagras.length - 1].y;
         
@@ -492,7 +483,6 @@
             bisagras.push({ x: xFijo, y: yFijo }); 
         }
 
-        // --- PASO 4: Renderizado de Cámara ---
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
         const radioEstimado = radioArranqueBisagra + (numLamas * eLama / 2) + 20;
@@ -503,14 +493,11 @@
         ctx.translate((canvas.width / 2) + simCam.x, (canvas.height / 2) + simCam.y);
         ctx.scale(scale, scale);
 
-        // Dibujar Eje Físico
         ctx.beginPath(); ctx.arc(0, 0, radioEjeFisico, 0, Math.PI * 2);
         ctx.fillStyle = "#1e293b"; ctx.fill();
         ctx.lineWidth = 1.5 / scale; ctx.strokeStyle = "#475569"; ctx.stroke();
 
         let dxfAngle = Math.atan2(pInf.y - pSup.y, pInf.x - pSup.x);
-
-        // NUEVO: Guardar los datos geométricos para la exportación DXF
         renderData = { bisagras: bisagras, numLamas: numLamas, flipCara: flipCara, dxfAngle: dxfAngle, pSup: pSup };
 
         for (let i = 0; i < numLamas; i++) {
@@ -531,7 +518,6 @@
             });
             ctx.restore();
             
-            // Dibujar punto de unión
             ctx.beginPath(); ctx.arc(p1.x, p1.y, 1.5 / scale, 0, Math.PI*2);
             ctx.fillStyle = "#ef4444"; ctx.fill();
         }
@@ -544,9 +530,118 @@
         if(!ignoreNextEvent) {
             document.getElementById('valDiametroObjetivo').value = diametroFinal.toFixed(0);
         }
+
+        // Llamar a la actualización del gráfico dinámico
+        generarGraficoEvolucion();
     }
 
-    // --- 4. EXPORTADOR A DXF ---
+    // --- NUEVO: SISTEMA DE GRAFICO CHART.JS ---
+    let chartInstancia = null;
+
+    function generarGraficoEvolucion() {
+        if(!pSup || !pInf || !pEje) return;
+
+        const alturaTotal = parseFloat(document.getElementById('valAlturaTotal').value) || 1500;
+        const dEje = parseFloat(document.getElementById('valEje').value) || 60;
+        const eLama = parseFloat(document.getElementById('valEspesor').value) || 9;
+        
+        let labelsAltura = [];
+        let dataDiametro = [];
+        
+        const radioArranqueBisagra = (dEje / 2) + (eLama / 2);
+        let bisagrasVirtual = [{ x: radioArranqueBisagra, y: 0, thetaGlobal: 0 }];
+        
+        // Calcular cuantas lamas necesitamos para simular hasta la altura máxima solicitada
+        let alturaMaximaGrafico = Math.ceil(alturaTotal / 100) * 100; // Redondear a la centena superior
+        let lamasParaGrafico = Math.ceil(alturaMaximaGrafico / altoLama);
+        let lamasEnRolloVirtual = Math.max(1, lamasParaGrafico - LAMAS_COLGANTES);
+        
+        // Simulación rápida pura y matemática para el gráfico
+        for (let i = 0; i < lamasEnRolloVirtual; i++) {
+            let pAnt = bisagrasVirtual[i];
+            let rActual = Math.hypot(pAnt.x, pAnt.y);
+            let dTheta = 0.02, dist = 0, targetX = 0, targetY = 0;
+            let testTheta = pAnt.thetaGlobal;
+            
+            while (dist < altoLama) {
+                testTheta += dTheta;
+                let rTest = rActual + (eLama * ((testTheta - pAnt.thetaGlobal) / (2 * Math.PI)));
+                targetX = rTest * Math.cos(testTheta);
+                targetY = rTest * Math.sin(testTheta);
+                dist = Math.hypot(targetX - pAnt.x, targetY - pAnt.y);
+            }
+            bisagrasVirtual.push({ x: targetX, y: targetY, thetaGlobal: testTheta });
+        }
+
+        // Muestreo cada 100mm
+        for(let h = 100; h <= alturaMaximaGrafico; h += 100) {
+            let lamasNecesarias = Math.ceil(h / altoLama);
+            let indiceRollo = Math.max(1, lamasNecesarias - LAMAS_COLGANTES);
+            if (indiceRollo >= bisagrasVirtual.length) indiceRollo = bisagrasVirtual.length - 1;
+            
+            let pFin = bisagrasVirtual[indiceRollo];
+            let diametroEnEsaAltura = (Math.hypot(pFin.x, pFin.y) * 2) + eLama;
+            
+            labelsAltura.push(h);
+            dataDiametro.push(diametroEnEsaAltura.toFixed(1));
+        }
+
+        // Renderizar o actualizar gráfico
+        if (chartInstancia) {
+            chartInstancia.data.labels = labelsAltura;
+            chartInstancia.data.datasets[0].data = dataDiametro;
+            chartInstancia.update();
+        } else {
+            const ctxChart = document.getElementById('chartEvolucion').getContext('2d');
+            
+            // Configuramos IndexAxis: 'y' para que el eje vertical sea la Altura y el horizontal el Diámetro
+            chartInstancia = new Chart(ctxChart, {
+                type: 'line',
+                data: {
+                    labels: labelsAltura,
+                    datasets: [{
+                        label: 'Ø (mm)',
+                        data: dataDiametro,
+                        borderColor: '#38bdf8', // Color azul cian
+                        backgroundColor: 'rgba(56, 189, 248, 0.2)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.2, // Curva suave
+                        pointRadius: 3,
+                        pointBackgroundColor: '#fde047' // Puntos amarillos
+                    }]
+                },
+                options: {
+                    indexAxis: 'y', // Invertimos ejes según requerimiento
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            title: { display: true, text: 'Diámetro de Cajón (mm)', color: '#94a3b8', font: {size: 11} },
+                            grid: { color: '#334155' },
+                            ticks: { color: '#cbd5e1', font: {size: 10} }
+                        },
+                        y: {
+                            title: { display: true, text: 'Altura Paño (mm)', color: '#94a3b8', font: {size: 11} },
+                            grid: { color: '#334155' },
+                            ticks: { color: '#cbd5e1', font: {size: 10} }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) { return `Diámetro: ${context.raw} mm`; },
+                                title: function(context) { return `Altura: ${context[0].label} mm`; }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    }
+
+    // --- EXPORTADOR A DXF ---
     function exportarDXF() {
         if (!renderData || appState !== 'SIMULATING' || dxfPoligons.length === 0) {
             alert("⚠️ Primero debes cargar un DXF, calibrarlo y generar una simulación.");
@@ -554,73 +649,45 @@
         }
 
         let dxfString = "0\nSECTION\n2\nENTITIES\n";
-
         const { bisagras, numLamas, flipCara, dxfAngle, pSup } = renderData;
-        
         const sy_mult = flipCara * -1;
         const cosA = Math.cos(-dxfAngle);
         const sinA = Math.sin(-dxfAngle);
 
         for (let i = 0; i < numLamas; i++) {
-            let p1 = bisagras[i];
-            let p2 = bisagras[i+1];
-            
+            let p1 = bisagras[i]; let p2 = bisagras[i+1];
             let theta = Math.atan2(p2.y - p1.y, p2.x - p1.x);
-            let cosT = Math.cos(theta);
-            let sinT = Math.sin(theta);
+            let cosT = Math.cos(theta); let sinT = Math.sin(theta);
 
             dxfPoligons.forEach(pol => {
                 let ptsTransformados = pol.pts.map(pt => {
-                    let tx = pt.x - pSup.x;
-                    let ty = pt.y - pSup.y;
-                    
-                    let rx1 = tx * cosA - ty * sinA;
-                    let ry1 = tx * sinA + ty * cosA;
-                    
-                    let sx = rx1;
-                    let sy_val = ry1 * sy_mult;
-                    
-                    let rx2 = sx * cosT - sy_val * sinT;
-                    let ry2 = sx * sinT + sy_val * cosT;
-                    
-                    let finalX = rx2 + p1.x;
-                    let finalY = ry2 + p1.y;
-
-                    return { x: finalX, y: -finalY };
+                    let tx = pt.x - pSup.x; let ty = pt.y - pSup.y;
+                    let rx1 = tx * cosA - ty * sinA; let ry1 = tx * sinA + ty * cosA;
+                    let sx = rx1; let sy_val = ry1 * sy_mult;
+                    let rx2 = sx * cosT - sy_val * sinT; let ry2 = sx * sinT + sy_val * cosT;
+                    return { x: rx2 + p1.x, y: -(ry2 + p1.y) };
                 });
 
                 for (let k = 0; k < ptsTransformados.length - 1; k++) {
                     dxfString += writeDXFLine(ptsTransformados[k], ptsTransformados[k+1], "Lamas");
                 }
-                if (pol.closed) {
-                    dxfString += writeDXFLine(ptsTransformados[ptsTransformados.length-1], ptsTransformados[0], "Lamas");
-                }
+                if (pol.closed) dxfString += writeDXFLine(ptsTransformados[ptsTransformados.length-1], ptsTransformados[0], "Lamas");
             });
         }
 
         const radioEje = parseFloat(document.getElementById('valEje').value) / 2;
         dxfString += writeDXFCircle(0, 0, radioEje, "Eje");
-
         dxfString += "0\nENDSEC\n0\nEOF\n";
 
         const blob = new Blob([dxfString], { type: "text/plain" });
         const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
+        const a = document.createElement('a'); a.href = url;
         a.download = `Persiana_Roll_D${document.getElementById('valDiametroObjetivo').value}mm.dxf`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+        document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
     }
 
-    function writeDXFLine(p1, p2, layer) {
-        return `0\nLINE\n8\n${layer}\n10\n${p1.x.toFixed(4)}\n20\n${p1.y.toFixed(4)}\n30\n0.0\n11\n${p2.x.toFixed(4)}\n21\n${p2.y.toFixed(4)}\n31\n0.0\n`;
-    }
-
-    function writeDXFCircle(x, y, r, layer) {
-        return `0\nCIRCLE\n8\n${layer}\n10\n${x.toFixed(4)}\n20\n${y.toFixed(4)}\n30\n0.0\n40\n${r.toFixed(4)}\n`;
-    }
+    function writeDXFLine(p1, p2, layer) { return `0\nLINE\n8\n${layer}\n10\n${p1.x.toFixed(4)}\n20\n${p1.y.toFixed(4)}\n30\n0.0\n11\n${p2.x.toFixed(4)}\n21\n${p2.y.toFixed(4)}\n31\n0.0\n`; }
+    function writeDXFCircle(x, y, r, layer) { return `0\nCIRCLE\n8\n${layer}\n10\n${x.toFixed(4)}\n20\n${y.toFixed(4)}\n30\n0.0\n40\n${r.toFixed(4)}\n`; }
 </script>
 </body>
 </html>
