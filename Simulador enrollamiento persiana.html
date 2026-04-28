@@ -11,7 +11,6 @@
         body { font-family: system-ui, -apple-system, sans-serif; margin: 0; display: flex; height: 100vh; background: var(--bg); color: var(--text); overflow: hidden; }
         #sidebar { width: 420px; background: var(--panel); padding: 20px; display: flex; flex-direction: column; gap: 15px; border-right: 1px solid var(--border); overflow-y: auto; z-index: 10; box-shadow: 2px 0 10px rgba(0,0,0,0.5); }
         
-        /* Ajuste de scrollbar para el sidebar */
         #sidebar::-webkit-scrollbar { width: 8px; }
         #sidebar::-webkit-scrollbar-track { background: var(--bg); }
         #sidebar::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
@@ -123,6 +122,13 @@
 </div>
 
 <script>
+    // --- 0. DXF DEL EJE HARDCODEADO (COMPRIMIDO PARA JS) ---
+    // Este string contiene el diseño del eje que nos pasaste, filtrado y listo para ser escalado.
+    const rawEjeDxf = `0\nSECTION\n2\nENTITIES\n0\nARC\n8\n0\n10\n2.519\n20\n37.331\n40\n1.600\n50\n357.5\n51\n42.5\n0\nARC\n8\n0\n10\n2.627\n20\n31.576\n40\n1.250\n50\n177.5\n51\n357.5\n0\nARC\n8\n0\n10\n2.627\n20\n31.576\n40\n0.450\n50\n177.5\n51\n357.5\n0\nARC\n8\n0\n10\n2.519\n20\n37.331\n40\n0.800\n50\n357.5\n51\n42.5\n0\nARC\n8\n0\n10\n2.519\n20\n40.878\n40\n1.599\n50\n177.5\n51\n222.5\n0\nARC\n8\n0\n10\n5.106\n20\n45.253\n40\n4.000\n50\n132.5\n51\n177.5\n0\nARC\n8\n0\n10\n20.964\n20\n59.829\n40\n3.999\n50\n87.5\n51\n132.5\n0\nARC\n8\n0\n10\n42.484\n20\n58.921\n40\n4.000\n50\n42.5\n51\n87.5\n0\nARC\n8\n0\n10\n57.059\n20\n43.062\n40\n4.000\n50\n357.5\n51\n42.5\n0\nARC\n8\n0\n10\n56.152\n20\n21.542\n40\n4.000\n50\n312.5\n51\n357.5\n0\nARC\n8\n0\n10\n40.293\n20\n6.967\n40\n3.999\n50\n267.5\n51\n312.5\n0\nARC\n8\n0\n10\n18.773\n20\n7.875\n40\n4.000\n50\n222.5\n51\n267.5\n0\nARC\n8\n0\n10\n4.198\n20\n23.733\n40\n3.999\n50\n177.5\n51\n222.5\n0\nARC\n8\n0\n10\n1.993\n20\n36.708\n40\n1.249\n50\n357.5\n51\n177.5\n0\nARC\n8\n0\n10\n1.993\n20\n36.708\n40\n0.450\n50\n357.5\n51\n177.5\n0\nARC\n8\n0\n10\n4.503\n20\n23.845\n40\n3.500\n50\n177.5\n51\n222.5\n0\nARC\n8\n0\n10\n18.910\n20\n8.169\n40\n3.499\n50\n222.5\n51\n267.5\n0\nARC\n8\n0\n10\n40.181\n20\n7.272\n40\n3.499\n50\n267.5\n51\n312.5\n0\nARC\n8\n0\n10\n55.857\n20\n21.679\n40\n3.500\n50\n312.5\n51\n357.5\n0\nARC\n8\n0\n10\n56.754\n20\n42.951\n40\n3.500\n50\n357.5\n51\n42.5\n0\nARC\n8\n0\n10\n42.347\n20\n58.626\n40\n3.500\n50\n42.5\n51\n87.5\n0\nARC\n8\n0\n10\n21.076\n20\n59.524\n40\n3.500\n50\n87.5\n51\n132.5\n0\nARC\n8\n0\n10\n5.400\n20\n45.117\n40\n3.500\n50\n132.5\n51\n177.5\n0\nARC\n8\n0\n10\n2.519\n20\n40.878\n40\n0.800\n50\n177.5\n51\n222.5\n0\nCIRCLE\n8\n0\n10\n48.410\n20\n49.740\n40\n2.000\n0\nCIRCLE\n8\n0\n10\n46.970\n20\n15.617\n40\n2.000\n0\nCIRCLE\n8\n0\n10\n54.757\n20\n32.380\n40\n2.000\n0\nCIRCLE\n8\n0\n10\n31.646\n20\n57.526\n40\n2.000\n0\nCIRCLE\n8\n0\n10\n12.848\n20\n17.056\n40\n2.000\n0\nCIRCLE\n8\n0\n10\n14.287\n20\n51.179\n40\n2.000\n0\nCIRCLE\n8\n0\n10\n29.611\n20\n9.269\n40\n2.000\n0\nCIRCLE\n8\n0\n10\n10.496\n20\n34.247\n40\n2.000\n0\nARC\n8\n0\n10\n30.629\n20\n33.398\n40\n10.000\n50\n177.5\n51\n222.5\n0\nARC\n8\n0\n10\n30.629\n20\n33.398\n40\n10.000\n50\n42.5\n51\n87.5\n0\nARC\n8\n0\n10\n30.629\n20\n33.398\n40\n10.000\n50\n87.5\n51\n132.5\n0\nARC\n8\n0\n10\n30.629\n20\n33.398\n40\n10.000\n50\n222.5\n51\n267.5\n0\nARC\n8\n0\n10\n30.629\n20\n33.398\n40\n10.000\n50\n132.5\n51\n177.5\n0\nARC\n8\n0\n10\n30.629\n20\n33.398\n40\n10.000\n50\n312.5\n51\n357.5\n0\nARC\n8\n0\n10\n30.629\n20\n33.398\n40\n10.000\n50\n267.5\n51\n312.5\n0\nARC\n8\n0\n10\n30.628\n20\n33.398\n40\n10.000\n50\n357.5\n51\n42.5\n0\nLINE\n8\n0\n10\n3.697\n20\n38.414\n11\n1.930\n21\n40.337\n0\nLINE\n8\n0\n10\n3.876\n20\n31.524\n11\n4.118\n21\n37.264\n0\nLINE\n8\n0\n10\n3.319\n20\n37.297\n11\n3.077\n21\n31.557\n0\nLINE\n8\n0\n10\n1.341\n20\n39.796\n11\n3.108\n21\n37.872\n0\nLINE\n8\n0\n10\n18.604\n20\n3.878\n11\n40.124\n21\n2.971\n0\nLINE\n8\n0\n10\n1.253\n20\n21.027\n11\n15.828\n21\n5.168\n0\nLINE\n8\n0\n10\n1.006\n20\n23.993\n11\n1.543\n21\n36.726\n0\nLINE\n8\n0\n10\n16.333\n20\n5.801\n11\n1.926\n21\n21.477\n0\nLINE\n8\n0\n10\n40.034\n20\n3.775\n11\n18.762\n21\n4.672\n0\nLINE\n8\n0\n10\n58.226\n20\n19.102\n11\n42.550\n21\n4.695\n0\nLINE\n8\n0\n10\n60.251\n20\n42.803\n11\n59.354\n21\n21.532\n0\nLINE\n8\n0\n10\n44.924\n20\n60.995\n11\n59.331\n21\n45.319\n0\nLINE\n8\n0\n10\n21.223\n20\n63.021\n11\n42.495\n21\n62.123\n0\nLINE\n8\n0\n10\n3.032\n20\n47.694\n11\n18.707\n21\n62.101\n0\nLINE\n8\n0\n10\n1.720\n20\n40.912\n11\n1.903\n21\n45.264\n0\nENDSEC\n0\nEOF`;
+
+    let ejePoligons = [];
+    let ejeBBox = { cx: 0, cy: 0, width: 1 };
+
     const canvas = document.getElementById('simCanvas');
     const ctx = canvas.getContext('2d');
     
@@ -151,7 +157,7 @@
     canvas.width = document.getElementById('canvas-container').clientWidth;
     canvas.height = document.getElementById('canvas-container').clientHeight;
 
-    // --- LOGICA DE FORMULARIOS ---
+    // --- LÓGICA DE FORMULARIOS ---
     const inputAltura = document.getElementById('valAlturaTotal');
     const inputLamas = document.getElementById('valLamas');
     const inputDiametroObj = document.getElementById('valDiametroObjetivo');
@@ -175,11 +181,9 @@
 
     inputDiametroObj.addEventListener('input', function() {
         if (appState !== 'SIMULATING' || ignoreNextEvent || !pSup || !pInf || !pEje) return;
-        
         let targetMaxRadius = parseFloat(this.value) / 2;
         let eLama = parseFloat(document.getElementById('valEspesor').value);
         let radioEje = parseFloat(document.getElementById('valEje').value) / 2;
-        
         let rActual = radioEje + (eLama / 2); 
         
         if (targetMaxRadius <= rActual) {
@@ -196,7 +200,6 @@
         while (rActual < targetMaxRadius && lamasCalculadas < 150) { 
             lamasCalculadas++;
             let dist = 0, targetX = 0, targetY = 0;
-            
             while (dist < altoLama) {
                 testTheta += 0.005;
                 let rTest = rActual + (eLama * ((testTheta - pAnt.thetaGlobal) / (2 * Math.PI)));
@@ -207,7 +210,6 @@
             rActual = Math.hypot(targetX, targetY);
             pAnt = { x: targetX, y: targetY, thetaGlobal: testTheta };
         }
-
         if (rActual + (eLama/2) > targetMaxRadius && lamasCalculadas > 1) lamasCalculadas--;
 
         ignoreNextEvent = true;
@@ -215,37 +217,10 @@
         inputLamas.value = lamasTotales;
         inputAltura.value = (lamasTotales * altoLama).toFixed(0);
         ignoreNextEvent = false;
-        
         simular();
     });
 
-    // --- LECTURA DXF ---
-    document.getElementById('fileDxf').addEventListener('change', function(e) {
-        const file = e.target.files[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = function(evt) {
-            try {
-                const dxfData = new DxfParser().parseSync(evt.target.result);
-                let segmentos = extraerSegmentosRaw(dxfData.entities, dxfData.blocks);
-                dxfPoligons = construirPoligonos(segmentos);
-                
-                let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-                dxfPoligons.forEach(pol => pol.pts.forEach(p => {
-                    if(p.x < minX) minX = p.x; if(p.x > maxX) maxX = p.x;
-                    if(p.y < minY) minY = p.y; if(p.y > maxY) maxY = p.y;
-                }));
-
-                if (dxfPoligons.length > 0) bbox = { minX, maxX, minY, maxY };
-                document.getElementById('dxfStatus').className = "status ok";
-                document.getElementById('dxfStatus').innerText = `Geometría OK`;
-                
-                iniciarCalibracion(); 
-            } catch(err) { alert("Error al leer el DXF."); }
-        };
-        reader.readAsText(file);
-    });
-
+    // --- LECTURA Y PROCESADO DE GEOMETRÍA DXF ---
     function extraerSegmentosRaw(entities, blocks, offX = 0, offY = 0) {
         let segs = []; if(!entities) return segs;
         entities.forEach(ent => {
@@ -283,11 +258,54 @@
                 }
             }
             let cerrado = Math.hypot(path[0].x-path[path.length-1].x, path[0].y-path[path.length-1].y) < 0.05;
-            let area = 0; if (cerrado) { for (let i = 0; i < path.length - 1; i++) area += path[i].x * path[i+1].y - path[i+1].x * path[i].y; area = Math.abs(area / 2); }
-            poligonos.push({ pts: path, closed: cerrado, area: area });
+            poligonos.push({ pts: path, closed: cerrado });
         }
-        return poligonos.sort((a, b) => b.area - a.area);
+        return poligonos;
     }
+
+    // Inicializar el diseño del Eje Físico embebido
+    function inicializarEjeFisico() {
+        try {
+            const parsedEje = new DxfParser().parseSync(rawEjeDxf);
+            let segs = extraerSegmentosRaw(parsedEje.entities, parsedEje.blocks);
+            ejePoligons = construirPoligonos(segs);
+            
+            let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+            ejePoligons.forEach(pol => pol.pts.forEach(p => {
+                if(p.x < minX) minX = p.x; if(p.x > maxX) maxX = p.x;
+                if(p.y < minY) minY = p.y; if(p.y > maxY) maxY = p.y;
+            }));
+            
+            ejeBBox = { cx: (minX + maxX) / 2, cy: (minY + maxY) / 2, width: maxX - minX };
+        } catch(e) { console.error("Fallo cargando eje dinámico", e); }
+    }
+    inicializarEjeFisico();
+
+    document.getElementById('fileDxf').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(evt) {
+            try {
+                const dxfData = new DxfParser().parseSync(evt.target.result);
+                let segmentos = extraerSegmentosRaw(dxfData.entities, dxfData.blocks);
+                dxfPoligons = construirPoligonos(segmentos);
+                
+                let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+                dxfPoligons.forEach(pol => pol.pts.forEach(p => {
+                    if(p.x < minX) minX = p.x; if(p.x > maxX) maxX = p.x;
+                    if(p.y < minY) minY = p.y; if(p.y > maxY) maxY = p.y;
+                }));
+
+                if (dxfPoligons.length > 0) bbox = { minX, maxX, minY, maxY };
+                document.getElementById('dxfStatus').className = "status ok";
+                document.getElementById('dxfStatus').innerText = `Geometría OK`;
+                
+                iniciarCalibracion(); 
+            } catch(err) { alert("Error al leer el DXF principal."); }
+        };
+        reader.readAsText(file);
+    });
 
     // --- CALIBRACIÓN ---
     function updateCalibConfig() {
@@ -390,10 +408,7 @@
 
     function renderCalibracion() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.save();
-        ctx.translate(calibConfig.cx, calibConfig.cy);
-        ctx.scale(calibConfig.scale, -calibConfig.scale); 
-        ctx.translate(-calibConfig.midX, -calibConfig.midY);
+        ctx.save(); ctx.translate(calibConfig.cx, calibConfig.cy); ctx.scale(calibConfig.scale, -calibConfig.scale); ctx.translate(-calibConfig.midX, -calibConfig.midY);
 
         dxfPoligons.forEach(pol => {
             ctx.beginPath(); ctx.moveTo(pol.pts[0].x, pol.pts[0].y);
@@ -407,17 +422,7 @@
             ctx.beginPath(); ctx.moveTo(hp.x - 15, hp.y); ctx.lineTo(hp.x + 15, hp.y);
             ctx.moveTo(hp.x, hp.y - 15); ctx.lineTo(hp.x, hp.y + 15);
             ctx.strokeStyle = "rgba(255,255,255,0.9)"; ctx.lineWidth = 1; ctx.stroke();
-
-            if (pSup && appState === 'CALIBRATING_P2') {
-                let sp = toScreen(pSup); ctx.beginPath(); ctx.moveTo(sp.x, sp.y); ctx.lineTo(hp.x, hp.y);
-                ctx.strokeStyle = "#ef4444"; ctx.lineWidth = 2; ctx.setLineDash([5, 5]); ctx.stroke(); ctx.setLineDash([]);
-            }
-            if (pSup && appState === 'CALIBRATING_AXIS') {
-                let sp = toScreen(pSup); ctx.beginPath(); ctx.moveTo(sp.x, sp.y); ctx.lineTo(hp.x, hp.y);
-                ctx.strokeStyle = "#8b5cf6"; ctx.lineWidth = 2; ctx.setLineDash([5, 5]); ctx.stroke(); ctx.setLineDash([]);
-            }
         }
-
         if (pSup) { let sp = toScreen(pSup); ctx.beginPath(); ctx.arc(sp.x, sp.y, 4, 0, Math.PI*2); ctx.fillStyle = '#3b82f6'; ctx.fill(); ctx.strokeStyle='#fff'; ctx.stroke(); }
         if (pInf) { let ip = toScreen(pInf); ctx.beginPath(); ctx.arc(ip.x, ip.y, 4, 0, Math.PI*2); ctx.fillStyle = '#ef4444'; ctx.fill(); ctx.strokeStyle='#fff'; ctx.stroke(); }
     }
@@ -493,9 +498,30 @@
         ctx.translate((canvas.width / 2) + simCam.x, (canvas.height / 2) + simCam.y);
         ctx.scale(scale, scale);
 
-        ctx.beginPath(); ctx.arc(0, 0, radioEjeFisico, 0, Math.PI * 2);
-        ctx.fillStyle = "#1e293b"; ctx.fill();
-        ctx.lineWidth = 1.5 / scale; ctx.strokeStyle = "#475569"; ctx.stroke();
+        // --- DIBUJAR EJE DXF (Reemplazo del círculo) ---
+        if (ejePoligons.length > 0) {
+            let scaleEje = dEje / ejeBBox.width; 
+            ctx.save();
+            ctx.scale(scaleEje, -scaleEje); // Ajustar sistema de coordenadas y escalar diámetro real
+            ctx.translate(-ejeBBox.cx, -ejeBBox.cy); // Centrar el DXF localmente
+            
+            ctx.strokeStyle = "#475569";
+            ctx.fillStyle = "#1e293b";
+            ctx.lineWidth = 1.0 / (scale * scaleEje);
+            
+            ejePoligons.forEach((pol) => {
+                ctx.beginPath();
+                ctx.moveTo(pol.pts[0].x, pol.pts[0].y);
+                for(let k=1; k<pol.pts.length; k++) ctx.lineTo(pol.pts[k].x, pol.pts[k].y);
+                if(pol.closed) ctx.closePath();
+                ctx.stroke();
+            });
+            ctx.restore();
+        } else {
+            ctx.beginPath(); ctx.arc(0, 0, radioEjeFisico, 0, Math.PI * 2);
+            ctx.fillStyle = "#1e293b"; ctx.fill();
+            ctx.lineWidth = 1.5 / scale; ctx.strokeStyle = "#475569"; ctx.stroke();
+        }
 
         let dxfAngle = Math.atan2(pInf.y - pSup.y, pInf.x - pSup.x);
         renderData = { bisagras: bisagras, numLamas: numLamas, flipCara: flipCara, dxfAngle: dxfAngle, pSup: pSup };
@@ -531,11 +557,10 @@
             document.getElementById('valDiametroObjetivo').value = diametroFinal.toFixed(0);
         }
 
-        // Llamar a la actualización del gráfico dinámico
         generarGraficoEvolucion();
     }
 
-    // --- NUEVO: SISTEMA DE GRAFICO CHART.JS ---
+    // --- GRÁFICO DINÁMICO ---
     let chartInstancia = null;
 
     function generarGraficoEvolucion() {
@@ -551,12 +576,10 @@
         const radioArranqueBisagra = (dEje / 2) + (eLama / 2);
         let bisagrasVirtual = [{ x: radioArranqueBisagra, y: 0, thetaGlobal: 0 }];
         
-        // Calcular cuantas lamas necesitamos para simular hasta la altura máxima solicitada
-        let alturaMaximaGrafico = Math.ceil(alturaTotal / 100) * 100; // Redondear a la centena superior
+        let alturaMaximaGrafico = Math.ceil(alturaTotal / 100) * 100; 
         let lamasParaGrafico = Math.ceil(alturaMaximaGrafico / altoLama);
         let lamasEnRolloVirtual = Math.max(1, lamasParaGrafico - LAMAS_COLGANTES);
         
-        // Simulación rápida pura y matemática para el gráfico
         for (let i = 0; i < lamasEnRolloVirtual; i++) {
             let pAnt = bisagrasVirtual[i];
             let rActual = Math.hypot(pAnt.x, pAnt.y);
@@ -573,8 +596,8 @@
             bisagrasVirtual.push({ x: targetX, y: targetY, thetaGlobal: testTheta });
         }
 
-        // Muestreo cada 100mm
-        for(let h = 100; h <= alturaMaximaGrafico; h += 100) {
+        // Muestreo empezando en 900mm
+        for(let h = 900; h <= Math.max(alturaMaximaGrafico, 900); h += 100) {
             let lamasNecesarias = Math.ceil(h / altoLama);
             let indiceRollo = Math.max(1, lamasNecesarias - LAMAS_COLGANTES);
             if (indiceRollo >= bisagrasVirtual.length) indiceRollo = bisagrasVirtual.length - 1;
@@ -586,7 +609,6 @@
             dataDiametro.push(diametroEnEsaAltura.toFixed(1));
         }
 
-        // Renderizar o actualizar gráfico
         if (chartInstancia) {
             chartInstancia.data.labels = labelsAltura;
             chartInstancia.data.datasets[0].data = dataDiametro;
@@ -594,7 +616,6 @@
         } else {
             const ctxChart = document.getElementById('chartEvolucion').getContext('2d');
             
-            // Configuramos IndexAxis: 'y' para que el eje vertical sea la Altura y el horizontal el Diámetro
             chartInstancia = new Chart(ctxChart, {
                 type: 'line',
                 data: {
@@ -602,17 +623,17 @@
                     datasets: [{
                         label: 'Ø (mm)',
                         data: dataDiametro,
-                        borderColor: '#38bdf8', // Color azul cian
+                        borderColor: '#38bdf8', 
                         backgroundColor: 'rgba(56, 189, 248, 0.2)',
                         borderWidth: 2,
                         fill: true,
-                        tension: 0.2, // Curva suave
+                        tension: 0.2, 
                         pointRadius: 3,
-                        pointBackgroundColor: '#fde047' // Puntos amarillos
+                        pointBackgroundColor: '#fde047' 
                     }]
                 },
                 options: {
-                    indexAxis: 'y', // Invertimos ejes según requerimiento
+                    indexAxis: 'y', 
                     responsive: true,
                     maintainAspectRatio: false,
                     scales: {
@@ -622,20 +643,13 @@
                             ticks: { color: '#cbd5e1', font: {size: 10} }
                         },
                         y: {
+                            reverse: true, // INVERTIMOS PARA QUE 900 EMPIECE ABAJO
                             title: { display: true, text: 'Altura Paño (mm)', color: '#94a3b8', font: {size: 11} },
                             grid: { color: '#334155' },
                             ticks: { color: '#cbd5e1', font: {size: 10} }
                         }
                     },
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) { return `Diámetro: ${context.raw} mm`; },
-                                title: function(context) { return `Altura: ${context[0].label} mm`; }
-                            }
-                        }
-                    }
+                    plugins: { legend: { display: false } }
                 }
             });
         }
@@ -675,8 +689,26 @@
             });
         }
 
-        const radioEje = parseFloat(document.getElementById('valEje').value) / 2;
-        dxfString += writeDXFCircle(0, 0, radioEje, "Eje");
+        const dEje = parseFloat(document.getElementById('valEje').value) || 60;
+        
+        // Exportar el diseño del Eje real si existe
+        if (ejePoligons.length > 0) {
+            let scaleEje = dEje / ejeBBox.width;
+            ejePoligons.forEach(pol => {
+                let ptsTrans = pol.pts.map(pt => {
+                    let tx = (pt.x - ejeBBox.cx) * scaleEje;
+                    let ty = (pt.y - ejeBBox.cy) * scaleEje;
+                    return { x: tx, y: -ty }; // CAD Coord rules
+                });
+                for(let k=0; k<ptsTrans.length-1; k++) {
+                    dxfString += writeDXFLine(ptsTrans[k], ptsTrans[k+1], "Eje_Fisico");
+                }
+                if (pol.closed) dxfString += writeDXFLine(ptsTrans[ptsTrans.length-1], ptsTrans[0], "Eje_Fisico");
+            });
+        } else {
+            dxfString += writeDXFCircle(0, 0, dEje/2, "Eje");
+        }
+
         dxfString += "0\nENDSEC\n0\nEOF\n";
 
         const blob = new Blob([dxfString], { type: "text/plain" });
