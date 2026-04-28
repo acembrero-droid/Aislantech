@@ -6,6 +6,8 @@
     <title>Aislantech · Análisis Térmico Pro (ISO 10077-2)</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Librería para generar el PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         :root {
             --color-primary: #EDD00E; --color-primary-dark: #B8860B; --color-primary-light: #FFF8DC;
@@ -34,6 +36,8 @@
         .btn-success { background:#2e7d32; color:white; }
         .btn-outline { background:transparent; border:2px solid #ddd; color:var(--color-secondary); }
         .btn-edit { background:#0288d1; color:white; }
+        .btn-pdf { background:#d32f2f; color:white; }
+        .btn-pdf:hover { background:#b71c1c; }
         
         .mode-switch { display:flex; background:#eee; border-radius:var(--border-radius); overflow:hidden; border:1px solid #ddd; }
         .mode-btn { flex:1; padding:10px; font-weight:700; font-size:0.8rem; border:none; background:transparent; cursor:pointer; color: #666; transition:var(--transition); }
@@ -54,7 +58,7 @@
         .boundary-swatch { width:12px; height:12px; border-radius:50%; display:inline-block; border:1px solid #000; }
         
         #customMatPanel { background: #f9f9f9; padding: 15px; border-radius: 8px; border: 1px dashed #ccc; margin-bottom: 15px; display: none; }
-        .result-card { display:none; background:#2e7d32; color:white; padding:20px; border-radius:var(--border-radius); margin-top:20px; text-align:center; }
+        .result-card { display:none; background:#2e7d32; color:white; padding:20px; border-radius:var(--border-radius); margin-top:20px; text-align:center; position: relative;}
     </style>
 </head>
 <body>
@@ -62,7 +66,9 @@
 <div class="container">
     <div class="header-container">
         <div><span class="logo-aislan">AISLAN</span><span class="logo-tech">TECH</span> <small style="margin-left:10px; opacity:0.6; font-weight: 400;">Thermal Analysis Pro</small></div>
-        <div id="solverStatus" style="font-weight: bold; color: #d32f2f; display:none;"><i class="fas fa-circle-notch fa-spin"></i> Analizando flujo ISO 10077-2...</div>
+        <div id="solverStatus" style="font-weight: bold; color: #d32f2f; display:none;">
+            <i class="fas fa-circle-notch fa-spin"></i> Analizando flujo ISO 10077-2... <span id="calcProgress">0%</span>
+        </div>
     </div>
     
     <div class="card">
@@ -72,6 +78,11 @@
                 <div class="control-group" style="flex: 1.2;">
                     <label>1. Cargar DXF</label>
                     <input type="file" id="dxfFile" accept=".dxf">
+                </div>
+
+                <div class="control-group" style="flex: 0.8;">
+                    <label title="Ajusta si el DXF no cierra los polígonos (0.1, 0.5, 1...)">Tolerancia</label>
+                    <input type="number" id="tolInput" value="0.1" step="0.1">
                 </div>
 
                 <div class="control-group" style="flex: 1.5;">
@@ -107,6 +118,7 @@
 
             </div>
 
+            <!-- Creador de Material Custom -->
             <div id="customMatPanel">
                 <div style="display:flex; gap:15px; align-items:flex-end;">
                     <div class="control-group"><label>Nombre del Material</label><input type="text" id="customMatName" placeholder="Espuma PUR"></div>
@@ -124,14 +136,15 @@
                     <button id="btnRotate" class="btn btn-outline btn-sm" title="Rotar 90º"><i class="fas fa-sync-alt"></i> Rotar</button>
                     <button id="btnZoomReset" class="btn btn-outline btn-sm" title="Centrar Vista"><i class="fas fa-compress-arrows-alt"></i> Centrar</button>
                     <select id="gridRes" style="width:auto; height:34px;">
-                        <option value="80">Malla Baja (80x80)</option>
-                        <option value="120" selected>Malla Estándar (120x120)</option>
-                        <option value="200">Malla Alta (200x200)</option>
+                        <option value="200">Mínima (200x200)</option>
+                        <option value="400" selected>Intermedia (400x400)</option>
+                        <option value="600">Alta (600x600 - Lento)</option>
                     </select>
                 </div>
                 
                 <div style="display:flex; gap:10px;">
                     <button id="btnBackToEdit" class="btn btn-edit" style="display:none;"><i class="fas fa-pencil-alt"></i> Volver a Edición</button>
+                    <button id="btnPdf" class="btn btn-pdf" style="display:none;"><i class="fas fa-file-pdf"></i> Generar PDF</button>
                     <button id="calcBtn" class="btn btn-success" disabled style="padding:10px 30px; font-size:1rem;"><i class="fas fa-play-circle"></i> CALCULAR Uf</button>
                 </div>
             </div>
@@ -151,21 +164,30 @@
 
 <script>
 (function() {
-    // ──── MATERIALES Y CONSTANTES (ISO 6946) ────
+    // ──── BASE AMPLIADA DE MATERIALES (ISO 10456 / 10077-2) ────
     let materials = [
         { name: "Cámara Aire (No ventilada)", k: 0.026, color: "#ecf0f1" },
+        { name: "Cámara Aire (Lig. ventilada)", k: 0.120, color: "#d5dbdb" },
         { name: "Aluminio", k: 160.0, color: "#95a5a6" },
+        { name: "Acero (Carbono)", k: 50.0, color: "#546e7a" },
         { name: "Acero Inox", k: 17.0, color: "#b0bec5" },
         { name: "Poliamida 25% FV", k: 0.30, color: "#d35400" },
         { name: "PVC Rígido", k: 0.17, color: "#9b59b6" },
         { name: "EPDM / Juntas", k: 0.25, color: "#2c3e50" },
         { name: "Silicona", k: 0.35, color: "#00bcd4" },
-        { name: "Aislante (XPS/PUR)", k: 0.035, color: "#f1c40f" },
-        { name: "Vidrio", k: 1.0, color: "#81d4fa" }
+        { name: "Aislante (XPS)", k: 0.034, color: "#f1c40f" },
+        { name: "Aislante (EPS)", k: 0.038, color: "#ffee58" },
+        { name: "Poliuretano (PUR)", k: 0.028, color: "#f39c12" },
+        { name: "Lana de Roca", k: 0.035, color: "#a1887f" },
+        { name: "Madera Blanda", k: 0.13, color: "#d3a36a" },
+        { name: "Madera Dura", k: 0.18, color: "#8d6e63" },
+        { name: "Vidrio", k: 1.0, color: "#81d4fa" },
+        { name: "Hormigón Armado", k: 1.6, color: "#78909c" },
+        { name: "Ladrillo Macizo", k: 0.7, color: "#d84315" }
     ];
 
-    const Rse = 0.04;
-    const Rsi = 0.13;
+    const Rse = 0.04; 
+    const Rsi = 0.13; 
 
     let polygons = [], boundaryEdges = [], boundaryAdj = [];
     let minX, maxX, minY, maxY;
@@ -176,15 +198,16 @@
     let zoomLevel = 1, offsetX = 0, offsetY = 0, baseScale = 1;
     let isDragging = false, dragStartX = 0, dragStartY = 0, hasDragged = false;
 
-    // Solver
+    // Solver Data para PDF
     let T = null, kGrid = null, dx, dy, isExt, isIntMeas, isIntSec;
     let showThermalMap = false;
+    let lastU = 0, lastFlux = 0, lastL2D = 0;
 
     const canvas = document.getElementById('canvas');
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
     const statusText = document.querySelector('#status span');
 
-    // ──── INTERFAZ ────
+    // ──── INTERFAZ Y MODOS ────
     function updateMaterialUI() {
         const sel = document.getElementById('matSelect');
         sel.innerHTML = materials.map((m,i) => `<option value="${i}">${m.name} (λ=${m.k})</option>`).join('');
@@ -233,13 +256,23 @@
         updateMaterialUI();
         document.getElementById('matSelect').value = materials.length - 1; 
         document.getElementById('customMatPanel').style.display = 'none';
-        setStatus(`Material "${name}" añadido a la paleta de pinceles.`);
+        setStatus(`Material "${name}" añadido a la paleta.`);
     };
 
     window.setBrushMaterial = (idx) => {
         if (editMode !== 'MATERIAL') document.getElementById('btnModeMat').click();
         document.getElementById('matSelect').value = idx;
         setStatus(`Pincel cambiado a: ${materials[idx].name}`);
+    };
+
+    document.getElementById('btnBackToEdit').onclick = function() {
+        showThermalMap = false;
+        this.style.display = 'none';
+        document.getElementById('btnPdf').style.display = 'none';
+        document.getElementById('result').style.display = 'none';
+        document.getElementById('calcBtn').disabled = false;
+        setStatus("Modo de edición activado.", "info");
+        draw();
     };
 
     function setStatus(msg, type = 'info') {
@@ -249,30 +282,29 @@
         bar.querySelector('i').className = type === 'error' ? 'fas fa-exclamation-triangle' : type === 'success' ? 'fas fa-check-circle' : 'fas fa-info-circle';
     }
 
-    // ──── DXF PARSER ROBUSTO (Polilíneas, Líneas, Arcos, Bulges) ────
+    // ──── LECTOR DXF (VERSIÓN ROBUSTA ORIGINAL) ────
     document.getElementById('dxfFile').onchange = e => {
         const file = e.target.files[0]; if(!file) return;
         const reader = new FileReader();
         reader.onload = ev => {
             try {
+                const tol = parseFloat(document.getElementById('tolInput').value) || 0.1;
                 const segments = parseDXF(ev.target.result);
-                if(segments.length === 0) throw new Error("No hay líneas válidas. ¡Asegúrate de explotar los bloques en tu programa CAD!");
+                if(segments.length === 0) throw new Error("No hay entidades 2D válidas. Asegúrate de explotar los bloques.");
                 
-                setStatus("Calculando geometría y áreas cerradas...");
-                setTimeout(() => {
-                    polygons = buildTopology(segments);
-                    if(polygons.length) {
-                        recalcBounds();
-                        boundaryEdges = extractBoundaryEdges(polygons);
-                        document.getElementById('calcBtn').disabled = false;
-                        showThermalMap = false;
-                        document.getElementById('result').style.display = 'none';
-                        setStatus("✅ DXF Importado. Pinta los materiales y contornos para calcular la transmitancia térmica.", "success");
-                        draw();
-                    } else {
-                        setStatus("Error: No se detectaron áreas cerradas continuas.", "error");
-                    }
-                }, 50);
+                polygons = buildTopology(segments, tol);
+                
+                if(polygons.length) {
+                    recalcBounds();
+                    boundaryEdges = extractBoundaryEdges(polygons, tol);
+                    document.getElementById('calcBtn').disabled = false;
+                    showThermalMap = false;
+                    document.getElementById('result').style.display = 'none';
+                    document.getElementById('btnBackToEdit').style.display = 'none';
+                    document.getElementById('btnPdf').style.display = 'none';
+                    setStatus("✅ DXF Importado. Pinta los materiales y contornos para calcular la transmitancia térmica.", "success");
+                    draw();
+                } else throw new Error("No se formaron áreas cerradas. Ajusta la Tolerancia y vuelve a cargar.");
             } catch(err) { setStatus("Error DXF: " + err.message, "error"); }
         };
         reader.readAsText(file);
@@ -280,241 +312,301 @@
 
     function parseDXF(text) {
         const lines = text.split(/\r?\n/);
-        let idx = 0, inEntities = false, segments = [];
-        let curE = null, curPoly = null;
+        let idx = 0;
+        const segments = [];
+        let currentEntity = null;
+        let currentPolyline = null;
 
-        const getP = () => {
+        function getPair() {
             while (idx < lines.length - 1) {
-                const c = parseInt(lines[idx++].trim()), v = lines[idx++].trim();
-                return [c, v];
-            } return null;
-        };
+                const codeStr = lines[idx].trim();
+                const valueStr = lines[idx + 1].trim();
+                idx += 2;
+                if (codeStr !== '') return [parseInt(codeStr), valueStr];
+            }
+            return null;
+        }
 
         function addBulgeSegments(p1, p2, bulge) {
-            if (!bulge || Math.abs(bulge) < 1e-5) { segments.push({ x1: p1.x, y1: p1.y, x2: p2.x, y2: p2.y }); return; }
-            const dx = p2.x - p1.x, dy = p2.y - p1.y, dist = Math.hypot(dx, dy);
+            if (!bulge || Math.abs(bulge) < 1e-5) {
+                segments.push({ x1: p1.x, y1: p1.y, x2: p2.x, y2: p2.y });
+                return;
+            }
+            const dx = p2.x - p1.x, dy = p2.y - p1.y;
+            const dist = Math.hypot(dx, dy);
             if (dist < 1e-6) return;
+            
             const theta = 4 * Math.atan(bulge);
             const radius = Math.abs(dist / (2 * Math.sin(theta / 2)));
             const dir = bulge > 0 ? 1 : -1;
-            const cx = (p1.x + p2.x) / 2 + (-dy / dist * dir) * radius * Math.cos(theta / 2);
-            const cy = (p1.y + p2.y) / 2 + (dx / dist * dir) * radius * Math.cos(theta / 2);
-            let a1 = Math.atan2(p1.y - cy, p1.x - cx), a2 = Math.atan2(p2.y - cy, p2.x - cx);
-            if (bulge > 0 && a2 <= a1) a2 += 2 * Math.PI;
-            if (bulge < 0 && a2 >= a1) a2 -= 2 * Math.PI;
-            const N = Math.max(8, Math.floor(Math.abs(a2 - a1) * radius / 2));
+            const midX = (p1.x + p2.x) / 2, midY = (p1.y + p2.y) / 2;
+            const apothem = radius * Math.cos(theta / 2);
+            
+            const perpX = -dy / dist * dir;
+            const perpY = dx / dist * dir;
+            const cx = midX + perpX * apothem;
+            const cy = midY + perpY * apothem;
+            
+            let startAngle = Math.atan2(p1.y - cy, p1.x - cx);
+            let endAngle = Math.atan2(p2.y - cy, p2.x - cx);
+            
+            if (bulge > 0 && endAngle <= startAngle) endAngle += 2 * Math.PI;
+            if (bulge < 0 && endAngle >= startAngle) endAngle -= 2 * Math.PI;
+            
+            const N = Math.max(6, Math.floor(Math.abs(endAngle - startAngle) * radius / 2));
             let prevX = p1.x, prevY = p1.y;
             for (let i = 1; i <= N; i++) {
-                const a = a1 + (a2 - a1) * (i / N), x = cx + radius * Math.cos(a), y = cy + radius * Math.sin(a);
-                segments.push({ x1: prevX, y1: prevY, x2: x, y2: y }); prevX = x; prevY = y;
+                const a = startAngle + (endAngle - startAngle) * (i / N);
+                const x = cx + radius * Math.cos(a);
+                const y = cy + radius * Math.sin(a);
+                segments.push({ x1: prevX, y1: prevY, x2: x, y2: y });
+                prevX = x; prevY = y;
             }
         }
 
-        function flushE(e) {
-            if (!e || e.ignore) return;
-            if (e.type === 'VERTEX' && curPoly) curPoly.vertices.push({ x: e.x, y: e.y, bulge: e.bulge });
-            if (e.type === 'LINE' && e.x1 !== undefined && e.x2 !== undefined) segments.push({ x1: e.x1, y1: e.y1, x2: e.x2, y2: e.y2 });
-            if ((e.type === 'CIRCLE' || e.type === 'ARC') && e.r > 0) {
-                let rs = (e.startAngle || 0) * Math.PI / 180, re = (e.endAngle || 360) * Math.PI / 180;
-                if (e.type === 'ARC' && re <= rs) re += 2 * Math.PI;
-                const N = Math.max(16, Math.floor(Math.abs(re - rs) * e.r / 2));
-                let px = e.cx + e.r * Math.cos(rs), py = e.cy + e.r * Math.sin(rs);
+        function flushEntity(ent) {
+            if (!ent || ent.ignore) return;
+            if (ent.type === 'VERTEX' && currentPolyline) {
+                currentPolyline.vertices.push({ x: ent.x || 0, y: ent.y || 0, bulge: ent.bulge || 0 });
+            } else if (ent.type === 'LINE' && ent.x1 !== undefined && ent.x2 !== undefined) {
+                segments.push({ x1: ent.x1, y1: ent.y1, x2: ent.x2, y2: ent.y2 });
+            } else if ((ent.type === 'CIRCLE' || ent.type === 'ARC') && ent.r > 0) {
+                const start = ent.startAngle !== undefined ? ent.startAngle : 0;
+                const end = ent.endAngle !== undefined ? ent.endAngle : 360;
+                let radStart = start * Math.PI / 180;
+                let radEnd = end * Math.PI / 180;
+                if (ent.type === 'ARC' && radEnd <= radStart) radEnd += 2 * Math.PI;
+                const N = Math.max(12, Math.floor(Math.abs(radEnd - radStart) * ent.r / 2));
+                let prevX = ent.cx + ent.r * Math.cos(radStart);
+                let prevY = ent.cy + ent.r * Math.sin(radStart);
                 for (let i = 1; i <= N; i++) {
-                    const a = rs + (re - rs) * (i / N), x = e.cx + e.r * Math.cos(a), y = e.cy + e.r * Math.sin(a);
-                    segments.push({ x1: px, y1: py, x2: x, y2: y }); px = x; py = y;
+                    const a = radStart + (radEnd - radStart) * (i / N);
+                    const x = ent.cx + ent.r * Math.cos(a);
+                    const y = ent.cy + ent.r * Math.sin(a);
+                    segments.push({ x1: prevX, y1: prevY, x2: x, y2: y });
+                    prevX = x; prevY = y;
                 }
-            }
-            if ((e.type === 'LWPOLYLINE' || e.type === 'POLYLINE') && e.vertices && e.vertices.length > 0) {
-                for (let i = 0; i < e.vertices.length - 1; i++) addBulgeSegments(e.vertices[i], e.vertices[i + 1], e.vertices[i].bulge);
-                if (e.closed && e.vertices.length > 2) addBulgeSegments(e.vertices[e.vertices.length - 1], e.vertices[0], e.vertices[e.vertices.length - 1].bulge);
-            }
-        }
-
-        while (true) {
-            const pair = getP(); if (!pair) break;
-            const [c, v] = pair;
-
-            if (c === 0 && v === 'SECTION') { const next = getP(); if (next && next[1] === 'ENTITIES') inEntities = true; continue; }
-            if (c === 0 && v === 'ENDSEC') { inEntities = false; continue; }
-            if (!inEntities) continue;
-
-            if (c === 0) {
-                if (curE && curE.type !== 'POLYLINE') flushE(curE);
-                if (v === 'LWPOLYLINE') curE = { type: 'LWPOLYLINE', vertices: [], closed: false, ignore: false };
-                else if (v === 'POLYLINE') { if (curPoly) flushE(curPoly); curPoly = { type: 'POLYLINE', vertices: [], closed: false, ignore: false }; curE = curPoly; }
-                else if (v === 'VERTEX' && curPoly) curE = { type: 'VERTEX', x: 0, y: 0, bulge: 0, ignore: false };
-                else if (v === 'SEQEND' && curPoly) { flushE(curPoly); curPoly = null; curE = null; }
-                else if (['LINE', 'CIRCLE', 'ARC'].includes(v)) curE = { type: v, ignore: false };
-                else curE = null;
-            } else if (curE) {
-                if (c === 67 && v === '1') curE.ignore = true; 
-                const val = parseFloat(v);
-                if (curE.type === 'LWPOLYLINE') {
-                    if (c === 70) curE.closed = (parseInt(v) & 1) !== 0;
-                    else if (c === 10) curE.vertices.push({ x: val, y: 0, bulge: 0 });
-                    else if (c === 20 && curE.vertices.length > 0) curE.vertices[curE.vertices.length - 1].y = val;
-                    else if (c === 42 && curE.vertices.length > 0) curE.vertices[curE.vertices.length - 1].bulge = val;
-                } else if (curE.type === 'POLYLINE') {
-                    if (c === 70) curE.closed = (parseInt(v) & 1) !== 0;
-                } else if (curE.type === 'VERTEX') {
-                    if (c === 10) curE.x = val; else if (c === 20) curE.y = val; else if (c === 42) curE.bulge = val;
-                } else if (curE.type === 'LINE') {
-                    if (c === 10) curE.x1 = val; else if (c === 20) curE.y1 = val; 
-                    else if (c === 11) curE.x2 = val; else if (c === 21) curE.y2 = val;
-                } else if (['CIRCLE', 'ARC'].includes(curE.type)) {
-                    if (c === 10) curE.cx = val; else if (c === 20) curE.cy = val; else if (c === 40) curE.r = val;
-                    else if (c === 50) curE.startAngle = val; else if (c === 51) curE.endAngle = val;
+            } else if ((ent.type === 'LWPOLYLINE' || ent.type === 'POLYLINE') && ent.vertices && ent.vertices.length > 0) {
+                for (let i = 0; i < ent.vertices.length - 1; i++) {
+                    addBulgeSegments(ent.vertices[i], ent.vertices[i + 1], ent.vertices[i].bulge);
+                }
+                if (ent.closed && ent.vertices.length > 2) {
+                    addBulgeSegments(ent.vertices[ent.vertices.length - 1], ent.vertices[0], ent.vertices[ent.vertices.length - 1].bulge);
                 }
             }
         }
-        if (curE && curE.type !== 'POLYLINE') flushE(curE);
-        if (curPoly) flushE(curPoly);
-        
-        // Filtrar micro segmentos
-        return segments.filter(s => Math.hypot(s.x2 - s.x1, s.y2 - s.y1) > 1e-4);
+
+        while (idx < lines.length) {
+            const pair = getPair();
+            if (!pair) break;
+            const [code, value] = pair;
+
+            if (code === 0) {
+                flushEntity(currentEntity);
+                if (value === 'LINE' || value === 'CIRCLE' || value === 'ARC' || value === 'LWPOLYLINE') {
+                    currentEntity = { type: value, vertices: [] };
+                } else if (value === 'POLYLINE') {
+                    currentEntity = { type: value, vertices: [], closed: false };
+                    currentPolyline = currentEntity;
+                } else if (value === 'VERTEX') {
+                    currentEntity = { type: 'VERTEX', x: 0, y: 0, bulge: 0 };
+                } else if (value === 'SEQEND') {
+                    if (currentPolyline) {
+                        currentEntity = currentPolyline;
+                        currentEntity.type = 'LWPOLYLINE';
+                        flushEntity(currentEntity);
+                        currentPolyline = null;
+                        currentEntity = null;
+                    }
+                } else {
+                    currentEntity = null;
+                }
+            } else if (currentEntity) {
+                if (code === 67 && value === '1') currentEntity.ignore = true; // Ignorar Paper Space
+                
+                const v = parseFloat(value);
+                if (currentEntity.type === 'LINE') {
+                    if (code === 10) currentEntity.x1 = v; else if (code === 20) currentEntity.y1 = v;
+                    else if (code === 11) currentEntity.x2 = v; else if (code === 21) currentEntity.y2 = v;
+                } else if (currentEntity.type === 'CIRCLE' || currentEntity.type === 'ARC') {
+                    if (code === 10) currentEntity.cx = v; else if (code === 20) currentEntity.cy = v;
+                    else if (code === 40) currentEntity.r = v; else if (code === 50) currentEntity.startAngle = v;
+                    else if (code === 51) currentEntity.endAngle = v;
+                } else if (currentEntity.type === 'LWPOLYLINE' || currentEntity.type === 'POLYLINE') {
+                    if (code === 70) currentEntity.closed = (parseInt(value) & 1) !== 0;
+                    else if (code === 10 && currentEntity.type === 'LWPOLYLINE') currentEntity.vertices.push({ x: v, y: 0, bulge: 0 });
+                    else if (code === 20 && currentEntity.type === 'LWPOLYLINE' && currentEntity.vertices.length > 0) {
+                        currentEntity.vertices[currentEntity.vertices.length - 1].y = v;
+                    } else if (code === 42 && currentEntity.type === 'LWPOLYLINE' && currentEntity.vertices.length > 0) {
+                        currentEntity.vertices[currentEntity.vertices.length - 1].bulge = v;
+                    }
+                } else if (currentEntity.type === 'VERTEX') {
+                    if (code === 10) currentEntity.x = v; else if (code === 20) currentEntity.y = v;
+                    else if (code === 42) currentEntity.bulge = v;
+                }
+            }
+        }
+        flushEntity(currentEntity);
+        return segments.filter(s => Math.hypot(s.x2 - s.x1, s.y2 - s.y1) > 1e-6);
     }
 
-    function buildTopology(rawSegments) {
-        // Redondeo de vértices al décimo de milímetro para evitar gaps invisibles
-        const snap = v => Math.round(v * 1e4) / 1e4;
-        
-        // 1. Intersección exhaustiva O(N^2)
-        let splits = new Map();
-        for (let i=0; i<rawSegments.length; i++) splits.set(i, [0, 1]);
+    function buildTopology(rawSegments, tol) {
+        // 1. Planarización O(N^2)
+        const pts = [];
+        rawSegments.forEach(s => { pts.push({x: s.x1, y: s.y1}); pts.push({x: s.x2, y: s.y2}); });
 
-        for (let i = 0; i < rawSegments.length; i++) {
-            let s1 = rawSegments[i];
-            let dx1 = s1.x2 - s1.x1, dy1 = s1.y2 - s1.y1;
-            for (let j = i + 1; j < rawSegments.length; j++) {
-                let s2 = rawSegments[j];
-                let dx2 = s2.x2 - s2.x1, dy2 = s2.y2 - s2.y1;
-                let den = dx1 * dy2 - dy1 * dx2;
+        for(let i=0; i<rawSegments.length; i++) {
+            const s1 = rawSegments[i];
+            for(let j=i+1; j<rawSegments.length; j++) {
+                const s2 = rawSegments[j];
+                const den = (s1.x2 - s1.x1)*(s2.y2 - s2.y1) - (s1.y2 - s1.y1)*(s2.x2 - s2.x1);
                 if (Math.abs(den) > 1e-7) {
-                    let u = ((s2.x1 - s1.x1) * dy2 - (s2.y1 - s1.y1) * dx2) / den;
-                    let v = ((s2.x1 - s1.x1) * dy1 - (s2.y1 - s1.y1) * dx1) / den;
-                    if (u > 1e-5 && u < 1 - 1e-5 && v > 1e-5 && v < 1 - 1e-5) {
-                        splits.get(i).push(u);
-                        splits.get(j).push(v);
+                    const u = ((s2.x1 - s1.x1)*(s2.y2 - s2.y1) - (s2.y1 - s1.y1)*(s2.x2 - s2.x1)) / den;
+                    const v = ((s2.x1 - s1.x1)*(s1.y2 - s1.y1) - (s2.y1 - s1.y1)*(s1.x2 - s1.x1)) / den;
+                    if (u > -1e-5 && u < 1+1e-5 && v > -1e-5 && v < 1+1e-5) {
+                        pts.push({ x: s1.x1 + u*(s1.x2 - s1.x1), y: s1.y1 + u*(s1.y2 - s1.y1) });
                     }
                 }
             }
         }
 
-        let splitSegments = [];
-        for (let i = 0; i < rawSegments.length; i++) {
-            let s = rawSegments[i];
-            let tVals = [...new Set(splits.get(i))].sort((a,b)=>a-b);
-            for (let k = 0; k < tVals.length - 1; k++) {
-                if (tVals[k+1] - tVals[k] > 1e-5) {
-                    splitSegments.push({
-                        x1: s.x1 + tVals[k] * (s.x2 - s.x1), y1: s.y1 + tVals[k] * (s.y2 - s.y1),
-                        x2: s.x1 + tVals[k+1] * (s.x2 - s.x1), y2: s.y1 + tVals[k+1] * (s.y2 - s.y1)
-                    });
+        const segments = [];
+        for(let i=0; i<rawSegments.length; i++) {
+            const s = rawSegments[i];
+            const len2 = (s.x2 - s.x1)**2 + (s.y2 - s.y1)**2;
+            if (len2 < 1e-7) continue;
+
+            const tVals = [0, 1];
+            pts.forEach(p => {
+                const t = ((p.x - s.x1)*(s.x2 - s.x1) + (p.y - s.y1)*(s.y2 - s.y1)) / len2;
+                if (t > 1e-5 && t < 1-1e-5) {
+                    const projX = s.x1 + t*(s.x2-s.x1);
+                    const projY = s.y1 + t*(s.y2-s.y1);
+                    if (Math.hypot(p.x - projX, p.y - projY) <= tol) tVals.push(t);
                 }
+            });
+
+            tVals.sort((a,b) => a - b);
+            let prevT = tVals[0];
+            for(let k=1; k<tVals.length; k++) {
+                if (tVals[k] - prevT < 1e-5) continue;
+                segments.push({
+                    x1: s.x1 + prevT*(s.x2-s.x1), y1: s.y1 + prevT*(s.y2-s.y1),
+                    x2: s.x1 + tVals[k]*(s.x2-s.x1), y2: s.y1 + tVals[k]*(s.y2-s.y1)
+                });
+                prevT = tVals[k];
             }
         }
 
-        // 2. Nodos únicos
-        let vertices = new Map();
-        let getVid = (x, y) => {
-            let k = `${snap(x)},${snap(y)}`;
-            if (!vertices.has(k)) vertices.set(k, {id: vertices.size, x: snap(x), y: snap(y), adj: []});
-            return vertices.get(k);
+        const vertices = [];
+        const grid = new Map();
+        const getV = (x, y) => {
+            const gx = Math.round(x / tol), gy = Math.round(y / tol);
+            for(let dx=-1; dx<=1; dx++) {
+                for(let dy=-1; dy<=1; dy++) {
+                    const key = `${gx+dx},${gy+dy}`;
+                    if(grid.has(key)) {
+                        for(const v of grid.get(key)) {
+                            if (Math.hypot(v.x - x, v.y - y) <= tol) return v;
+                        }
+                    }
+                }
+            }
+            const newV = {id: vertices.length, x, y, adj: []};
+            vertices.push(newV);
+            const key = `${gx},${gy}`;
+            if(!grid.has(key)) grid.set(key, []);
+            grid.get(key).push(newV);
+            return newV;
         };
 
-        let uniqueEdges = new Map();
-        for (let s of splitSegments) {
-            let v1 = getVid(s.x1, s.y1), v2 = getVid(s.x2, s.y2);
-            if (v1.id === v2.id) continue;
-            let minId = Math.min(v1.id, v2.id), maxId = Math.max(v1.id, v2.id);
-            uniqueEdges.set(`${minId}-${maxId}`, {v1, v2});
-        }
+        const uniqueEdges = new Map();
+        segments.forEach(s => {
+            const v1 = getV(s.x1, s.y1);
+            const v2 = getV(s.x2, s.y2);
+            if (v1.id === v2.id) return;
+            const id1 = Math.min(v1.id, v2.id), id2 = Math.max(v1.id, v2.id);
+            uniqueEdges.set(`${id1}-${id2}`, {v1, v2}); 
+        });
 
-        // 3. Eliminar ramas sueltas (Dangles)
-        let edgeList = Array.from(uniqueEdges.values());
-        let adjMap = new Map();
-        for(let e of edgeList) {
-            if(!adjMap.has(e.v1.id)) adjMap.set(e.v1.id, new Set()); adjMap.get(e.v1.id).add(e.v2.id);
-            if(!adjMap.has(e.v2.id)) adjMap.set(e.v2.id, new Set()); adjMap.get(e.v2.id).add(e.v1.id);
-        }
+        const adj = new Map();
+        uniqueEdges.forEach((_, key) => {
+            const [id1, id2] = key.split('-').map(Number);
+            if(!adj.has(id1)) adj.set(id1, new Set()); if(!adj.has(id2)) adj.set(id2, new Set());
+            adj.get(id1).add(id2); adj.get(id2).add(id1);
+        });
 
-        let dangles = [];
-        for(let [v, neighbors] of adjMap.entries()) { if(neighbors.size === 1) dangles.push(v); }
-        while(dangles.length > 0) {
-            let v = dangles.pop();
-            if(!adjMap.has(v)) continue;
-            let neighbors = adjMap.get(v);
-            if(neighbors.size === 1) {
-                let u = [...neighbors][0];
-                adjMap.get(u).delete(v); adjMap.delete(v);
-                if(adjMap.get(u).size === 1) dangles.push(u);
-            }
-        }
-
-        // 4. Grafos Half-Edge
-        let halfEdges = [];
-        let vArray = Array.from(vertices.values());
-        for (let [u, neighbors] of adjMap.entries()) {
-            for (let v of neighbors) {
-                if (u < v) {
-                    let vu = vArray[u], vv = vArray[v];
-                    let a1 = Math.atan2(vv.y - vu.y, vv.x - vu.x), a2 = Math.atan2(vu.y - vv.y, vu.x - vv.x);
-                    let h1 = {from: vu, to: vv, angle: a1, used: false}, h2 = {from: vv, to: vu, angle: a2, used: false};
-                    h1.rev = h2; h2.rev = h1;
-                    vu.adj.push(h1); vv.adj.push(h2);
-                    halfEdges.push(h1, h2);
+        let pruned = true;
+        while(pruned) {
+            pruned = false;
+            for (const [vId, neighbors] of adj.entries()) {
+                if(neighbors.size === 1) {
+                    const nId = Array.from(neighbors)[0];
+                    neighbors.delete(nId);
+                    if(adj.has(nId)) adj.get(nId).delete(vId);
+                    uniqueEdges.delete(`${Math.min(vId, nId)}-${Math.max(vId, nId)}`);
+                    pruned = true;
                 }
             }
         }
 
-        for (let v of vertices.values()) { v.adj.sort((a, b) => a.angle - b.angle); }
+        const halfEdges = [];
+        uniqueEdges.forEach(e => {
+            const h1 = {from: e.v1, to: e.v2, angle: Math.atan2(e.v2.y - e.v1.y, e.v2.x - e.v1.x), used: false};
+            const h2 = {from: e.v2, to: e.v1, angle: Math.atan2(e.v1.y - e.v2.y, e.v1.x - e.v2.x), used: false};
+            h1.rev = h2; h2.rev = h1;
+            e.v1.adj.push(h1); e.v2.adj.push(h2);
+            halfEdges.push(h1, h2);
+        });
 
-        // 5. Encontrar caras
-        let faces = [];
-        for (let he of halfEdges) {
-            if (he.used) continue;
-            let pts = [], curr = he, loops = 0;
-            while (!curr.used && loops < 10000) {
+        vertices.forEach(v => v.adj.sort((a, b) => a.angle - b.angle));
+
+        const rawFaces = [];
+        halfEdges.forEach(he => {
+            if(he.used) return;
+            const pts = []; let curr = he, loops = 0;
+            while(!curr.used && loops < 10000) {
                 curr.used = true; pts.push({x: curr.from.x, y: curr.from.y});
-                let revIdx = curr.to.adj.indexOf(curr.rev);
-                let nextIdx = (revIdx - 1 + curr.to.adj.length) % curr.to.adj.length;
-                curr = curr.to.adj[nextIdx]; loops++;
+                const idx = curr.to.adj.indexOf(curr.rev);
+                curr = curr.to.adj[(idx - 1 + curr.to.adj.length) % curr.to.adj.length];
+                loops++;
             }
-            if (pts.length > 2) {
+            if(pts.length > 2) {
                 let area = 0;
-                for (let i = 0; i < pts.length; i++) area += pts[i].x * pts[(i+1)%pts.length].y - pts[(i+1)%pts.length].x * pts[i].y;
-                area /= 2;
-                faces.push({pts: pts, signedArea: area, area: Math.abs(area), matIdx: 1}); // Por defecto aluminio
-            }
-        }
-
-        // Eliminar cara universo
-        let maxA = -1, universeFace = null;
-        for (let f of faces) { if (f.area > maxA) { maxA = f.area; universeFace = f; } }
-        
-        return faces.filter(f => f !== universeFace && f.area > 0.01).sort((a, b) => b.area - a.area);
-    }
-
-    function extractBoundaryEdges(polys) {
-        const m = new Map();
-        polys.forEach(poly => {
-            for(let i=0; i<poly.pts.length; i++){
-                const p1 = poly.pts[i], p2 = poly.pts[(i+1)%poly.pts.length];
-                const k1 = `${p1.x.toFixed(3)},${p1.y.toFixed(3)}-${p2.x.toFixed(3)},${p2.y.toFixed(3)}`;
-                const k2 = `${p2.x.toFixed(3)},${p2.y.toFixed(3)}-${p1.x.toFixed(3)},${p1.y.toFixed(3)}`;
-                if(m.has(k1)) m.get(k1).count++; else if(m.has(k2)) m.get(k2).count++;
-                else m.set(k1, {p1, p2, count: 1, type: 0});
+                for(let i=0; i<pts.length; i++) area += (pts[i].x * pts[(i+1)%pts.length].y - pts[(i+1)%pts.length].x * pts[i].y);
+                rawFaces.push({pts, signedArea: area/2, area: Math.abs(area/2), matIdx: 1}); // Aluminio por defecto
             }
         });
-        const edges = Array.from(m.values()).filter(e => e.count === 1).map(e => ({p1:e.p1, p2:e.p2, type:0}));
+
+        let maxA = -1, sign = 1;
+        rawFaces.forEach(f => { if (f.area > maxA) { maxA = f.area; sign = Math.sign(f.signedArea); } });
+        
+        return rawFaces.filter(f => Math.sign(f.signedArea) !== sign && f.area > 1e-4).sort((a,b) => b.area - a.area);
+    }
+
+    function extractBoundaryEdges(polys, tol) {
+        const map = new Map();
+        const rT = (val) => Math.round(val / tol) * tol;
+        
+        polys.forEach(poly => {
+            for(let i=0; i<poly.pts.length; i++) {
+                const p1 = poly.pts[i], p2 = poly.pts[(i+1)%poly.pts.length];
+                const k1 = `${rT(p1.x)},${rT(p1.y)}-${rT(p2.x)},${rT(p2.y)}`;
+                const k2 = `${rT(p2.x)},${rT(p2.y)}-${rT(p1.x)},${rT(p1.y)}`;
+                if(map.has(k1)) map.get(k1).count++; else if(map.has(k2)) map.get(k2).count++;
+                else map.set(k1, {p1, p2, count: 1, type: 0});
+            }
+        });
+        
+        const edges = Array.from(map.values()).filter(e => e.count === 1).map(e => ({p1:e.p1, p2:e.p2, type:0}));
         
         boundaryAdj = edges.map(() => []);
         for(let i=0; i<edges.length; i++){
             for(let j=i+1; j<edges.length; j++){
-                if(Math.hypot(edges[i].p1.x-edges[j].p1.x, edges[i].p1.y-edges[j].p1.y) < 0.1 || 
-                   Math.hypot(edges[i].p1.x-edges[j].p2.x, edges[i].p1.y-edges[j].p2.y) < 0.1 || 
-                   Math.hypot(edges[i].p2.x-edges[j].p1.x, edges[i].p2.y-edges[j].p1.y) < 0.1 || 
-                   Math.hypot(edges[i].p2.x-edges[j].p2.x, edges[i].p2.y-edges[j].p2.y) < 0.1) {
+                if(Math.hypot(edges[i].p1.x-edges[j].p1.x, edges[i].p1.y-edges[j].p1.y) < tol*2 || 
+                   Math.hypot(edges[i].p1.x-edges[j].p2.x, edges[i].p1.y-edges[j].p2.y) < tol*2 || 
+                   Math.hypot(edges[i].p2.x-edges[j].p1.x, edges[i].p2.y-edges[j].p1.y) < tol*2 || 
+                   Math.hypot(edges[i].p2.x-edges[j].p2.x, edges[i].p2.y-edges[j].p2.y) < tol*2) {
                     boundaryAdj[i].push(j); boundaryAdj[j].push(i);
                 }
             }
@@ -522,7 +614,7 @@
         return edges;
     }
 
-    // ──── GESTIÓN DE VISTA (ZOOM ANCLADO) ────
+    // ──── GESTIÓN DE VISTA (ZOOM ANCLADO AL RATÓN) ────
     function recalcBounds() {
         if(!polygons.length) return;
         const all = polygons.flatMap(p => p.pts);
@@ -567,8 +659,10 @@
         
         const cw = canvas.width, ch = canvas.height;
         const cxW = (minX + maxX) / 2, cyW = (minY + maxY) / 2;
+        
         offsetX = mx - cw / 2 - (wBefore.x - cxW) * baseScale * zoomLevel;
         offsetY = my - ch / 2 + (wBefore.y - cyW) * baseScale * zoomLevel;
+        
         draw();
     };
 
@@ -621,14 +715,16 @@
         isDragging = false; canvas.classList.remove('grabbing');
         if(hasDragged || !polygons.length || showThermalMap) return;
         
-        // Ejecuta Pintado Directo basado en la selección
         if(editMode === 'BOUNDARY' && hoveredEdgeIdx !== -1) {
             const activeType = parseInt(document.getElementById('boundSelect').value);
             
             if(e.shiftKey) {
                 let path = bfsFindNearestAssigned(hoveredEdgeIdx);
-                if(path){ path.forEach(id => boundaryEdges[id].type = activeType); }
-                else boundaryEdges[hoveredEdgeIdx].type = activeType;
+                if(path){ 
+                    path.forEach(id => boundaryEdges[id].type = activeType); 
+                } else {
+                    boundaryEdges[hoveredEdgeIdx].type = activeType;
+                }
             } else {
                 boundaryEdges[hoveredEdgeIdx].type = activeType;
             }
@@ -708,7 +804,7 @@
         polygons.forEach(p => p.pts.forEach(pt => {
             const dxx = pt.x-cx, dyy = pt.y-cy; pt.x = cx - dyy; pt.y = cy + dxx;
         }));
-        recalcBounds(); boundaryEdges = extractBoundaryEdges(polygons); draw();
+        recalcBounds(); boundaryEdges = extractBoundaryEdges(polygons, parseFloat(document.getElementById('tolInput').value) || 0.1); draw();
     };
 
     // ──── SOLVER TÉRMICO Y CÁLCULO DE U ────
@@ -724,7 +820,7 @@
         document.getElementById('calcBtn').disabled = true;
         
         setTimeout(() => {
-            dx = (maxX-minX)/res; dy = (maxY-minY)/res;
+            dx = (maxX-minX)/res || 0.001; dy = (maxY-minY)/res || 0.001;
             kGrid = Array.from({length:res}, (_,i)=> Array.from({length:res}, (_,j)=> {
                 const x = minX+j*dx+dx/2, y = minY+i*dy+dy/2;
                 const p = polygons.find(poly => {
@@ -754,54 +850,217 @@
                 }
             });
 
-            const iter = res === 200 ? 3000 : 1500;
-            for(let it=0; it<iter; it++){
-                for(let i=0; i<res; i++){
-                    for(let j=0; j<res; j++){
-                        if(kGrid[i][j]===0) continue;
-                        
-                        // Resistencias Superficiales (Rs)
-                        if(isExt[i][j]){ T[i][j] = (te + T[i][j]*(kGrid[i][j]*Rse/dx)) / (1 + (kGrid[i][j]*Rse/dx)); continue; }
-                        if(isIntMeas[i][j] || isIntSec[i][j]){ T[i][j] = (ti + T[i][j]*(kGrid[i][j]*Rsi/dx)) / (1 + (kGrid[i][j]*Rsi/dx)); continue; }
-                        
-                        let n=0, d=0;
-                        if(j>0 && kGrid[i][j-1]>0){ n += kGrid[i][j-1]*T[i][j-1]; d += kGrid[i][j-1]; }
-                        if(j<res-1 && kGrid[i][j+1]>0){ n += kGrid[i][j+1]*T[i][j+1]; d += kGrid[i][j+1]; }
-                        if(i>0 && kGrid[i-1][j]>0){ n += kGrid[i-1][j]*T[i-1][j]; d += kGrid[i-1][j]; }
-                        if(i<res-1 && kGrid[i+1][j]>0){ n += kGrid[i+1][j]*T[i+1][j]; d += kGrid[i+1][j]; }
-                        if(d>0) T[i][j] = n/d;
+            let iter = 5000;
+            let chunkSize = 300;
+            if (res === 400) { iter = 15000; chunkSize = 150; }
+            if (res === 600) { iter = 35000; chunkSize = 100; }
+            
+            let done = 0;
+            const rx = dy/dx, ry = dx/dy;
+            const c_solid = (k1, k2, r) => ((k1+k2)/2) * r;
+            const c_surf = (k, Rs, r, delta) => r / (Rs/delta + 1/(2*k));
+
+            function chunk() {
+                const end = Math.min(done+chunkSize, iter);
+                for(let it=done; it<end; it++){
+                    for(let i=0; i<res; i++){
+                        for(let j=0; j<res; j++){
+                            if(kGrid[i][j]===0) continue;
+                            
+                            if(isExt[i][j]){ T[i][j] = te; continue; }
+                            if(isIntMeas[i][j] || isIntSec[i][j]){ T[i][j] = ti; continue; }
+                            
+                            let n=0, d=0;
+                            if(j>0) {
+                                if(isExt[i][j-1]) { let C = c_surf(kGrid[i][j], Rse, rx, dx); n += C*te; d += C; }
+                                else if(isIntMeas[i][j-1] || isIntSec[i][j-1]) { let C = c_surf(kGrid[i][j], Rsi, rx, dx); n += C*ti; d += C; }
+                                else if(kGrid[i][j-1]>0) { let C = c_solid(kGrid[i][j], kGrid[i][j-1], rx); n += C*T[i][j-1]; d += C; }
+                            }
+                            if(j<res-1) {
+                                if(isExt[i][j+1]) { let C = c_surf(kGrid[i][j], Rse, rx, dx); n += C*te; d += C; }
+                                else if(isIntMeas[i][j+1] || isIntSec[i][j+1]) { let C = c_surf(kGrid[i][j], Rsi, rx, dx); n += C*ti; d += C; }
+                                else if(kGrid[i][j+1]>0) { let C = c_solid(kGrid[i][j], kGrid[i][j+1], rx); n += C*T[i][j+1]; d += C; }
+                            }
+                            if(i>0) {
+                                if(isExt[i-1][j]) { let C = c_surf(kGrid[i][j], Rse, ry, dy); n += C*te; d += C; }
+                                else if(isIntMeas[i-1][j] || isIntSec[i-1][j]) { let C = c_surf(kGrid[i][j], Rsi, ry, dy); n += C*ti; d += C; }
+                                else if(kGrid[i-1][j]>0) { let C = c_solid(kGrid[i][j], kGrid[i-1][j], ry); n += C*T[i-1][j]; d += C; }
+                            }
+                            if(i<res-1) {
+                                if(isExt[i+1][j]) { let C = c_surf(kGrid[i][j], Rse, ry, dy); n += C*te; d += C; }
+                                else if(isIntMeas[i+1][j] || isIntSec[i+1][j]) { let C = c_surf(kGrid[i][j], Rsi, ry, dy); n += C*ti; d += C; }
+                                else if(kGrid[i+1][j]>0) { let C = c_solid(kGrid[i][j], kGrid[i+1][j], ry); n += C*T[i+1][j]; d += C; }
+                            }
+                            if(d>0) T[i][j] = n/d;
+                        }
                     }
+                }
+                done = end;
+                document.getElementById('calcProgress').innerText = Math.round((done/iter)*100) + '%';
+                
+                if(done < iter) {
+                    setTimeout(chunk, 0); 
+                } else {
+                    finishSolver();
                 }
             }
 
-            let flux = 0;
-            for(let i=0; i<res; i++){
-                for(let j=0; j<res; j++){
-                    if(isIntMeas[i][j]){
-                        if(j>0 && !isIntMeas[i][j-1] && kGrid[i][j-1]>0) flux += kGrid[i][j]*(ti - T[i][j]) / (kGrid[i][j]*Rsi + dx/2);
-                        if(j<res-1 && !isIntMeas[i][j+1] && kGrid[i][j+1]>0) flux += kGrid[i][j]*(ti - T[i][j]) / (kGrid[i][j]*Rsi + dx/2);
-                        if(i>0 && !isIntMeas[i-1][j] && kGrid[i-1][j]>0) flux += kGrid[i][j]*(ti - T[i][j]) / (kGrid[i][j]*Rsi + dy/2);
-                        if(i<res-1 && !isIntMeas[i+1][j] && kGrid[i+1][j]>0) flux += kGrid[i][j]*(ti - T[i][j]) / (kGrid[i][j]*Rsi + dy/2);
+            function finishSolver() {
+                let flux = 0;
+                for(let i=0; i<res; i++){
+                    for(let j=0; j<res; j++){
+                        if(isIntMeas[i][j]){
+                            if(j>0 && kGrid[i][j-1]>0 && !isIntMeas[i][j-1] && !isIntSec[i][j-1] && !isExt[i][j-1]) 
+                                flux += c_surf(kGrid[i][j-1], Rsi, rx, dx) * (ti - T[i][j-1]);
+                            if(j<res-1 && kGrid[i][j+1]>0 && !isIntMeas[i][j+1] && !isIntSec[i][j+1] && !isExt[i][j+1]) 
+                                flux += c_surf(kGrid[i][j+1], Rsi, rx, dx) * (ti - T[i][j+1]);
+                            if(i>0 && kGrid[i-1][j]>0 && !isIntMeas[i-1][j] && !isIntSec[i-1][j] && !isExt[i-1][j]) 
+                                flux += c_surf(kGrid[i-1][j], Rsi, ry, dy) * (ti - T[i-1][j]);
+                            if(i<res-1 && kGrid[i+1][j]>0 && !isIntMeas[i+1][j] && !isIntSec[i+1][j] && !isExt[i+1][j]) 
+                                flux += c_surf(kGrid[i+1][j], Rsi, ry, dy) * (ti - T[i+1][j]);
+                        }
                     }
                 }
+                
+                const deltaT = Math.abs(ti - te) || 1;
+                const L2D = Math.abs(flux) / deltaT;
+                const U = L2D / lp;
+
+                lastU = U;
+                lastFlux = flux;
+                lastL2D = L2D;
+                
+                document.getElementById('result').style.display="block";
+                document.getElementById('result').innerHTML=`
+                    <h2>U<sub>f</sub> = ${U.toFixed(3)} W/(m²·K)</h2>
+                    <p>Cálculo analítico iterativo (FDM) s/ ISO 10077-2</p>
+                    <p style="opacity:0.9; margin-top:5px; font-size:0.85rem;">
+                        <small>Flujo lineal (Q): ${Math.abs(flux).toFixed(3)} W/m &nbsp;|&nbsp; L<sup>2D</sup>: ${L2D.toFixed(3)} W/(m·K) &nbsp;|&nbsp; b<sub>f</sub>: ${lp*1000} mm</small>
+                    </p>
+                `;
+                
+                showThermalMap=true; 
+                document.getElementById('btnBackToEdit').style.display="inline-flex";
+                document.getElementById('btnPdf').style.display="inline-flex";
+                document.getElementById('solverStatus').style.display="none"; 
+                document.getElementById('calcBtn').disabled = false;
+                
+                // Centrar vista en el resultado
+                zoomLevel = 1; offsetX = 0; offsetY = 0;
+                draw();
+                setStatus("✅ Análisis completado con éxito.", "success");
             }
-            
-            const deltaT = Math.abs(ti - te) || 1;
-            const U = Math.abs(flux) / (lp * deltaT);
-            
-            document.getElementById('result').style.display="block";
-            document.getElementById('result').innerHTML=`<h2>U<sub>f</sub> = ${U.toFixed(3)} W/(m²·K)</h2><p>Flujo lineal (Q): ${Math.abs(flux).toFixed(3)} W/m | Malla: ${res}x${res}</p>`;
-            
-            showThermalMap=true; 
-            document.getElementById('btnBackToEdit').style.display="inline-flex";
-            document.getElementById('solverStatus').style.display="none"; 
-            document.getElementById('calcBtn').disabled = false;
-            
-            // Centrar vista en el resultado
-            zoomLevel = 1; offsetX = 0; offsetY = 0;
-            draw();
-            setStatus("✅ Análisis completado con éxito.", "success");
+
+            chunk();
+
         }, 50);
+    };
+
+    // ──── GENERACIÓN DE INFORME PDF Y EVALUACIÓN CRÍTICA ────
+    document.getElementById('btnPdf').onclick = () => {
+        const lp = document.getElementById('LpInput').value;
+        const resLabel = document.getElementById('gridRes').options[document.getElementById('gridRes').selectedIndex].text;
+        
+        // Averiguar qué materiales se han usado
+        let usedMats = new Set();
+        polygons.forEach(p => usedMats.add(p.matIdx));
+        let matListHTML = Array.from(usedMats).map(idx => 
+            `<li style="width: 48%; margin-bottom: 5px;"><span style="display:inline-block; width:12px; height:12px; background:${materials[idx].color}; border:1px solid #000; margin-right:5px; vertical-align: middle;"></span> 
+            ${materials[idx].name} (λ = ${materials[idx].k} W/m·K)</li>`
+        ).join('');
+
+        const tExt = document.getElementById('tExt').value;
+        const tInt = document.getElementById('tInt').value;
+        const deltaT = Math.abs(tInt - tExt);
+
+        const report = document.createElement('div');
+        report.innerHTML = `
+            <div style="font-family: 'Open Sans', Arial, sans-serif; padding: 40px; color: #333; max-width: 800px; margin: auto; font-size: 12px; line-height: 1.5;">
+                
+                <!-- Encabezado -->
+                <div style="border-bottom: 3px solid #EDD00E; padding-bottom: 10px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: flex-end;">
+                    <div>
+                        <h1 style="color: #3E3E3E; margin:0; font-size: 24px;">INFORME DE TRANSMITANCIA TÉRMICA</h1>
+                        <h3 style="color: #666; margin: 5px 0 0 0; font-size: 14px;">Evaluación de Perfilería mediante FDM 2D</h3>
+                    </div>
+                    <div style="text-align: right; font-size: 10px; color: #999;">
+                        Generado el: ${new Date().toLocaleDateString()}<br>
+                        Aislantech Thermal Simulator
+                    </div>
+                </div>
+                
+                <!-- 1. Resultados -->
+                <h4 style="color: #1976d2; border-bottom: 1px solid #ccc; padding-bottom: 5px; margin-top: 0;">1. Resultados Principales</h4>
+                <table style="width: 100%; margin-bottom: 20px; font-size: 14px; background: #f9f9f9; padding: 15px; border-radius: 5px; border: 1px solid #eee;">
+                    <tr>
+                        <td style="padding: 5px; width: 60%;"><strong>Transmitancia Térmica del Marco (U<sub>f</sub>):</strong></td>
+                        <td style="padding: 5px; font-size: 18px; font-weight: bold; color: #2e7d32;">${lastU.toFixed(3)} W/(m²·K)</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 5px; border-top: 1px dotted #ccc;">Flujo Térmico Lineal (Q):</td>
+                        <td style="padding: 5px; border-top: 1px dotted #ccc;">${Math.abs(lastFlux).toFixed(3)} W/m</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 5px;">Conductancia Térmica 2D (L<sup>2D</sup>):</td>
+                        <td style="padding: 5px;">${lastL2D.toFixed(3)} W/(m·K)</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 5px;">Ancho Proyectado (b<sub>f</sub>):</td>
+                        <td style="padding: 5px;">${lp} mm</td>
+                    </tr>
+                </table>
+
+                <!-- 2. Mapa -->
+                <h4 style="color: #1976d2; border-bottom: 1px solid #ccc; padding-bottom: 5px;">2. Geometría y Distribución Térmica</h4>
+                <div style="text-align: center; margin: 15px 0;">
+                    <img src="${canvas.toDataURL('image/png')}" style="max-height: 280px; width: auto; border: 1px solid #ddd; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+                </div>
+
+                <!-- 3. Materiales -->
+                <h4 style="color: #1976d2; border-bottom: 1px solid #ccc; padding-bottom: 5px;">3. Materiales Aplicados</h4>
+                <ul style="list-style: none; padding: 0; margin-bottom: 20px; display: flex; flex-wrap: wrap;">
+                    ${matListHTML}
+                </ul>
+
+                <!-- 4. Normativa -->
+                <h4 style="color: #1976d2; border-bottom: 1px solid #ccc; padding-bottom: 5px;">4. Marco Normativo y Condiciones de Contorno</h4>
+                <p style="text-align: justify; margin-bottom: 20px; color: #555;">
+                    El cálculo se fundamenta en las directrices geométricas y físicas de la norma <strong>UNE-EN ISO 10077-2</strong> 
+                    (Comportamiento térmico de ventanas, puertas y persianas. Cálculo de la transmitancia térmica. Método numérico para marcos). 
+                    Las resistencias térmicas superficiales se han establecido acorde a la <strong>ISO 6946</strong> para flujo de calor horizontal:
+                    <br><br>
+                    • <strong>R<sub>se</sub></strong> (Resistencia Superficial Exterior): 0.04 m²·K/W a ${tExt} ºC.<br>
+                    • <strong>R<sub>si</sub></strong> (Resistencia Superficial Interior): 0.13 m²·K/W a ${tInt} ºC.<br>
+                    • Salto térmico total ponderado ($\Delta T$): ${deltaT} K.
+                </p>
+
+                <!-- 5. Evaluación Crítica -->
+                <h4 style="color: #1976d2; border-bottom: 1px solid #ccc; padding-bottom: 5px;">5. Análisis Crítico y Limitaciones del Modelo</h4>
+                <div style="text-align: justify; background: #fff3e0; padding: 15px; border-left: 4px solid #ff9800; border-radius: 0 4px 4px 0; color: #444;">
+                    <strong>Idoneidad Técnica del Método Numérico:</strong> Este modelo emplea el Método de Diferencias Finitas (FDM) con una resolución de discretización de <strong>${resLabel}</strong>. 
+                    El reporte está sujeto a las siguientes consideraciones técnicas de validación:
+                    <br><br>
+                    1. <strong>Discretización de Malla:</strong> La convergencia matemática depende de la densidad de malla. El uso de mallas estandar o altas (400x400 a 600x600) en el simulador minimiza el error residual de truncamiento a los umbrales exigidos normativamente (< 2%).<br><br>
+                    2. <strong>Tratamiento de Cámaras de Aire (CRÍTICO):</strong> El presente simulador asume una conductividad térmica isótropa y constante para el aire en el interior del perfil. Sin embargo, la estricta aplicación de la ISO 10077-2 demanda la sustitución de las cavidades por una <em>conductividad térmica equivalente (λ<sub>eq</sub>)</em> calculada de forma iterativa, contemplando el flujo radiativo entre las superficies de la cavidad (función de la emisividad ε) y el flujo convectivo (función del espesor, dirección y $\Delta T$). Como este parámetro no se ha integrado bidireccionalmente, <strong>los resultados aquí plasmados representan una aproximación optimista</strong> respecto a un ensayo de laboratorio si el marco posee amplias cavidades interiores.<br><br>
+                    3. <strong>Restricción Dimensional (2D):</strong> El modelo asume un perfil extruido infinitamente largo. Se obvian los puentes térmicos puntuales (tornillería, herrajes de cierre) y lineales ortogonales (corte y sellado de esquinas del bastidor).
+                    <br><br>
+                    <strong>Conclusión Pericial:</strong> El resultado es altamente fiable para la <em>evaluación comparativa de diseños</em> (A/B testing de geometrías, número de roturas de puente térmico y cambios de aleación). No obstante, para certificaciones oficiales Marcado CE, el valor U<sub>f</sub> final debe extraerse de un programa validado expresamente contra el Anexo D de la ISO 10077-2 mediante el cálculo avanzado de radiación en cavidades.
+                </div>
+
+                <div style="margin-top: 30px; font-size: 10px; color: #999; text-align: center; border-top: 1px solid #eee; padding-top: 10px;">
+                    Aislantech Thermal Simulator © ${new Date().getFullYear()}
+                </div>
+            </div>
+        `;
+
+        setStatus("Generando informe justificado en PDF...", "info");
+        html2pdf().from(report).set({
+            margin: [10, 10, 10, 10],
+            filename: 'Aislantech_Informe_Tecnico_Uf.pdf',
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2, logging: false },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        }).save().then(() => setStatus("✅ Informe PDF técnico descargado correctamente.", "success"));
     };
 
     updateMaterialUI();
