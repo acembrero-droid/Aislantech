@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simulador Cinemático PRO - Cadena Perfecta y Eje Libre</title>
+    <title>Simulador Cinemático DEFINITIVO</title>
     <script src="https://cdn.jsdelivr.net/npm/dxf-parser@1.1.2/dist/dxf-parser.min.js"></script>
     <style>
         :root { --bg: #0f172a; --panel: #1e293b; --text: #f8fafc; --border: #334155; --accent: #3b82f6; }
@@ -12,7 +12,8 @@
         h2 { margin: 0; color: #60a5fa; font-size: 1.2rem; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
         h3 { margin: 10px 0 5px 0; color: #94a3b8; font-size: 0.9rem; text-transform: uppercase; }
         label { font-size: 0.85rem; color: #cbd5e1; font-weight: 600; display: block; margin-bottom: 4px; }
-        input[type="file"], input[type="number"], input[type="range"], select { width: 100%; padding: 8px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg); color: white; box-sizing: border-box; }
+        input[type="file"], input[type="number"], input[type="range"] { width: 100%; padding: 8px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg); color: white; box-sizing: border-box; }
+        input[type="number"]:focus { outline: none; border-color: var(--accent); }
         
         .control-box { background: #0f172a; border: 1px solid var(--accent); border-radius: 6px; padding: 10px; }
         .btn-action { background: var(--accent); color: white; border: none; padding: 10px; border-radius: 6px; width: 100%; font-weight: bold; cursor: pointer; transition: 0.2s; margin-bottom: 10px; }
@@ -31,6 +32,8 @@
         canvas { width: 100%; height: 100%; display: block; }
         
         #instructionOverlay { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); background: var(--accent); color: white; padding: 12px 24px; border-radius: 30px; font-weight: bold; display: none; pointer-events: none; box-shadow: 0 4px 15px rgba(0,0,0,0.5); z-index: 20; font-size: 1.1rem; border: 2px solid #fff; text-align: center; }
+        
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
     </style>
 </head>
 <body>
@@ -45,9 +48,8 @@
     </div>
 
     <div class="control-box">
-        <label style="color:#60a5fa;">Calibración Espacial (Libre)</label>
+        <label style="color:#60a5fa;">Calibración Espacial</label>
         <button id="btnRecalibrar" class="btn-action" onclick="iniciarCalibracion()" style="display:none;">📍 Re-Calibrar Puntos y Eje</button>
-        
         <div class="checkbox-group">
             <input type="checkbox" id="chkFlipX" onchange="if(appState==='SIMULATING') simular();">
             <label for="chkFlipX">Invertir Cara de Lama (Flip Inside/Out)</label>
@@ -55,25 +57,33 @@
     </div>
 
     <div>
-        <h3>2. Geometría del Rollo</h3>
-        <label>Diámetro del Eje [mm]</label>
-        <input type="number" id="valEje" value="60" oninput="if(appState==='SIMULATING') simular();">
-    </div>
-    <div>
-        <label>Aumento de radio por vuelta (Espesor e) [mm]</label>
-        <input type="number" id="valEspesor" value="9" step="0.1" oninput="if(appState==='SIMULATING') simular();">
-    </div>
-    <div>
-        <label>Número de Lamas: <strong id="outLamas" style="color:#38bdf8;">30</strong></label>
-        <input type="range" id="valLamas" min="5" max="80" value="30" oninput="document.getElementById('outLamas').innerText = this.value; if(appState==='SIMULATING') simular();">
+        <h3>2. Geometría y Cálculo Bidireccional</h3>
+        
+        <div class="grid-2">
+            <div>
+                <label>Diámetro Eje (mm)</label>
+                <input type="number" id="valEje" value="60" oninput="if(appState==='SIMULATING') simular();">
+            </div>
+            <div>
+                <label>Espesor Rollo (mm)</label>
+                <input type="number" id="valEspesor" value="9" step="0.1" oninput="if(appState==='SIMULATING') simular();">
+            </div>
+        </div>
+
+        <div style="margin-top: 15px; border-top: 1px dashed #334155; padding-top: 15px;">
+            <label style="color:#fde047;">Altura Total Deseada (mm)</label>
+            <input type="number" id="valAlturaTotal" value="1500" step="10">
+        </div>
+
+        <div style="margin-top: 10px;">
+            <label>Número de Lamas Requeridas</label>
+            <input type="number" id="valLamas" value="30" step="1">
+        </div>
     </div>
 
     <div class="data-panel">
         <div style="margin-bottom: 8px; display:flex; justify-content:space-between;">
-            <span>Distancia exacta entre ejes:</span> <strong id="infoAlto" style="color:#fde047;">-- mm</strong>
-        </div>
-        <div style="margin-bottom: 8px; display:flex; justify-content:space-between;">
-            <span>Altura total paño:</span> <strong id="infoPaño">-- mm</strong>
+            <span>Paso de Lama (Alto útil):</span> <strong id="infoAlto" style="color:#fde047;">-- mm</strong>
         </div>
         <div style="display:flex; justify-content:space-between; margin-top: 15px; border-top: 1px solid #334155; padding-top: 10px;">
             <span>Ø Exterior Cajón:</span> <span id="infoDiam" class="highlight">-- mm</span>
@@ -93,16 +103,18 @@
     // Almacenamiento DXF
     let dxfPoligons = []; 
     let bbox = { minX: 0, maxX: 0, minY: 0, maxY: 0 };
-    let escalaGlobal = 4;
-
-    // Máquina de Estados (Libertad Total de Puntos)
+    
+    // Máquina de Estados
     let appState = 'IDLE'; 
-    let pSup = null; // Clic 1: Bisagra Superior
-    let pInf = null; // Clic 2: Bisagra Inferior
-    let pEje = null; // Clic 3: Centro del Eje
+    let pSup = null; let pInf = null; let pEje = null; 
     let cursorPoint = null; 
 
+    // Configuración de Cámara (Ahora soporta Zoom y Pan)
     let calibConfig = { cx: 0, cy: 0, scale: 1, midX: 0, midY: 0 };
+    let simCam = { x: 0, y: 0, zoom: 1 };
+    let isDragging = false;
+    let lastMouse = { x: 0, y: 0 };
+    let altoLama = 45; // Guardamos el paso exacto
 
     window.addEventListener('resize', () => {
         canvas.width = canvas.parentElement.clientWidth;
@@ -113,7 +125,30 @@
     canvas.width = document.getElementById('canvas-container').clientWidth;
     canvas.height = document.getElementById('canvas-container').clientHeight;
 
-    // 1. EXTRACTOR DXF
+    // --- LÓGICA DE CÁLCULO BIDIRECCIONAL ---
+    const inputAltura = document.getElementById('valAlturaTotal');
+    const inputLamas = document.getElementById('valLamas');
+
+    // Si cambias la altura -> Calcula Lamas
+    inputAltura.addEventListener('input', function() {
+        if (appState !== 'SIMULATING') return;
+        let lamas = Math.ceil(parseFloat(this.value) / altoLama);
+        if (lamas < 1) lamas = 1;
+        inputLamas.value = lamas;
+        simular();
+    });
+
+    // Si cambias las lamas -> Calcula Altura
+    inputLamas.addEventListener('input', function() {
+        if (appState !== 'SIMULATING') return;
+        let lamas = parseInt(this.value);
+        if (lamas < 1) lamas = 1;
+        inputAltura.value = (lamas * altoLama).toFixed(0);
+        simular();
+    });
+
+
+    // --- 1. EXTRACTOR DXF ---
     document.getElementById('fileDxf').addEventListener('change', function(e) {
         const file = e.target.files[0];
         if (!file) return;
@@ -131,21 +166,17 @@
                 }));
 
                 if (dxfPoligons.length > 0) bbox = { minX, maxX, minY, maxY };
-                
                 document.getElementById('dxfStatus').className = "status ok";
-                document.getElementById('dxfStatus').innerText = `Geometría procesada con éxito`;
+                document.getElementById('dxfStatus').innerText = `Geometría OK`;
                 
                 iniciarCalibracion(); 
-            } catch(err) {
-                console.error(err); alert("Error al leer el DXF.");
-            }
+            } catch(err) { alert("Error al leer el DXF."); }
         };
         reader.readAsText(file);
     });
 
     function extraerSegmentosRaw(entities, blocks, offX = 0, offY = 0) {
-        let segs = [];
-        if(!entities) return segs;
+        let segs = []; if(!entities) return segs;
         entities.forEach(ent => {
             if (ent.type === 'LINE') segs.push({ p1: {x: ent.vertices[0].x+offX, y: ent.vertices[0].y+offY}, p2: {x: ent.vertices[1].x+offX, y: ent.vertices[1].y+offY} });
             else if (ent.type === 'LWPOLYLINE' || ent.type === 'POLYLINE') {
@@ -187,7 +218,7 @@
         return poligonos.sort((a, b) => b.area - a.area);
     }
 
-    // 2. SISTEMA DE CALIBRACIÓN (LIBRE, SIN IMÁN)
+    // --- 2. SISTEMA DE CALIBRACIÓN (Conversión de Coordenadas Perfecta) ---
     function updateCalibConfig() {
         calibConfig.cx = canvas.width / 2;
         calibConfig.cy = canvas.height / 2;
@@ -196,18 +227,30 @@
         calibConfig.midY = (bbox.minY + bbox.maxY) / 2;
     }
 
-    // Transformaciones directas e inversas para libertad total
-    function toScreen(pt) { return { x: calibConfig.cx + (pt.x - calibConfig.midX) * calibConfig.scale, y: calibConfig.cy - (pt.y - calibConfig.midY) * calibConfig.scale }; }
-    function fromScreen(sx, sy) { return { x: calibConfig.midX + (sx - calibConfig.cx) / calibConfig.scale, y: calibConfig.midY - (sy - calibConfig.cy) / -calibConfig.scale }; }
+    // Corrección de la Inversión: CAD (Y sube) -> Web (Y baja)
+    function toScreen(pt) { 
+        return { 
+            x: calibConfig.cx + (pt.x - calibConfig.midX) * calibConfig.scale, 
+            y: calibConfig.cy - (pt.y - calibConfig.midY) * calibConfig.scale 
+        }; 
+    }
+    
+    function fromScreen(sx, sy) { 
+        return { 
+            x: calibConfig.midX + (sx - calibConfig.cx) / calibConfig.scale, 
+            y: calibConfig.midY - (sy - calibConfig.cy) / calibConfig.scale // Al restar, invertimos el signo para el CAD
+        }; 
+    }
 
     function iniciarCalibracion() {
         if(dxfPoligons.length === 0) return;
         appState = 'CALIBRATING_P1';
         pSup = null; pInf = null; pEje = null;
+        simCam = { x: 0, y: 0, zoom: 1 }; // Reset cámara
         
         let overlay = document.getElementById('instructionOverlay');
         overlay.style.display = 'block';
-        overlay.innerHTML = "📍 Paso 1:<br><span style='font-size:0.9rem; font-weight:normal;'>Clic libre en la BISAGRA SUPERIOR</span>";
+        overlay.innerHTML = "📍 Paso 1:<br><span style='font-size:0.9rem; font-weight:normal;'>Haz clic en la BISAGRA SUPERIOR</span>";
         overlay.style.backgroundColor = '#3b82f6';
         
         document.getElementById('btnRecalibrar').style.display = 'none';
@@ -215,53 +258,109 @@
         renderCalibracion();
     }
 
-    // El cursor sigue exactamente el ratón. Ni rastro de "snap"
-    document.getElementById('simCanvas').addEventListener('mousemove', (e) => {
-        if (appState === 'SIMULATING') return;
-        const rect = canvas.getBoundingClientRect();
-        cursorPoint = fromScreen(e.clientX - rect.left, e.clientY - rect.top);
-        renderCalibracion();
+    // --- CONTROL DE RATÓN: ZOOM Y PAN ---
+    canvas.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        const zoomFactor = e.deltaY < 0 ? 1.1 : 0.9;
+        
+        if (appState === 'SIMULATING') {
+            simCam.zoom *= zoomFactor;
+            simular();
+        } else if (appState.startsWith('CALIBRATING')) {
+            calibConfig.scale *= zoomFactor;
+            renderCalibracion();
+        }
     });
 
-    document.getElementById('simCanvas').addEventListener('mousedown', (e) => {
-        if (appState === 'SIMULATING' || !cursorPoint) return;
-        let overlay = document.getElementById('instructionOverlay');
-        
-        if (appState === 'CALIBRATING_P1') {
-            pSup = cursorPoint;
-            appState = 'CALIBRATING_P2';
-            overlay.innerHTML = "📍 Paso 2:<br><span style='font-size:0.9rem; font-weight:normal;'>Clic libre en la BISAGRA INFERIOR</span>";
-            overlay.style.backgroundColor = '#ef4444';
-        } 
-        else if (appState === 'CALIBRATING_P2') {
-            pInf = cursorPoint;
-            appState = 'CALIBRATING_AXIS';
-            overlay.innerHTML = "⚙️ Paso 3:<br><span style='font-size:0.9rem; font-weight:normal;'>Clic donde quieras ubicar el CENTRO DEL EJE</span>";
-            overlay.style.backgroundColor = '#8b5cf6';
+    canvas.addEventListener('mousedown', (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const mx = e.clientX - rect.left;
+        const my = e.clientY - rect.top;
+
+        // Botón derecho o rueda (Panorámica)
+        if (e.button === 1 || e.button === 2) {
+            isDragging = true;
+            lastMouse = { x: mx, y: my };
+            return;
         }
-        else if (appState === 'CALIBRATING_AXIS') {
-            pEje = cursorPoint;
-            appState = 'SIMULATING';
-            overlay.style.display = 'none';
-            document.getElementById('btnRecalibrar').style.display = 'block';
-            
-            // Calculamos la distancia exacta que actuará como eslabón rígido
-            let altoLama = Math.hypot(pInf.x - pSup.x, pInf.y - pSup.y);
-            let radioInicial = Math.hypot(pEje.x - pSup.x, pEje.y - pSup.y);
-            
-            document.getElementById('infoAlto').innerText = altoLama.toFixed(2) + " mm";
-            document.getElementById('valEje').value = (radioInicial * 2).toFixed(1); 
-            
-            simular();
+
+        // Clic Principal: Calibración
+        if (appState !== 'SIMULATING' && cursorPoint) {
+            let overlay = document.getElementById('instructionOverlay');
+            if (appState === 'CALIBRATING_P1') {
+                pSup = cursorPoint;
+                appState = 'CALIBRATING_P2';
+                overlay.innerHTML = "📍 Paso 2:<br><span style='font-size:0.9rem; font-weight:normal;'>Haz clic en la BISAGRA INFERIOR</span>";
+                overlay.style.backgroundColor = '#ef4444';
+            } 
+            else if (appState === 'CALIBRATING_P2') {
+                pInf = cursorPoint;
+                appState = 'CALIBRATING_AXIS';
+                overlay.innerHTML = "⚙️ Paso 3:<br><span style='font-size:0.9rem; font-weight:normal;'>Coloca el CENTRO DEL EJE</span>";
+                overlay.style.backgroundColor = '#8b5cf6';
+            }
+            else if (appState === 'CALIBRATING_AXIS') {
+                pEje = cursorPoint;
+                appState = 'SIMULATING';
+                overlay.style.display = 'none';
+                document.getElementById('btnRecalibrar').style.display = 'block';
+                
+                // Calcular Paso
+                altoLama = Math.hypot(pInf.x - pSup.x, pInf.y - pSup.y);
+                let radioInicial = Math.hypot(pEje.x - pSup.x, pEje.y - pSup.y);
+                
+                document.getElementById('infoAlto').innerText = altoLama.toFixed(2) + " mm";
+                document.getElementById('valEje').value = (radioInicial * 2).toFixed(1); 
+                
+                // Forzar sincronización de lamas vs altura inicial
+                let lamasActuales = parseInt(inputLamas.value);
+                inputAltura.value = (lamasActuales * altoLama).toFixed(0);
+
+                simular();
+            }
+        } else if (appState === 'SIMULATING') {
+            isDragging = true;
+            lastMouse = { x: mx, y: my };
         }
     });
+
+    canvas.addEventListener('mousemove', (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const mx = e.clientX - rect.left;
+        const my = e.clientY - rect.top;
+
+        if (isDragging) {
+            const dx = mx - lastMouse.x;
+            const dy = my - lastMouse.y;
+            if (appState === 'SIMULATING') {
+                simCam.x += dx;
+                simCam.y += dy;
+                simular();
+            } else {
+                calibConfig.cx += dx;
+                calibConfig.cy += dy;
+                renderCalibracion();
+            }
+            lastMouse = { x: mx, y: my };
+        } else {
+            // Actualizar cursor de precisión
+            if (appState.startsWith('CALIBRATING')) {
+                cursorPoint = fromScreen(mx, my);
+                renderCalibracion();
+            }
+        }
+    });
+
+    canvas.addEventListener('mouseup', () => isDragging = false);
+    canvas.addEventListener('mouseleave', () => isDragging = false);
+    canvas.addEventListener('contextmenu', e => e.preventDefault()); // Evitar menú de clic derecho
 
     function renderCalibracion() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         
         ctx.save();
         ctx.translate(calibConfig.cx, calibConfig.cy);
-        ctx.scale(calibConfig.scale, -calibConfig.scale); // Eje Y invertido (Estándar CAD)
+        ctx.scale(calibConfig.scale, -calibConfig.scale); // Inversión CAD
         ctx.translate(-calibConfig.midX, -calibConfig.midY);
 
         dxfPoligons.forEach(pol => {
@@ -274,14 +373,13 @@
         });
         ctx.restore();
 
-        // Cruz de precisión extrema del cursor (siempre visible)
+        // Cursor de Precisión
         if (cursorPoint) {
             let hp = toScreen(cursorPoint);
             ctx.beginPath(); ctx.moveTo(hp.x - 15, hp.y); ctx.lineTo(hp.x + 15, hp.y);
             ctx.moveTo(hp.x, hp.y - 15); ctx.lineTo(hp.x, hp.y + 15);
             ctx.strokeStyle = "rgba(255,255,255,0.9)"; ctx.lineWidth = 1; ctx.stroke();
 
-            // Líneas visuales de las conexiones
             if (pSup && appState === 'CALIBRATING_P2') {
                 let sp = toScreen(pSup);
                 ctx.beginPath(); ctx.moveTo(sp.x, sp.y); ctx.lineTo(hp.x, hp.y);
@@ -297,7 +395,6 @@
             }
         }
 
-        // Puntos fijados
         if (pSup) {
             let sp = toScreen(pSup);
             ctx.beginPath(); ctx.arc(sp.x, sp.y, 4, 0, Math.PI*2); ctx.fillStyle = '#3b82f6'; ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth=1; ctx.stroke();
@@ -308,7 +405,7 @@
         }
     }
 
-    // 3. MOTOR CINEMÁTICO: CUERPO RÍGIDO Y MATRIZ EXACTA
+    // --- 3. MOTOR CINEMÁTICO RÍGIDO ---
     function simular() {
         if(appState !== 'SIMULATING' || !pSup || !pInf || !pEje) return;
 
@@ -317,39 +414,31 @@
         const numLamas = parseInt(document.getElementById('valLamas').value) || 30;
         const flipCara = document.getElementById('chkFlipX').checked ? -1 : 1;
 
-        // Medidas Inmutables
-        const altoLama = Math.hypot(pInf.x - pSup.x, pInf.y - pSup.y);
-        const radioInicial = dEje / 2; // Usamos el valor del UI, inicializado con el clic
+        const radioInicial = dEje / 2; 
 
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+        // Auto-Scale Base + User Zoom/Pan
         const radioEstimado = radioInicial + (numLamas * eLama / 2) + 20;
-        escalaGlobal = Math.min(canvas.width / (radioEstimado*2.5), canvas.height / (radioEstimado*2.5));
-        if (escalaGlobal < 1) escalaGlobal = 1;
+        let baseScale = Math.min(canvas.width / (radioEstimado*2.5), canvas.height / (radioEstimado*2.5));
+        let scale = baseScale * simCam.zoom;
 
         ctx.save();
-        ctx.translate(canvas.width / 2, canvas.height / 2);
-        ctx.scale(escalaGlobal, escalaGlobal);
+        // Aplicar cámara del usuario
+        ctx.translate((canvas.width / 2) + simCam.x, (canvas.height / 2) + simCam.y);
+        ctx.scale(scale, scale);
 
-        // Centro Eje Visual
+        // Centro Eje
         ctx.beginPath(); ctx.arc(0, 0, radioInicial, 0, Math.PI * 2);
         ctx.fillStyle = "#1e293b"; ctx.fill();
-        ctx.lineWidth = 1.5 / escalaGlobal; ctx.strokeStyle = "#475569"; ctx.stroke();
+        ctx.lineWidth = 1.5 / scale; ctx.strokeStyle = "#475569"; ctx.stroke();
 
-        // -----------------------------------------------------------------
-        // PASO A: CÁLCULO DE PUNTOS EXACTOS (CADENA CINEMÁTICA)
-        // -----------------------------------------------------------------
+        // Calcular Eslabones Perfectos
         let bisagras = [];
         let radioMaximo = radioInicial;
-
-        // El ángulo natural de salida respecto al eje
         let anguloInicial = Math.atan2(pSup.y - pEje.y, pSup.x - pEje.x);
         
-        bisagras.push({ 
-            x: radioInicial * Math.cos(anguloInicial), 
-            y: radioInicial * Math.sin(anguloInicial), 
-            thetaGlobal: anguloInicial 
-        });
+        bisagras.push({ x: radioInicial * Math.cos(anguloInicial), y: radioInicial * Math.sin(anguloInicial), thetaGlobal: anguloInicial });
 
         for (let i = 0; i < numLamas; i++) {
             let pAnt = bisagras[i];
@@ -357,7 +446,6 @@
             let dTheta = 0.005, dist = 0, targetX = 0, targetY = 0;
             let testTheta = pAnt.thetaGlobal;
             
-            // Algoritmo de Búsqueda Radial de Precisión
             while (dist < altoLama) {
                 testTheta += 0.005;
                 let rTest = rActual + (eLama * ((testTheta - pAnt.thetaGlobal) / (2 * Math.PI)));
@@ -365,66 +453,41 @@
                 targetY = rTest * Math.sin(testTheta);
                 dist = Math.hypot(targetX - pAnt.x, targetY - pAnt.y);
             }
-
             let pNuevo = { x: targetX, y: targetY, thetaGlobal: testTheta };
             bisagras.push(pNuevo);
             if (Math.hypot(pNuevo.x, pNuevo.y) > radioMaximo) radioMaximo = Math.hypot(pNuevo.x, pNuevo.y);
         }
 
-        // -----------------------------------------------------------------
-        // PASO B: MATRIZ DE TRANSFORMACIÓN (ENCAJE 100% PERFECTO)
-        // -----------------------------------------------------------------
-        // El ángulo interno original del DXF entre Bisagra Sup e Inf
+        // Matriz de Transformación
         let dxfAngle = Math.atan2(pInf.y - pSup.y, pInf.x - pSup.x);
 
         for (let i = 0; i < numLamas; i++) {
             let p1 = bisagras[i], p2 = bisagras[i+1];
 
             ctx.save();
-            
-            // 1. Nos posicionamos en la coordenada de inicio del eslabón (p1 = pSup)
             ctx.translate(p1.x, p1.y);
-            
-            // 2. Rotamos el mundo para que el eje X apunte matemáticamente exacto hacia la siguiente bisagra (p2)
-            let worldAngle = Math.atan2(p2.y - p1.y, p2.x - p1.x);
-            ctx.rotate(worldAngle);
-            
-            // 3. Aplicamos el Flip Frontal si el usuario lo requiere y corregimos el eje Y de AutoCAD a Web
+            ctx.rotate(Math.atan2(p2.y - p1.y, p2.x - p1.x));
             ctx.scale(1, flipCara * -1); 
-            
-            // 4. Contrarrestamos el ángulo en el que estaba dibujada originalmente la lama
             ctx.rotate(-dxfAngle);
-            
-            // 5. El Movimiento Maestro: Desplazamos todo para que el clic del usuario (pSup) caiga en el (0,0) actual
             ctx.translate(-pSup.x, -pSup.y);
 
-            // Renderizamos el DXF - Automáticamente pInf caerá en p2
             dxfPoligons.forEach((pol, index) => {
                 ctx.beginPath();
                 ctx.moveTo(pol.pts[0].x, pol.pts[0].y);
                 for(let k=1; k<pol.pts.length; k++) ctx.lineTo(pol.pts[k].x, pol.pts[k].y);
                 
-                if (pol.closed) { 
-                    ctx.fillStyle = index === 0 ? '#94a3b8' : '#fef08a';
-                    ctx.fill(); 
-                }
-                ctx.strokeStyle = '#475569';
-                ctx.lineWidth = 1.0 / escalaGlobal;
-                ctx.stroke();
+                if (pol.closed) { ctx.fillStyle = index === 0 ? '#94a3b8' : '#fef08a'; ctx.fill(); }
+                ctx.strokeStyle = '#475569'; ctx.lineWidth = 1.0 / scale; ctx.stroke();
             });
             ctx.restore();
             
-            // Dibujamos el punto exacto de la bisagra (se ve cómo comparten el centro)
-            ctx.beginPath(); ctx.arc(p1.x, p1.y, 1.5 / escalaGlobal, 0, Math.PI*2);
+            ctx.beginPath(); ctx.arc(p1.x, p1.y, 1.5 / scale, 0, Math.PI*2);
             ctx.fillStyle = "#ef4444"; ctx.fill();
         }
 
         ctx.restore();
-
-        document.getElementById('infoPaño').innerText = (altoLama * numLamas).toFixed(0) + " mm";
         document.getElementById('infoDiam').innerText = ((radioMaximo * 2) + eLama).toFixed(1) + " mm";
     }
-
 </script>
 </body>
 </html>
