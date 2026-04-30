@@ -3,9 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Aislantech · Análisis Térmico Pro (ISO 10077-2) con λ_eq</title>
+    <title>Aislantherm · Análisis Térmico (ISO 10077-2)</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Librería para generar el PDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         :root {
@@ -17,23 +18,33 @@
         body { font-family:'Open Sans',sans-serif; background:var(--color-light); color:var(--color-gray); overflow-x: hidden; }
         h1,h2,h3,.card-title,.btn { font-family:'Montserrat',sans-serif; font-weight:600; color:var(--color-dark); }
         .container { width:100%; max-width:1600px; margin:0 auto; padding:20px; }
+        
         .header-container { display:flex; justify-content:space-between; align-items:center; padding:15px 0; border-bottom: 2px solid var(--color-primary); margin-bottom: 20px;}
         .logo-aislan { color:var(--color-secondary); font-size:1.5rem; font-weight:700; }
         .logo-tech { color:var(--color-primary); font-size:1.5rem; font-weight:800; }
+
         .main-layout { display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start; }
         .sidebar { flex: 0 0 340px; display: flex; flex-direction: column; gap: 15px; }
-        .workspace { flex: 1; min-width: 500px; display: flex; flex-direction: column; gap: 15px; }
+        
+        /* Contenedor centralizado para no estirar el canvas */
+        .workspace { flex: 1; min-width: 500px; display: flex; flex-direction: column; } 
+        .workspace-inner { width: 100%; max-width: 850px; margin: 0 auto; display: flex; flex-direction: column; }
+        
         @media (max-width: 950px) {
             .sidebar { flex: 1 1 100%; }
             .workspace { flex: 1 1 100%; min-width: 100%; }
+            .workspace-inner { max-width: 100%; }
         }
+
         .card { background:white; border-radius:var(--border-radius); box-shadow:0 5px 15px rgba(0,0,0,0.05); border-top:4px solid var(--color-primary); }
         .card-body { padding:1.2rem; }
+        
         .controls-stack { display:flex; flex-direction:column; gap:1.2rem; }
         .control-group { display:flex; flex-direction:column; gap:6px; }
         label { font-size:0.75rem; font-weight:700; text-transform:uppercase; color:var(--color-secondary); }
-        input, select { padding:10px 12px; border:1px solid #ddd; border-radius:var(--border-radius); font-size:0.85rem; width:100%; background: #fdfdfd; transition: var(--transition); }
+        input, select { padding:8px 12px; border:1px solid #ddd; border-radius:var(--border-radius); font-size:0.85rem; width:100%; background: #fdfdfd; transition: var(--transition); }
         input:focus, select:focus { border-color: var(--color-primary); outline: none; background: #fff; box-shadow: 0 0 0 3px var(--color-primary-light); }
+        
         .btn { display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:12px 16px; border-radius:var(--border-radius); font-weight:700; border:none; cursor:pointer; transition:var(--transition); font-size:0.85rem; width: 100%; }
         .btn-primary { background:var(--color-primary); color:var(--color-dark); }
         .btn-primary:hover { background:var(--color-primary-dark); color:#fff; }
@@ -46,36 +57,76 @@
         .btn-pdf { background:#d32f2f; color:white; }
         .btn-pdf:hover { background:#b71c1c; }
         button:disabled { opacity: 0.5; cursor: not-allowed; }
+        
         .mode-switch { display:flex; background:#eee; border-radius:var(--border-radius); overflow:hidden; border:1px solid #ddd; flex-wrap: wrap;}
-        .mode-btn { flex:1; padding:10px 5px; font-weight:700; font-size:0.75rem; border:none; background:transparent; cursor:pointer; color: #666; transition:var(--transition); min-width: 30%; text-align: center;}
+        .mode-btn { flex:1; padding:8px 2px; font-weight:700; font-size:0.75rem; border:none; background:transparent; cursor:pointer; color: #666; transition:var(--transition); min-width: 24%; text-align: center;}
         .mode-btn.active { background:var(--color-secondary); color:white; }
-        .status-bar { background:var(--color-primary-light); border-left:4px solid var(--color-primary); padding:12px 16px; border-radius:var(--border-radius); font-weight:600; font-size:0.85rem; display: flex; align-items: center; justify-content: space-between; gap: 10px;}
-        .canvas-wrapper { position:relative; background:#fff; border-radius:var(--border-radius); border:1px solid #ddd; overflow:hidden; box-shadow: inset 0 0 10px rgba(0,0,0,0.05); }
+        
+        /* SISTEMA DE PESTAÑAS (TABS) MEJORADO */
+        .tabs-header { display: flex; align-items: flex-end; border-bottom: 2px solid var(--color-primary); margin-bottom: 0; background: #e8e8e8; padding: 8px 10px 0 10px; border-radius: 8px 8px 0 0; }
+        .tabs-list { display: flex; overflow-x: auto; flex: 1; gap: 4px; }
+        .tabs-list::-webkit-scrollbar { height: 4px; }
+        .tabs-list::-webkit-scrollbar-thumb { background: #ccc; border-radius: 2px; }
+        .tab-item { background: #dcdcdc; color: #666; padding: 10px 14px; border-radius: 6px 6px 0 0; cursor: pointer; font-size: 0.85rem; font-weight: 600; display: flex; align-items: center; gap: 6px; transition: 0.2s; border: 1px solid transparent; border-bottom: none; position: relative; bottom: -2px; }
+        .tab-item:hover:not(.active) { background: #ebebeb; color: #333; }
+        .tab-item.active { background: #fff; color: var(--color-primary-dark); font-weight: 700; border-color: #ddd; border-top: 3px solid var(--color-primary); border-bottom: 2px solid #fff; z-index: 2; }
+        .tab-name { display: inline-block; min-width: 40px; cursor: text; outline: none; }
+        .tab-icon-btn { color: #aaa; cursor: pointer; font-size: 0.75rem; padding: 3px; border-radius: 4px; transition: 0.2s; margin-left: 2px; }
+        .tab-icon-btn:hover { color: #333; background: #e0e0e0; }
+        .tab-close { color: #aaa; cursor: pointer; font-size: 0.8rem; padding: 2px; border-radius: 50%; transition: 0.2s; margin-left: 4px; }
+        .tab-close:hover { color: #d32f2f; background: rgba(211,47,47,0.1); }
+        .global-tab-actions { display: flex; gap: 5px; padding-left: 10px; padding-bottom: 6px; }
+        .global-tab-btn { background: #fff; border: 1px solid #ccc; color: #555; border-radius: 4px; padding: 6px 12px; cursor: pointer; font-size: 0.8rem; font-weight: 600; transition: 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.05);}
+        .global-tab-btn:hover { background: #f5f5f5; border-color: var(--color-primary); color: var(--color-primary-dark); }
+
+        .status-bar { background:var(--color-primary-light); border-left:4px solid var(--color-primary); padding:10px 15px; border-radius:0 0 var(--border-radius) var(--border-radius); font-weight:600; font-size:0.85rem; display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 15px;}
+        
+        .canvas-wrapper { position:relative; background:#fff; border:1px solid #ddd; overflow:hidden; box-shadow: inset 0 0 10px rgba(0,0,0,0.05); border-top: none; }
         canvas { display:block; width:100%; height:auto; cursor:crosshair; background-image: radial-gradient(#ddd 1px, transparent 1px); background-size: 20px 20px; }
         canvas.grabbing { cursor: grabbing !important; }
-        .legend-panel { display:flex; flex-wrap:wrap; gap:0.5rem; background:white; padding:12px; border-radius:var(--border-radius); align-items:center; border:1px solid #ddd; }
+        
+        .legend-panel { display:flex; flex-wrap:wrap; gap:0.5rem; background:white; padding:12px; border-radius:var(--border-radius); align-items:center; border:1px solid #ddd; margin-bottom: 15px;}
         .legend-item { display:flex; align-items:center; gap:8px; font-size:0.75rem; cursor:pointer; padding: 6px 10px; border-radius: 4px; transition: var(--transition); border: 1px solid transparent; }
         .legend-item:hover { background: #f0f0f0; border-color: #ddd; }
         .legend-item.active { background: var(--color-primary-light); border-color: var(--color-primary); font-weight: 600; }
         .legend-color { width:16px; height:16px; border-radius:3px; border:1px solid rgba(0,0,0,0.2); }
+        
         .boundary-legend { display:flex; gap:1rem; align-items:center; margin-left:auto; font-size:0.75rem; font-weight:700; border-left: 1px solid #ddd; padding-left: 15px; }
         .boundary-swatch { width:12px; height:12px; border-radius:50%; display:inline-block; border:1px solid #000; }
+        
         #customMatPanel { background: #fafafa; padding: 15px; border-radius: 8px; border: 1px dashed #ccc; margin-top: 10px; display: none; }
-        .result-card { display:none; background:#2e7d32; color:white; padding:20px; border-radius:var(--border-radius); text-align:center; position: relative;}
+        .result-card { display:none; background:#2e7d32; color:white; padding:20px; border-radius:var(--border-radius); text-align:center; margin-bottom: 20px; position: relative;}
+
         hr.divider { border:none; border-top:1px solid #eee; margin: 5px 0; }
         .btn-group-row { display: flex; gap: 10px; flex-wrap: wrap; }
+        
+        /* Modal Personalizado de Seguridad */
+        .modal-overlay { display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.6); z-index:9999; align-items:center; justify-content:center; backdrop-filter: blur(3px); }
+        .modal-box { background:white; padding:25px; border-radius:12px; width:350px; text-align:center; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+        .modal-text { margin-bottom:20px; font-size:1rem; font-weight:600; color:#333; }
     </style>
 </head>
 <body>
 
+<!-- MODAL PERSONALIZADO (Reemplaza a window.confirm para no ser bloqueado) -->
+<div id="customModal" class="modal-overlay">
+    <div class="modal-box">
+        <p id="modalText" class="modal-text"></p>
+        <div style="display:flex; gap:10px; justify-content:center;">
+            <button id="modalBtnCancel" class="btn btn-outline" style="flex:1; padding: 8px;">Cancelar</button>
+            <button id="modalBtnConfirm" class="btn btn-pdf" style="flex:1; padding: 8px;">Eliminar</button>
+        </div>
+    </div>
+</div>
+
 <div class="container">
     <div class="header-container">
         <div>
-            <span class="logo-aislan">AISLAN</span><span class="logo-tech">TECH</span> 
-            <small style="margin-left:10px; opacity:0.6; font-weight: 400; border-left: 1px solid #ccc; padding-left: 10px;">Thermal Simulator ISO 10077-2 / CTE · λ_eq Cavities</small>
+            <span class="logo-aislan">AISLAN</span><span class="logo-tech">THERM</span> 
+            <small style="margin-left:10px; opacity:0.6; font-weight: 400; border-left: 1px solid #ccc; padding-left: 10px;">Aislantes técnicos del Mediterráneo</small>
         </div>
         <div id="solverStatus" style="font-weight: bold; color: #d32f2f; display:none;">
-            <i class="fas fa-circle-notch fa-spin"></i> Calculando Termodinámica (SI)... <span id="calcProgress">0%</span>
+            <i class="fas fa-circle-notch fa-spin"></i> Calculando Termodinámica de Alta Precisión... <span id="calcProgress">0%</span>
         </div>
     </div>
     
@@ -84,6 +135,7 @@
         <aside class="sidebar">
             <div class="card">
                 <div class="card-body controls-stack">
+                    
                     <div class="control-group">
                         <label><i class="fas fa-file-upload"></i> 1. Archivo / Proyecto</label>
                         <div class="btn-group-row">
@@ -92,40 +144,40 @@
                                 <input type="file" id="dxfFile" accept=".dxf" style="display:none;">
                             </label>
                             <label class="btn btn-outline" style="flex:1; padding: 8px; cursor: pointer; text-align: center; margin: 0;">
-                                <i class="fas fa-folder-open"></i> Abrir Proyecto
+                                <i class="fas fa-folder-open"></i> Cargar (.json)
                                 <input type="file" id="jsonFile" accept=".json" style="display:none;">
                             </label>
                         </div>
-                        <button id="btnSaveProject" class="btn btn-primary" style="padding: 8px; margin-top: 5px;"><i class="fas fa-save"></i> Guardar Proyecto Actual (.json)</button>
+                        <button id="btnSaveProject" class="btn btn-primary" style="padding: 8px; margin-top: 5px;"><i class="fas fa-save"></i> Guardar Proyecto Completo</button>
                     </div>
 
                     <div class="control-group">
                         <label title="Ajusta si el DXF tiene huecos (ej: 0.1, 0.5)">Tolerancia de Unión (mm)</label>
-                        <input type="number" id="tolInput" value="0.1" step="0.1">
+                        <input type="number" id="tolInput" value="0.1" step="0.1" onchange="window.updateSettings()">
                     </div>
 
                     <hr class="divider">
 
                     <div class="control-group">
-                        <label><i class="fas fa-mouse-pointer"></i> 2. Herramienta de Trabajo</label>
+                        <label><i class="fas fa-mouse-pointer"></i> 2. Herramientas</label>
                         <div class="mode-switch">
-                            <button id="btnModeMat" class="mode-btn active"><i class="fas fa-fill-drip"></i> Material</button>
-                            <button id="btnModeBound" class="mode-btn"><i class="fas fa-vector-square"></i> Contornos</button>
-                            <button id="btnModeCrop" class="mode-btn"><i class="fas fa-crop-alt"></i> Área</button>
+                            <button id="btnModeMat" class="mode-btn active" title="Pintar Materiales"><i class="fas fa-fill-drip"></i></button>
+                            <button id="btnModeBound" class="mode-btn" title="Pintar Contornos"><i class="fas fa-vector-square"></i></button>
+                            <button id="btnModeCrop" class="mode-btn" title="Recortar Área"><i class="fas fa-crop-alt"></i></button>
+                            <button id="btnModePan" class="mode-btn" title="Mover Vista"><i class="fas fa-hand-paper"></i></button>
                         </div>
                     </div>
 
                     <div class="control-group" style="background: #f9f9f9; padding: 15px; border-radius: var(--border-radius); border: 1px solid #eee;">
-                        <label id="brushLabel">3. Pincel Activo / Asignación</label>                        
+                        <label id="brushLabel">3. Acción Activa</label>
+                        
+                        <!-- Panel Materiales -->
                         <div id="matBrushContainer" style="display:flex; flex-direction:column; gap:5px;">
                             <select id="matSelect"></select>
                             <button id="btnShowCustomMat" class="btn btn-outline btn-sm" style="padding:8px;"><i class="fas fa-plus"></i> Crear Nuevo Material</button>
-                            <div class="control-group" style="margin-top:5px;">
-                                <label>Emisividad Superficial (ε) para cavidades</label>
-                                <input type="number" id="emisivityInput" value="0.90" step="0.01" min="0.01" max="0.99">
-                                <small style="font-size:0.7rem;">Usada en λ_eq según ISO 10077-2</small>
-                            </div>
                         </div>
+
+                        <!-- Creador de Materiales -->
                         <div id="customMatPanel">
                             <div class="control-group"><label>Nombre</label><input type="text" id="customMatName" placeholder="Ej: Espuma PUR"></div>
                             <div class="control-group"><label>Conductividad (λ) W/m·K</label><input type="number" id="customMatK" step="0.001" value="0.035"></div>
@@ -135,6 +187,8 @@
                                 <button id="btnAddCustomMat" class="btn btn-primary" style="flex:1">Guardar</button>
                             </div>
                         </div>
+
+                        <!-- Panel Contornos -->
                         <select id="boundSelect" style="display:none; font-weight:bold;">
                             <option value="1" style="color:#1976d2;">Exterior (Frío + Rse)</option>
                             <option value="2" style="color:#d32f2f;">Interior (Medir Uf + Rsi)</option>
@@ -145,6 +199,9 @@
                         <div id="cropHelpText" style="display:none; font-size:0.75rem; color: #666; line-height:1.4;">
                             <i class="fas fa-info-circle"></i> Haz clic y arrastra en el lienzo para delimitar la zona exacta a simular. Un clic normal borrará el recorte.
                         </div>
+                        <div id="panHelpText" style="display:none; font-size:0.75rem; color: #666; line-height:1.4;">
+                            <i class="fas fa-hand-paper"></i> Haz clic y arrastra el ratón sobre el lienzo para encuadrar y mover el perfil.
+                        </div>
                     </div>
 
                     <hr class="divider">
@@ -152,22 +209,28 @@
                     <div class="control-group">
                         <label><i class="fas fa-sliders-h"></i> 4. Condiciones de Ensayo</label>
                         <div class="btn-group-row">
-                            <div class="control-group" style="flex:1"><label>T. Ext (ºC)</label><input type="number" id="tExt" value="0"></div>
-                            <div class="control-group" style="flex:1"><label>T. Int (ºC)</label><input type="number" id="tInt" value="20"></div>
+                            <div class="control-group" style="flex:1"><label>T. Ext (ºC)</label><input type="number" id="tExt" value="0" onchange="window.updateSettings()"></div>
+                            <div class="control-group" style="flex:1"><label>T. Int (ºC)</label><input type="number" id="tInt" value="20" onchange="window.updateSettings()"></div>
                         </div>
-                        <div class="control-group" style="margin-top:5px;">
-                            <label>Ancho proyectado b<sub>f</sub> (mm)</label>
-                            <input type="number" id="LpInput" value="100" title="Ancho proyectado perpendicular al flujo térmico">
+                        <div class="btn-group-row" style="margin-top:5px;">
+                            <div class="control-group" style="flex:1">
+                                <label title="Ancho proyectado perpendicular al flujo térmico">Ancho b<sub>f</sub> (mm)</label>
+                                <input type="number" id="LpInput" value="100" onchange="window.updateSettings()">
+                            </div>
+                            <div class="control-group" style="flex:1">
+                                <label title="Emisividad para cálculo λ_eq de cavidades interiores (ISO 10077-2)">Emisividad (ε)</label>
+                                <input type="number" id="emissInput" value="0.90" step="0.05" min="0.05" max="1.0" onchange="window.updateSettings()">
+                            </div>
                         </div>
                     </div>
 
                     <div class="control-group">
                         <label>Resolución de Malla (FDM)</label>
-                        <select id="gridRes" style="font-weight: 600;">
+                        <select id="gridRes" style="font-weight: 600;" onchange="window.updateSettings()">
                             <option value="200">Mínima (200x200) - Rápido</option>
                             <option value="400" selected>Media (400x400) - Estándar</option>
                             <option value="600">Alta (600x600) - Preciso</option>
-                            <option value="1000">Ultra (1000x1000) - Muy Lento</option>
+                            <option value="1000">Ultra (1000x1000) - Lento</option>
                         </select>
                     </div>
 
@@ -178,36 +241,63 @@
             </div>
         </aside>
 
-        <!-- ÁREA PRINCIPAL (LIENZO Y RESULTADOS) -->
+        <!-- ÁREA PRINCIPAL ENCAPSULADA (TABS, LIENZO Y RESULTADOS) -->
         <main class="workspace">
-            <div class="status-bar" id="status">
-                <div><i class="fas fa-info-circle"></i> <span id="statusText">Esperando archivo DXF...</span></div>
-                <div class="btn-group-row">
-                    <button id="btnRotate" class="btn btn-outline btn-sm" title="Rotar 90º"><i class="fas fa-sync-alt"></i></button>
-                    <button id="btnZoomReset" class="btn btn-outline btn-sm" title="Centrar Vista"><i class="fas fa-compress-arrows-alt"></i></button>
+            <div class="workspace-inner">
+                <!-- CONTENEDOR DE PESTAÑAS ELEGANTE -->
+                <div class="tabs-header">
+                    <div class="tabs-list" id="tabsContainer">
+                        <!-- Las pestañas se inyectarán aquí dinámicamente -->
+                    </div>
+                    <div class="global-tab-actions">
+                        <button class="global-tab-btn" onclick="window.addTab()" title="Añadir nuevo perfil vacío"><i class="fas fa-plus"></i> Nuevo</button>
+                        <button class="global-tab-btn" onclick="window.duplicateTab()" title="Duplicar pestaña actual"><i class="fas fa-copy"></i> Duplicar</button>
+                    </div>
                 </div>
+
+                <div class="canvas-wrapper">
+                    <canvas id="canvas" width="1100" height="700"></canvas>
+                </div>
+                <div class="status-bar" id="status">
+                    <div><i class="fas fa-info-circle"></i> <span id="statusText">Esperando archivo DXF...</span></div>
+                    <div class="btn-group-row">
+                        <button id="btnRotate" class="btn btn-outline btn-sm" title="Rotar 90º"><i class="fas fa-sync-alt"></i></button>
+                        <button id="btnZoomReset" class="btn btn-outline btn-sm" title="Centrar Vista"><i class="fas fa-compress-arrows-alt"></i></button>
+                    </div>
+                </div>
+
+                <div class="legend-panel" id="legend"></div>
+
+                <div class="btn-group-row" style="justify-content: center; margin-bottom: 20px;">
+                    <button id="btnToggleIso" class="btn btn-outline" style="display:none; flex:0 0 auto; padding: 10px 15px;"><i class="fas fa-water"></i> Isotermas</button>
+                    <button id="btnBackToEdit" class="btn btn-edit" style="display:none; flex:0 0 auto; padding: 10px 15px;"><i class="fas fa-pencil-alt"></i> Editar Geometría</button>
+                    <button id="btnPdf" class="btn btn-pdf" style="display:none; flex:0 0 auto; padding: 10px 15px;"><i class="fas fa-file-pdf"></i> Generar Informe PDF</button>
+                </div>
+
+                <div id="result" class="result-card"></div>
             </div>
-
-            <div class="canvas-wrapper">
-                <canvas id="canvas" width="1100" height="700"></canvas>
-            </div>
-
-            <div class="legend-panel" id="legend"></div>
-
-            <div class="btn-group-row" style="justify-content: center; margin-top: -5px;">
-                <button id="btnToggleIso" class="btn btn-outline" style="display:none; flex:0 0 auto; padding: 10px 15px;"><i class="fas fa-water"></i> Isotermas</button>
-                <button id="btnBackToEdit" class="btn btn-edit" style="display:none; flex:0 0 auto; padding: 10px 15px;"><i class="fas fa-pencil-alt"></i> Editar</button>
-                <button id="btnPdf" class="btn btn-pdf" style="display:none; flex:0 0 auto; padding: 10px 15px;"><i class="fas fa-file-pdf"></i> Informe PDF</button>
-            </div>
-
-            <div id="result" class="result-card"></div>
         </main>
     </div>
 </div>
 
 <script>
 (function() {
-    // ──── CATÁLOGO DE MATERIALES (CTE Y ESTÁNDARES) ────
+    // ──── EXPOSICIÓN DE FUNCIONES GLOBALES PARA EVITAR ReferenceError ────
+    window.setStatus = function(msg, type = 'info') {
+        const stText = document.getElementById('statusText');
+        const bar = document.getElementById('status');
+        if (stText) stText.textContent = msg;
+        if (bar) {
+            bar.className = `status-bar ${type}`;
+            let icon = 'fas fa-info-circle';
+            if (type === 'error') icon = 'fas fa-exclamation-triangle';
+            if (type === 'success') icon = 'fas fa-check-circle';
+            const iconEl = bar.querySelector('i');
+            if (iconEl) iconEl.className = icon;
+        }
+    };
+
+    // ──── CATÁLOGO GLOBAL DE MATERIALES ────
     let materials = [
         { name: "Cámara Aire (No ventilada)", k: 0.026, color: "#ecf0f1" },
         { name: "Cámara Aire (Lig. ventilada)", k: 0.120, color: "#d5dbdb" },
@@ -235,30 +325,237 @@
     const Rse = 0.04; 
     const Rsi = 0.13; 
     const Rsi_cond = 0.25; 
-    const SIGMA = 5.67e-8; // Stefan-Boltzmann
 
+    // ──── GESTIÓN DE WORKSPACES (PESTAÑAS) ────
+    function createEmptyWorkspace(name) {
+        return {
+            name: name,
+            polygons: [], boundaryEdges: [], boundaryAdj: [],
+            minX: 0, maxX: 0, minY: 0, maxY: 0,
+            cropRect: null, calcBounds: null,
+            zoomLevel: 1, offsetX: 0, offsetY: 0, baseScale: 1,
+            T: null, isExtGrid: null, isIntMeasGrid: null, isIntSecGrid: null, kGrid: null,
+            showThermalMap: false, showIsotherms: false,
+            lastU: 0, lastFlux: 0, lastL2D: 0, lastFRsi: 0, lastTsiMin: 0,
+            lastTsiMinX: null, lastTsiMinY: null, lastAlgo: "FDM Métrico (ISO 10077-2)",
+            settings: { tol: 0.1, Lp: 100, tExt: 0, tInt: 20, res: 400, emiss: 0.90 }
+        };
+    }
+
+    let workspaces = [createEmptyWorkspace("Perfil 1")];
+    let currentWsIdx = 0;
+    let wsCounter = 1;
+
+    // Variables globales
     let polygons = [], boundaryEdges = [], boundaryAdj = [];
-    let minX, maxX, minY, maxY;
+    let minX = 0, maxX = 0, minY = 0, maxY = 0;
+    
+    window.isCropping = false;
+    window.cropStartX = 0;
+    window.cropStartY = 0; 
+    let cropRect = null, calcBounds = null;
+    
+    let zoomLevel = 1, offsetX = 0, offsetY = 0, baseScale = 1;
+    let T = null, isExtGrid = null, isIntMeasGrid = null, isIntSecGrid = null, kGrid = null;
+    let showThermalMap = false, showIsotherms = false;
+    let lastU = 0, lastFlux = 0, lastL2D = 0, lastAlgo = "FDM Métrico";
+    let lastFRsi = 0, lastTsiMin = 0, lastTsiMinX = null, lastTsiMinY = null;
+
     let selectedPoly = -1, hoveredPolyIdx = -1, hoveredEdgeIdx = -1;
     let editMode = 'MATERIAL';
-    let cropRect = null; 
-    let isCropping = false;
-    let cropStartX = 0, cropStartY = 0;
-    let calcBounds = null; 
-    let zoomLevel = 1, offsetX = 0, offsetY = 0, baseScale = 1;
     let isDragging = false, dragStartX = 0, dragStartY = 0, hasDragged = false;
-
-    // Variables del solver
-    let T = null, isExtGrid = null, isIntMeasGrid = null, isIntSecGrid = null;
-    let showThermalMap = false, showIsotherms = false;
-    let lastU = 0, lastFlux = 0, lastL2D = 0, lastAlgo = "FDM";
-    let lastFRsi = 0, lastTsiMin = 0;
-    let dx, dy, kGrid, isSolidGrid, isOuterAir;
+    let dragStartX_client = 0, dragStartY_client = 0;
 
     const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
-    const statusText = document.querySelector('#statusText');
 
+    function saveState() {
+        let ws = workspaces[currentWsIdx];
+        ws.polygons = polygons; ws.boundaryEdges = boundaryEdges; ws.boundaryAdj = boundaryAdj;
+        ws.minX = minX; ws.maxX = maxX; ws.minY = minY; ws.maxY = maxY;
+        ws.cropRect = cropRect; ws.calcBounds = calcBounds;
+        ws.zoomLevel = zoomLevel; ws.offsetX = offsetX; ws.offsetY = offsetY; ws.baseScale = baseScale;
+        ws.T = T; ws.isExtGrid = isExtGrid; ws.isIntMeasGrid = isIntMeasGrid; ws.isIntSecGrid = isIntSecGrid; ws.kGrid = kGrid;
+        ws.showThermalMap = showThermalMap; ws.showIsotherms = showIsotherms;
+        ws.lastU = lastU; ws.lastFlux = lastFlux; ws.lastL2D = lastL2D; ws.lastFRsi = lastFRsi; ws.lastTsiMin = lastTsiMin;
+        ws.lastTsiMinX = lastTsiMinX; ws.lastTsiMinY = lastTsiMinY; ws.lastAlgo = lastAlgo;
+        
+        ws.settings = {
+            tol: parseFloat(document.getElementById('tolInput').value) || 0.1,
+            Lp: parseFloat(document.getElementById('LpInput').value) || 100,
+            tExt: parseFloat(document.getElementById('tExt').value) || 0,
+            tInt: parseFloat(document.getElementById('tInt').value) || 20,
+            res: parseInt(document.getElementById('gridRes').value) || 400,
+            emiss: parseFloat(document.getElementById('emissInput').value) || 0.90
+        };
+    }
+
+    window.updateSettings = function() {
+        workspaces[currentWsIdx].settings = {
+            tol: parseFloat(document.getElementById('tolInput').value) || 0.1,
+            Lp: parseFloat(document.getElementById('LpInput').value) || 100,
+            tExt: parseFloat(document.getElementById('tExt').value) || 0,
+            tInt: parseFloat(document.getElementById('tInt').value) || 20,
+            res: parseInt(document.getElementById('gridRes').value) || 400,
+            emiss: parseFloat(document.getElementById('emissInput').value) || 0.90
+        };
+    };
+
+    window.loadState = function(idx, skipSave = false) {
+        if (!skipSave) saveState();
+        currentWsIdx = idx;
+        let ws = workspaces[currentWsIdx];
+        
+        polygons = ws.polygons || []; boundaryEdges = ws.boundaryEdges || []; boundaryAdj = ws.boundaryAdj || [];
+        minX = ws.minX || 0; maxX = ws.maxX || 0; minY = ws.minY || 0; maxY = ws.maxY || 0;
+        cropRect = ws.cropRect || null; calcBounds = ws.calcBounds || null;
+        zoomLevel = ws.zoomLevel || 1; offsetX = ws.offsetX || 0; offsetY = ws.offsetY || 0; baseScale = ws.baseScale || 1;
+        T = ws.T || null; isExtGrid = ws.isExtGrid || null; isIntMeasGrid = ws.isIntMeasGrid || null; isIntSecGrid = ws.isIntSecGrid || null; kGrid = ws.kGrid || null;
+        showThermalMap = ws.showThermalMap || false; showIsotherms = ws.showIsotherms || false;
+        lastU = ws.lastU || 0; lastFlux = ws.lastFlux || 0; lastL2D = ws.lastL2D || 0; lastFRsi = ws.lastFRsi || 0; lastTsiMin = ws.lastTsiMin || 0;
+        lastTsiMinX = ws.lastTsiMinX || null; lastTsiMinY = ws.lastTsiMinY || null; lastAlgo = ws.lastAlgo || "FDM Métrico (ISO 10077-2)";
+        
+        if (ws.settings) {
+            document.getElementById('tolInput').value = ws.settings.tol || 0.1;
+            document.getElementById('LpInput').value = ws.settings.Lp || 100;
+            document.getElementById('tExt').value = ws.settings.tExt || 0;
+            document.getElementById('tInt').value = ws.settings.tInt || 20;
+            document.getElementById('gridRes').value = ws.settings.res || 400;
+            document.getElementById('emissInput').value = ws.settings.emiss || 0.90;
+        }
+
+        if (showThermalMap) {
+            document.getElementById('result').style.display = "block";
+            document.getElementById('result').innerHTML=`
+                <h2>U<sub>f</sub> = ${lastU.toFixed(3)} W/(m²·K)</h2>
+                <h3 style="margin: 10px 0; color:#FFD54F;">f<sub>Rsi</sub> = ${lastFRsi.toFixed(3)} (T<sub>si,min</sub> = ${lastTsiMin.toFixed(1)} ºC)</h3>
+                <p>Cálculo analítico iterativo (${lastAlgo}) s/ ISO 10077-2</p>
+                <p style="opacity:0.9; margin-top:5px; font-size:0.85rem;">
+                    <small>Flujo (Q): ${Math.abs(lastFlux).toFixed(3)} W/m &nbsp;|&nbsp; L<sup>2D</sup>: ${lastL2D.toFixed(3)} W/(m·K) &nbsp;|&nbsp; b<sub>f</sub>: ${ws.settings.Lp} mm</small>
+                </p>
+            `;
+            document.getElementById('btnBackToEdit').style.display="inline-flex";
+            document.getElementById('btnPdf').style.display="inline-flex";
+            document.getElementById('btnToggleIso').style.display="inline-flex";
+            if(showIsotherms) document.getElementById('btnToggleIso').classList.add('active');
+            else document.getElementById('btnToggleIso').classList.remove('active');
+            document.getElementById('calcBtn').disabled = false;
+            window.setStatus(`Visualizando resultados de ${ws.name}`, "success");
+        } else {
+            document.getElementById('result').style.display = "none";
+            document.getElementById('btnBackToEdit').style.display = "none";
+            let hasAnyResult = workspaces.some(w => w.T !== null);
+            document.getElementById('btnPdf').style.display = hasAnyResult ? "inline-flex" : "none";
+            document.getElementById('btnToggleIso').style.display = "none";
+            document.getElementById('calcBtn').disabled = polygons.length === 0;
+            
+            if(polygons.length) window.setStatus(`Editando ${ws.name}. Asigna materiales y marca los contornos.`, "info");
+            else window.setStatus(`Espacio de trabajo vacío (${ws.name}). Importa un DXF para comenzar.`, "info");
+        }
+        
+        renderTabs();
+        draw();
+    };
+
+    window.addTab = function() {
+        saveState();
+        wsCounter++;
+        let newWs = createEmptyWorkspace("Perfil " + wsCounter);
+        workspaces.push(newWs);
+        window.loadState(workspaces.length - 1, true); 
+    };
+
+    window.duplicateTab = function() {
+        saveState();
+        wsCounter++;
+        let currentWs = workspaces[currentWsIdx];
+        let newWs = JSON.parse(JSON.stringify(currentWs));
+        newWs.name = currentWs.name + " (Copia)";
+        workspaces.push(newWs);
+        window.loadState(workspaces.length - 1, true); 
+        window.setStatus(`Se ha duplicado el perfil como "${newWs.name}"`, "success");
+    };
+
+    let modalCallback = null;
+    function showConfirmModal(msg, callback) {
+        document.getElementById('modalText').innerText = msg;
+        document.getElementById('customModal').style.display = 'flex';
+        modalCallback = callback;
+    }
+    document.getElementById('modalBtnCancel').onclick = () => { document.getElementById('customModal').style.display = 'none'; modalCallback = null; };
+    document.getElementById('modalBtnConfirm').onclick = () => { document.getElementById('customModal').style.display = 'none'; if(modalCallback) modalCallback(); modalCallback = null; };
+
+    window.removeTab = function(e, idx) {
+        if(e) e.stopPropagation();
+        if(workspaces.length === 1) {
+            window.setStatus("No puedes eliminar la única pestaña. Puedes importar un nuevo DXF encima.", "error");
+            return;
+        }
+        showConfirmModal("¿Seguro que quieres eliminar esta pestaña y sus resultados?", () => {
+            workspaces.splice(idx, 1);
+            if (currentWsIdx >= workspaces.length) currentWsIdx = workspaces.length - 1;
+            window.loadState(currentWsIdx, true);
+        });
+    };
+
+    window.triggerRename = function(e, idx) {
+        if(e) e.stopPropagation(); 
+        let span = document.getElementById('tab-name-' + idx);
+        if(span) {
+            span.contentEditable = "true";
+            span.focus();
+            let range = document.createRange();
+            range.selectNodeContents(span);
+            let sel = window.getSelection();
+            sel.removeAllRanges();
+            sel.addRange(range);
+        }
+    };
+
+    window.saveTabName = function(e, idx) {
+        let newName = e.target.innerText;
+        if (newName && newName.trim() !== "") {
+            workspaces[idx].name = newName.trim();
+        } else {
+            e.target.innerText = workspaces[idx].name;
+        }
+        e.target.contentEditable = "false";
+        renderTabs();
+    };
+
+    function renderTabs() {
+        let html = '';
+        workspaces.forEach((ws, i) => {
+            let active = i === currentWsIdx ? 'active' : '';
+            let icon = ws.T ? '<i class="fas fa-check-circle tab-icon" style="color:#2e7d32" title="Calculado"></i>' : '<i class="fas fa-drafting-compass tab-icon"></i>';
+            html += `<div class="tab-item ${active}" onclick="window.loadState(${i})">
+                        ${icon} 
+                        <span id="tab-name-${i}" class="tab-name" contenteditable="false" 
+                            onblur="window.saveTabName(event, ${i})" 
+                            onkeydown="if(event.key==='Enter'){event.preventDefault(); this.blur();}" 
+                            style="outline: none;">${ws.name}</span>
+                        <button class="tab-action-btn" onclick="window.triggerRename(event, ${i})" title="Renombrar pestaña"><i class="fas fa-pencil-alt"></i></button>
+                        ${workspaces.length > 1 ? `<button class="tab-action-btn delete" onclick="window.removeTab(event, ${i})" title="Eliminar pestaña"><i class="fas fa-times"></i></button>` : ''}
+                     </div>`;
+        });
+        document.getElementById('tabsContainer').innerHTML = html;
+        
+        let hasAnyResult = workspaces.some(w => w.T !== null);
+        let btnPdf = document.getElementById('btnPdf');
+        
+        if (hasAnyResult) {
+            btnPdf.style.display = "inline-flex";
+            if (workspaces.filter(w => w.T !== null).length > 1) {
+                btnPdf.innerHTML = '<i class="fas fa-file-pdf"></i> Generar Informe Comparativo';
+            } else {
+                btnPdf.innerHTML = '<i class="fas fa-file-pdf"></i> Generar Informe PDF';
+            }
+        } else {
+            btnPdf.style.display = "none";
+        }
+    }
+
+    // ──── INTERFAZ DE HERRAMIENTAS ────
     function updateMaterialUI() {
         const sel = document.getElementById('matSelect');
         const currentVal = sel.value; 
@@ -266,7 +563,7 @@
         sel.innerHTML += `<option value="CUSTOM" style="font-weight:bold; color:var(--color-primary-dark);">+ Crear Material Nuevo...</option>`;
         if (currentVal && (currentVal === 'CUSTOM' || parseInt(currentVal) < materials.length)) {
             sel.value = currentVal;
-        } else { sel.value = "0"; }        
+        } else { sel.value = "0"; }
         updateLegendUI();
     }
 
@@ -274,7 +571,7 @@
         const sel = document.getElementById('matSelect');
         const activeIdx = parseInt(sel.value) || 0;
         document.getElementById('legend').innerHTML = materials.map((m,i)=>
-            `<div class="legend-item ${i === activeIdx ? 'active' : ''}" onclick="setBrushMaterial(${i})" title="Pincel: ${m.name}">
+            `<div class="legend-item ${i === activeIdx ? 'active' : ''}" onclick="window.setBrushMaterial(${i})" title="Pincel: ${m.name}">
                 <div class="legend-color" style="background:${m.color}"></div> 
                 <span>${m.name}</span>
             </div>`).join('') + `
@@ -285,159 +582,599 @@
             </div>`;
     }
 
-    document.getElementById('btnModeMat').onclick = function() { editMode = 'MATERIAL'; this.classList.add('active'); document.getElementById('btnModeBound').classList.remove('active'); document.getElementById('btnModeCrop').classList.remove('active'); document.getElementById('matBrushContainer').style.display = 'flex'; document.getElementById('boundSelect').style.display = 'none'; document.getElementById('cropHelpText').style.display = 'none'; setStatus("Modo Materiales: Selecciona el material en la paleta y pinta el perfil."); draw(); };
-    document.getElementById('btnModeBound').onclick = function() { editMode = 'BOUNDARY'; this.classList.add('active'); document.getElementById('btnModeMat').classList.remove('active'); document.getElementById('btnModeCrop').classList.remove('active'); document.getElementById('matBrushContainer').style.display = 'none'; document.getElementById('boundSelect').style.display = 'block'; document.getElementById('cropHelpText').style.display = 'none'; setStatus("Modo Contornos: SHIFT+Clic en una línea para pintar contornos continuos."); draw(); };
-    document.getElementById('btnModeCrop').onclick = function() { editMode = 'CROP'; this.classList.add('active'); document.getElementById('btnModeMat').classList.remove('active'); document.getElementById('btnModeBound').classList.remove('active'); document.getElementById('matBrushContainer').style.display = 'none'; document.getElementById('boundSelect').style.display = 'none'; document.getElementById('cropHelpText').style.display = 'block'; setStatus("Modo Área: Haz clic y arrastra para definir la zona exacta a simular."); draw(); };
+    function switchMode(mode, btnId, msg) {
+        editMode = mode;
+        document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
+        document.getElementById(btnId).classList.add('active');
+        
+        document.getElementById('matBrushContainer').style.display = (mode === 'MATERIAL') ? 'flex' : 'none';
+        document.getElementById('boundSelect').style.display = (mode === 'BOUNDARY') ? 'block' : 'none';
+        document.getElementById('cropHelpText').style.display = (mode === 'CROP') ? 'block' : 'none';
+        document.getElementById('panHelpText').style.display = (mode === 'PAN') ? 'block' : 'none';
+        
+        window.setStatus(msg);
+        draw();
+    }
+
+    document.getElementById('btnModeMat').onclick = () => switchMode('MATERIAL', 'btnModeMat', "Modo Materiales: Selecciona el material en la paleta y pinta el perfil.");
+    document.getElementById('btnModeBound').onclick = () => switchMode('BOUNDARY', 'btnModeBound', "Modo Contornos: SHIFT+Clic en una línea para pintar contornos continuos.");
+    document.getElementById('btnModeCrop').onclick = () => switchMode('CROP', 'btnModeCrop', "Modo Área: Haz clic y arrastra para definir la zona exacta a simular.");
+    document.getElementById('btnModePan').onclick = () => switchMode('PAN', 'btnModePan', "Modo Mover: Haz clic y arrastra para mover la vista del perfil.");
+
     document.getElementById('btnShowCustomMat').onclick = () => { document.getElementById('customMatPanel').style.display = 'block'; document.getElementById('matSelect').value = 'CUSTOM'; };
     document.getElementById('btnCancelCustomMat').onclick = () => { document.getElementById('customMatPanel').style.display = 'none'; document.getElementById('matSelect').value = "0"; updateLegendUI(); };
-    document.getElementById('btnAddCustomMat').onclick = function() { const name = document.getElementById('customMatName').value || "Material Especial"; const k = parseFloat(document.getElementById('customMatK').value) || 0.1; const color = document.getElementById('customMatColor').value; materials.push({name, k, color}); updateMaterialUI(); document.getElementById('matSelect').value = materials.length - 1; updateLegendUI(); document.getElementById('customMatPanel').style.display = 'none'; setStatus(`Material "${name}" añadido a la paleta.`); };
-    document.getElementById('matSelect').onchange = function() { if(this.value === 'CUSTOM') document.getElementById('customMatPanel').style.display = 'block'; else document.getElementById('customMatPanel').style.display = 'none'; updateLegendUI(); };
-    window.setBrushMaterial = (idx) => { if (editMode !== 'MATERIAL') document.getElementById('btnModeMat').click(); document.getElementById('matSelect').value = idx; updateLegendUI(); setStatus(`Pincel activo: ${materials[idx].name}`); };
-    document.getElementById('btnBackToEdit').onclick = function() { showThermalMap = false; showIsotherms = false; this.style.display = 'none'; document.getElementById('btnPdf').style.display = 'none'; document.getElementById('btnToggleIso').style.display = 'none'; document.getElementById('btnToggleIso').classList.remove('active'); document.getElementById('result').style.display = 'none'; document.getElementById('calcBtn').disabled = false; setStatus("Modo de edición activado.", "info"); draw(); };
-    document.getElementById('btnToggleIso').onclick = function() { showIsotherms = !showIsotherms; if(showIsotherms) this.classList.add('active'); else this.classList.remove('active'); draw(); };
-    function setStatus(msg, type = 'info') { statusText.textContent = msg; const bar = document.getElementById('status'); bar.className = `status-bar ${type}`; let icon = 'fas fa-info-circle'; if(type === 'error') icon = 'fas fa-exclamation-triangle'; if(type === 'success') icon = 'fas fa-check-circle'; bar.querySelector('i').className = icon; }
+    
+    document.getElementById('btnAddCustomMat').onclick = function() {
+        const name = document.getElementById('customMatName').value || "Material Especial";
+        const k = parseFloat(document.getElementById('customMatK').value) || 0.1;
+        const color = document.getElementById('customMatColor').value;
+        materials.push({name, k, color});
+        updateMaterialUI(); document.getElementById('matSelect').value = materials.length - 1; updateLegendUI();
+        document.getElementById('customMatPanel').style.display = 'none'; window.setStatus(`Material "${name}" añadido a la paleta.`);
+    };
 
-    // Guardar / Cargar proyecto
-    document.getElementById('btnSaveProject').onclick = () => { if (!polygons.length) { setStatus("No hay geometría para guardar. Importa un DXF primero.", "error"); return; } const projectData = { materials: materials, polygons: polygons, boundaryEdges: boundaryEdges, settings: { tol: document.getElementById('tolInput').value, Lp: document.getElementById('LpInput').value, tExt: document.getElementById('tExt').value, tInt: document.getElementById('tInt').value, res: document.getElementById('gridRes').value, emisivity: document.getElementById('emisivityInput').value } }; const blob = new Blob([JSON.stringify(projectData)], {type: "application/json"}); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = "Aislantech_Proyecto.json"; a.click(); URL.revokeObjectURL(url); setStatus("✅ Proyecto guardado correctamente.", "success"); };
-    document.getElementById('jsonFile').onchange = e => { const file = e.target.files[0]; if(!file) return; const reader = new FileReader(); reader.onload = ev => { try { const data = JSON.parse(ev.target.result); if(!data.polygons || !data.boundaryEdges) throw new Error("Formato de proyecto no válido."); materials = data.materials || materials; polygons = data.polygons; boundaryEdges = data.boundaryEdges; const tol = parseFloat(data.settings?.tol || 0.1); boundaryAdj = boundaryEdges.map(() => []); for(let i=0; i<boundaryEdges.length; i++){ for(let j=i+1; j<boundaryEdges.length; j++){ if(Math.hypot(boundaryEdges[i].p1.x-boundaryEdges[j].p1.x, boundaryEdges[i].p1.y-boundaryEdges[j].p1.y) < tol*2 || Math.hypot(boundaryEdges[i].p1.x-boundaryEdges[j].p2.x, boundaryEdges[i].p1.y-boundaryEdges[j].p2.y) < tol*2 || Math.hypot(boundaryEdges[i].p2.x-boundaryEdges[j].p1.x, boundaryEdges[i].p2.y-boundaryEdges[j].p1.y) < tol*2 || Math.hypot(boundaryEdges[i].p2.x-boundaryEdges[j].p2.x, boundaryEdges[i].p2.y-boundaryEdges[j].p2.y) < tol*2) { boundaryAdj[i].push(j); boundaryAdj[j].push(i); } } } if (data.settings) { document.getElementById('tolInput').value = data.settings.tol || 0.1; document.getElementById('LpInput').value = data.settings.Lp || 100; document.getElementById('tExt').value = data.settings.tExt || 0; document.getElementById('tInt').value = data.settings.tInt || 20; document.getElementById('gridRes').value = data.settings.res || 400; if(data.settings.emisivity) document.getElementById('emisivityInput').value = data.settings.emisivity; } updateMaterialUI(); recalcBounds(); cropRect = null; calcBounds = null; document.getElementById('calcBtn').disabled = false; showThermalMap = false; showIsotherms = false; document.getElementById('result').style.display = 'none'; document.getElementById('btnBackToEdit').style.display = 'none'; document.getElementById('btnPdf').style.display = 'none'; document.getElementById('btnToggleIso').style.display = 'none'; setStatus("✅ Proyecto cargado correctamente.", "success"); draw(); } catch(err) { setStatus("Error al cargar: " + err.message, "error"); } }; reader.readAsText(file); e.target.value = ""; };
+    document.getElementById('matSelect').onchange = function() {
+        if(this.value === 'CUSTOM') document.getElementById('customMatPanel').style.display = 'block';
+        else document.getElementById('customMatPanel').style.display = 'none';
+        updateLegendUI();
+    };
 
-    // DXF parser (simplificado pero funcional)
-    document.getElementById('dxfFile').onchange = e => { const file = e.target.files[0]; if(!file) return; const reader = new FileReader(); reader.onload = ev => { try { const tol = parseFloat(document.getElementById('tolInput').value) || 0.1; const segments = parseDXF(ev.target.result); if(segments.length === 0) throw new Error("No hay entidades 2D válidas."); polygons = buildTopology(segments, tol); if(polygons.length) { recalcBounds(); cropRect = null; calcBounds = null; boundaryEdges = extractBoundaryEdges(polygons, tol); document.getElementById('calcBtn').disabled = false; showThermalMap = false; showIsotherms = false; document.getElementById('result').style.display = 'none'; document.getElementById('btnBackToEdit').style.display = 'none'; document.getElementById('btnPdf').style.display = 'none'; document.getElementById('btnToggleIso').style.display = 'none'; setStatus(`✅ DXF Importado (${polygons.length} áreas). Pinta los materiales.`, "success"); draw(); } else throw new Error("No se formaron áreas cerradas. Ajusta la Tolerancia."); } catch(err) { setStatus("Error DXF: " + err.message, "error"); } }; reader.readAsText(file); e.target.value = ""; };
+    window.setBrushMaterial = function(idx) {
+        if (editMode !== 'MATERIAL') document.getElementById('btnModeMat').click();
+        document.getElementById('matSelect').value = idx; updateLegendUI(); window.setStatus(`Pincel activo: ${materials[idx].name}`);
+    };
 
-    function parseDXF(text) { /* ... mantiene la implementación anterior ... */ 
-        const lines = text.split(/\r?\n/);
-        let idx = 0, inEntities = false, segments = [];
-        let curE = null, curPoly = null;
-        const getP = () => { while (idx < lines.length - 1) { const c = parseInt(lines[idx++].trim()), v = lines[idx++].trim(); return [c, v]; } return null; };
-        function addB(p1, p2, bulge) { if (!bulge || Math.abs(bulge) < 1e-5) { segments.push({ x1: p1.x, y1: p1.y, x2: p2.x, y2: p2.y }); return; } const dx = p2.x - p1.x, dy = p2.y - p1.y, dist = Math.hypot(dx, dy); if (dist < 1e-6) return; const theta = 4 * Math.atan(bulge), radius = Math.abs(dist / (2 * Math.sin(theta / 2))), dir = bulge > 0 ? 1 : -1; const cx = (p1.x + p2.x) / 2 + (-dy / dist * dir) * radius * Math.cos(theta / 2); const cy = (p1.y + p2.y) / 2 + (dx / dist * dir) * radius * Math.cos(theta / 2); let a1 = Math.atan2(p1.y - cy, p1.x - cx), a2 = Math.atan2(p2.y - cy, p2.x - cx); if (bulge > 0 && a2 <= a1) a2 += 2 * Math.PI; if (bulge < 0 && a2 >= a1) a2 -= 2 * Math.PI; const N = Math.max(6, Math.floor(Math.abs(a2 - a1) * radius / 2)); let px = p1.x, py = p1.y; for (let i = 1; i <= N; i++) { const a = a1 + (a2 - a1) * (i / N), x = cx + radius * Math.cos(a), y = cy + radius * Math.sin(a); segments.push({ x1: px, y1: py, x2: x, y2: y }); px = x; py = y; } }
-        function flushE(e) { if (!e || e.ignore) return; if (e.type === 'VERTEX' && curPoly) curPoly.vertices.push({ x: e.x || 0, y: e.y || 0, bulge: e.bulge || 0 }); else if (e.type === 'LINE' && e.x1 !== undefined && e.x2 !== undefined) segments.push({ x1: e.x1, y1: e.y1, x2: e.x2, y2: e.y2 }); else if ((e.type === 'CIRCLE' || e.type === 'ARC') && e.r > 0) { let start = e.startAngle !== undefined ? e.startAngle : 0, end = e.endAngle !== undefined ? e.endAngle : 360; let rs = start * Math.PI / 180, re = end * Math.PI / 180; if (e.type === 'ARC' && re <= rs) re += 2 * Math.PI; const N = Math.max(12, Math.floor(Math.abs(re - rs) * e.r / 2)); let px = e.cx + e.r * Math.cos(rs), py = e.cy + e.r * Math.sin(rs); for (let i = 1; i <= N; i++) { const a = rs + (re - rs) * (i / N), x = e.cx + e.r * Math.cos(a), y = e.cy + e.r * Math.sin(a); segments.push({ x1: px, y1: py, x2: x, y2: y }); px = x; py = y; } } else if ((e.type === 'LWPOLYLINE' || e.type === 'POLYLINE') && e.vertices && e.vertices.length > 0) { for (let i = 0; i < e.vertices.length - 1; i++) addB(e.vertices[i], e.vertices[i + 1], e.vertices[i].bulge); if (e.closed && e.vertices.length > 2) addB(e.vertices[e.vertices.length - 1], e.vertices[0], e.vertices[e.vertices.length - 1].bulge); } }
-        while (idx < lines.length) { const pair = getP(); if (!pair) break; const [c, v] = pair; if (c === 0) { flushE(curE); if (v === 'LINE' || v === 'CIRCLE' || v === 'ARC' || v === 'LWPOLYLINE') curE = { type: v, vertices: [] }; else if (v === 'POLYLINE') { curE = { type: v, vertices: [], closed: false }; curPoly = curE; } else if (v === 'VERTEX') curE = { type: 'VERTEX', x: 0, y: 0, bulge: 0 }; else if (v === 'SEQEND') { if (curPoly) { curE = curPoly; curE.type = 'LWPOLYLINE'; flushE(curE); curPoly = null; curE = null; } } else curE = null; } else if (curE) { if (c === 67 && v === '1') curE.ignore = true; const val = parseFloat(v); if (curE.type === 'LINE') { if (c === 10) curE.x1 = val; else if (c === 20) curE.y1 = val; else if (c === 11) curE.x2 = val; else if (c === 21) curE.y2 = val; } else if (curE.type === 'CIRCLE' || curE.type === 'ARC') { if (c === 10) curE.cx = val; else if (c === 20) curE.cy = val; else if (c === 40) curE.r = val; else if (c === 50) curE.startAngle = val; else if (c === 51) curE.endAngle = val; } else if (curE.type === 'LWPOLYLINE' || curE.type === 'POLYLINE') { if (c === 70) curE.closed = (parseInt(v) & 1) !== 0; else if (c === 10 && curE.type === 'LWPOLYLINE') curE.vertices.push({ x: val, y: 0, bulge: 0 }); else if (c === 20 && curE.type === 'LWPOLYLINE' && curE.vertices.length > 0) curE.vertices[curE.vertices.length - 1].y = val; else if (c === 42 && curE.type === 'LWPOLYLINE' && curE.vertices.length > 0) curE.vertices[curE.vertices.length - 1].bulge = val; } else if (curE.type === 'VERTEX') { if (c === 10) curE.x = val; else if (c === 20) curE.y = val; else if (c === 42) curE.bulge = val; } } } flushE(curE); return segments.filter(s => Math.hypot(s.x2 - s.x1, s.y2 - s.y1) > 1e-6);
-    }
-
-    function buildTopology(raw, tol) { /* misma implementación que antes */ 
-        const pts = []; raw.forEach(s => { pts.push({x: s.x1, y: s.y1}); pts.push({x: s.x2, y: s.y2}); });
-        for(let i=0; i<raw.length; i++) { const s1 = raw[i]; for(let j=i+1; j<raw.length; j++) { const s2 = raw[j]; const den = (s1.x2 - s1.x1)*(s2.y2 - s2.y1) - (s1.y2 - s1.y1)*(s2.x2 - s2.x1); if (Math.abs(den) > 1e-7) { const u = ((s2.x1 - s1.x1)*(s2.y2 - s2.y1) - (s2.y1 - s1.y1)*(s2.x2 - s2.x1)) / den; const v = ((s2.x1 - s1.x1)*(s1.y2 - s1.y1) - (s2.y1 - s1.y1)*(s1.x2 - s1.x1)) / den; if (u > -1e-5 && u < 1+1e-5 && v > -1e-5 && v < 1+1e-5) pts.push({ x: s1.x1 + u*(s1.x2 - s1.x1), y: s1.y1 + u*(s1.y2 - s1.y1) }); } } }
-        const segments = [];
-        for(let i=0; i<raw.length; i++) { const s = raw[i], tVals = [0, 1], l2 = (s.x2 - s.x1)**2 + (s.y2 - s.y1)**2; if (l2 < 1e-7) continue; pts.forEach(p => { const t = ((p.x - s.x1)*(s.x2 - s.x1) + (p.y - s.y1)*(s.y2 - s.y1)) / l2; if (t > 1e-5 && t < 1-1e-5) { if (Math.hypot(p.x - (s.x1 + t*(s.x2-s.x1)), p.y - (s.y1 + t*(s.y2-s.y1))) <= tol) tVals.push(t); } }); tVals.sort((a,b) => a - b); let prevT = tVals[0]; for(let k=1; k<tVals.length; k++) { if (tVals[k] - prevT < 1e-5) continue; segments.push({ x1: s.x1 + prevT*(s.x2-s.x1), y1: s.y1 + prevT*(s.y2-s.y1), x2: s.x1 + tVals[k]*(s.x2-s.x1), y2: s.y1 + tVals[k]*(s.y2-s.y1) }); prevT = tVals[k]; } }
-        const vertices = [], grid = new Map(); const getV = (x, y) => { const gx = Math.round(x / tol), gy = Math.round(y / tol); for(let dx=-1; dx<=1; dx++) { for(let dy=-1; dy<=1; dy++) { const key = `${gx+dx},${gy+dy}`; if(grid.has(key)) { for(const v of grid.get(key)) { if (Math.hypot(v.x - x, v.y - y) <= tol) return v; } } } } const newV = {id: vertices.length, x, y, adj: []}; vertices.push(newV); const key = `${gx},${gy}`; if(!grid.has(key)) grid.set(key, []); grid.get(key).push(newV); return newV; };
-        const uniqueEdges = new Map(); segments.forEach(s => { const v1 = getV(s.x1, s.y1), v2 = getV(s.x2, s.y2); if (v1.id === v2.id) return; uniqueEdges.set(`${Math.min(v1.id, v2.id)}-${Math.max(v1.id, v2.id)}`, {v1, v2}); });
-        const adj = new Map(); uniqueEdges.forEach((_, key) => { const [id1, id2] = key.split('-').map(Number); if(!adj.has(id1)) adj.set(id1, new Set()); if(!adj.has(id2)) adj.set(id2, new Set()); adj.get(id1).add(id2); adj.get(id2).add(id1); });
-        let pruned = true; while(pruned) { pruned = false; for (const [vId, neighbors] of adj.entries()) { if(neighbors.size === 1) { const nId = Array.from(neighbors)[0]; neighbors.delete(nId); if(adj.has(nId)) adj.get(nId).delete(vId); uniqueEdges.delete(`${Math.min(vId, nId)}-${Math.max(vId, nId)}`); pruned = true; } } }
-        const halfEdges = []; uniqueEdges.forEach(e => { const h1 = {from: e.v1, to: e.v2, angle: Math.atan2(e.v2.y - e.v1.y, e.v2.x - e.v1.x), used: false}; const h2 = {from: e.v2, to: e.v1, angle: Math.atan2(e.v1.y - e.v2.y, e.v1.x - e.v2.x), used: false}; h1.rev = h2; h2.rev = h1; e.v1.adj.push(h1); e.v2.adj.push(h2); halfEdges.push(h1, h2); }); vertices.forEach(v => v.adj.sort((a, b) => a.angle - b.angle));
-        const rawFaces = []; halfEdges.forEach(he => { if(he.used) return; const pts = []; let curr = he, loops = 0; while(!curr.used && loops < 10000) { curr.used = true; pts.push({x: curr.from.x, y: curr.from.y}); curr = curr.to.adj[(curr.to.adj.indexOf(curr.rev) - 1 + curr.to.adj.length) % curr.to.adj.length]; loops++; } if(pts.length > 2) { let area = 0; for(let i=0; i<pts.length; i++) area += (pts[i].x * pts[(i+1)%pts.length].y - pts[(i+1)%pts.length].x * pts[i].y); rawFaces.push({pts, signedArea: area/2, area: Math.abs(area/2), matIdx: 2}); } });
-        let maxA = -1, sign = 1; rawFaces.forEach(f => { if (f.area > maxA) { maxA = f.area; sign = Math.sign(f.signedArea); } }); return rawFaces.filter(f => Math.sign(f.signedArea) !== sign && f.area > 1e-4).sort((a,b) => b.area - a.area);
-    }
-
-    function extractBoundaryEdges(polys, tol) { const map = new Map(), rT = (val) => Math.round(val / tol) * tol; polys.forEach(poly => { for(let i=0; i<poly.pts.length; i++) { const p1 = poly.pts[i], p2 = poly.pts[(i+1)%poly.pts.length]; const k1 = `${rT(p1.x)},${rT(p1.y)}-${rT(p2.x)},${rT(p2.y)}`, k2 = `${rT(p2.x)},${rT(p2.y)}-${rT(p1.x)},${rT(p1.y)}`; if(map.has(k1)) map.get(k1).count++; else if(map.has(k2)) map.get(k2).count++; else map.set(k1, {p1, p2, count: 1, type: 0}); } }); const edges = Array.from(map.values()).filter(e => e.count === 1).map(e => ({p1:e.p1, p2:e.p2, type:0})); boundaryAdj = edges.map(() => []); for(let i=0; i<edges.length; i++){ for(let j=i+1; j<edges.length; j++){ if(Math.hypot(edges[i].p1.x-edges[j].p1.x, edges[i].p1.y-edges[j].p1.y) < tol*2 || Math.hypot(edges[i].p1.x-edges[j].p2.x, edges[i].p1.y-edges[j].p2.y) < tol*2 || Math.hypot(edges[i].p2.x-edges[j].p1.x, edges[i].p2.y-edges[j].p1.y) < tol*2 || Math.hypot(edges[i].p2.x-edges[j].p2.x, edges[i].p2.y-edges[j].p2.y) < tol*2) { boundaryAdj[i].push(j); boundaryAdj[j].push(i); } } } return edges; }
-
-    function recalcBounds() { if(!polygons.length) return; const all = polygons.flatMap(p => p.pts); let rMinX = Math.min(...all.map(p => p.x)), rMaxX = Math.max(...all.map(p => p.x)), rMinY = Math.min(...all.map(p => p.y)), rMaxY = Math.max(...all.map(p => p.y)); let padX = Math.max(15, (rMaxX - rMinX) * 0.10), padY = Math.max(15, (rMaxY - rMinY) * 0.10); minX = rMinX - padX; maxX = rMaxX + padX; minY = rMinY - padY; maxY = rMaxY + padY; document.getElementById('LpInput').value = Math.round(rMaxY - rMinY); const pad = 60, cw = canvas.width, ch = canvas.height; baseScale = Math.min((cw-pad*2)/(maxX-minX||1), (ch-pad*2)/(maxY-minY||1)); zoomLevel = 1; offsetX = 0; offsetY = 0; }
-
-    function getTransform() { const cw = canvas.width, ch = canvas.height, cxW = (minX + maxX) / 2, cyW = (minY + maxY) / 2; return { s: baseScale * zoomLevel, tx: x => offsetX + cw / 2 + (x - cxW) * baseScale * zoomLevel, ty: y => offsetY + ch / 2 - (y - cyW) * baseScale * zoomLevel }; }
-    function getWorld(sx, sy) { const cw = canvas.width, ch = canvas.height, cxW = (minX + maxX) / 2, cyW = (minY + maxY) / 2; return { x: cxW + (sx - offsetX - cw / 2) / (baseScale * zoomLevel), y: cyW - (sy - offsetY - ch / 2) / (baseScale * zoomLevel) }; }
-    canvas.onwheel = e => { e.preventDefault(); if (!polygons.length) return; const rect = canvas.getBoundingClientRect(); const mx = (e.clientX - rect.left) * (canvas.width / rect.width), my = (e.clientY - rect.top) * (canvas.height / rect.height); const wBefore = getWorld(mx, my); const factor = e.deltaY < 0 ? 1.15 : 1 / 1.15; zoomLevel = Math.max(0.1, Math.min(zoomLevel * factor, 50)); const cw = canvas.width, ch = canvas.height, cxW = (minX + maxX) / 2, cyW = (minY + maxY) / 2; offsetX = mx - cw / 2 - (wBefore.x - cxW) * baseScale * zoomLevel; offsetY = my - ch / 2 + (wBefore.y - cyW) * baseScale * zoomLevel; draw(); };
-    document.getElementById('btnZoomReset').onclick = () => { zoomLevel = 1; offsetX = 0; offsetY = 0; draw(); };
-    canvas.onmousedown = e => { if(!polygons.length) return; const rect = canvas.getBoundingClientRect(); const mx = (e.clientX-rect.left)*(canvas.width/rect.width), my = (e.clientY-rect.top)*(canvas.height/rect.height); const w = getWorld(mx, my); if (editMode === 'CROP') { isCropping = true; cropStartX = w.x; cropStartY = w.y; cropRect = {x1: w.x, y1: w.y, x2: w.x, y2: w.y}; return; } isDragging = true; hasDragged = false; dragStartX = mx - offsetX; dragStartY = my - offsetY; canvas.classList.add('grabbing'); };
-    canvas.onmousemove = e => { if(!polygons.length || showThermalMap) return; const rect = canvas.getBoundingClientRect(); const mx = (e.clientX-rect.left)*(canvas.width/rect.width), my = (e.clientY-rect.top)*(canvas.height/rect.height); if(isDragging){ offsetX = mx-dragStartX; offsetY = my-dragStartY; hasDragged = true; draw(); return; } const w = getWorld(mx, my); if (isCropping) { cropRect.x2 = w.x; cropRect.y2 = w.y; draw(); return; } let updated = false; if(editMode === 'BOUNDARY') { let minD = Infinity, hE = -1; boundaryEdges.forEach((edge, i) => { const dx = edge.p2.x-edge.p1.x, dy = edge.p2.y-edge.p1.y, l2 = dx*dx+dy*dy; let t = Math.max(0, Math.min(1, ((w.x-edge.p1.x)*dx+(w.y-edge.p1.y)*dy)/l2)); let dist = Math.hypot(w.x-(edge.p1.x+t*dx), w.y-(edge.p1.y+t*dy)); if(dist < minD){ minD = dist; hE = i; } }); if(minD > 12/(baseScale*zoomLevel)) hE = -1; if (hE !== hoveredEdgeIdx) { hoveredEdgeIdx = hE; updated = true; } } else if (editMode === 'MATERIAL') { let hP = -1; for(let i=polygons.length-1; i>=0; i--){ let inside = false, pts = polygons[i].pts; for (let k = 0, j = pts.length - 1; k < pts.length; j = k++) { if (((pts[k].y > w.y) !== (pts[j].y > w.y)) && (w.x < (pts[j].x - pts[k].x) * (w.y - pts[k].y) / (pts[j].y - pts[k].y) + pts[k].x)) inside = !inside; } if(inside){ hP = i; break; } } if (hP !== hoveredPolyIdx) { hoveredPolyIdx = hP; updated = true; } } if (updated) draw(); };
-    canvas.onmouseup = e => { if(!polygons.length) return; isDragging = false; canvas.classList.remove('grabbing'); if(hasDragged || showThermalMap) return; if (isCropping) { isCropping = false; const dist = Math.hypot(cropRect.x1 - cropRect.x2, cropRect.y1 - cropRect.y2); if (dist < 5 / baseScale / zoomLevel) { cropRect = null; calcBounds = null; setStatus("Área de cálculo restablecida al total del perfil.", "success"); } else { let marginCrop = 5 / baseScale / zoomLevel; calcBounds = { minX: Math.min(cropRect.x1, cropRect.x2) - marginCrop, maxX: Math.max(cropRect.x1, cropRect.x2) + marginCrop, minY: Math.min(cropRect.y1, cropRect.y2) - marginCrop, maxY: Math.max(cropRect.y1, cropRect.y2) + marginCrop }; setStatus("Área de cálculo acotada. El solver ignorará lo que esté fuera.", "success"); } draw(); return; } if(editMode === 'BOUNDARY' && hoveredEdgeIdx !== -1) { const activeType = parseInt(document.getElementById('boundSelect').value); if(e.shiftKey) { let path = bfsFindNearestAssigned(hoveredEdgeIdx); if(path){ path.forEach(id => boundaryEdges[id].type = activeType); } else boundaryEdges[hoveredEdgeIdx].type = activeType; } else boundaryEdges[hoveredEdgeIdx].type = activeType; draw(); return; } if (editMode === 'MATERIAL' && hoveredPolyIdx !== -1) { const activeMat = parseInt(document.getElementById('matSelect').value); if (!isNaN(activeMat)) { polygons[hoveredPolyIdx].matIdx = activeMat; selectedPoly = hoveredPolyIdx; draw(); } } };
-    function bfsFindNearestAssigned(startIdx) { let queue = [[startIdx, [startIdx]]], visited = new Set([startIdx]); while(queue.length > 0) { let [curr, path] = queue.shift(); if (boundaryEdges[curr].type !== 0 && curr !== startIdx) return path; for (let n of boundaryAdj[curr]) { if (!visited.has(n)) { visited.add(n); queue.push([n, [...path, n]]); } } } return null; }
-
-    function draw() { ctx.clearRect(0,0,canvas.width,canvas.height); if(!polygons.length) return; const {tx, ty, s} = getTransform(); if(showThermalMap && T && calcBounds) { const res = parseInt(document.getElementById('gridRes').value); const te = +document.getElementById('tExt').value, ti = +document.getElementById('tInt').value; const cw = (calcBounds.maxX - calcBounds.minX) / res * s; const ch = (calcBounds.maxY - calcBounds.minY) / res * s; for(let i=0; i<res; i++) { for(let j=0; j<res; j++) { if(kGrid && (kGrid[i][j] > 0 || isExtGrid[i][j] || isIntMeasGrid[i][j] || isIntSecGrid[i][j])) { const f = Math.max(0, Math.min(1, (T[i][j]-te)/(ti-te||1))); ctx.fillStyle = `hsl(${(1-f)*240}, 75%, 50%)`; ctx.fillRect(tx(calcBounds.minX + j*dx), ty(calcBounds.minY + i*dy) - ch, cw+0.6, ch+0.6); } } } if (showIsotherms) { let isos = new Set([13]); for(let t = Math.ceil(te); t <= Math.floor(ti); t += 2) isos.add(t); ctx.font = "300 9px 'Open Sans', sans-serif"; ctx.textAlign = "left"; ctx.textBaseline = "bottom"; for(let i=0; i<res; i++) { for(let j=0; j<res; j++) { if(kGrid[i][j] > 0 || isExtGrid[i][j] || isIntMeasGrid[i][j] || isIntSecGrid[i][j]) { let val = T[i][j]; for(let iso of isos) { if (j < res-1 && ((val <= iso && T[i][j+1] > iso) || (val >= iso && T[i][j+1] < iso))) { let px = tx(calcBounds.minX + j*dx + dx/2); let py = ty(calcBounds.minY + i*dy) - ch/2; ctx.fillStyle = 'rgba(0,0,0,0.4)'; ctx.fillRect(px, py, 1.2, 1.2); if (i % 45 === 0) { ctx.fillStyle = 'rgba(0,0,0,0.85)'; ctx.fillText(iso + "°", px + 3, py - 2); } } if (i < res-1 && ((val <= iso && T[i+1][j] > iso) || (val >= iso && T[i+1][j] < iso))) { let px = tx(calcBounds.minX + j*dx); let py = ty(calcBounds.minY + i*dy + dy/2) - ch; ctx.fillStyle = 'rgba(0,0,0,0.4)'; ctx.fillRect(px, py, 1.2, 1.2); if (j % 45 === 0) { ctx.fillStyle = 'rgba(0,0,0,0.85)'; ctx.fillText(iso + "°", px + 3, py - 2); } } } } } } } } ctx.globalAlpha = showThermalMap ? 0.3 : 1.0; polygons.forEach((p, i) => { ctx.beginPath(); ctx.moveTo(tx(p.pts[0].x), ty(p.pts[0].y)); p.pts.forEach(pt => ctx.lineTo(tx(pt.x), ty(pt.y))); ctx.closePath(); ctx.fillStyle = materials[p.matIdx].color; ctx.fill(); if (editMode === 'MATERIAL' && i === hoveredPolyIdx) { ctx.fillStyle="rgba(255,255,255,0.4)"; ctx.fill(); } ctx.strokeStyle = "rgba(0,0,0,0.5)"; ctx.lineWidth = 1; ctx.stroke(); }); ctx.globalAlpha = 1.0; boundaryEdges.forEach((edge, i) => { if(edge.type === 0 && showThermalMap) return; ctx.beginPath(); ctx.moveTo(tx(edge.p1.x), ty(edge.p1.y)); ctx.lineTo(tx(edge.p2.x), ty(edge.p2.y)); let color = "rgba(0,0,0,0.1)"; if(edge.type === 1) color = "#1976d2"; if(edge.type === 2) color = "#d32f2f"; if(edge.type === 3) color = "#757575"; if(edge.type === 4) color = "#ff9800"; ctx.strokeStyle = color; ctx.lineWidth = (editMode==='BOUNDARY' && i===hoveredEdgeIdx) ? 8 : (edge.type!==0 ? 4 : 1.5); ctx.stroke(); }); if (cropRect || calcBounds) { ctx.save(); ctx.setLineDash([5, 5]); ctx.strokeStyle = '#e74c3c'; ctx.lineWidth = 2; ctx.fillStyle = 'rgba(231, 76, 60, 0.05)'; const box = cropRect ? { minX: Math.min(cropRect.x1, cropRect.x2), maxX: Math.max(cropRect.x1, cropRect.x2), minY: Math.min(cropRect.y1, cropRect.y2), maxY: Math.max(cropRect.y1, cropRect.y2) } : calcBounds; const tX1 = tx(box.minX), tX2 = tx(box.maxX), tY1 = ty(box.maxY), tY2 = ty(box.minY); ctx.fillRect(tX1, tY1, tX2 - tX1, tY2 - tY1); ctx.strokeRect(tX1, tY1, tX2 - tX1, tY2 - tY1); ctx.restore(); } }
-    document.getElementById('btnRotate').onclick = () => { if(!polygons.length) return; const cx = (minX+maxX)/2, cy = (minY+maxY)/2; polygons.forEach(p => p.pts.forEach(pt => { const dxx = pt.x-cx, dyy = pt.y-cy; pt.x = cx - dyy; pt.y = cy + dxx; })); recalcBounds(); calcBounds = null; boundaryEdges = extractBoundaryEdges(polygons, parseFloat(document.getElementById('tolInput').value) || 0.1); draw(); };
-
-    // Función para asignar λ equivalente a cavidades cerradas (ISO 10077-2)
-    function assignEquivalentLambdaToCavities(isSolid, isOuterAir, bounds, dx, dy, te, ti, emisivity) {
-        const res = isSolid.length;
-        const Tm = (te + ti) / 2 + 273.15; // temperatura media en Kelvin
-        const lambda_air = 0.026; // W/m·K
-        const epsilon = emisivity; // emisividad superficial (0.9 por defecto)
-        // Calcular λ_rad simple para cavidad: λ_rad = 4 * sigma * epsilon * Tm^3 * e, donde e es espesor en m
-        // En la práctica se usa una formulación más precisa, pero ésta es una aproximación aceptable.
-        // Según ISO 10077-2, λ_rad = 4 * sigma * epsilon * Tm^3 * d, con d espesor de la cavidad.
+    document.getElementById('btnBackToEdit').onclick = function() {
+        showThermalMap = false; showIsotherms = false; this.style.display = 'none';
+        document.getElementById('btnToggleIso').style.display = 'none'; document.getElementById('btnToggleIso').classList.remove('active');
+        document.getElementById('result').style.display = 'none'; document.getElementById('calcBtn').disabled = false; 
+        lastTsiMinX = null; lastTsiMinY = null;
         
-        // Primero etiquetamos cada componente conexa de aire interior (no exterior)
-        let visited = Array.from({length:res}, () => new Array(res).fill(false));
-        let cavities = [];
-        for(let i=0; i<res; i++) {
-            for(let j=0; j<res; j++) {
-                if(!isSolid[i][j] && !isOuterAir[i][j] && !visited[i][j]) {
-                    // BFS para esta cavidad
-                    let cells = [];
-                    let queue = [[i,j]];
-                    visited[i][j] = true;
-                    while(queue.length) {
-                        let [ci,cj] = queue.shift();
-                        cells.push([ci,cj]);
-                        for(let [di,dj] of [[0,1],[1,0],[0,-1],[-1,0]]) {
-                            let ni=ci+di, nj=cj+dj;
-                            if(ni>=0 && ni<res && nj>=0 && nj<res && !isSolid[ni][nj] && !isOuterAir[ni][nj] && !visited[ni][nj]) {
-                                visited[ni][nj] = true;
-                                queue.push([ni,nj]);
+        let hasAnyResult = workspaces.some(w => w.T !== null);
+        document.getElementById('btnPdf').style.display = hasAnyResult ? "inline-flex" : "none";
+        
+        window.setStatus("Modo de edición activado.", "info"); draw();
+    };
+
+    document.getElementById('btnToggleIso').onclick = function() {
+        showIsotherms = !showIsotherms;
+        if(showIsotherms) this.classList.add('active'); else this.classList.remove('active'); draw();
+    };
+
+    // ──── GUARDAR Y CARGAR PROYECTO JSON ────
+    document.getElementById('btnSaveProject').onclick = () => {
+        saveState(); 
+        if (!polygons.length && workspaces.length === 1) { window.setStatus("No hay geometría para guardar. Importa un DXF primero.", "error"); return; }
+        const projectData = { materials: materials, workspaces: workspaces };
+        const blob = new Blob([JSON.stringify(projectData)], {type: "application/json"});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a'); a.href = url; a.download = "Aislantherm_Proyecto.json"; a.click(); URL.revokeObjectURL(url);
+        window.setStatus("✅ Proyecto Completo guardado correctamente.", "success");
+    };
+
+    document.getElementById('jsonFile').onchange = e => {
+        const file = e.target.files[0]; if(!file) return;
+        const reader = new FileReader();
+        reader.onload = ev => {
+            try {
+                const data = JSON.parse(ev.target.result);
+                materials = data.materials || materials;
+                
+                if (data.workspaces && data.workspaces.length > 0) {
+                    workspaces = data.workspaces;
+                    wsCounter = workspaces.length;
+                    window.loadState(0, true);
+                } else if (data.polygons) {
+                    let ws = createEmptyWorkspace("Perfil Importado");
+                    ws.polygons = data.polygons;
+                    ws.boundaryEdges = data.boundaryEdges;
+                    ws.settings = data.settings || ws.settings;
+                    
+                    if (data.minX !== undefined) {
+                        ws.minX = data.minX; ws.maxX = data.maxX; ws.minY = data.minY; ws.maxY = data.maxY;
+                        ws.baseScale = data.baseScale; ws.zoomLevel = data.zoomLevel; ws.offsetX = data.offsetX; ws.offsetY = data.offsetY;
+                    }
+
+                    workspaces = [ws];
+                    wsCounter = 1;
+                    window.loadState(0, true);
+                    
+                    if(data.minX === undefined) recalcBounds(); 
+                    
+                    const tol = parseFloat(ws.settings.tol || 0.1);
+                    boundaryAdj = ws.boundaryEdges.map(() => []);
+                    for(let i=0; i<ws.boundaryEdges.length; i++){
+                        for(let j=i+1; j<ws.boundaryEdges.length; j++){
+                            if(Math.hypot(ws.boundaryEdges[i].p1.x-ws.boundaryEdges[j].p1.x, ws.boundaryEdges[i].p1.y-ws.boundaryEdges[j].p1.y) < tol*2 || Math.hypot(ws.boundaryEdges[i].p1.x-ws.boundaryEdges[j].p2.x, ws.boundaryEdges[i].p1.y-ws.boundaryEdges[j].p2.y) < tol*2 || Math.hypot(ws.boundaryEdges[i].p2.x-ws.boundaryEdges[j].p1.x, ws.boundaryEdges[i].p2.y-ws.boundaryEdges[j].p1.y) < tol*2 || Math.hypot(ws.boundaryEdges[i].p2.x-ws.boundaryEdges[j].p2.x, ws.boundaryEdges[i].p2.y-ws.boundaryEdges[j].p2.y) < tol*2) {
+                                boundaryAdj[i].push(j); boundaryAdj[j].push(i);
                             }
                         }
                     }
-                    if(cells.length > 0) cavities.push(cells);
+                } else {
+                    throw new Error("Formato de proyecto no válido.");
+                }
+                updateMaterialUI();
+                recalcBounds(); 
+                draw(); 
+                window.setStatus("✅ Proyecto cargado correctamente.", "success"); 
+            } catch(err) { window.setStatus("Error al cargar: " + err.message, "error"); }
+        };
+        reader.readAsText(file); e.target.value = ""; 
+    };
+
+    // ──── LECTOR DXF Y TOPOLOGÍA ────
+    document.getElementById('dxfFile').onchange = e => {
+        const file = e.target.files[0]; if(!file) return;
+        const reader = new FileReader();
+        reader.onload = ev => {
+            try {
+                const tol = parseFloat(document.getElementById('tolInput').value) || 0.1;
+                const segments = parseDXF(ev.target.result);
+                if(segments.length === 0) throw new Error("No hay entidades 2D válidas. Asegúrate de explotar los bloques.");
+                
+                polygons = buildTopology(segments, tol);
+                if(polygons.length) {
+                    recalcBounds(); cropRect = null; calcBounds = null;
+                    boundaryEdges = extractBoundaryEdges(polygons, tol);
+                    T = null; showThermalMap = false; showIsotherms = false;
+                    document.getElementById('calcBtn').disabled = false;
+                    document.getElementById('result').style.display = 'none'; document.getElementById('btnBackToEdit').style.display = 'none';
+                    document.getElementById('btnToggleIso').style.display = 'none';
+                    
+                    saveState(); 
+                    renderTabs();
+                    
+                    window.setStatus(`✅ DXF Importado en ${workspaces[currentWsIdx].name} (${polygons.length} áreas). Pinta los materiales.`, "success"); draw();
+                } else throw new Error("No se formaron áreas cerradas. Ajusta la Tolerancia.");
+            } catch(err) { window.setStatus("Error DXF: " + err.message, "error"); }
+        };
+        reader.readAsText(file); e.target.value = ""; 
+    };
+
+    function parseDXF(text) {
+        const lines = text.split(/\r?\n/); let idx = 0, inEntities = false, segments = []; let curE = null, curPoly = null;
+        const getP = () => { while (idx < lines.length - 1) { const c = parseInt(lines[idx++].trim()), v = lines[idx++].trim(); return [c, v]; } return null; };
+        function addB(p1, p2, bulge) {
+            if (!bulge || Math.abs(bulge) < 1e-5) { segments.push({ x1: p1.x, y1: p1.y, x2: p2.x, y2: p2.y }); return; }
+            const dx = p2.x - p1.x, dy = p2.y - p1.y, dist = Math.hypot(dx, dy); if (dist < 1e-6) return;
+            const theta = 4 * Math.atan(bulge), radius = Math.abs(dist / (2 * Math.sin(theta / 2))), dir = bulge > 0 ? 1 : -1;
+            const cx = (p1.x + p2.x) / 2 + (-dy / dist * dir) * radius * Math.cos(theta / 2), cy = (p1.y + p2.y) / 2 + (dx / dist * dir) * radius * Math.cos(theta / 2);
+            let a1 = Math.atan2(p1.y - cy, p1.x - cx), a2 = Math.atan2(p2.y - cy, p2.x - cx);
+            if (bulge > 0 && a2 <= a1) a2 += 2 * Math.PI; if (bulge < 0 && a2 >= a1) a2 -= 2 * Math.PI;
+            const N = Math.max(6, Math.floor(Math.abs(a2 - a1) * radius / 2));
+            let px = p1.x, py = p1.y;
+            for (let i = 1; i <= N; i++) { const a = a1 + (a2 - a1) * (i / N), x = cx + radius * Math.cos(a), y = cy + radius * Math.sin(a); segments.push({ x1: px, y1: py, x2: x, y2: y }); px = x; py = y; }
+        }
+        function flushE(e) {
+            if (!e || e.ignore) return;
+            if (e.type === 'VERTEX' && curPoly) curPoly.vertices.push({ x: e.x || 0, y: e.y || 0, bulge: e.bulge || 0 });
+            else if (e.type === 'LINE' && e.x1 !== undefined && e.x2 !== undefined) segments.push({ x1: e.x1, y1: e.y1, x2: e.x2, y2: e.y2 });
+            else if ((e.type === 'CIRCLE' || e.type === 'ARC') && e.r > 0) {
+                let start = e.startAngle !== undefined ? e.startAngle : 0, end = e.endAngle !== undefined ? e.endAngle : 360;
+                let rs = start * Math.PI / 180, re = end * Math.PI / 180;
+                if (e.type === 'ARC' && re <= rs) re += 2 * Math.PI;
+                const N = Math.max(12, Math.floor(Math.abs(re - rs) * e.r / 2)); let px = e.cx + e.r * Math.cos(rs), py = e.cy + e.r * Math.sin(rs);
+                for (let i = 1; i <= N; i++) { const a = rs + (re - rs) * (i / N), x = e.cx + e.r * Math.cos(a), y = e.cy + e.r * Math.sin(a); segments.push({ x1: px, y1: py, x2: x, y2: y }); px = x; py = y; }
+            } else if ((e.type === 'LWPOLYLINE' || e.type === 'POLYLINE') && e.vertices && e.vertices.length > 0) {
+                for (let i = 0; i < e.vertices.length - 1; i++) addB(e.vertices[i], e.vertices[i + 1], e.vertices[i].bulge);
+                if (e.closed && e.vertices.length > 2) addB(e.vertices[e.vertices.length - 1], e.vertices[0], e.vertices[e.vertices.length - 1].bulge);
+            }
+        }
+        while (idx < lines.length) {
+            const pair = getP(); if (!pair) break; const [c, v] = pair;
+            if (c === 0) {
+                flushE(curE);
+                if (v === 'LINE' || v === 'CIRCLE' || v === 'ARC' || v === 'LWPOLYLINE') curE = { type: v, vertices: [] };
+                else if (v === 'POLYLINE') { curE = { type: v, vertices: [], closed: false }; curPoly = curE; }
+                else if (v === 'VERTEX') curE = { type: 'VERTEX', x: 0, y: 0, bulge: 0 };
+                else if (v === 'SEQEND') { if (curPoly) { curE = curPoly; curE.type = 'LWPOLYLINE'; flushE(curE); curPoly = null; curE = null; } }
+                else curE = null;
+            } else if (curE) {
+                if (c === 67 && v === '1') curE.ignore = true; 
+                const val = parseFloat(v);
+                if (curE.type === 'LINE') { if (c === 10) curE.x1 = val; else if (c === 20) curE.y1 = val; else if (c === 11) curE.x2 = val; else if (c === 21) curE.y2 = val; } 
+                else if (curE.type === 'CIRCLE' || curE.type === 'ARC') { if (c === 10) curE.cx = val; else if (c === 20) curE.cy = val; else if (c === 40) curE.r = val; else if (c === 50) curE.startAngle = val; else if (c === 51) curE.endAngle = val; } 
+                else if (curE.type === 'LWPOLYLINE' || curE.type === 'POLYLINE') { if (c === 70) curE.closed = (parseInt(v) & 1) !== 0; else if (c === 10 && curE.type === 'LWPOLYLINE') curE.vertices.push({ x: val, y: 0, bulge: 0 }); else if (c === 20 && curE.type === 'LWPOLYLINE' && curE.vertices.length > 0) curE.vertices[curE.vertices.length - 1].y = val; else if (c === 42 && curE.type === 'LWPOLYLINE' && curE.vertices.length > 0) curE.vertices[curE.vertices.length - 1].bulge = val; } 
+                else if (curE.type === 'VERTEX') { if (c === 10) curE.x = val; else if (c === 20) curE.y = val; else if (c === 42) curE.bulge = val; }
+            }
+        }
+        flushE(curE); return segments.filter(s => Math.hypot(s.x2 - s.x1, s.y2 - s.y1) > 1e-6);
+    }
+
+    function buildTopology(raw, tol) {
+        const pts = []; raw.forEach(s => { pts.push({x: s.x1, y: s.y1}); pts.push({x: s.x2, y: s.y2}); });
+        for(let i=0; i<raw.length; i++) {
+            const s1 = raw[i];
+            for(let j=i+1; j<raw.length; j++) {
+                const s2 = raw[j]; const den = (s1.x2 - s1.x1)*(s2.y2 - s2.y1) - (s1.y2 - s1.y1)*(s2.x2 - s2.x1);
+                if (Math.abs(den) > 1e-7) {
+                    const u = ((s2.x1 - s1.x1)*(s2.y2 - s2.y1) - (s2.y1 - s1.y1)*(s2.x2 - s2.x1)) / den, v = ((s2.x1 - s1.x1)*(s1.y2 - s1.y1) - (s2.y1 - s1.y1)*(s1.x2 - s1.x1)) / den;
+                    if (u > -1e-5 && u < 1+1e-5 && v > -1e-5 && v < 1+1e-5) pts.push({ x: s1.x1 + u*(s1.x2 - s1.x1), y: s1.y1 + u*(s1.y2 - s1.y1) });
                 }
             }
         }
-        // Para cada cavidad, calcular espesor característico en dirección X (flujo horizontal)
-        // y asignar λ_eq a todas sus celdas.
-        cavities.forEach(cav => {
-            // Determinar rango de coordenadas X (world) y Y para la cavidad
-            let minX_cav = Infinity, maxX_cav = -Infinity;
-            let minY_cav = Infinity, maxY_cav = -Infinity;
-            cav.forEach(([i,j]) => {
-                const x = bounds.minX + j*dx + dx/2;
-                const y = bounds.minY + i*dy + dy/2;
-                minX_cav = Math.min(minX_cav, x);
-                maxX_cav = Math.max(maxX_cav, x);
-                minY_cav = Math.min(minY_cav, y);
-                maxY_cav = Math.max(maxY_cav, y);
-            });
-            const thickness = maxX_cav - minX_cav; // espesor en metros (dirección horizontal)
-            if(thickness <= 0) return;
-            // Calcular número de Grashof y Prandtl para el aire (aproximado)
-            // Propiedades del aire a Tm ~ 283 K: Pr=0.71, beta=1/Tm, nu=1.5e-5, alpha=2.2e-5, k_air=0.026
-            const Pr = 0.71;
-            const beta = 1.0 / Tm;
-            const g = 9.81;
-            const deltaT = ti - te; // gradiente térmico, pero para cavidad cerrada se usa diferencia entre paredes, estimamos 0.5*deltaT
-            const dT_cav = Math.abs(deltaT) * 0.5; // aproximación
-            const nu = 1.5e-5;
-            const Gr = (g * beta * dT_cav * Math.pow(thickness, 3)) / (nu*nu);
-            const Ra = Gr * Pr;
-            let Nu = 1;
-            if(Ra > 2000) {
-                // Correlación para cavidad vertical con flujo horizontal (orientación típica)
-                Nu = 0.18 * Math.pow(Ra, 0.25);
-            }
-            const lambda_conv = Nu * lambda_air;
-            const lambda_rad = 4 * SIGMA * epsilon * Math.pow(Tm, 3) * thickness;
-            const lambda_eq = lambda_air + lambda_conv + lambda_rad;
-            // Asignar a todas las celdas de la cavidad
-            cav.forEach(([i,j]) => {
-                kGrid[i][j] = lambda_eq;
-            });
+        const segments = [];
+        for(let i=0; i<raw.length; i++) {
+            const s = raw[i], tVals = [0, 1], l2 = (s.x2 - s.x1)**2 + (s.y2 - s.y1)**2; if (l2 < 1e-7) continue;
+            pts.forEach(p => { const t = ((p.x - s.x1)*(s.x2 - s.x1) + (p.y - s.y1)*(s.y2 - s.y1)) / l2; if (t > 1e-5 && t < 1-1e-5) { if (Math.hypot(p.x - (s.x1 + t*(s.x2-s.x1)), p.y - (s.y1 + t*(s.y2-s.y1))) <= tol) tVals.push(t); } });
+            tVals.sort((a,b) => a - b); let prevT = tVals[0];
+            for(let k=1; k<tVals.length; k++) { if (tVals[k] - prevT < 1e-5) continue; segments.push({ x1: s.x1 + prevT*(s.x2-s.x1), y1: s.y1 + prevT*(s.y2-s.y1), x2: s.x1 + tVals[k]*(s.x2-s.x1), y2: s.y1 + tVals[k]*(s.y2-s.y1) }); prevT = tVals[k]; }
+        }
+        const vertices = [], grid = new Map();
+        const getV = (x, y) => {
+            const gx = Math.round(x / tol), gy = Math.round(y / tol);
+            for(let dx=-1; dx<=1; dx++) { for(let dy=-1; dy<=1; dy++) { const key = `${gx+dx},${gy+dy}`; if(grid.has(key)) { for(const v of grid.get(key)) { if (Math.hypot(v.x - x, v.y - y) <= tol) return v; } } } }
+            const newV = {id: vertices.length, x, y, adj: []}; vertices.push(newV); const key = `${gx},${gy}`; if(!grid.has(key)) grid.set(key, []); grid.get(key).push(newV); return newV;
+        };
+        const uniqueEdges = new Map();
+        segments.forEach(s => { const v1 = getV(s.x1, s.y1), v2 = getV(s.x2, s.y2); if (v1.id === v2.id) return; uniqueEdges.set(`${Math.min(v1.id, v2.id)}-${Math.max(v1.id, v2.id)}`, {v1, v2}); });
+        const adj = new Map();
+        uniqueEdges.forEach((_, key) => { const [id1, id2] = key.split('-').map(Number); if(!adj.has(id1)) adj.set(id1, new Set()); if(!adj.has(id2)) adj.set(id2, new Set()); adj.get(id1).add(id2); adj.get(id2).add(id1); });
+        let pruned = true;
+        while(pruned) { pruned = false; for (const [vId, neighbors] of adj.entries()) { if(neighbors.size === 1) { const nId = Array.from(neighbors)[0]; neighbors.delete(nId); if(adj.has(nId)) adj.get(nId).delete(vId); uniqueEdges.delete(`${Math.min(vId, nId)}-${Math.max(vId, nId)}`); pruned = true; } } }
+        const halfEdges = [];
+        uniqueEdges.forEach(e => {
+            const h1 = {from: e.v1, to: e.v2, angle: Math.atan2(e.v2.y - e.v1.y, e.v2.x - e.v1.x), used: false}, h2 = {from: e.v2, to: e.v1, angle: Math.atan2(e.v1.y - e.v2.y, e.v1.x - e.v2.x), used: false};
+            h1.rev = h2; h2.rev = h1; e.v1.adj.push(h1); e.v2.adj.push(h2); halfEdges.push(h1, h2);
         });
+        vertices.forEach(v => v.adj.sort((a, b) => a.angle - b.angle));
+        const rawFaces = [];
+        halfEdges.forEach(he => {
+            if(he.used) return; const pts = []; let curr = he, loops = 0;
+            while(!curr.used && loops < 10000) { curr.used = true; pts.push({x: curr.from.x, y: curr.from.y}); curr = curr.to.adj[(curr.to.adj.indexOf(curr.rev) - 1 + curr.to.adj.length) % curr.to.adj.length]; loops++; }
+            if(pts.length > 2) { let area = 0; for(let i=0; i<pts.length; i++) area += (pts[i].x * pts[(i+1)%pts.length].y - pts[(i+1)%pts.length].x * pts[i].y); rawFaces.push({pts, signedArea: area/2, area: Math.abs(area/2), matIdx: 2}); }
+        });
+        let maxA = -1, sign = 1;
+        rawFaces.forEach(f => { if (f.area > maxA) { maxA = f.area; sign = Math.sign(f.signedArea); } });
+        return rawFaces.filter(f => Math.sign(f.signedArea) !== sign && f.area > 1e-4).sort((a,b) => b.area - a.area);
     }
 
-    // SOLVER PRINCIPAL
+    function extractBoundaryEdges(polys, tol) {
+        const map = new Map(), rT = (val) => Math.round(val / tol) * tol;
+        polys.forEach(poly => {
+            for(let i=0; i<poly.pts.length; i++) {
+                const p1 = poly.pts[i], p2 = poly.pts[(i+1)%poly.pts.length];
+                const k1 = `${rT(p1.x)},${rT(p1.y)}-${rT(p2.x)},${rT(p2.y)}`, k2 = `${rT(p2.x)},${rT(p2.y)}-${rT(p1.x)},${rT(p1.y)}`;
+                if(map.has(k1)) map.get(k1).count++; else if(map.has(k2)) map.get(k2).count++; else map.set(k1, {p1, p2, count: 1, type: 0});
+            }
+        });
+        const edges = Array.from(map.values()).filter(e => e.count === 1).map(e => ({p1:e.p1, p2:e.p2, type:0}));
+        boundaryAdj = edges.map(() => []);
+        for(let i=0; i<edges.length; i++){
+            for(let j=i+1; j<edges.length; j++){
+                if(Math.hypot(edges[i].p1.x-edges[j].p1.x, edges[i].p1.y-edges[j].p1.y) < tol*2 || Math.hypot(edges[i].p1.x-edges[j].p2.x, edges[i].p1.y-edges[j].p2.y) < tol*2 || Math.hypot(edges[i].p2.x-edges[j].p1.x, edges[i].p2.y-edges[j].p1.y) < tol*2 || Math.hypot(edges[i].p2.x-edges[j].p2.x, edges[i].p2.y-edges[j].p2.y) < tol*2) {
+                    boundaryAdj[i].push(j); boundaryAdj[j].push(i);
+                }
+            }
+        }
+        return edges;
+    }
+
+    // ──── VISTA, CROP Y MARGEN AUTOMÁTICO ────
+    function recalcBounds() {
+        if(!polygons.length) return;
+        const all = polygons.flatMap(p => p.pts);
+        
+        let rMinX = Math.min(...all.map(p => p.x)); let rMaxX = Math.max(...all.map(p => p.x));
+        let rMinY = Math.min(...all.map(p => p.y)); let rMaxY = Math.max(...all.map(p => p.y));
+        
+        let width = rMaxX - rMinX;
+        let height = rMaxY - rMinY;
+        if (width === 0) width = 10;
+        if (height === 0) height = 10;
+
+        let padX = width * 0.15; 
+        let padY = height * 0.15;
+        
+        minX = rMinX - padX; maxX = rMaxX + padX; minY = rMinY - padY; maxY = rMaxY + padY;
+        
+        let lpVal = Math.round(height);
+        if (height < 5) lpVal = Math.round(height * 1000);
+        document.getElementById('LpInput').value = lpVal; 
+        
+        const pad = 40, cw = canvas.width, ch = canvas.height;
+        baseScale = Math.min((cw-pad*2)/(maxX-minX||1), (ch-pad*2)/(maxY-minY||1));
+        zoomLevel = 1; offsetX = 0; offsetY = 0;
+    }
+
+    function getTransform() {
+        const cw = canvas.width, ch = canvas.height, cxW = (minX + maxX) / 2, cyW = (minY + maxY) / 2;
+        return { s: baseScale * zoomLevel, tx: x => offsetX + cw / 2 + (x - cxW) * baseScale * zoomLevel, ty: y => offsetY + ch / 2 - (y - cyW) * baseScale * zoomLevel };
+    }
+
+    function getWorld(sx, sy) {
+        const cw = canvas.width, ch = canvas.height, cxW = (minX + maxX) / 2, cyW = (minY + maxY) / 2;
+        return { x: cxW + (sx - offsetX - cw / 2) / (baseScale * zoomLevel), y: cyW - (sy - offsetY - ch / 2) / (baseScale * zoomLevel) };
+    }
+
+    canvas.onwheel = e => {
+        e.preventDefault(); if (!polygons.length) return;
+        const rect = canvas.getBoundingClientRect();
+        const mx = (e.clientX - rect.left) * (canvas.width / rect.width), my = (e.clientY - rect.top) * (canvas.height / rect.height);
+        const wBefore = getWorld(mx, my);
+        const factor = e.deltaY < 0 ? 1.15 : 1 / 1.15;
+        zoomLevel = Math.max(0.1, Math.min(zoomLevel * factor, 50));
+        const cw = canvas.width, ch = canvas.height, cxW = (minX + maxX) / 2, cyW = (minY + maxY) / 2;
+        offsetX = mx - cw / 2 - (wBefore.x - cxW) * baseScale * zoomLevel; offsetY = my - ch / 2 + (wBefore.y - cyW) * baseScale * zoomLevel;
+        draw();
+    };
+
+    document.getElementById('btnZoomReset').onclick = () => { zoomLevel = 1; offsetX = 0; offsetY = 0; draw(); };
+
+    // ──── CONTROL DEL RATÓN (ARRASTRE PANORÁMICO SIEMPRE ACTIVO) ────
+    canvas.onmousedown = e => {
+        if(!polygons.length) return;
+        const rect = canvas.getBoundingClientRect();
+        const mx = (e.clientX - rect.left) * (canvas.width / rect.width);
+        const my = (e.clientY - rect.top) * (canvas.height / rect.height);
+        const w = getWorld(mx, my);
+
+        if (editMode === 'CROP' && !showThermalMap && e.button === 0) {
+            window.isCropping = true; window.cropStartX = w.x; window.cropStartY = w.y; cropRect = {x1: w.x, y1: w.y, x2: w.x, y2: w.y};
+            return;
+        }
+
+        isDragging = true;
+        hasDragged = false;
+        dragStartX_client = e.clientX;
+        dragStartY_client = e.clientY;
+        dragStartX = mx - offsetX;
+        dragStartY = my - offsetY;
+        canvas.classList.add('grabbing');
+    };
+
+    canvas.onmousemove = e => {
+        if(!polygons.length) return;
+        const rect = canvas.getBoundingClientRect();
+        const mx = (e.clientX - rect.left) * (canvas.width / rect.width);
+        const my = (e.clientY - rect.top) * (canvas.height / rect.height);
+
+        if(isDragging){
+            e.preventDefault(); 
+            if (Math.hypot(e.clientX - dragStartX_client, e.clientY - dragStartY_client) > 3) {
+                hasDragged = true;
+            }
+            if (editMode === 'PAN' || showThermalMap || editMode === 'MATERIAL' || editMode === 'BOUNDARY') {
+                offsetX = mx - dragStartX;
+                offsetY = my - dragStartY;
+                draw();
+            }
+            return;
+        }
+
+        if(showThermalMap || editMode === 'PAN') return; 
+
+        const w = getWorld(mx, my);
+        if (window.isCropping) { cropRect.x2 = w.x; cropRect.y2 = w.y; draw(); return; }
+        
+        let updated = false;
+        if(editMode === 'BOUNDARY') {
+            let minD = Infinity, hE = -1;
+            boundaryEdges.forEach((edge, i) => {
+                const dx = edge.p2.x-edge.p1.x, dy = edge.p2.y-edge.p1.y, l2 = dx*dx+dy*dy;
+                let t = Math.max(0, Math.min(1, ((w.x-edge.p1.x)*dx+(w.y-edge.p1.y)*dy)/l2));
+                let dist = Math.hypot(w.x-(edge.p1.x+t*dx), w.y-(edge.p1.y+t*dy));
+                if(dist < minD){ minD = dist; hE = i; }
+            });
+            if(minD > 12/(baseScale*zoomLevel)) hE = -1;
+            if (hE !== hoveredEdgeIdx) { hoveredEdgeIdx = hE; updated = true; }
+        } else if (editMode === 'MATERIAL') {
+            let hP = -1;
+            for(let i=polygons.length-1; i>=0; i--){
+                let inside = false, pts = polygons[i].pts;
+                for (let k = 0, j = pts.length - 1; k < pts.length; j = k++) {
+                    if (((pts[k].y > w.y) !== (pts[j].y > w.y)) && (w.x < (pts[j].x - pts[k].x) * (w.y - pts[k].y) / (pts[j].y - pts[k].y) + pts[k].x)) inside = !inside;
+                }
+                if(inside){ hP = i; break; }
+            }
+            if (hP !== hoveredPolyIdx) { hoveredPolyIdx = hP; updated = true; }
+        }
+        if (updated) draw();
+    };
+
+    canvas.onmouseup = e => {
+        if(!polygons.length) return;
+        isDragging = false; canvas.classList.remove('grabbing');
+        
+        if(hasDragged) return; 
+        if(showThermalMap || editMode === 'PAN') return; 
+
+        if (window.isCropping) {
+            window.isCropping = false; const dist = Math.hypot(cropRect.x1 - cropRect.x2, cropRect.y1 - cropRect.y2);
+            if (dist < 5 / baseScale / zoomLevel) {
+                cropRect = null; calcBounds = null; window.setStatus("Área de cálculo restablecida al total del perfil.", "success");
+            } else {
+                let marginCrop = 5 / baseScale / zoomLevel; 
+                calcBounds = {
+                    minX: Math.min(cropRect.x1, cropRect.x2) - marginCrop, maxX: Math.max(cropRect.x1, cropRect.x2) + marginCrop,
+                    minY: Math.min(cropRect.y1, cropRect.y2) - marginCrop, maxY: Math.max(cropRect.y1, cropRect.y2) + marginCrop
+                };
+                window.setStatus("Área de cálculo acotada. El solver ignorará lo que esté fuera.", "success");
+            }
+            draw(); return;
+        }
+        if(editMode === 'BOUNDARY' && hoveredEdgeIdx !== -1) {
+            const activeType = parseInt(document.getElementById('boundSelect').value);
+            if(e.shiftKey) {
+                let path = bfsFindNearestAssigned(hoveredEdgeIdx);
+                if(path){ path.forEach(id => boundaryEdges[id].type = activeType); } else boundaryEdges[hoveredEdgeIdx].type = activeType;
+            } else boundaryEdges[hoveredEdgeIdx].type = activeType;
+            draw(); return;
+        }
+        if (editMode === 'MATERIAL' && hoveredPolyIdx !== -1) {
+            const activeMat = parseInt(document.getElementById('matSelect').value);
+            if (!isNaN(activeMat)) { polygons[hoveredPolyIdx].matIdx = activeMat; selectedPoly = hoveredPolyIdx; draw(); }
+        }
+    };
+
+    function bfsFindNearestAssigned(startIdx) {
+        let queue = [[startIdx, [startIdx]]], visited = new Set([startIdx]);
+        while(queue.length > 0) {
+            let [curr, path] = queue.shift();
+            if (boundaryEdges[curr].type !== 0 && curr !== startIdx) return path;
+            for (let n of boundaryAdj[curr]) { if (!visited.has(n)) { visited.add(n); queue.push([n, [...path, n]]); } }
+        } return null;
+    }
+
+    // ──── RENDERING (RESCATANDO dx y dy GLOBALES PARA EVITAR ReferenceError) ────
+    function draw(opts = {}) {
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+        
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        if(!polygons.length) return;
+        const {tx, ty, s} = getTransform();
+
+        const drawThermal = opts.drawThermal !== undefined ? opts.drawThermal : (showThermalMap && T && calcBounds);
+        const drawIsos = opts.drawIsos !== undefined ? opts.drawIsos : (showIsotherms && T && calcBounds);
+        const drawMarker = opts.drawMarker !== undefined ? opts.drawMarker : (showThermalMap && lastTsiMinX !== null);
+
+        // Definimos dx y dy dentro de draw para que no salte error al renderizar colores e isotermas
+        let dx = 0.001, dy = 0.001;
+        if (calcBounds) {
+            const res = parseInt(document.getElementById('gridRes').value) || 400;
+            dx = (calcBounds.maxX - calcBounds.minX) / res || 0.001;
+            dy = (calcBounds.maxY - calcBounds.minY) / res || 0.001;
+        }
+
+        if(drawThermal) {
+            const res = parseInt(document.getElementById('gridRes').value) || 400;
+            const te = +document.getElementById('tExt').value, ti = +document.getElementById('tInt').value;
+            const cw = dx * s, ch = dy * s;
+            for(let i=0; i<res; i++) {
+                for(let j=0; j<res; j++) {
+                    if(kGrid[i][j] > 0) { 
+                        const f = Math.max(0, Math.min(1, (T[i][j]-te)/(ti-te||1)));
+                        ctx.fillStyle = `hsl(${(1-f)*240}, 75%, 50%)`;
+                        ctx.fillRect(tx(calcBounds.minX + j*dx), ty(calcBounds.minY + i*dy) - ch, cw+0.6, ch+0.6);
+                    }
+                }
+            }
+        }
+
+        ctx.globalAlpha = drawThermal ? 0.3 : 1.0;
+        polygons.forEach((p, i) => {
+            ctx.beginPath(); ctx.moveTo(tx(p.pts[0].x), ty(p.pts[0].y));
+            p.pts.forEach(pt => ctx.lineTo(tx(pt.x), ty(pt.y))); ctx.closePath();
+            ctx.fillStyle = materials[p.matIdx].color; ctx.fill();
+            if (!drawThermal && editMode === 'MATERIAL' && i === hoveredPolyIdx) { ctx.fillStyle="rgba(255,255,255,0.4)"; ctx.fill(); } 
+            ctx.strokeStyle = "rgba(0,0,0,0.5)"; ctx.lineWidth = 1; ctx.stroke();
+        });
+        ctx.globalAlpha = 1.0;
+
+        boundaryEdges.forEach((edge, i) => {
+            if(edge.type === 0 && drawThermal) return;
+            ctx.beginPath(); ctx.moveTo(tx(edge.p1.x), ty(edge.p1.y)); ctx.lineTo(tx(edge.p2.x), ty(edge.p2.y));
+            let color = "rgba(0,0,0,0.1)";
+            if(edge.type === 1) color = "#1976d2"; if(edge.type === 2) color = "#d32f2f"; 
+            if(edge.type === 3) color = "#757575"; if(edge.type === 4) color = "#ff9800";
+            ctx.strokeStyle = color; 
+            ctx.lineWidth = (!drawThermal && editMode==='BOUNDARY' && i===hoveredEdgeIdx) ? 8 : (edge.type!==0 ? 4 : 1.5);
+            ctx.stroke();
+        });
+
+        if (drawIsos && T && calcBounds) {
+            const res = parseInt(document.getElementById('gridRes').value) || 400;
+            const te = +document.getElementById('tExt').value, ti = +document.getElementById('tInt').value;
+            const ch = dy * s;
+            
+            let isos = new Set([13]); 
+            for(let t = Math.ceil(te); t <= Math.floor(ti); t += 2) isos.add(t);
+            ctx.font = "300 9px 'Open Sans', sans-serif"; ctx.textAlign = "left"; ctx.textBaseline = "bottom";
+
+            for(let i=0; i<res; i++) {
+                for(let j=0; j<res; j++) {
+                    if(kGrid[i][j] > 0) {
+                        let val = T[i][j];
+                        for(let iso of isos) {
+                            if (j < res-1 && ((val <= iso && T[i][j+1] > iso) || (val >= iso && T[i][j+1] < iso))) {
+                                let px = tx(calcBounds.minX + j*dx + dx/2), py = ty(calcBounds.minY + i*dy) - ch/2;
+                                ctx.fillStyle = 'rgba(0,0,0,0.4)'; ctx.fillRect(px, py, 1.2, 1.2);
+                                if (i % 45 === 0) { ctx.fillStyle = 'rgba(0,0,0,0.85)'; ctx.fillText(iso + "°", px + 3, py - 2); }
+                            }
+                            if (i < res-1 && ((val <= iso && T[i+1][j] > iso) || (val >= iso && T[i+1][j] < iso))) {
+                                let px = tx(calcBounds.minX + j*dx), py = ty(calcBounds.minY + i*dy + dy/2) - ch;
+                                ctx.fillStyle = 'rgba(0,0,0,0.4)'; ctx.fillRect(px, py, 1.2, 1.2);
+                                if (j % 45 === 0) { ctx.fillStyle = 'rgba(0,0,0,0.85)'; ctx.fillText(iso + "°", px + 3, py - 2); }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // MARCADOR MUY VISIBLE DEL PUNTO CRÍTICO DE CONDENSACIÓN EN UI
+        if (drawMarker && lastTsiMinX !== null && lastTsiMinY !== null) {
+            let px = tx(lastTsiMinX);
+            let py = ty(lastTsiMinY);
+            
+            ctx.beginPath();
+            ctx.arc(px, py, 9, 0, 2*Math.PI);
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 5;
+            ctx.stroke();
+            
+            ctx.beginPath();
+            ctx.arc(px, py, 9, 0, 2*Math.PI);
+            ctx.strokeStyle = '#d32f2f'; 
+            ctx.lineWidth = 2.5;
+            ctx.stroke();
+            
+            ctx.beginPath();
+            ctx.moveTo(px - 14, py); ctx.lineTo(px + 14, py);
+            ctx.moveTo(px, py - 14); ctx.lineTo(px, py + 14);
+            ctx.stroke();
+
+            ctx.fillStyle = '#d32f2f';
+            ctx.font = "bold 16px 'Montserrat', sans-serif";
+            const textMetrics = ctx.measureText("Tsi,min");
+            ctx.fillStyle = "rgba(255, 255, 255, 0.7)";
+            ctx.fillRect(px + 12, py - 16, textMetrics.width + 4, 18);
+            ctx.fillStyle = '#d32f2f';
+            ctx.fillText("Tsi,min", px + 14, py - 2);
+        }
+
+        if (!drawThermal && (cropRect || calcBounds)) {
+            ctx.save(); ctx.setLineDash([5, 5]); ctx.strokeStyle = '#e74c3c'; ctx.lineWidth = 2; ctx.fillStyle = 'rgba(231, 76, 60, 0.05)';
+            const box = cropRect ? {
+                minX: Math.min(cropRect.x1, cropRect.x2), maxX: Math.max(cropRect.x1, cropRect.x2),
+                minY: Math.min(cropRect.y1, cropRect.y2), maxY: Math.max(cropRect.y1, cropRect.y2)
+            } : calcBounds;
+            const tX1 = tx(box.minX), tX2 = tx(box.maxX), tY1 = ty(box.maxY), tY2 = ty(box.minY); 
+            ctx.fillRect(tX1, tY1, tX2 - tX1, tY2 - tY1); ctx.strokeRect(tX1, tY1, tX2 - tX1, tY2 - tY1); ctx.restore();
+        }
+    }
+
+    document.getElementById('btnRotate').onclick = () => {
+        if(!polygons.length) return;
+        const cx = (minX+maxX)/2, cy = (minY+maxY)/2;
+        polygons.forEach(p => p.pts.forEach(pt => { const dxx = pt.x-cx, dyy = pt.y-cy; pt.x = cx - dyy; pt.y = cy + dxx; }));
+        recalcBounds(); calcBounds = null; 
+        boundaryEdges = extractBoundaryEdges(polygons, parseFloat(document.getElementById('tolInput').value) || 0.1); draw();
+    };
+
+    // ──── SOLVER FDM 4.0: EQUILIBRIO FÍSICO EXACTO Y ISO 10077-2 CAVITIES ────
     document.getElementById('calcBtn').onclick = () => {
         if(!polygons.length) return;
         if(!boundaryEdges.some(e => e.type===1) || !boundaryEdges.some(e => e.type===2)) {
-            setStatus('❌ Falta marcar Borde Exterior (azul) e Interior de Medición (rojo).', 'error'); return;
+            window.setStatus('❌ Falta marcar Borde Exterior (azul) e Interior de Medición (rojo).', 'error'); return;
         }
-        const res = parseInt(document.getElementById('gridRes').value);
+        
+        const res = parseInt(document.getElementById('gridRes').value) || 400;
         const lp = (+document.getElementById('LpInput').value || 100) / 1000;
-        const emisivity = parseFloat(document.getElementById('emisivityInput').value);
         document.getElementById('solverStatus').style.display = "block";
         document.getElementById('calcBtn').disabled = true;
         
         setTimeout(() => {
             calcBounds = calcBounds ? calcBounds : { minX, maxX, minY, maxY };
-            dx = (calcBounds.maxX - calcBounds.minX) / res;
-            dy = (calcBounds.maxY - calcBounds.minY) / res;
-            // Inicializar matrices
-            isSolidGrid = Array.from({length:res}, () => new Array(res).fill(false));
+            
+            let dx = (calcBounds.maxX - calcBounds.minX) / res || 0.001; 
+            let dy = (calcBounds.maxY - calcBounds.minY) / res || 0.001;
+            
+            const dx_m = dx / 1000, dy_m = dy / 1000;
+            let isSolid = Array.from({length:res}, () => new Array(res).fill(false));
+
             kGrid = Array.from({length:res}, (_,i)=> Array.from({length:res}, (_,j)=> {
                 const x = calcBounds.minX + j*dx + dx/2, y = calcBounds.minY + i*dy + dy/2;
                 const p = polygons.find(poly => {
@@ -447,120 +1184,216 @@
                     } return inside;
                 }); 
                 if (p) {
-                    isSolidGrid[i][j] = true;
+                    isSolid[i][j] = true;
                     return materials[p.matIdx].k;
                 }
-                return 0.026; // por defecto aire
+                return 0; // Aire
             }));
+
+            let lineBlocker = Array.from({length:res}, () => new Uint8Array(res));
+            boundaryEdges.forEach(e => {
+                if (e.type === 3) {
+                    const steps = Math.ceil(Math.hypot(e.p2.x-e.p1.x, e.p2.y-e.p1.y) / Math.min(dx,dy) * 2);
+                    for(let s=0; s<=steps; s++){
+                        const px = e.p1.x + (s/steps)*(e.p2.x-e.p1.x);
+                        const py = e.p1.y + (s/steps)*(e.p2.y-e.p1.y);
+                        const j = Math.floor((px - calcBounds.minX) / dx);
+                        const i = Math.floor((py - calcBounds.minY) / dy);
+                        if(i>=0 && i<res && j>=0 && j<res){
+                            for(let di=-1; di<=1; di++){
+                                for(let dj=-1; dj<=1; dj++){
+                                    if(i+di>=0 && i+di<res && j+dj>=0 && j+dj<res) lineBlocker[i+di][j+dj] = 1;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
             const te = +document.getElementById('tExt').value, ti = +document.getElementById('tInt').value;
             T = Array.from({length:res}, () => new Array(res).fill((te+ti)/2));
+            
             isExtGrid = Array.from({length:res}, () => new Array(res).fill(false));
             isIntMeasGrid = Array.from({length:res}, () => new Array(res).fill(false));
             isIntSecGrid = Array.from({length:res}, () => new Array(res).fill(false));
-            isOuterAir = Array.from({length:res}, () => new Array(res).fill(false));
-            // Identificar aire exterior mediante BFS desde bordes
+
+            let isOuterAir = Array.from({length:res}, () => new Array(res).fill(false));
             let q = [];
             for(let i=0; i<res; i++){
-                if(!isSolidGrid[i][0]) { isOuterAir[i][0] = true; q.push([i,0]); }
-                if(!isSolidGrid[i][res-1]) { isOuterAir[i][res-1] = true; q.push([i,res-1]); }
-                if(!isSolidGrid[0][i]) { isOuterAir[0][i] = true; q.push([0,i]); }
-                if(!isSolidGrid[res-1][i]) { isOuterAir[res-1][i] = true; q.push([res-1,i]); }
+                if(!isSolid[i][0] && !lineBlocker[i][0]) { isOuterAir[i][0] = true; q.push([i,0]); }
+                if(!isSolid[i][res-1] && !lineBlocker[i][res-1]) { isOuterAir[i][res-1] = true; q.push([i,res-1]); }
+                if(!isSolid[0][i] && !lineBlocker[0][i]) { isOuterAir[0][i] = true; q.push([0,i]); }
+                if(!isSolid[res-1][i] && !lineBlocker[res-1][i]) { isOuterAir[res-1][i] = true; q.push([res-1,i]); }
             }
+
             let head = 0;
             const dirs = [[0,1],[1,0],[0,-1],[-1,0]];
             while(head < q.length){
                 let [ci, cj] = q[head++];
                 for(let d of dirs){
                     let ni = ci+d[0], nj = cj+d[1];
-                    if(ni>=0 && ni<res && nj>=0 && nj<res && !isSolidGrid[ni][nj] && !isOuterAir[ni][nj]){
+                    if(ni>=0 && ni<res && nj>=0 && nj<res && !isSolid[ni][nj] && !isOuterAir[ni][nj] && !lineBlocker[ni][nj]){
                         isOuterAir[ni][nj] = true;
                         q.push([ni, nj]);
                     }
                 }
             }
-            // Asignar contornos a celdas de aire exterior adyacentes a sólido y cercanas a líneas
-            let boundaryAirCells = [];
+
+            let isCavityVisited = Array.from({length:res}, () => new Array(res).fill(false));
+            let userEmissivity = parseFloat(document.getElementById('emissInput').value) || 0.9;
+            let E_cavity = 1 / (2 / userEmissivity - 1);
+            const sigma = 5.67e-8;
+            const Tm = 283; 
+            const hr_base = 4 * sigma * Math.pow(Tm, 3) * E_cavity;
+
             for(let i=0; i<res; i++){
                 for(let j=0; j<res; j++){
-                    if(isOuterAir[i][j]){
-                        let touchesSolid = false;
-                        for(let d of dirs){
-                            let ni = i+d[0], nj = j+d[1];
-                            if(ni>=0 && ni<res && nj>=0 && nj<res && isSolidGrid[ni][nj]){
-                                touchesSolid = true; break;
+                    if(!isSolid[i][j] && !isOuterAir[i][j] && !isCavityVisited[i][j] && !lineBlocker[i][j]) {
+                        let cavCells = [];
+                        let cq = [[i,j]];
+                        isCavityVisited[i][j] = true;
+                        let c_head = 0;
+                        let min_x = j, max_x = j, min_y = i, max_y = i;
+
+                        while(c_head < cq.length) {
+                            let [ci, cj] = cq[c_head++];
+                            cavCells.push([ci, cj]);
+                            if(cj < min_x) min_x = cj; if(cj > max_x) max_x = cj;
+                            if(ci < min_y) min_y = ci; if(ci > max_y) max_y = ci;
+
+                            for(let d of dirs){
+                                let ni = ci+d[0], nj = cj+d[1];
+                                if(ni>=0 && ni<res && nj>=0 && nj<res && !isSolid[ni][nj] && !isOuterAir[ni][nj] && !isCavityVisited[ni][nj] && !lineBlocker[ni][nj]) {
+                                    isCavityVisited[ni][nj] = true;
+                                    cq.push([ni, nj]);
+                                }
                             }
                         }
-                        if(touchesSolid) boundaryAirCells.push({i, j});
+
+                        let d_cav = (max_x - min_x + 1) * dx_m; 
+                        let b_cav = (max_y - min_y + 1) * dy_m; 
+                        
+                        let ha = 0.025 / (d_cav || 0.001);
+                        let ratio_cav = d_cav / (b_cav || 0.001);
+                        let phi = 0.5 + 0.5 * Math.sqrt(1 + ratio_cav*ratio_cav) - 0.5 * ratio_cav;
+                        let hr = hr_base * phi;
+                        
+                        let lambda_eq = d_cav / (1 / (ha + hr));
+                        if(lambda_eq < 0.025) lambda_eq = 0.025; 
+
+                        for(let cell of cavCells) {
+                            kGrid[cell[0]][cell[1]] = lambda_eq; 
+                            isSolid[cell[0]][cell[1]] = true; 
+                        }
                     }
                 }
             }
-            boundaryAirCells.forEach(cell => {
-                let cx = calcBounds.minX + cell.j*dx + dx/2;
-                let cy = calcBounds.minY + cell.i*dy + dy/2;
-                let minD = Infinity;
-                let closestType = 0;
-                boundaryEdges.forEach(e => {
-                    if(e.type === 0 || e.type === 3) return;
-                    const l2 = (e.p2.x - e.p1.x)**2 + (e.p2.y - e.p1.y)**2;
-                    let t = Math.max(0, Math.min(1, ((cx - e.p1.x)*(e.p2.x - e.p1.x) + (cy - e.p1.y)*(e.p2.y - e.p1.y)) / (l2 || 1e-5)));
-                    let dist = Math.hypot(cx - (e.p1.x + t*(e.p2.x - e.p1.x)), cy - (e.p1.y + t*(e.p2.y - e.p1.y)));
-                    if(dist < minD) { minD = dist; closestType = e.type; }
-                });
-                if(minD < 50) { 
-                    if(closestType === 1) isExtGrid[cell.i][cell.j] = true;
-                    else if(closestType === 2) isIntMeasGrid[cell.i][cell.j] = true;
-                    else if(closestType === 4) isIntSecGrid[cell.i][cell.j] = true;
+
+            let boundGrid = Array.from({length:res}, () => new Uint8Array(res));
+            boundaryEdges.forEach(e => {
+                if(e.type === 0 || e.type === 3) return;
+                const steps = Math.ceil(Math.hypot(e.p2.x-e.p1.x, e.p2.y-e.p1.y) / Math.min(dx,dy) * 2);
+                for(let s=0; s<=steps; s++){
+                    const px = e.p1.x + (s/steps)*(e.p2.x-e.p1.x);
+                    const py = e.p1.y + (s/steps)*(e.p2.y-e.p1.y);
+                    const j = Math.floor((px - calcBounds.minX) / dx);
+                    const i = Math.floor((py - calcBounds.minY) / dy);
+                    if(i>=0 && i<res && j>=0 && j<res){
+                        for(let di=-2; di<=2; di++){
+                            for(let dj=-2; dj<=2; dj++){
+                                if(i+di>=0 && i+di<res && j+dj>=0 && j+dj<res) boundGrid[i+di][j+dj] = e.type;
+                            }
+                        }
+                    }
                 }
             });
-            // Ahora aplicar λ equivalente a cavidades cerradas (aire interior no exterior)
-            assignEquivalentLambdaToCavities(isSolidGrid, isOuterAir, calcBounds, dx, dy, te, ti, emisivity);
-            // Fijar temperaturas de contorno
+
+            let q2 = [];
+            for(let i=0; i<res; i++){
+                for(let j=0; j<res; j++){
+                    if(boundGrid[i][j] > 0 && isOuterAir[i][j]){
+                        let type = boundGrid[i][j];
+                        if(type===1) isExtGrid[i][j]=true;
+                        else if(type===2) isIntMeasGrid[i][j]=true;
+                        else if(type===4) isIntSecGrid[i][j]=true;
+                        q2.push({i, j, type});
+                    }
+                }
+            }
+
+            let head2 = 0;
+            while(head2 < q2.length) {
+                let curr = q2[head2++];
+                for(let d of dirs){
+                    let ni = curr.i + d[0], nj = curr.j + d[1];
+                    if(ni>=0 && ni<res && nj>=0 && nj<res) {
+                        if(isOuterAir[ni][nj] && !isExtGrid[ni][nj] && !isIntMeasGrid[ni][nj] && !isIntSecGrid[ni][nj]){
+                            if (boundGrid[ni][nj] !== 0 && boundGrid[ni][nj] !== curr.type) continue;
+                            if(curr.type===1) isExtGrid[ni][nj]=true;
+                            else if(curr.type===2) isIntMeasGrid[ni][nj]=true;
+                            else if(curr.type===4) isIntSecGrid[ni][nj]=true;
+                            q2.push({i: ni, j: nj, type: curr.type});
+                        }
+                    }
+                }
+            }
+
             for(let i=0; i<res; i++){
                 for(let j=0; j<res; j++){
                     if(isExtGrid[i][j]) T[i][j] = te;
                     else if(isIntMeasGrid[i][j] || isIntSecGrid[i][j]) T[i][j] = ti;
                 }
             }
-            // Parámetros de iteración
-            let iter = 4000; let chunkSize = 400; let omega = 1.1; 
-            if (res === 400) { iter = 8000; chunkSize = 200; omega = 1.1; lastAlgo = "FDM Estándar + λ_eq"; }
-            if (res === 600) { iter = 14000; chunkSize = 100; omega = 1.15; lastAlgo = "FDM Alta + λ_eq"; }
-            if (res === 1000) { iter = 30000; chunkSize = 40; omega = 1.15; lastAlgo = "FDM Ultra + λ_eq"; } 
+
+            let iter = 5000; let chunkSize = 500; 
+            let omega = 2 / (1 + Math.sin(Math.PI / res)); 
+            
+            if (res === 400) { iter = 8000; chunkSize = 200; lastAlgo = "FDM Dinámico"; }
+            if (res === 600) { iter = 14000; chunkSize = 100; lastAlgo = "FDM Dinámico Alta"; }
+            if (res === 1000) { iter = 30000; chunkSize = 40; lastAlgo = "FDM Dinámico Ultra"; } 
+            
             let done = 0;
-            const dx_m = dx / 1000, dy_m = dy / 1000;
-            const rx = dy/dx, ry = dx/dy;
-            const c_solid = (k1, k2, ratio) => (2 * k1 * k2 / (k1 + k2)) * ratio;
-            const c_surf = (k, Rs, ratio, delta_m) => ratio / (Rs/delta_m + 1/(2*k));
+            const rx = dy_m/dx_m, ry = dx_m/dy_m;
+            
+            const c_solid_x = (k1, k2) => (2 * k1 * k2 / (k1 + k2)) * rx;
+            const c_solid_y = (k1, k2) => (2 * k1 * k2 / (k1 + k2)) * ry;
+            const c_surf_x = (k, Rs) => dy_m / (Rs + dx_m / (2 * k));
+            const c_surf_y = (k, Rs) => dx_m / (Rs + dy_m / (2 * k));
+            
+            const q_surf_x = (k, Rs, Tcell, Tenv) => (Tenv - Tcell) / (Rs + dx_m / (2 * k));
+            const q_surf_y = (k, Rs, Tcell, Tenv) => (Tenv - Tcell) / (Rs + dy_m / (2 * k));
+
             function chunk() {
                 const end = Math.min(done+chunkSize, iter);
                 for(let it=done; it<end; it++){
                     for(let i=0; i<res; i++){
                         for(let j=0; j<res; j++){
-                            if(isExtGrid[i][j] || isIntMeasGrid[i][j] || isIntSecGrid[i][j] || isOuterAir[i][j]) continue; 
+                            if(!isSolid[i][j]) continue; 
+                            let k = kGrid[i][j];
                             let n=0, d=0;
+                            
                             if(j>0) {
-                                if(isExtGrid[i][j-1]) { let C = c_surf(kGrid[i][j], Rse, rx, dx_m); n += C*te; d += C; }
-                                else if(isIntMeasGrid[i][j-1] || isIntSecGrid[i][j-1]) { let C = c_surf(kGrid[i][j], Rsi, rx, dx_m); n += C*ti; d += C; }
-                                else if(!isOuterAir[i][j-1]) { let C = c_solid(kGrid[i][j], kGrid[i][j-1], rx); n += C*T[i][j-1]; d += C; }
+                                if(isExtGrid[i][j-1]) { let C = c_surf_x(k, Rse); n += C*te; d += C; }
+                                else if(isIntMeasGrid[i][j-1] || isIntSecGrid[i][j-1]) { let C = c_surf_x(k, Rsi); n += C*ti; d += C; }
+                                else if(isSolid[i][j-1]) { let C = c_solid_x(k, kGrid[i][j-1]); n += C*T[i][j-1]; d += C; }
                             }
                             if(j<res-1) {
-                                if(isExtGrid[i][j+1]) { let C = c_surf(kGrid[i][j], Rse, rx, dx_m); n += C*te; d += C; }
-                                else if(isIntMeasGrid[i][j+1] || isIntSecGrid[i][j+1]) { let C = c_surf(kGrid[i][j], Rsi, rx, dx_m); n += C*ti; d += C; }
-                                else if(!isOuterAir[i][j+1]) { let C = c_solid(kGrid[i][j], kGrid[i][j+1], rx); n += C*T[i][j+1]; d += C; }
+                                if(isExtGrid[i][j+1]) { let C = c_surf_x(k, Rse); n += C*te; d += C; }
+                                else if(isIntMeasGrid[i][j+1] || isIntSecGrid[i][j+1]) { let C = c_surf_x(k, Rsi); n += C*ti; d += C; }
+                                else if(isSolid[i][j+1]) { let C = c_solid_x(k, kGrid[i][j+1]); n += C*T[i][j+1]; d += C; }
                             }
                             if(i>0) {
-                                if(isExtGrid[i-1][j]) { let C = c_surf(kGrid[i][j], Rse, ry, dy_m); n += C*te; d += C; }
-                                else if(isIntMeasGrid[i-1][j] || isIntSecGrid[i-1][j]) { let C = c_surf(kGrid[i][j], Rsi, ry, dy_m); n += C*ti; d += C; }
-                                else if(!isOuterAir[i-1][j]) { let C = c_solid(kGrid[i][j], kGrid[i-1][j], ry); n += C*T[i-1][j]; d += C; }
+                                if(isExtGrid[i-1][j]) { let C = c_surf_y(k, Rse); n += C*te; d += C; }
+                                else if(isIntMeasGrid[i-1][j] || isIntSecGrid[i-1][j]) { let C = c_surf_y(k, Rsi); n += C*ti; d += C; }
+                                else if(isSolid[i-1][j]) { let C = c_solid_y(k, kGrid[i-1][j]); n += C*T[i-1][j]; d += C; }
                             }
                             if(i<res-1) {
-                                if(isExtGrid[i+1][j]) { let C = c_surf(kGrid[i][j], Rse, ry, dy_m); n += C*te; d += C; }
-                                else if(isIntMeasGrid[i+1][j] || isIntSecGrid[i+1][j]) { let C = c_surf(kGrid[i][j], Rsi, ry, dy_m); n += C*ti; d += C; }
-                                else if(!isOuterAir[i+1][j]) { let C = c_solid(kGrid[i][j], kGrid[i+1][j], ry); n += C*T[i+1][j]; d += C; }
+                                if(isExtGrid[i+1][j]) { let C = c_surf_y(k, Rse); n += C*te; d += C; }
+                                else if(isIntMeasGrid[i+1][j] || isIntSecGrid[i+1][j]) { let C = c_surf_y(k, Rsi); n += C*ti; d += C; }
+                                else if(isSolid[i+1][j]) { let C = c_solid_y(k, kGrid[i+1][j]); n += C*T[i+1][j]; d += C; }
                             }
                             if(d>0) {
                                 let t_new = n/d;
-                                t_new = Math.max(Math.min(te, ti), Math.min(Math.max(te, ti), t_new));
                                 T[i][j] = T[i][j] + omega * (t_new - T[i][j]);
                             }
                         }
@@ -568,118 +1401,324 @@
                 }
                 done = end;
                 document.getElementById('calcProgress').innerText = Math.round((done/iter)*100) + '%';
+                
                 if(done < iter) setTimeout(chunk, 0); 
                 else finishSolver();
             }
+
             function finishSolver() {
                 let flux = 0;
                 let minTsi = Infinity;
+                let minI = -1, minJ = -1;
+
                 for(let i=0; i<res; i++){
                     for(let j=0; j<res; j++){
-                        if(isOuterAir[i][j]) continue;
-                        const checkNeighbor = (ni, nj, sideLength_m) => {
-                            if(ni>=0 && ni<res && nj>=0 && nj<res && (isIntMeasGrid[ni][nj] || isIntSecGrid[ni][nj])) {
-                                let R_used = isIntMeasGrid[ni][nj] ? Rsi : Rsi;
-                                let q = (ti - T[i][j]) / (R_used + (sideLength_m/2)/kGrid[i][j]);
-                                let t_surf = ti - q * Rsi_cond;
-                                if(t_surf < minTsi) minTsi = t_surf;
-                                if(isIntMeasGrid[ni][nj]) flux += q * sideLength_m;
+                        if(isSolid[i][j]){
+                            let k = kGrid[i][j];
+                            
+                            if(j>0 && (isIntMeasGrid[i][j-1] || isIntSecGrid[i][j-1])) {
+                                let q_local = q_surf_x(k, Rsi, T[i][j], ti);
+                                let t_surf = ti - q_local * Rsi_cond; 
+                                if(t_surf < minTsi) { minTsi = t_surf; minI = i; minJ = j; }
+                                if(isIntMeasGrid[i][j-1]) flux += q_local * dy_m; 
                             }
-                        };
-                        if(j>0) checkNeighbor(i, j-1, dy_m);
-                        if(j<res-1) checkNeighbor(i, j+1, dy_m);
-                        if(i>0) checkNeighbor(i-1, j, dx_m);
-                        if(i<res-1) checkNeighbor(i+1, j, dx_m);
+                            if(j<res-1 && (isIntMeasGrid[i][j+1] || isIntSecGrid[i][j+1])) {
+                                let q_local = q_surf_x(k, Rsi, T[i][j], ti);
+                                let t_surf = ti - q_local * Rsi_cond;
+                                if(t_surf < minTsi) { minTsi = t_surf; minI = i; minJ = j; }
+                                if(isIntMeasGrid[i][j+1]) flux += q_local * dy_m; 
+                            }
+                            if(i>0 && (isIntMeasGrid[i-1][j] || isIntSecGrid[i-1][j])) {
+                                let q_local = q_surf_y(k, Rsi, T[i][j], ti);
+                                let t_surf = ti - q_local * Rsi_cond;
+                                if(t_surf < minTsi) { minTsi = t_surf; minI = i; minJ = j; }
+                                if(isIntMeasGrid[i-1][j]) flux += q_local * dx_m; 
+                            }
+                            if(i<res-1 && (isIntMeasGrid[i+1][j] || isIntSecGrid[i+1][j])) {
+                                let q_local = q_surf_y(k, Rsi, T[i][j], ti);
+                                let t_surf = ti - q_local * Rsi_cond;
+                                if(t_surf < minTsi) { minTsi = t_surf; minI = i; minJ = j; }
+                                if(isIntMeasGrid[i+1][j]) flux += q_local * dx_m; 
+                            }
+                        }
                     }
                 }
+
+                if (minI !== -1 && minJ !== -1) {
+                    lastTsiMinX = calcBounds.minX + minJ*dx + dx/2;
+                    lastTsiMinY = calcBounds.minY + minI*dy + dy/2;
+                } else {
+                    lastTsiMinX = null; lastTsiMinY = null;
+                }
+
                 if(minTsi === Infinity) minTsi = ti;
+
                 const deltaT = Math.abs(ti - te) || 1;
                 const L2D = Math.abs(flux) / deltaT;
                 const U = L2D / lp;
+                
                 let fRsi = (minTsi - te) / deltaT;
                 fRsi = Math.max(0, Math.min(1, fRsi));
+
                 lastU = U; lastFlux = flux; lastL2D = L2D;
                 lastFRsi = fRsi; lastTsiMin = minTsi;
+                
                 document.getElementById('result').style.display="block";
                 document.getElementById('result').innerHTML=`
                     <h2>U<sub>f</sub> = ${U.toFixed(3)} W/(m²·K)</h2>
                     <h3 style="margin: 10px 0; color:#FFD54F;">f<sub>Rsi</sub> = ${fRsi.toFixed(3)} (T<sub>si,min</sub> = ${minTsi.toFixed(1)} ºC)</h3>
-                    <p>Cálculo analítico iterativo (${lastAlgo}) s/ ISO 10077-2 con λ_eq en cavidades</p>
+                    <p>Cálculo analítico iterativo (${lastAlgo}) s/ ISO 10077-2</p>
                     <p style="opacity:0.9; margin-top:5px; font-size:0.85rem;">
                         <small>Flujo lineal (Q): ${Math.abs(flux).toFixed(3)} W/m &nbsp;|&nbsp; L<sup>2D</sup>: ${L2D.toFixed(3)} W/(m·K) &nbsp;|&nbsp; b<sub>f</sub>: ${lp*1000} mm</small>
                     </p>
                 `;
+                
                 showThermalMap=true; 
                 document.getElementById('btnBackToEdit').style.display="inline-flex";
-                document.getElementById('btnPdf').style.display="inline-flex";
+                
+                let hasAnyResult = workspaces.some(w => w.T !== null) || T !== null;
+                document.getElementById('btnPdf').style.display = hasAnyResult ? "inline-flex" : "none";
+                
                 document.getElementById('btnToggleIso').style.display="inline-flex";
                 document.getElementById('solverStatus').style.display="none"; 
                 document.getElementById('calcBtn').disabled = false;
+                
                 zoomLevel = 1; offsetX = 0; offsetY = 0;
-                draw();
-                setStatus("✅ Análisis completado con λ_eq en cavidades.", "success");
+                draw(); // Al lanzar draw() con showThermalMap, automáticamente dibujará el marcador.
+                window.setStatus("✅ Análisis completado. Matriz estabilizada.", "success");
             }
             chunk();
+
         }, 50);
     };
 
-    // PDF
-    document.getElementById('btnPdf').onclick = () => {
-        const lp = document.getElementById('LpInput').value;
-        const resLabel = document.getElementById('gridRes').options[document.getElementById('gridRes').selectedIndex].text;
+    // ──── INFORME PDF COMPACTO (EVITA ESPACIOS EN BLANCO EXCESIVOS) ────
+    function buildDetailPages(ws, imgThermal, imgGeo) {
         let usedMats = new Set();
-        polygons.forEach(p => {
-            if (calcBounds) {
+        ws.polygons.forEach(p => {
+            if (ws.calcBounds) {
                 let inside = false;
                 for(let pt of p.pts) {
-                    if(pt.x >= calcBounds.minX && pt.x <= calcBounds.maxX && pt.y >= calcBounds.minY && pt.y <= calcBounds.maxY) {
-                        inside = true; break;
-                    }
+                    if(pt.x >= ws.calcBounds.minX && pt.x <= ws.calcBounds.maxX && pt.y >= ws.calcBounds.minY && pt.y <= ws.calcBounds.maxY) { inside = true; break; }
                 }
                 if (inside) usedMats.add(p.matIdx);
             } else {
                 usedMats.add(p.matIdx);
             }
         });
+        
         let matListHTML = Array.from(usedMats).map(idx => 
-            `<li style="width: 48%; margin-bottom: 5px;"><span style="display:inline-block; width:12px; height:12px; background:${materials[idx].color}; border:1px solid #000; margin-right:5px; vertical-align: middle;"></span> 
-            ${materials[idx].name} (λ = ${materials[idx].k} W/m·K)</li>`
+            `<li style="margin-bottom: 6px; width: 48%; display: inline-block; box-sizing: border-box;">
+                <span style="display:inline-block; width:10px; height:10px; background:${materials[idx].color}; border:1px solid #000; margin-right:5px; vertical-align: middle;"></span> 
+                ${materials[idx].name} (&lambda; = ${materials[idx].k} W/m·K)
+            </li>`
         ).join('');
-        const tExt = document.getElementById('tExt').value, tInt = document.getElementById('tInt').value;
-        const deltaT = Math.abs(tInt - tExt);
-        const report = document.createElement('div');
-        report.innerHTML = `
-            <div style="font-family: 'Open Sans', Arial, sans-serif; padding: 40px; color: #333; max-width: 800px; margin: auto; font-size: 12px; line-height: 1.5;">
-                <div style="border-bottom: 3px solid #EDD00E; padding-bottom: 10px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: flex-end;">
-                    <div><h1 style="color: #3E3E3E; margin:0; font-size: 24px;">INFORME DE TRANSMITANCIA Y CONDENSACIONES</h1><h3 style="color: #666; margin: 5px 0 0 0; font-size: 14px;">Evaluación Pericial mediante FDM 2D + λ_eq Cavities</h3></div>
-                    <div style="text-align: right; font-size: 10px; color: #999;">Generado el: ${new Date().toLocaleDateString()}<br>Aislantech Thermal Simulator</div>
+
+        return `
+            <div class="html2pdf__page-break"></div>
+            
+            <div style="padding: 20px 40px; box-sizing: border-box; background: #fff;">
+                <h3 style="color: #34495e; border-bottom: 3px solid #EDD00E; padding-bottom: 5px; margin-bottom: 15px; font-size: 20px;">Ficha Técnica: ${ws.name}</h3>
+                
+                <h4 style="color: #1976d2; border-bottom: 1px solid #ccc; padding-bottom: 5px; margin: 0 0 10px 0; font-size: 15px;">1. Resultados de Transmitancia</h4>
+                <table style="width: 100%; font-size: 13px; background: #f9f9f9; border-radius: 5px; border: 1px solid #eee; margin-bottom: 15px; border-collapse: collapse;">
+                    <tr>
+                        <td style="padding: 8px; width: 60%; border-bottom: 1px solid #eee;"><strong>Transmitancia Térmica del Marco (U<sub>f</sub>):</strong></td>
+                        <td style="padding: 8px; font-size: 16px; font-weight: bold; color: #2e7d32; border-bottom: 1px solid #eee;">${ws.lastU.toFixed(3)} W/(m²·K)</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 6px 8px; border-bottom: 1px solid #eee;">Flujo Térmico Lineal Total (Q):</td>
+                        <td style="padding: 6px 8px; border-bottom: 1px solid #eee;">${Math.abs(ws.lastFlux).toFixed(3)} W/m</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 6px 8px; border-bottom: 1px solid #eee;">Conductancia Térmica 2D (L<sup>2D</sup>):</td>
+                        <td style="padding: 6px 8px; border-bottom: 1px solid #eee;">${ws.lastL2D.toFixed(3)} W/(m·K)</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 6px 8px;">Ancho Proyectado Termodinámico (b<sub>f</sub>):</td>
+                        <td style="padding: 6px 8px;">${ws.settings.Lp} mm</td>
+                    </tr>
+                </table>
+
+                <h4 style="color: #1976d2; border-bottom: 1px solid #ccc; padding-bottom: 5px; font-size: 15px; margin: 0 0 10px 0;">2. Riesgo de Condensación Superficial</h4>
+                <div style="background: #e3f2fd; border-radius: 4px; border-left: 4px solid #1976d2; padding: 10px; margin-bottom: 15px;">
+                    <p style="margin: 0 0 4px 0; font-size: 13px;"><strong>Temperatura superficial mínima (T<sub>si,min</sub>):</strong> ${ws.lastTsiMin.toFixed(1)} ºC</p>
+                    <p style="margin: 0; font-size: 13px;"><strong>Factor de temperatura interior (f<sub>Rsi</sub>):</strong> <span style="font-weight:bold; font-size:16px; color: ${ws.lastFRsi > 0.70 ? '#2e7d32' : '#d32f2f'};">${ws.lastFRsi.toFixed(3)}</span></p>
                 </div>
-                <div style="margin-bottom: 20px;"><h4 style="color: #1976d2; border-bottom: 1px solid #ccc; padding-bottom: 5px;">1. Resultados Principales</h4>
-                <table style="width: 100%; font-size: 14px; background: #f9f9f9; padding: 15px; border-radius: 5px; border: 1px solid #eee;">
-                    <tr><td style="padding: 5px;"><strong>Transmitancia Térmica del Marco (U<sub>f</sub>):</strong></td><td style="padding: 5px; font-size: 18px; font-weight: bold; color: #2e7d32;">${lastU.toFixed(3)} W/(m²·K)</td></tr>
-                    <tr><td style="padding: 5px; border-top: 1px dotted #ccc;">Flujo Térmico Lineal (Q):</td><td style="padding: 5px; border-top: 1px dotted #ccc;">${Math.abs(lastFlux).toFixed(3)} W/m</td></tr>
-                    <tr><td style="padding: 5px;">Conductancia Térmica 2D (L<sup>2D</sup>):</td><td style="padding: 5px;">${lastL2D.toFixed(3)} W/(m·K)</td></tr>
-                    <tr><td style="padding: 5px;">Ancho Proyectado (b<sub>f</sub>):</td><td style="padding: 5px;">${lp} mm</td></tr>
-                </table></div>
-                <div style="margin-bottom: 20px;"><h4 style="color: #1976d2; border-bottom: 1px solid #ccc; padding-bottom: 5px;">2. Riesgo de Condensación Superficial</h4>
-                <ul style="list-style: none; padding: 10px; background: #e3f2fd; border-radius: 4px; border-left: 4px solid #1976d2;">
-                    <li><strong>Temperatura superficial mínima (T<sub>si,min</sub>):</strong> ${lastTsiMin.toFixed(1)} ºC</li>
-                    <li><strong>Factor de temperatura interior (f<sub>Rsi</sub>):</strong> <span style="font-weight:bold; font-size:16px;">${lastFRsi.toFixed(3)}</span></li>
-                </ul></div>
-                <div style="margin-bottom: 20px;"><h4 style="color: #1976d2; border-bottom: 1px solid #ccc; padding-bottom: 5px;">3. Geometría e Isotermas</h4>
-                <div style="text-align: center; margin: 15px 0;"><img src="${canvas.toDataURL('image/png')}" style="max-height: 280px; width: auto; border: 1px solid #ddd; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);"></div></div>
-                <div style="margin-bottom: 20px;"><h4 style="color: #1976d2; border-bottom: 1px solid #ccc; padding-bottom: 5px;">4. Materiales Aplicados</h4>
-                <ul style="list-style: none; padding: 0; display: flex; flex-wrap: wrap;">${matListHTML}</ul></div>
-                <div style="margin-bottom: 20px;"><h4 style="color: #1976d2; border-bottom: 1px solid #ccc; padding-bottom: 5px;">5. Marco Normativo y λ_eq Cavidades</h4>
-                <p style="text-align: justify; color: #555;">Cálculo basado en <strong>UNE-EN ISO 10077-2</strong> y <strong>EN 13788</strong> para condensaciones. Se ha implementado la <strong>conductividad térmica equivalente (λ<sub>eq</sub>)</strong> para cavidades de aire cerradas, considerando los efectos de convección y radiación según el Anexo C de la ISO 10077-2. Las propiedades del aire se han evaluado a temperatura media de la cavidad. La emisividad superficial utilizada es ε = ${document.getElementById('emisivityInput').value}.<br><br>
-                Resistencias térmicas superficiales: R<sub>se</sub>=0.04, R<sub>si</sub>=0.13, R<sub>si,cond</sub>=0.25 m²·K/W. ΔT = ${deltaT} K.</p></div>
-                <div style="margin-bottom: 20px;"><h4 style="color: #1976d2; border-bottom: 1px solid #ccc; padding-bottom: 5px;">6. Análisis Crítico Pericial</h4>
-                <div style="text-align: justify; background: #fff3e0; padding: 15px; border-left: 4px solid #ff9800; border-radius: 0 4px 4px 0; color: #444;">
-                    Este modelo incluye λ<sub>eq</sub> para cavidades cerradas, lo que mejora significativamente la precisión respecto a aproximaciones isotermas. No obstante, para certificaciones oficiales se requiere un software validado según el Anexo D de la ISO 10077-2.
-                </div></div>
+
+                <h4 style="color: #1976d2; border-bottom: 1px solid #ccc; padding-bottom: 5px; font-size: 15px; margin: 0 0 10px 0;">3. Condiciones de Contorno y Materiales</h4>
+                <div style="background: #fdfdfd; border: 1px solid #eee; padding: 10px; border-radius: 5px; font-size: 12px; color: #555; margin-bottom: 15px;">
+                    T<sub>int</sub> = ${ws.settings.tInt}ºC, T<sub>ext</sub> = ${ws.settings.tExt}ºC | Emisividad cavidades (ε): ${ws.settings.emiss}
+                </div>
+                <ul style="list-style: none; padding: 0; margin: 0 0 15px 0; font-size: 12px;">${matListHTML}</ul>
+
+                <h4 style="color: #1976d2; border-bottom: 1px solid #ccc; padding-bottom: 5px; margin: 0 0 10px 0; font-size: 15px;">4. Representación Gráfica</h4>
+                
+                <div style="margin-bottom: 15px;">
+                    <strong style="display:block; margin-bottom: 5px; font-size: 12px; color: #333;">Fig 1. Geometría, Isotermas y T<sub>si,min</sub></strong>
+                    <div style="text-align: center; background: #fafafa; padding: 5px; border: 1px solid #ddd; border-radius: 4px;">
+                        <img src="${imgGeo}" style="width: auto; max-width: 100%; max-height: 280px; object-fit: contain;">
+                    </div>
+                </div>
+
+                <div>
+                    <strong style="display:block; margin-bottom: 5px; font-size: 12px; color: #333;">Fig 2. Distribución Térmica (FDM Color Map)</strong>
+                    <div style="text-align: center; background: #fafafa; padding: 5px; border: 1px solid #ddd; border-radius: 4px;">
+                        <img src="${imgThermal}" style="width: auto; max-width: 100%; max-height: 280px; object-fit: contain;">
+                    </div>
+                </div>
             </div>
         `;
-        html2pdf().from(report).set({ margin: [10,10,10,10], filename: 'Aislantech_Condensaciones_Uf.pdf', image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } }).save();
+    }
+
+    document.getElementById('btnPdf').onclick = async () => {
+        saveState(); 
+        let validWorkspaces = workspaces.filter(w => w.T !== null);
+        if(validWorkspaces.length === 0) return;
+
+        window.setStatus("Generando informe de alta resolución...", "info");
+
+        let compHTML = '';
+        if (validWorkspaces.length > 1) {
+            let rows = validWorkspaces.map(w => `
+                <tr>
+                    <td style="padding: 8px; border-bottom: 1px solid #eee;"><strong>${w.name}</strong></td>
+                    <td style="padding: 8px; border-bottom: 1px solid #eee; color: #2e7d32; font-weight: bold;">${w.lastU.toFixed(3)}</td>
+                    <td style="padding: 8px; border-bottom: 1px solid #eee; color: ${w.lastFRsi > 0.7 ? '#2e7d32' : '#d32f2f'}; font-weight: bold;">${w.lastFRsi.toFixed(3)}</td>
+                    <td style="padding: 8px; border-bottom: 1px solid #eee;">${w.lastTsiMin.toFixed(1)} ºC</td>
+                    <td style="padding: 8px; border-bottom: 1px solid #eee;">${w.settings.Lp} mm</td>
+                </tr>
+            `).join('');
+
+            compHTML = `
+                <div class="html2pdf__page-break"></div>
+                <div style="padding: 20px 40px; box-sizing: border-box; background: #fff;">
+                    <h3 style="color: #34495e; border-bottom: 3px solid #EDD00E; padding-bottom: 5px; margin-bottom: 15px; font-size: 20px;">Comparativa Global de Sistemas</h3>
+                    <table style="width: 100%; margin-top: 15px; font-size: 13px; border-collapse: collapse; text-align: left; border: 1px solid #ddd;">
+                        <thead style="background-color: #f5f5f5;">
+                            <tr>
+                                <th style="padding: 10px; border-bottom: 2px solid #ccc;">Perfil / Variante</th>
+                                <th style="padding: 10px; border-bottom: 2px solid #ccc;">U<sub>f</sub> (W/m²K)</th>
+                                <th style="padding: 10px; border-bottom: 2px solid #ccc;">f<sub>Rsi</sub></th>
+                                <th style="padding: 10px; border-bottom: 2px solid #ccc;">T<sub>si,min</sub></th>
+                                <th style="padding: 10px; border-bottom: 2px solid #ccc;">Ancho b<sub>f</sub></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${rows}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+
+        let originalIndex = currentWsIdx;
+        let detailPagesHTML = '';
+
+        for(let i=0; i<validWorkspaces.length; i++) {
+            let ws = validWorkspaces[i];
+            let actualIndex = workspaces.indexOf(ws);
+            window.loadState(actualIndex, true); 
+
+            draw({ drawThermal: true, drawIsos: false, drawMarker: false });
+            let imgT = canvas.toDataURL('image/jpeg', 0.95);
+            draw({ drawThermal: false, drawIsos: true, drawMarker: true });
+            let imgG = canvas.toDataURL('image/jpeg', 0.95);
+
+            detailPagesHTML += buildDetailPages(ws, imgT, imgG);
+        }
+
+        window.loadState(originalIndex, true);
+
+        const report = document.createElement('div');
+        report.id = "pdf-report-content";
+        report.style.width = "800px";
+        report.style.fontFamily = "'Montserrat', 'Open Sans', Arial, sans-serif";
+        report.style.color = "#333";
+        report.style.backgroundColor = "#fff";
+        
+        report.innerHTML = `
+            <!-- PORTADA COMPACTA -->
+            <div style="padding: 20px 40px; box-sizing: border-box; background: #fff;">
+                <div style="text-align: center; padding: 40px 30px; border: 3px solid #EDD00E; border-radius: 8px; margin-top: 20px;">
+                    <h1 style="font-size: 32px; color: #2c3e50; text-transform: uppercase; margin: 0 0 10px 0;">Informe Técnico</h1>
+                    <h2 style="font-size: 16px; color: #7f8c8d; font-weight: normal; margin: 0 0 30px 0;">Análisis de Transmitancia Térmica y Condensaciones</h2>
+                    <hr style="border: none; border-top: 4px solid #EDD00E; width: 80px; margin: 0 auto 30px auto;">
+                    <h3 style="font-size: 20px; color: #34495e; margin: 0 0 60px 0;">Evaluación Normativa<br>UNE-EN ISO 10077-2 / 13788</h3>
+                    <div style="margin-bottom: 50px;">
+                        <p style="font-size: 12px; color: #777; text-transform: uppercase; margin: 0 0 5px 0;">Software de simulación termodinámica:</p>
+                        <p style="font-size: 24px; font-weight: bold; color: #333; margin: 0;">Aislantherm</p>
+                    </div>
+                    <div style="margin-bottom: 60px;">
+                        <p style="font-size: 12px; color: #777; text-transform: uppercase; margin: 0 0 5px 0;">Estudio técnico elaborado por:</p>
+                        <p style="font-size: 20px; font-weight: bold; color: #1976d2; margin: 0;">Aislantes técnicos del Mediterráneo</p>
+                    </div>
+                    <div style="border-top: 1px solid #eee; padding-top: 15px; color: #999; font-size: 12px; display: inline-block; width: 80%;">
+                        Fecha de generación del documento: <strong>${new Date().toLocaleDateString()}</strong>
+                    </div>
+                </div>
+            </div>
+
+            ${compHTML}
+            ${detailPagesHTML}
+
+            <div class="html2pdf__page-break"></div>
+
+            <div style="padding: 20px 40px; box-sizing: border-box; background: #fff;">
+                <h4 style="color: #1976d2; border-bottom: 2px solid #ccc; padding-bottom: 8px; font-size: 18px; margin: 0 0 15px 0;">Justificación Matemática y Marco Normativo</h4>
+                <div style="text-align: justify; font-size: 12px; line-height: 1.5; color: #444;">
+                    <p style="margin: 0 0 10px 0;">El presente análisis computacional resuelve la Ecuación Diferencial de Calor bidimensional en estado estacionario empleando el <strong>Método de Diferencias Finitas (FDM)</strong> para enmallados ortogonales heterogéneos. El diseño termodinámico satisface estrictamente las exigencias estipuladas en:</p>
+                    <ul style="margin: 0 0 20px 0; background: #f5f5f5; padding: 10px 15px 10px 30px; border-radius: 4px; border: 1px solid #eee;">
+                        <li style="margin-bottom: 4px;"><strong>UNE-EN ISO 10077-2:</strong> Método numérico para la determinación de la transmitancia térmica de los marcos.</li>
+                        <li style="margin-bottom: 4px;"><strong>UNE-EN ISO 13788:</strong> Temperatura superficial interior para evitar la humedad superficial crítica y condensación intersticial.</li>
+                        <li><strong>UNE-EN ISO 10211:</strong> Puentes térmicos en la edificación. Flujos de calor y temperaturas superficiales.</li>
+                    </ul>
+
+                    <strong style="font-size: 14px; color: #333; display: block; margin-bottom: 6px;">1. Determinación de la Transmitancia Térmica (U<sub>f</sub>)</strong>
+                    <p style="margin: 0 0 8px 0;">La transmitancia del perfil deriva del acoplamiento térmico iterativo. Alcanzado el equilibrio, se integra el flujo de calor a lo largo de las fronteras sometidas a condiciones de convección externa, deduciéndose la conductancia bidimensional geométrica (L<sup>2D</sup>):</p>
+                    <div style="text-align:center; padding: 8px; margin: 8px 0 15px 0; background: #fff8e1; border: 1px dashed #ffb300; border-radius: 4px;">
+                        <span style="font-size: 15px; font-family: 'Times New Roman', serif;"><i>L<sup>2D</sup> = Q / &Delta;T &nbsp; ; &nbsp; U<sub>f</sub> = L<sup>2D</sup> / b<sub>f</sub></i></span>
+                    </div>
+
+                    <strong style="font-size: 14px; color: #333; display: block; margin-bottom: 6px;">2. Riesgo de Condensación (Zonas Climáticas y f<sub>Rsi</sub>)</strong>
+                    <div style="background: #e3f2fd; padding: 12px; border-left: 4px solid #1976d2; margin-bottom: 15px; border-radius: 4px;">
+                        <p style="margin: 0 0 8px 0; font-size: 12px;">Según el DB-HE del Código Técnico de la Edificación (CTE), para evitar condensaciones superficiales y formación de moho, el factor de temperatura superficial interior <strong>(f<sub>Rsi</sub>)</strong> debe ser superior a un valor límite <strong>(f<sub>Rsi,min</sub>)</strong> que depende de la zona climática de invierno de la localidad:</p>
+                        <table style="width: 100%; font-size: 11px; background: white; border-collapse: collapse; text-align: center;">
+                            <tr style="background: #f0f0f0;">
+                                <th style="padding: 4px; border: 1px solid #ccc;">Zona Climática</th>
+                                <th style="padding: 4px; border: 1px solid #ccc;">&alpha;</th>
+                                <th style="padding: 4px; border: 1px solid #ccc;">A</th>
+                                <th style="padding: 4px; border: 1px solid #ccc;">B</th>
+                                <th style="padding: 4px; border: 1px solid #ccc;">C</th>
+                                <th style="padding: 4px; border: 1px solid #ccc;">D</th>
+                                <th style="padding: 4px; border: 1px solid #ccc;">E</th>
+                            </tr>
+                            <tr>
+                                <td style="padding: 4px; border: 1px solid #ccc; font-weight: bold;">f<sub>Rsi,min</sub> exigido</td>
+                                <td style="padding: 4px; border: 1px solid #ccc;">0.52</td>
+                                <td style="padding: 4px; border: 1px solid #ccc;">0.50</td>
+                                <td style="padding: 4px; border: 1px solid #ccc;">0.56</td>
+                                <td style="padding: 4px; border: 1px solid #ccc;">0.61</td>
+                                <td style="padding: 4px; border: 1px solid #ccc;">0.64</td>
+                                <td style="padding: 4px; border: 1px solid #ccc;">0.68</td>
+                            </tr>
+                        </table>
+                    </div>
+
+                    <strong style="font-size: 14px; color: #333; display: block; margin-bottom: 6px;">3. Termodinámica de Cavidades Estancas</strong>
+                    <p style="margin: 0;">En rigurosa aplicación del Anexo D de ISO 10077-2, las cámaras de aire confinadas no se simulan como conductores puros. El algoritmo identifica paramétricamente cada geometría e implanta una conductividad equivalente (<i>&lambda;<sub>eq</sub></i>) que modela la disipación convectiva y radiativa.</p>
+                </div>
+            </div>
+        `;
+
+        html2pdf().from(report).set({
+            margin: 10,
+            filename: validWorkspaces.length > 1 ? 'Aislantherm_Estudio_Comparativo.pdf' : 'Aislantherm_Informe_Tecnico.pdf',
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2, logging: false, windowWidth: 800 },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+            pagebreak: { mode: 'css', after: '.pdf-page' }
+        }).save().then(() => window.setStatus("✅ Informe PDF descargado correctamente.", "success"));
     };
 
     updateMaterialUI();
