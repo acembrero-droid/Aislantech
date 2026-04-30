@@ -26,7 +26,6 @@
         .main-layout { display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start; }
         .sidebar { flex: 0 0 340px; display: flex; flex-direction: column; gap: 15px; }
         
-        /* Contenedor centralizado para no estirar el canvas */
         .workspace { flex: 1; min-width: 500px; display: flex; flex-direction: column; } 
         .workspace-inner { width: 100%; max-width: 850px; margin: 0 auto; display: flex; flex-direction: column; }
         
@@ -62,7 +61,7 @@
         .mode-btn { flex:1; padding:8px 2px; font-weight:700; font-size:0.75rem; border:none; background:transparent; cursor:pointer; color: #666; transition:var(--transition); min-width: 24%; text-align: center;}
         .mode-btn.active { background:var(--color-secondary); color:white; }
         
-        /* SISTEMA DE PESTAÑAS (TABS) MEJORADO */
+        /* SISTEMA DE PESTAÑAS (TABS) */
         .tabs-header { display: flex; align-items: flex-end; border-bottom: 2px solid var(--color-primary); margin-bottom: 0; background: #e8e8e8; padding: 8px 10px 0 10px; border-radius: 8px 8px 0 0; }
         .tabs-list { display: flex; overflow-x: auto; flex: 1; gap: 4px; }
         .tabs-list::-webkit-scrollbar { height: 4px; }
@@ -126,7 +125,7 @@
             <small style="margin-left:10px; opacity:0.6; font-weight: 400; border-left: 1px solid #ccc; padding-left: 10px;">Aislantes técnicos del Mediterráneo</small>
         </div>
         <div id="solverStatus" style="font-weight: bold; color: #d32f2f; display:none;">
-            <i class="fas fa-circle-notch fa-spin"></i> Calculando Termodinámica de Alta Precisión... <span id="calcProgress">0%</span>
+            <i class="fas fa-circle-notch fa-spin"></i> CALCULANDO... <span id="calcProgress">0%</span>
         </div>
     </div>
     
@@ -197,7 +196,7 @@
                             <option value="0" style="color:#000;">Borrar Contorno</option>
                         </select>
                         <div id="cropHelpText" style="display:none; font-size:0.75rem; color: #666; line-height:1.4;">
-                            <i class="fas fa-info-circle"></i> Haz clic y arrastra en el lienzo para delimitar la zona exacta a simular. Un clic normal borrará el recorte.
+                            <i class="fas fa-info-circle"></i> Haz clic y arrastra en el lienzo para delimitar la zona exacta a simular.
                         </div>
                         <div id="panHelpText" style="display:none; font-size:0.75rem; color: #666; line-height:1.4;">
                             <i class="fas fa-hand-paper"></i> Haz clic y arrastra el ratón sobre el lienzo para encuadrar y mover el perfil.
@@ -227,10 +226,9 @@
                     <div class="control-group">
                         <label>Resolución de Malla (FDM)</label>
                         <select id="gridRes" style="font-weight: 600;" onchange="window.updateSettings()">
-                            <option value="200">Mínima (200x200) - Rápido</option>
-                            <option value="400" selected>Media (400x400) - Estándar</option>
-                            <option value="600">Alta (600x600) - Preciso</option>
-                            <option value="1000">Ultra (1000x1000) - Lento</option>
+                            <option value="200">Mínima (200x200)</option>
+                            <option value="400" selected>Media (400x400)</option>
+                            <option value="600">Alta (600x600)</option>
                         </select>
                     </div>
 
@@ -241,7 +239,7 @@
             </div>
         </aside>
 
-        <!-- ÁREA PRINCIPAL ENCAPSULADA (TABS, LIENZO Y RESULTADOS) -->
+        <!-- ÁREA PRINCIPAL ENCAPSULADA -->
         <main class="workspace">
             <div class="workspace-inner">
                 <!-- CONTENEDOR DE PESTAÑAS ELEGANTE -->
@@ -282,7 +280,7 @@
 
 <script>
 (function() {
-    // ──── EXPOSICIÓN DE FUNCIONES GLOBALES PARA EVITAR ReferenceError ────
+    // ──── EXPOSICIÓN DE FUNCIONES GLOBALES ────
     window.setStatus = function(msg, type = 'info') {
         const stText = document.getElementById('statusText');
         const bar = document.getElementById('status');
@@ -312,21 +310,15 @@
         { name: "Madera Dura", k: 0.18, color: "#8d6e63" },
         { name: "Vidrio Sódico", k: 1.0, color: "#81d4fa" },
         { name: "Ladrillo Macizo (CTE)", k: 0.87, color: "#d84315" },
-        { name: "Ladrillo Perforado (CTE)", k: 0.53, color: "#e64a19" },
-        { name: "Hormigón Armado (CTE)", k: 2.00, color: "#78909c" },
-        { name: "Mortero Cemento (CTE)", k: 1.30, color: "#b0bec5" },
-        { name: "Yeso / Escayola (CTE)", k: 0.30, color: "#f5f5f5" },
         { name: "Aislante XPS (CTE)", k: 0.034, color: "#f1c40f" },
         { name: "Aislante EPS (CTE)", k: 0.039, color: "#ffee58" },
         { name: "Poliuretano PUR (CTE)", k: 0.028, color: "#f39c12" },
         { name: "Lana Mineral MW (CTE)", k: 0.035, color: "#a1887f" }
     ];
 
-    const Rse = 0.04; 
-    const Rsi = 0.13; 
-    const Rsi_cond = 0.25; 
+    const Rse = 0.04, Rsi = 0.13, Rsi_cond = 0.25; 
 
-    // ──── GESTIÓN DE WORKSPACES (PESTAÑAS) ────
+    // ──── GESTIÓN DE WORKSPACES ────
     function createEmptyWorkspace(name) {
         return {
             name: name,
@@ -334,8 +326,7 @@
             minX: 0, maxX: 0, minY: 0, maxY: 0,
             cropRect: null, calcBounds: null,
             zoomLevel: 1, offsetX: 0, offsetY: 0, baseScale: 1,
-            T: null, isExtGrid: null, isIntMeasGrid: null, isIntSecGrid: null, kGrid: null,
-            showThermalMap: false, showIsotherms: false,
+            T: null, kGrid: null, showThermalMap: false, showIsotherms: false,
             lastU: 0, lastFlux: 0, lastL2D: 0, lastFRsi: 0, lastTsiMin: 0,
             lastTsiMinX: null, lastTsiMinY: null, lastAlgo: "FDM Métrico (ISO 10077-2)",
             settings: { tol: 0.1, Lp: 100, tExt: 0, tInt: 20, res: 400, emiss: 0.90 }
@@ -343,244 +334,153 @@
     }
 
     let workspaces = [createEmptyWorkspace("Perfil 1")];
-    let currentWsIdx = 0;
-    let wsCounter = 1;
+    let currentWsIdx = 0, wsCounter = 1;
 
-    // Variables globales
     let polygons = [], boundaryEdges = [], boundaryAdj = [];
     let minX = 0, maxX = 0, minY = 0, maxY = 0;
-    
-    window.isCropping = false;
-    window.cropStartX = 0;
-    window.cropStartY = 0; 
     let cropRect = null, calcBounds = null;
-    
+    window.isCropping = false; window.cropStartX = 0; window.cropStartY = 0; 
     let zoomLevel = 1, offsetX = 0, offsetY = 0, baseScale = 1;
-    let T = null, isExtGrid = null, isIntMeasGrid = null, isIntSecGrid = null, kGrid = null;
-    let showThermalMap = false, showIsotherms = false;
+    let T = null, kGrid = null, showThermalMap = false, showIsotherms = false;
     let lastU = 0, lastFlux = 0, lastL2D = 0, lastAlgo = "FDM Métrico";
     let lastFRsi = 0, lastTsiMin = 0, lastTsiMinX = null, lastTsiMinY = null;
 
-    let selectedPoly = -1, hoveredPolyIdx = -1, hoveredEdgeIdx = -1;
-    let editMode = 'MATERIAL';
-    let isDragging = false, dragStartX = 0, dragStartY = 0, hasDragged = false;
-    let dragStartX_client = 0, dragStartY_client = 0;
+    let selectedPoly = -1, hoveredPolyIdx = -1, hoveredEdgeIdx = -1, editMode = 'MATERIAL';
+    let isDragging = false, dragStartX = 0, dragStartY = 0, hasDragged = false, dragStartX_client = 0, dragStartY_client = 0;
 
-    const canvas = document.getElementById('canvas');
-    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    const canvas = document.getElementById('canvas'), ctx = canvas.getContext('2d', { willReadFrequently: true });
 
     function saveState() {
         let ws = workspaces[currentWsIdx];
-        ws.polygons = polygons; ws.boundaryEdges = boundaryEdges; ws.boundaryAdj = boundaryAdj;
-        ws.minX = minX; ws.maxX = maxX; ws.minY = minY; ws.maxY = maxY;
-        ws.cropRect = cropRect; ws.calcBounds = calcBounds;
-        ws.zoomLevel = zoomLevel; ws.offsetX = offsetX; ws.offsetY = offsetY; ws.baseScale = baseScale;
-        ws.T = T; ws.isExtGrid = isExtGrid; ws.isIntMeasGrid = isIntMeasGrid; ws.isIntSecGrid = isIntSecGrid; ws.kGrid = kGrid;
-        ws.showThermalMap = showThermalMap; ws.showIsotherms = showIsotherms;
-        ws.lastU = lastU; ws.lastFlux = lastFlux; ws.lastL2D = lastL2D; ws.lastFRsi = lastFRsi; ws.lastTsiMin = lastTsiMin;
-        ws.lastTsiMinX = lastTsiMinX; ws.lastTsiMinY = lastTsiMinY; ws.lastAlgo = lastAlgo;
-        
-        ws.settings = {
-            tol: parseFloat(document.getElementById('tolInput').value) || 0.1,
-            Lp: parseFloat(document.getElementById('LpInput').value) || 100,
-            tExt: parseFloat(document.getElementById('tExt').value) || 0,
-            tInt: parseFloat(document.getElementById('tInt').value) || 20,
-            res: parseInt(document.getElementById('gridRes').value) || 400,
-            emiss: parseFloat(document.getElementById('emissInput').value) || 0.90
-        };
+        if(!ws) return;
+        Object.assign(ws, { polygons, boundaryEdges, boundaryAdj, minX, maxX, minY, maxY, cropRect, calcBounds, zoomLevel, offsetX, offsetY, baseScale, T, kGrid, showThermalMap, showIsotherms, lastU, lastFlux, lastL2D, lastFRsi, lastTsiMin, lastTsiMinX, lastTsiMinY, lastAlgo });
+        ws.settings = { tol: parseFloat(document.getElementById('tolInput').value) || 0.1, Lp: parseFloat(document.getElementById('LpInput').value) || 100, tExt: parseFloat(document.getElementById('tExt').value) || 0, tInt: parseFloat(document.getElementById('tInt').value) || 20, res: parseInt(document.getElementById('gridRes').value) || 400, emiss: parseFloat(document.getElementById('emissInput').value) || 0.90 };
     }
 
-    window.updateSettings = function() {
-        workspaces[currentWsIdx].settings = {
-            tol: parseFloat(document.getElementById('tolInput').value) || 0.1,
-            Lp: parseFloat(document.getElementById('LpInput').value) || 100,
-            tExt: parseFloat(document.getElementById('tExt').value) || 0,
-            tInt: parseFloat(document.getElementById('tInt').value) || 20,
-            res: parseInt(document.getElementById('gridRes').value) || 400,
-            emiss: parseFloat(document.getElementById('emissInput').value) || 0.90
-        };
+    window.updateLegendUI = function() {
+        const activeIdx = parseInt(document.getElementById('matSelect').value) || 0;
+        document.getElementById('legend').innerHTML = materials.map((m,i)=>
+            `<div class="legend-item ${i === activeIdx ? 'active' : ''}" onclick="window.setBrushMaterial(${i})">
+                <div class="legend-color" style="background:${m.color}"></div><span>${m.name}</span>
+            </div>`).join('') + `
+            <div class="boundary-legend">
+                <span><span class="boundary-swatch" style="background:#1976d2"></span> Ext.</span>
+                <span><span class="boundary-swatch" style="background:#d32f2f"></span> Int.</span>
+            </div>`;
+    };
+
+    window.updateMaterialUI = function() {
+        const sel = document.getElementById('matSelect');
+        const currentVal = sel.value; 
+        sel.innerHTML = materials.map((m,i) => `<option value="${i}">${m.name} (λ=${m.k})</option>`).join('') + `<option value="CUSTOM">+ Nuevo Material...</option>`;
+        if (currentVal && parseInt(currentVal) < materials.length) sel.value = currentVal; else sel.value = "0";
+        window.updateLegendUI();
     };
 
     window.loadState = function(idx, skipSave = false) {
         if (!skipSave) saveState();
         currentWsIdx = idx;
         let ws = workspaces[currentWsIdx];
-        
         polygons = ws.polygons || []; boundaryEdges = ws.boundaryEdges || []; boundaryAdj = ws.boundaryAdj || [];
-        minX = ws.minX || 0; maxX = ws.maxX || 0; minY = ws.minY || 0; maxY = ws.maxY || 0;
-        cropRect = ws.cropRect || null; calcBounds = ws.calcBounds || null;
-        zoomLevel = ws.zoomLevel || 1; offsetX = ws.offsetX || 0; offsetY = ws.offsetY || 0; baseScale = ws.baseScale || 1;
-        T = ws.T || null; isExtGrid = ws.isExtGrid || null; isIntMeasGrid = ws.isIntMeasGrid || null; isIntSecGrid = ws.isIntSecGrid || null; kGrid = ws.kGrid || null;
-        showThermalMap = ws.showThermalMap || false; showIsotherms = ws.showIsotherms || false;
-        lastU = ws.lastU || 0; lastFlux = ws.lastFlux || 0; lastL2D = ws.lastL2D || 0; lastFRsi = ws.lastFRsi || 0; lastTsiMin = ws.lastTsiMin || 0;
-        lastTsiMinX = ws.lastTsiMinX || null; lastTsiMinY = ws.lastTsiMinY || null; lastAlgo = ws.lastAlgo || "FDM Métrico (ISO 10077-2)";
+        minX = ws.minX; maxX = ws.maxX; minY = ws.minY; maxY = ws.maxY;
+        cropRect = ws.cropRect; calcBounds = ws.calcBounds;
+        zoomLevel = ws.zoomLevel; offsetX = ws.offsetX; offsetY = ws.offsetY; baseScale = ws.baseScale;
+        T = ws.T; kGrid = ws.kGrid; showThermalMap = ws.showThermalMap; showIsotherms = ws.showIsotherms;
+        lastU = ws.lastU; lastFlux = ws.lastFlux; lastL2D = ws.lastL2D; lastFRsi = ws.lastFRsi; lastTsiMin = ws.lastTsiMin;
+        lastTsiMinX = ws.lastTsiMinX; lastTsiMinY = ws.lastTsiMinY; lastAlgo = ws.lastAlgo;
         
         if (ws.settings) {
-            document.getElementById('tolInput').value = ws.settings.tol || 0.1;
-            document.getElementById('LpInput').value = ws.settings.Lp || 100;
-            document.getElementById('tExt').value = ws.settings.tExt || 0;
-            document.getElementById('tInt').value = ws.settings.tInt || 20;
-            document.getElementById('gridRes').value = ws.settings.res || 400;
-            document.getElementById('emissInput').value = ws.settings.emiss || 0.90;
+            document.getElementById('tolInput').value = ws.settings.tol; document.getElementById('LpInput').value = ws.settings.Lp;
+            document.getElementById('tExt').value = ws.settings.tExt; document.getElementById('tInt').value = ws.settings.tInt;
+            document.getElementById('gridRes').value = ws.settings.res; document.getElementById('emissInput').value = ws.settings.emiss;
         }
 
+        const resPanel = document.getElementById('result');
         if (showThermalMap) {
-            document.getElementById('result').style.display = "block";
-            document.getElementById('result').innerHTML=`
-                <h2>U<sub>f</sub> = ${lastU.toFixed(3)} W/(m²·K)</h2>
-                <h3 style="margin: 10px 0; color:#FFD54F;">f<sub>Rsi</sub> = ${lastFRsi.toFixed(3)} (T<sub>si,min</sub> = ${lastTsiMin.toFixed(1)} ºC)</h3>
-                <p>Cálculo analítico iterativo (${lastAlgo}) s/ ISO 10077-2</p>
-                <p style="opacity:0.9; margin-top:5px; font-size:0.85rem;">
-                    <small>Flujo (Q): ${Math.abs(lastFlux).toFixed(3)} W/m &nbsp;|&nbsp; L<sup>2D</sup>: ${lastL2D.toFixed(3)} W/(m·K) &nbsp;|&nbsp; b<sub>f</sub>: ${ws.settings.Lp} mm</small>
-                </p>
-            `;
-            document.getElementById('btnBackToEdit').style.display="inline-flex";
-            document.getElementById('btnPdf').style.display="inline-flex";
+            resPanel.style.display = "block";
+            resPanel.innerHTML=`<h2>U<sub>f</sub> = ${lastU.toFixed(3)} W/(m²K)</h2><h3>f<sub>Rsi</sub> = ${lastFRsi.toFixed(3)} (T<sub>min</sub> = ${lastTsiMin.toFixed(1)}ºC)</h3>`;
+            document.getElementById('btnBackToEdit').style.display="inline-flex"; 
             document.getElementById('btnToggleIso').style.display="inline-flex";
-            if(showIsotherms) document.getElementById('btnToggleIso').classList.add('active');
-            else document.getElementById('btnToggleIso').classList.remove('active');
-            document.getElementById('calcBtn').disabled = false;
-            window.setStatus(`Visualizando resultados de ${ws.name}`, "success");
+            if(showIsotherms) document.getElementById('btnToggleIso').classList.add('active'); else document.getElementById('btnToggleIso').classList.remove('active');
         } else {
-            document.getElementById('result').style.display = "none";
-            document.getElementById('btnBackToEdit').style.display = "none";
-            let hasAnyResult = workspaces.some(w => w.T !== null);
-            document.getElementById('btnPdf').style.display = hasAnyResult ? "inline-flex" : "none";
-            document.getElementById('btnToggleIso').style.display = "none";
-            document.getElementById('calcBtn').disabled = polygons.length === 0;
-            
-            if(polygons.length) window.setStatus(`Editando ${ws.name}. Asigna materiales y marca los contornos.`, "info");
-            else window.setStatus(`Espacio de trabajo vacío (${ws.name}). Importa un DXF para comenzar.`, "info");
+            resPanel.style.display = "none"; document.getElementById('btnBackToEdit').style.display = "none"; document.getElementById('btnToggleIso').style.display = "none";
         }
-        
-        renderTabs();
-        draw();
+        document.getElementById('calcBtn').disabled = polygons.length === 0;
+        document.getElementById('btnPdf').style.display = workspaces.some(w => w.T !== null) ? "inline-flex" : "none";
+        renderTabs(); draw();
     };
 
-    window.addTab = function() {
-        saveState();
-        wsCounter++;
-        let newWs = createEmptyWorkspace("Perfil " + wsCounter);
-        workspaces.push(newWs);
-        window.loadState(workspaces.length - 1, true); 
+    window.addTab = function() { saveState(); wsCounter++; workspaces.push(createEmptyWorkspace("Perfil " + wsCounter)); window.loadState(workspaces.length - 1, true); };
+    window.duplicateTab = function() { 
+        saveState(); wsCounter++; 
+        let newWs = JSON.parse(JSON.stringify(workspaces[currentWsIdx])); 
+        newWs.name = workspaces[currentWsIdx].name + " (Copia)"; 
+        workspaces.push(newWs); window.loadState(workspaces.length - 1, true); 
     };
-
-    window.duplicateTab = function() {
-        saveState();
-        wsCounter++;
-        let currentWs = workspaces[currentWsIdx];
-        let newWs = JSON.parse(JSON.stringify(currentWs));
-        newWs.name = currentWs.name + " (Copia)";
-        workspaces.push(newWs);
-        window.loadState(workspaces.length - 1, true); 
-        window.setStatus(`Se ha duplicado el perfil como "${newWs.name}"`, "success");
-    };
-
-    let modalCallback = null;
-    function showConfirmModal(msg, callback) {
-        document.getElementById('modalText').innerText = msg;
-        document.getElementById('customModal').style.display = 'flex';
-        modalCallback = callback;
-    }
-    document.getElementById('modalBtnCancel').onclick = () => { document.getElementById('customModal').style.display = 'none'; modalCallback = null; };
-    document.getElementById('modalBtnConfirm').onclick = () => { document.getElementById('customModal').style.display = 'none'; if(modalCallback) modalCallback(); modalCallback = null; };
 
     window.removeTab = function(e, idx) {
         if(e) e.stopPropagation();
-        if(workspaces.length === 1) {
-            window.setStatus("No puedes eliminar la única pestaña. Puedes importar un nuevo DXF encima.", "error");
-            return;
-        }
-        showConfirmModal("¿Seguro que quieres eliminar esta pestaña y sus resultados?", () => {
-            workspaces.splice(idx, 1);
-            if (currentWsIdx >= workspaces.length) currentWsIdx = workspaces.length - 1;
-            window.loadState(currentWsIdx, true);
-        });
+        if(workspaces.length === 1) return;
+        document.getElementById('modalText').innerText = "¿Seguro que quieres eliminar esta pestaña?";
+        document.getElementById('customModal').style.display = 'flex';
+        document.getElementById('modalBtnConfirm').onclick = () => {
+            workspaces.splice(idx, 1); if(currentWsIdx >= workspaces.length) currentWsIdx = workspaces.length - 1;
+            window.loadState(currentWsIdx, true); document.getElementById('customModal').style.display = 'none';
+        };
+        document.getElementById('modalBtnCancel').onclick = () => document.getElementById('customModal').style.display = 'none';
     };
 
     window.triggerRename = function(e, idx) {
-        if(e) e.stopPropagation(); 
+        if(e) e.stopPropagation();
         let span = document.getElementById('tab-name-' + idx);
         if(span) {
-            span.contentEditable = "true";
-            span.focus();
-            let range = document.createRange();
-            range.selectNodeContents(span);
-            let sel = window.getSelection();
-            sel.removeAllRanges();
-            sel.addRange(range);
+            span.contentEditable = "true"; span.focus();
+            let range = document.createRange(); range.selectNodeContents(span);
+            let sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(range);
         }
     };
 
     window.saveTabName = function(e, idx) {
         let newName = e.target.innerText;
-        if (newName && newName.trim() !== "") {
-            workspaces[idx].name = newName.trim();
-        } else {
-            e.target.innerText = workspaces[idx].name;
-        }
-        e.target.contentEditable = "false";
-        renderTabs();
+        if (newName && newName.trim() !== "") workspaces[idx].name = newName.trim(); else e.target.innerText = workspaces[idx].name;
+        e.target.contentEditable = "false"; renderTabs();
     };
 
     function renderTabs() {
-        let html = '';
-        workspaces.forEach((ws, i) => {
-            let active = i === currentWsIdx ? 'active' : '';
-            let icon = ws.T ? '<i class="fas fa-check-circle tab-icon" style="color:#2e7d32" title="Calculado"></i>' : '<i class="fas fa-drafting-compass tab-icon"></i>';
-            html += `<div class="tab-item ${active}" onclick="window.loadState(${i})">
-                        ${icon} 
-                        <span id="tab-name-${i}" class="tab-name" contenteditable="false" 
-                            onblur="window.saveTabName(event, ${i})" 
-                            onkeydown="if(event.key==='Enter'){event.preventDefault(); this.blur();}" 
-                            style="outline: none;">${ws.name}</span>
-                        <button class="tab-action-btn" onclick="window.triggerRename(event, ${i})" title="Renombrar pestaña"><i class="fas fa-pencil-alt"></i></button>
-                        ${workspaces.length > 1 ? `<button class="tab-action-btn delete" onclick="window.removeTab(event, ${i})" title="Eliminar pestaña"><i class="fas fa-times"></i></button>` : ''}
-                     </div>`;
-        });
+        let html = workspaces.map((ws, i) => `
+            <div class="tab-item ${i === currentWsIdx ? 'active' : ''}" onclick="window.loadState(${i})">
+                ${ws.T ? '<i class="fas fa-check-circle" style="color:#2e7d32"></i>' : '<i class="fas fa-drafting-compass"></i>'}
+                <span id="tab-name-${i}" class="tab-name" contenteditable="false" onblur="window.saveTabName(event, ${i})" onkeydown="if(event.key==='Enter'){event.preventDefault(); this.blur();}">${ws.name}</span>
+                <button class="tab-action-btn" onclick="window.triggerRename(event, ${i})"><i class="fas fa-pencil-alt"></i></button>
+                ${workspaces.length > 1 ? `<button class="tab-action-btn delete" onclick="window.removeTab(event, ${i})"><i class="fas fa-times"></i></button>` : ''}
+            </div>`).join('');
         document.getElementById('tabsContainer').innerHTML = html;
-        
-        let hasAnyResult = workspaces.some(w => w.T !== null);
-        let btnPdf = document.getElementById('btnPdf');
-        
-        if (hasAnyResult) {
-            btnPdf.style.display = "inline-flex";
-            if (workspaces.filter(w => w.T !== null).length > 1) {
-                btnPdf.innerHTML = '<i class="fas fa-file-pdf"></i> Generar Informe Comparativo';
-            } else {
-                btnPdf.innerHTML = '<i class="fas fa-file-pdf"></i> Generar Informe PDF';
-            }
-        } else {
-            btnPdf.style.display = "none";
-        }
+        let validResults = workspaces.filter(w => w.T !== null).length;
+        document.getElementById('btnPdf').innerHTML = validResults > 1 ? '<i class="fas fa-file-pdf"></i> Generar Informe Comparativo' : '<i class="fas fa-file-pdf"></i> Generar Informe PDF';
     }
 
     // ──── INTERFAZ DE HERRAMIENTAS ────
-    function updateMaterialUI() {
-        const sel = document.getElementById('matSelect');
-        const currentVal = sel.value; 
-        sel.innerHTML = materials.map((m,i) => `<option value="${i}">${m.name} (λ=${m.k})</option>`).join('');
-        sel.innerHTML += `<option value="CUSTOM" style="font-weight:bold; color:var(--color-primary-dark);">+ Crear Material Nuevo...</option>`;
-        if (currentVal && (currentVal === 'CUSTOM' || parseInt(currentVal) < materials.length)) {
-            sel.value = currentVal;
-        } else { sel.value = "0"; }
-        updateLegendUI();
-    }
+    document.getElementById('btnCancelCustomMat').onclick = () => { document.getElementById('customMatPanel').style.display = 'none'; document.getElementById('matSelect').value = "0"; window.updateLegendUI(); };
+    
+    document.getElementById('btnAddCustomMat').onclick = function() {
+        const name = document.getElementById('customMatName').value || "Material Especial";
+        const k = parseFloat(document.getElementById('customMatK').value) || 0.1;
+        const color = document.getElementById('customMatColor').value;
+        materials.push({name, k, color});
+        window.updateMaterialUI(); document.getElementById('matSelect').value = materials.length - 1; window.updateLegendUI();
+        document.getElementById('customMatPanel').style.display = 'none'; window.setStatus(`Material "${name}" añadido a la paleta.`);
+    };
 
-    function updateLegendUI() {
-        const sel = document.getElementById('matSelect');
-        const activeIdx = parseInt(sel.value) || 0;
-        document.getElementById('legend').innerHTML = materials.map((m,i)=>
-            `<div class="legend-item ${i === activeIdx ? 'active' : ''}" onclick="window.setBrushMaterial(${i})" title="Pincel: ${m.name}">
-                <div class="legend-color" style="background:${m.color}"></div> 
-                <span>${m.name}</span>
-            </div>`).join('') + `
-            <div class="boundary-legend">
-                <span><span class="boundary-swatch" style="background:#1976d2"></span> Ext.</span>
-                <span><span class="boundary-swatch" style="background:#d32f2f"></span> Int (Uf)</span>
-                <span><span class="boundary-swatch" style="background:#ff9800"></span> Int Sec.</span>
-            </div>`;
-    }
+    document.getElementById('matSelect').onchange = function() {
+        if(this.value === 'CUSTOM') document.getElementById('customMatPanel').style.display = 'block';
+        else document.getElementById('customMatPanel').style.display = 'none';
+        window.updateLegendUI();
+    };
+
+    window.setBrushMaterial = function(idx) {
+        if (editMode !== 'MATERIAL') document.getElementById('btnModeMat').click();
+        document.getElementById('matSelect').value = idx; window.updateLegendUI(); window.setStatus(`Pincel activo: ${materials[idx].name}`);
+    };
 
     function switchMode(mode, btnId, msg) {
         editMode = mode;
@@ -600,29 +500,6 @@
     document.getElementById('btnModeBound').onclick = () => switchMode('BOUNDARY', 'btnModeBound', "Modo Contornos: SHIFT+Clic en una línea para pintar contornos continuos.");
     document.getElementById('btnModeCrop').onclick = () => switchMode('CROP', 'btnModeCrop', "Modo Área: Haz clic y arrastra para definir la zona exacta a simular.");
     document.getElementById('btnModePan').onclick = () => switchMode('PAN', 'btnModePan', "Modo Mover: Haz clic y arrastra para mover la vista del perfil.");
-
-    document.getElementById('btnShowCustomMat').onclick = () => { document.getElementById('customMatPanel').style.display = 'block'; document.getElementById('matSelect').value = 'CUSTOM'; };
-    document.getElementById('btnCancelCustomMat').onclick = () => { document.getElementById('customMatPanel').style.display = 'none'; document.getElementById('matSelect').value = "0"; updateLegendUI(); };
-    
-    document.getElementById('btnAddCustomMat').onclick = function() {
-        const name = document.getElementById('customMatName').value || "Material Especial";
-        const k = parseFloat(document.getElementById('customMatK').value) || 0.1;
-        const color = document.getElementById('customMatColor').value;
-        materials.push({name, k, color});
-        updateMaterialUI(); document.getElementById('matSelect').value = materials.length - 1; updateLegendUI();
-        document.getElementById('customMatPanel').style.display = 'none'; window.setStatus(`Material "${name}" añadido a la paleta.`);
-    };
-
-    document.getElementById('matSelect').onchange = function() {
-        if(this.value === 'CUSTOM') document.getElementById('customMatPanel').style.display = 'block';
-        else document.getElementById('customMatPanel').style.display = 'none';
-        updateLegendUI();
-    };
-
-    window.setBrushMaterial = function(idx) {
-        if (editMode !== 'MATERIAL') document.getElementById('btnModeMat').click();
-        document.getElementById('matSelect').value = idx; updateLegendUI(); window.setStatus(`Pincel activo: ${materials[idx].name}`);
-    };
 
     document.getElementById('btnBackToEdit').onclick = function() {
         showThermalMap = false; showIsotherms = false; this.style.display = 'none';
@@ -693,7 +570,7 @@
                 } else {
                     throw new Error("Formato de proyecto no válido.");
                 }
-                updateMaterialUI();
+                window.updateMaterialUI();
                 recalcBounds(); 
                 draw(); 
                 window.setStatus("✅ Proyecto cargado correctamente.", "success"); 
@@ -929,6 +806,7 @@
         const mx = (e.clientX - rect.left) * (canvas.width / rect.width);
         const my = (e.clientY - rect.top) * (canvas.height / rect.height);
 
+        // PANNING DISPONIBLE SIEMPRE
         if(isDragging){
             e.preventDefault(); 
             if (Math.hypot(e.clientX - dragStartX_client, e.clientY - dragStartY_client) > 3) {
@@ -951,9 +829,9 @@
         if(editMode === 'BOUNDARY') {
             let minD = Infinity, hE = -1;
             boundaryEdges.forEach((edge, i) => {
-                const dx = edge.p2.x-edge.p1.x, dy = edge.p2.y-edge.p1.y, l2 = dx*dx+dy*dy;
-                let t = Math.max(0, Math.min(1, ((w.x-edge.p1.x)*dx+(w.y-edge.p1.y)*dy)/l2));
-                let dist = Math.hypot(w.x-(edge.p1.x+t*dx), w.y-(edge.p1.y+t*dy));
+                const dxCalc = edge.p2.x-edge.p1.x, dyCalc = edge.p2.y-edge.p1.y, l2 = dxCalc*dxCalc+dyCalc*dyCalc;
+                let t = Math.max(0, Math.min(1, ((w.x-edge.p1.x)*dxCalc+(w.y-edge.p1.y)*dyCalc)/l2));
+                let dist = Math.hypot(w.x-(edge.p1.x+t*dxCalc), w.y-(edge.p1.y+t*dyCalc));
                 if(dist < minD){ minD = dist; hE = i; }
             });
             if(minD > 12/(baseScale*zoomLevel)) hE = -1;
@@ -1016,7 +894,7 @@
         } return null;
     }
 
-    // ──── RENDERING (RESCATANDO dx y dy GLOBALES PARA EVITAR ReferenceError) ────
+    // ──── RENDERING (REPARADO REFERENCE ERROR dx) ────
     function draw(opts = {}) {
         ctx.clearRect(0,0,canvas.width,canvas.height);
         
@@ -1030,24 +908,23 @@
         const drawIsos = opts.drawIsos !== undefined ? opts.drawIsos : (showIsotherms && T && calcBounds);
         const drawMarker = opts.drawMarker !== undefined ? opts.drawMarker : (showThermalMap && lastTsiMinX !== null);
 
-        // Definimos dx y dy dentro de draw para que no salte error al renderizar colores e isotermas
-        let dx = 0.001, dy = 0.001;
-        if (calcBounds) {
-            const res = parseInt(document.getElementById('gridRes').value) || 400;
-            dx = (calcBounds.maxX - calcBounds.minX) / res || 0.001;
-            dy = (calcBounds.maxY - calcBounds.minY) / res || 0.001;
+        let dxLocal = 0.001, dyLocal = 0.001;
+        if(calcBounds) {
+            const res = workspaces[currentWsIdx].settings.res || 400;
+            dxLocal = (calcBounds.maxX - calcBounds.minX) / res;
+            dyLocal = (calcBounds.maxY - calcBounds.minY) / res;
         }
 
         if(drawThermal) {
-            const res = parseInt(document.getElementById('gridRes').value) || 400;
-            const te = +document.getElementById('tExt').value, ti = +document.getElementById('tInt').value;
-            const cw = dx * s, ch = dy * s;
+            const res = workspaces[currentWsIdx].settings.res;
+            const te = workspaces[currentWsIdx].settings.tExt, ti = workspaces[currentWsIdx].settings.tInt;
+            const cw = dxLocal * s, ch = dyLocal * s;
             for(let i=0; i<res; i++) {
                 for(let j=0; j<res; j++) {
                     if(kGrid[i][j] > 0) { 
                         const f = Math.max(0, Math.min(1, (T[i][j]-te)/(ti-te||1)));
                         ctx.fillStyle = `hsl(${(1-f)*240}, 75%, 50%)`;
-                        ctx.fillRect(tx(calcBounds.minX + j*dx), ty(calcBounds.minY + i*dy) - ch, cw+0.6, ch+0.6);
+                        ctx.fillRect(tx(calcBounds.minX + j*dxLocal), ty(calcBounds.minY + i*dyLocal) - ch, cw+0.6, ch+0.6);
                     }
                 }
             }
@@ -1075,9 +952,9 @@
         });
 
         if (drawIsos && T && calcBounds) {
-            const res = parseInt(document.getElementById('gridRes').value) || 400;
+            const res = parseInt(document.getElementById('gridRes').value);
             const te = +document.getElementById('tExt').value, ti = +document.getElementById('tInt').value;
-            const ch = dy * s;
+            const ch = dyLocal * s;
             
             let isos = new Set([13]); 
             for(let t = Math.ceil(te); t <= Math.floor(ti); t += 2) isos.add(t);
@@ -1089,12 +966,12 @@
                         let val = T[i][j];
                         for(let iso of isos) {
                             if (j < res-1 && ((val <= iso && T[i][j+1] > iso) || (val >= iso && T[i][j+1] < iso))) {
-                                let px = tx(calcBounds.minX + j*dx + dx/2), py = ty(calcBounds.minY + i*dy) - ch/2;
+                                let px = tx(calcBounds.minX + j*dxLocal + dxLocal/2), py = ty(calcBounds.minY + i*dyLocal) - ch/2;
                                 ctx.fillStyle = 'rgba(0,0,0,0.4)'; ctx.fillRect(px, py, 1.2, 1.2);
                                 if (i % 45 === 0) { ctx.fillStyle = 'rgba(0,0,0,0.85)'; ctx.fillText(iso + "°", px + 3, py - 2); }
                             }
                             if (i < res-1 && ((val <= iso && T[i+1][j] > iso) || (val >= iso && T[i+1][j] < iso))) {
-                                let px = tx(calcBounds.minX + j*dx), py = ty(calcBounds.minY + i*dy + dy/2) - ch;
+                                let px = tx(calcBounds.minX + j*dxLocal), py = ty(calcBounds.minY + i*dyLocal + dyLocal/2) - ch;
                                 ctx.fillStyle = 'rgba(0,0,0,0.4)'; ctx.fillRect(px, py, 1.2, 1.2);
                                 if (j % 45 === 0) { ctx.fillStyle = 'rgba(0,0,0,0.85)'; ctx.fillText(iso + "°", px + 3, py - 2); }
                             }
@@ -1161,7 +1038,7 @@
             window.setStatus('❌ Falta marcar Borde Exterior (azul) e Interior de Medición (rojo).', 'error'); return;
         }
         
-        const res = parseInt(document.getElementById('gridRes').value) || 400;
+        const res = parseInt(document.getElementById('gridRes').value);
         const lp = (+document.getElementById('LpInput').value || 100) / 1000;
         document.getElementById('solverStatus').style.display = "block";
         document.getElementById('calcBtn').disabled = true;
@@ -1169,14 +1046,14 @@
         setTimeout(() => {
             calcBounds = calcBounds ? calcBounds : { minX, maxX, minY, maxY };
             
-            let dx = (calcBounds.maxX - calcBounds.minX) / res || 0.001; 
-            let dy = (calcBounds.maxY - calcBounds.minY) / res || 0.001;
+            let dxLocal = (calcBounds.maxX - calcBounds.minX) / res || 0.001; 
+            let dyLocal = (calcBounds.maxY - calcBounds.minY) / res || 0.001;
             
-            const dx_m = dx / 1000, dy_m = dy / 1000;
+            const dx_m = dxLocal / 1000, dy_m = dyLocal / 1000;
             let isSolid = Array.from({length:res}, () => new Array(res).fill(false));
 
             kGrid = Array.from({length:res}, (_,i)=> Array.from({length:res}, (_,j)=> {
-                const x = calcBounds.minX + j*dx + dx/2, y = calcBounds.minY + i*dy + dy/2;
+                const x = calcBounds.minX + j*dxLocal + dxLocal/2, y = calcBounds.minY + i*dyLocal + dyLocal/2;
                 const p = polygons.find(poly => {
                     let inside = false, pts = poly.pts;
                     for (let k = 0, l = pts.length - 1; k < pts.length; l = k++) {
@@ -1193,12 +1070,12 @@
             let lineBlocker = Array.from({length:res}, () => new Uint8Array(res));
             boundaryEdges.forEach(e => {
                 if (e.type === 3) {
-                    const steps = Math.ceil(Math.hypot(e.p2.x-e.p1.x, e.p2.y-e.p1.y) / Math.min(dx,dy) * 2);
+                    const steps = Math.ceil(Math.hypot(e.p2.x-e.p1.x, e.p2.y-e.p1.y) / Math.min(dxLocal,dyLocal) * 2);
                     for(let s=0; s<=steps; s++){
                         const px = e.p1.x + (s/steps)*(e.p2.x-e.p1.x);
                         const py = e.p1.y + (s/steps)*(e.p2.y-e.p1.y);
-                        const j = Math.floor((px - calcBounds.minX) / dx);
-                        const i = Math.floor((py - calcBounds.minY) / dy);
+                        const j = Math.floor((px - calcBounds.minX) / dxLocal);
+                        const i = Math.floor((py - calcBounds.minY) / dyLocal);
                         if(i>=0 && i<res && j>=0 && j<res){
                             for(let di=-1; di<=1; di++){
                                 for(let dj=-1; dj<=1; dj++){
@@ -1292,12 +1169,12 @@
             let boundGrid = Array.from({length:res}, () => new Uint8Array(res));
             boundaryEdges.forEach(e => {
                 if(e.type === 0 || e.type === 3) return;
-                const steps = Math.ceil(Math.hypot(e.p2.x-e.p1.x, e.p2.y-e.p1.y) / Math.min(dx,dy) * 2);
+                const steps = Math.ceil(Math.hypot(e.p2.x-e.p1.x, e.p2.y-e.p1.y) / Math.min(dxLocal,dyLocal) * 2);
                 for(let s=0; s<=steps; s++){
                     const px = e.p1.x + (s/steps)*(e.p2.x-e.p1.x);
                     const py = e.p1.y + (s/steps)*(e.p2.y-e.p1.y);
-                    const j = Math.floor((px - calcBounds.minX) / dx);
-                    const i = Math.floor((py - calcBounds.minY) / dy);
+                    const j = Math.floor((px - calcBounds.minX) / dxLocal);
+                    const i = Math.floor((py - calcBounds.minY) / dyLocal);
                     if(i>=0 && i<res && j>=0 && j<res){
                         for(let di=-2; di<=2; di++){
                             for(let dj=-2; dj<=2; dj++){
@@ -1445,8 +1322,8 @@
                 }
 
                 if (minI !== -1 && minJ !== -1) {
-                    lastTsiMinX = calcBounds.minX + minJ*dx + dx/2;
-                    lastTsiMinY = calcBounds.minY + minI*dy + dy/2;
+                    lastTsiMinX = calcBounds.minX + minJ*dxLocal + dxLocal/2;
+                    lastTsiMinY = calcBounds.minY + minI*dyLocal + dyLocal/2;
                 } else {
                     lastTsiMinX = null; lastTsiMinY = null;
                 }
@@ -1484,7 +1361,7 @@
                 document.getElementById('calcBtn').disabled = false;
                 
                 zoomLevel = 1; offsetX = 0; offsetY = 0;
-                draw(); // Al lanzar draw() con showThermalMap, automáticamente dibujará el marcador.
+                draw();
                 window.setStatus("✅ Análisis completado. Matriz estabilizada.", "success");
             }
             chunk();
@@ -1492,7 +1369,7 @@
         }, 50);
     };
 
-    // ──── INFORME PDF COMPACTO (EVITA ESPACIOS EN BLANCO EXCESIVOS) ────
+    // ──── INFORME PDF EDITORIAL (SIN CORTES Y LIMPIO) ────
     function buildDetailPages(ws, imgThermal, imgGeo) {
         let usedMats = new Set();
         ws.polygons.forEach(p => {
@@ -1508,63 +1385,71 @@
         });
         
         let matListHTML = Array.from(usedMats).map(idx => 
-            `<li style="margin-bottom: 6px; width: 48%; display: inline-block; box-sizing: border-box;">
-                <span style="display:inline-block; width:10px; height:10px; background:${materials[idx].color}; border:1px solid #000; margin-right:5px; vertical-align: middle;"></span> 
+            `<li style="margin-bottom: 8px; width: 48%; display: inline-block; box-sizing: border-box;">
+                <span style="display:inline-block; width:12px; height:12px; background:${materials[idx].color}; border:1px solid #000; margin-right:5px; vertical-align: middle;"></span> 
                 ${materials[idx].name} (&lambda; = ${materials[idx].k} W/m·K)
             </li>`
         ).join('');
 
+        const deltaT = Math.abs(ws.settings.tInt - ws.settings.tExt);
+
         return `
             <div class="html2pdf__page-break"></div>
             
-            <div style="padding: 20px 40px; box-sizing: border-box; background: #fff;">
-                <h3 style="color: #34495e; border-bottom: 3px solid #EDD00E; padding-bottom: 5px; margin-bottom: 15px; font-size: 20px;">Ficha Técnica: ${ws.name}</h3>
+            <div style="padding-top: 30px;">
+                <h3 style="color: #34495e; border-bottom: 3px solid #EDD00E; padding-bottom: 10px; margin-bottom: 20px;">Ficha Técnica: ${ws.name}</h3>
                 
-                <h4 style="color: #1976d2; border-bottom: 1px solid #ccc; padding-bottom: 5px; margin: 0 0 10px 0; font-size: 15px;">1. Resultados de Transmitancia</h4>
-                <table style="width: 100%; font-size: 13px; background: #f9f9f9; border-radius: 5px; border: 1px solid #eee; margin-bottom: 15px; border-collapse: collapse;">
+                <h4 style="color: #1976d2; border-bottom: 2px solid #ccc; padding-bottom: 8px; margin: 0 0 15px 0; font-size: 16px;">1. Resultados de Transmitancia</h4>
+                <table style="width: 100%; font-size: 13px; background: #f9f9f9; border-radius: 5px; border: 1px solid #eee; margin-bottom: 25px; border-collapse: collapse;">
                     <tr>
-                        <td style="padding: 8px; width: 60%; border-bottom: 1px solid #eee;"><strong>Transmitancia Térmica del Marco (U<sub>f</sub>):</strong></td>
-                        <td style="padding: 8px; font-size: 16px; font-weight: bold; color: #2e7d32; border-bottom: 1px solid #eee;">${ws.lastU.toFixed(3)} W/(m²·K)</td>
+                        <td style="padding: 10px; width: 60%; border-bottom: 1px solid #eee;"><strong>Transmitancia Térmica del Marco (U<sub>f</sub>):</strong></td>
+                        <td style="padding: 10px; font-size: 16px; font-weight: bold; color: #2e7d32; border-bottom: 1px solid #eee;">${ws.lastU.toFixed(3)} W/(m²·K)</td>
                     </tr>
                     <tr>
-                        <td style="padding: 6px 8px; border-bottom: 1px solid #eee;">Flujo Térmico Lineal Total (Q):</td>
-                        <td style="padding: 6px 8px; border-bottom: 1px solid #eee;">${Math.abs(ws.lastFlux).toFixed(3)} W/m</td>
+                        <td style="padding: 10px; border-bottom: 1px solid #eee;">Flujo Térmico Lineal Total (Q):</td>
+                        <td style="padding: 10px; border-bottom: 1px solid #eee;">${Math.abs(ws.lastFlux).toFixed(3)} W/m</td>
                     </tr>
                     <tr>
-                        <td style="padding: 6px 8px; border-bottom: 1px solid #eee;">Conductancia Térmica 2D (L<sup>2D</sup>):</td>
-                        <td style="padding: 6px 8px; border-bottom: 1px solid #eee;">${ws.lastL2D.toFixed(3)} W/(m·K)</td>
+                        <td style="padding: 10px; border-bottom: 1px solid #eee;">Conductancia Térmica 2D (L<sup>2D</sup>):</td>
+                        <td style="padding: 10px; border-bottom: 1px solid #eee;">${ws.lastL2D.toFixed(3)} W/(m·K)</td>
                     </tr>
                     <tr>
-                        <td style="padding: 6px 8px;">Ancho Proyectado Termodinámico (b<sub>f</sub>):</td>
-                        <td style="padding: 6px 8px;">${ws.settings.Lp} mm</td>
+                        <td style="padding: 10px;">Ancho Proyectado Termodinámico (b<sub>f</sub>):</td>
+                        <td style="padding: 10px;">${ws.settings.Lp} mm</td>
                     </tr>
                 </table>
 
-                <h4 style="color: #1976d2; border-bottom: 1px solid #ccc; padding-bottom: 5px; font-size: 15px; margin: 0 0 10px 0;">2. Riesgo de Condensación Superficial</h4>
-                <div style="background: #e3f2fd; border-radius: 4px; border-left: 4px solid #1976d2; padding: 10px; margin-bottom: 15px;">
-                    <p style="margin: 0 0 4px 0; font-size: 13px;"><strong>Temperatura superficial mínima (T<sub>si,min</sub>):</strong> ${ws.lastTsiMin.toFixed(1)} ºC</p>
+                <h4 style="color: #1976d2; border-bottom: 2px solid #ccc; padding-bottom: 8px; margin: 0 0 15px 0; font-size: 16px;">2. Riesgo de Condensación Superficial</h4>
+                <div style="background: #e3f2fd; border-radius: 4px; border-left: 4px solid #1976d2; padding: 12px; margin-bottom: 25px;">
+                    <p style="margin: 0 0 6px 0; font-size: 13px;"><strong>Temperatura superficial mínima (T<sub>si,min</sub>):</strong> ${ws.lastTsiMin.toFixed(1)} ºC</p>
                     <p style="margin: 0; font-size: 13px;"><strong>Factor de temperatura interior (f<sub>Rsi</sub>):</strong> <span style="font-weight:bold; font-size:16px; color: ${ws.lastFRsi > 0.70 ? '#2e7d32' : '#d32f2f'};">${ws.lastFRsi.toFixed(3)}</span></p>
                 </div>
 
-                <h4 style="color: #1976d2; border-bottom: 1px solid #ccc; padding-bottom: 5px; font-size: 15px; margin: 0 0 10px 0;">3. Condiciones de Contorno y Materiales</h4>
-                <div style="background: #fdfdfd; border: 1px solid #eee; padding: 10px; border-radius: 5px; font-size: 12px; color: #555; margin-bottom: 15px;">
+                <h4 style="color: #1976d2; border-bottom: 2px solid #ccc; padding-bottom: 8px; margin: 0 0 15px 0; font-size: 16px;">3. Materiales y Condiciones</h4>
+                <ul style="list-style: none; padding: 0; margin: 0 0 20px 0; font-size: 12px;">${matListHTML}</ul>
+                <div style="background: #fdfdfd; border: 1px solid #eee; padding: 10px; border-radius: 5px; font-size: 12px; color: #555;">
                     T<sub>int</sub> = ${ws.settings.tInt}ºC, T<sub>ext</sub> = ${ws.settings.tExt}ºC | Emisividad cavidades (ε): ${ws.settings.emiss}
                 </div>
-                <ul style="list-style: none; padding: 0; margin: 0 0 15px 0; font-size: 12px;">${matListHTML}</ul>
+            </div>
 
-                <h4 style="color: #1976d2; border-bottom: 1px solid #ccc; padding-bottom: 5px; margin: 0 0 10px 0; font-size: 15px;">4. Representación Gráfica</h4>
+            <div class="html2pdf__page-break"></div>
+
+            <div style="padding-top: 30px;">
+                <h4 style="color: #1976d2; border-bottom: 2px solid #ccc; padding-bottom: 8px; margin: 0 0 20px 0; font-size: 18px;">4. Representación Gráfica - ${ws.name}</h4>
                 
-                <div style="margin-bottom: 15px;">
-                    <strong style="display:block; margin-bottom: 5px; font-size: 12px; color: #333;">Fig 1. Geometría, Isotermas y T<sub>si,min</sub></strong>
-                    <div style="text-align: center; background: #fafafa; padding: 5px; border: 1px solid #ddd; border-radius: 4px;">
-                        <img src="${imgGeo}" style="width: auto; max-width: 100%; max-height: 280px; object-fit: contain;">
+                <div style="display: flex; gap: 15px; margin-bottom: 30px;">
+                    <div style="flex: 1;">
+                        <strong style="display:block; margin-bottom: 10px; font-size: 13px; color: #333; text-align: center;">Fig 1. Geometría, Isotermas y T<sub>si,min</sub></strong>
+                        <div style="text-align: center; background: #fafafa; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">
+                            <img src="${imgGeo}" style="width: 100%; height: auto; object-fit: contain;">
+                        </div>
                     </div>
-                </div>
 
-                <div>
-                    <strong style="display:block; margin-bottom: 5px; font-size: 12px; color: #333;">Fig 2. Distribución Térmica (FDM Color Map)</strong>
-                    <div style="text-align: center; background: #fafafa; padding: 5px; border: 1px solid #ddd; border-radius: 4px;">
-                        <img src="${imgThermal}" style="width: auto; max-width: 100%; max-height: 280px; object-fit: contain;">
+                    <div style="flex: 1;">
+                        <strong style="display:block; margin-bottom: 10px; font-size: 13px; color: #333; text-align: center;">Fig 2. Distribución Térmica (FDM)</strong>
+                        <div style="text-align: center; background: #fafafa; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">
+                            <img src="${imgThermal}" style="width: 100%; height: auto; object-fit: contain;">
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1576,32 +1461,32 @@
         let validWorkspaces = workspaces.filter(w => w.T !== null);
         if(validWorkspaces.length === 0) return;
 
-        window.setStatus("Generando informe de alta resolución...", "info");
+        window.setStatus("Generando informe de alta resolución. Por favor, espera...", "info");
 
         let compHTML = '';
         if (validWorkspaces.length > 1) {
             let rows = validWorkspaces.map(w => `
                 <tr>
-                    <td style="padding: 8px; border-bottom: 1px solid #eee;"><strong>${w.name}</strong></td>
-                    <td style="padding: 8px; border-bottom: 1px solid #eee; color: #2e7d32; font-weight: bold;">${w.lastU.toFixed(3)}</td>
-                    <td style="padding: 8px; border-bottom: 1px solid #eee; color: ${w.lastFRsi > 0.7 ? '#2e7d32' : '#d32f2f'}; font-weight: bold;">${w.lastFRsi.toFixed(3)}</td>
-                    <td style="padding: 8px; border-bottom: 1px solid #eee;">${w.lastTsiMin.toFixed(1)} ºC</td>
-                    <td style="padding: 8px; border-bottom: 1px solid #eee;">${w.settings.Lp} mm</td>
+                    <td style="padding: 10px; border-bottom: 1px solid #eee;"><strong>${w.name}</strong></td>
+                    <td style="padding: 10px; border-bottom: 1px solid #eee; color: #2e7d32; font-weight: bold;">${w.lastU.toFixed(3)}</td>
+                    <td style="padding: 10px; border-bottom: 1px solid #eee; color: ${w.lastFRsi > 0.7 ? '#2e7d32' : '#d32f2f'}; font-weight: bold;">${w.lastFRsi.toFixed(3)}</td>
+                    <td style="padding: 10px; border-bottom: 1px solid #eee;">${w.lastTsiMin.toFixed(1)} ºC</td>
+                    <td style="padding: 10px; border-bottom: 1px solid #eee;">${w.settings.Lp} mm</td>
                 </tr>
             `).join('');
 
             compHTML = `
                 <div class="html2pdf__page-break"></div>
-                <div style="padding: 20px 40px; box-sizing: border-box; background: #fff;">
-                    <h3 style="color: #34495e; border-bottom: 3px solid #EDD00E; padding-bottom: 5px; margin-bottom: 15px; font-size: 20px;">Comparativa Global de Sistemas</h3>
-                    <table style="width: 100%; margin-top: 15px; font-size: 13px; border-collapse: collapse; text-align: left; border: 1px solid #ddd;">
+                <div style="padding-top: 30px;">
+                    <h3 style="color: #34495e; border-bottom: 3px solid #EDD00E; padding-bottom: 10px; margin-bottom: 20px;">Comparativa Global de Sistemas</h3>
+                    <table style="width: 100%; margin-top: 30px; font-size: 14px; border-collapse: collapse; text-align: left; border: 1px solid #ddd;">
                         <thead style="background-color: #f5f5f5;">
                             <tr>
-                                <th style="padding: 10px; border-bottom: 2px solid #ccc;">Perfil / Variante</th>
-                                <th style="padding: 10px; border-bottom: 2px solid #ccc;">U<sub>f</sub> (W/m²K)</th>
-                                <th style="padding: 10px; border-bottom: 2px solid #ccc;">f<sub>Rsi</sub></th>
-                                <th style="padding: 10px; border-bottom: 2px solid #ccc;">T<sub>si,min</sub></th>
-                                <th style="padding: 10px; border-bottom: 2px solid #ccc;">Ancho b<sub>f</sub></th>
+                                <th style="padding: 12px; border-bottom: 2px solid #ccc;">Perfil / Variante</th>
+                                <th style="padding: 12px; border-bottom: 2px solid #ccc;">U<sub>f</sub> (W/m²K)</th>
+                                <th style="padding: 12px; border-bottom: 2px solid #ccc;">f<sub>Rsi</sub></th>
+                                <th style="padding: 12px; border-bottom: 2px solid #ccc;">T<sub>si,min</sub></th>
+                                <th style="padding: 12px; border-bottom: 2px solid #ccc;">Ancho b<sub>f</sub></th>
                             </tr>
                         </thead>
                         <tbody>
@@ -1632,96 +1517,101 @@
 
         const report = document.createElement('div');
         report.id = "pdf-report-content";
-        report.style.width = "800px";
         report.style.fontFamily = "'Montserrat', 'Open Sans', Arial, sans-serif";
         report.style.color = "#333";
         report.style.backgroundColor = "#fff";
+        report.style.padding = "20px";
         
         report.innerHTML = `
-            <!-- PORTADA COMPACTA -->
-            <div style="padding: 20px 40px; box-sizing: border-box; background: #fff;">
-                <div style="text-align: center; padding: 40px 30px; border: 3px solid #EDD00E; border-radius: 8px; margin-top: 20px;">
-                    <h1 style="font-size: 32px; color: #2c3e50; text-transform: uppercase; margin: 0 0 10px 0;">Informe Técnico</h1>
-                    <h2 style="font-size: 16px; color: #7f8c8d; font-weight: normal; margin: 0 0 30px 0;">Análisis de Transmitancia Térmica y Condensaciones</h2>
-                    <hr style="border: none; border-top: 4px solid #EDD00E; width: 80px; margin: 0 auto 30px auto;">
-                    <h3 style="font-size: 20px; color: #34495e; margin: 0 0 60px 0;">Evaluación Normativa<br>UNE-EN ISO 10077-2 / 13788</h3>
-                    <div style="margin-bottom: 50px;">
-                        <p style="font-size: 12px; color: #777; text-transform: uppercase; margin: 0 0 5px 0;">Software de simulación termodinámica:</p>
-                        <p style="font-size: 24px; font-weight: bold; color: #333; margin: 0;">Aislantherm</p>
-                    </div>
-                    <div style="margin-bottom: 60px;">
-                        <p style="font-size: 12px; color: #777; text-transform: uppercase; margin: 0 0 5px 0;">Estudio técnico elaborado por:</p>
-                        <p style="font-size: 20px; font-weight: bold; color: #1976d2; margin: 0;">Aislantes técnicos del Mediterráneo</p>
-                    </div>
-                    <div style="border-top: 1px solid #eee; padding-top: 15px; color: #999; font-size: 12px; display: inline-block; width: 80%;">
-                        Fecha de generación del documento: <strong>${new Date().toLocaleDateString()}</strong>
-                    </div>
+            <!-- PORTADA FLUIDA -->
+            <div style="text-align: center; padding: 60px 40px; border: 3px solid #EDD00E; border-radius: 8px; margin-top: 50px;">
+                <h1 style="font-size: 32px; color: #2c3e50; text-transform: uppercase; margin: 0 0 10px 0;">Informe Técnico</h1>
+                <h2 style="font-size: 16px; color: #7f8c8d; font-weight: normal; margin: 0 0 50px 0;">Análisis de Transmitancia Térmica y Condensaciones</h2>
+                <hr style="border: none; border-top: 5px solid #EDD00E; width: 80px; margin: 0 auto 50px auto;">
+                <h3 style="font-size: 20px; color: #34495e; margin: 0 0 100px 0;">Evaluación Normativa<br>UNE-EN ISO 10077-2 / 13788</h3>
+                <div style="margin-bottom: 80px;">
+                    <p style="font-size: 12px; color: #777; text-transform: uppercase; margin: 0 0 5px 0;">Software de simulación termodinámica:</p>
+                    <p style="font-size: 24px; font-weight: bold; color: #333; margin: 0;">Aislantherm</p>
+                </div>
+                <div style="margin-bottom: 120px;">
+                    <p style="font-size: 12px; color: #777; text-transform: uppercase; margin: 0 0 5px 0;">Estudio técnico elaborado por:</p>
+                    <p style="font-size: 20px; font-weight: bold; color: #1976d2; margin: 0;">Aislantes técnicos del Mediterráneo</p>
+                </div>
+                <div style="border-top: 1px solid #eee; padding-top: 20px; color: #999; font-size: 12px; display: inline-block; width: 80%;">
+                    Fecha de generación del documento: <strong>${new Date().toLocaleDateString()}</strong>
                 </div>
             </div>
 
+            <!-- TABLA COMPARATIVA -->
             ${compHTML}
+
+            <!-- FICHAS INDIVIDUALES -->
             ${detailPagesHTML}
 
+            <!-- SALTO PARA JUSTIFICACIÓN -->
             <div class="html2pdf__page-break"></div>
 
-            <div style="padding: 20px 40px; box-sizing: border-box; background: #fff;">
+            <div style="padding-top: 30px;">
                 <h4 style="color: #1976d2; border-bottom: 2px solid #ccc; padding-bottom: 8px; font-size: 18px; margin: 0 0 15px 0;">Justificación Matemática y Marco Normativo</h4>
-                <div style="text-align: justify; font-size: 12px; line-height: 1.5; color: #444;">
-                    <p style="margin: 0 0 10px 0;">El presente análisis computacional resuelve la Ecuación Diferencial de Calor bidimensional en estado estacionario empleando el <strong>Método de Diferencias Finitas (FDM)</strong> para enmallados ortogonales heterogéneos. El diseño termodinámico satisface estrictamente las exigencias estipuladas en:</p>
-                    <ul style="margin: 0 0 20px 0; background: #f5f5f5; padding: 10px 15px 10px 30px; border-radius: 4px; border: 1px solid #eee;">
-                        <li style="margin-bottom: 4px;"><strong>UNE-EN ISO 10077-2:</strong> Método numérico para la determinación de la transmitancia térmica de los marcos.</li>
-                        <li style="margin-bottom: 4px;"><strong>UNE-EN ISO 13788:</strong> Temperatura superficial interior para evitar la humedad superficial crítica y condensación intersticial.</li>
+                <div style="text-align: justify; font-size: 12px; line-height: 1.6; color: #444;">
+                    <p style="margin: 0 0 15px 0;">El presente análisis computacional resuelve la Ecuación Diferencial de Calor bidimensional en estado estacionario (Ecuación de Laplace generalizada: <i>&nabla; &middot; (&lambda; &nabla;T) = 0</i>) empleando el <strong>Método de Diferencias Finitas (FDM)</strong> para enmallados ortogonales heterogéneos. El diseño termodinámico satisface estrictamente las exigencias estipuladas en:</p>
+                    <ul style="margin: 0 0 25px 0; background: #f5f5f5; padding: 15px 20px 15px 40px; border-radius: 4px; border: 1px solid #eee;">
+                        <li style="margin-bottom: 6px;"><strong>UNE-EN ISO 10077-2:</strong> Método numérico para la determinación de la transmitancia térmica de los marcos.</li>
+                        <li style="margin-bottom: 6px;"><strong>UNE-EN ISO 13788:</strong> Temperatura superficial interior para evitar la humedad superficial crítica y condensación intersticial.</li>
                         <li><strong>UNE-EN ISO 10211:</strong> Puentes térmicos en la edificación. Flujos de calor y temperaturas superficiales.</li>
                     </ul>
 
-                    <strong style="font-size: 14px; color: #333; display: block; margin-bottom: 6px;">1. Determinación de la Transmitancia Térmica (U<sub>f</sub>)</strong>
-                    <p style="margin: 0 0 8px 0;">La transmitancia del perfil deriva del acoplamiento térmico iterativo. Alcanzado el equilibrio, se integra el flujo de calor a lo largo de las fronteras sometidas a condiciones de convección externa, deduciéndose la conductancia bidimensional geométrica (L<sup>2D</sup>):</p>
-                    <div style="text-align:center; padding: 8px; margin: 8px 0 15px 0; background: #fff8e1; border: 1px dashed #ffb300; border-radius: 4px;">
-                        <span style="font-size: 15px; font-family: 'Times New Roman', serif;"><i>L<sup>2D</sup> = Q / &Delta;T &nbsp; ; &nbsp; U<sub>f</sub> = L<sup>2D</sup> / b<sub>f</sub></i></span>
+                    <strong style="font-size: 14px; color: #333; display: block; margin-bottom: 8px;">1. Determinación de la Transmitancia Térmica (U<sub>f</sub>)</strong>
+                    <p style="margin: 0 0 10px 0;">La transmitancia del perfil deriva del acoplamiento térmico iterativo mediante un algoritmo SOR dinámico. Alcanzado el equilibrio térmico, se integra el flujo de calor a lo largo de las fronteras sometidas a condiciones de convección externa, deduciéndose la conductancia bidimensional geométrica (L<sup>2D</sup>):</p>
+                    <div style="text-align:center; padding: 15px; margin: 15px 0 25px 0; background: #fff8e1; border: 1px dashed #ffb300; border-radius: 4px;">
+                        <span style="font-size: 16px; font-family: 'Times New Roman', serif;"><i>L<sup>2D</sup> = Q / &Delta;T &nbsp; ; &nbsp; U<sub>f</sub> = L<sup>2D</sup> / b<sub>f</sub></i></span>
                     </div>
 
-                    <strong style="font-size: 14px; color: #333; display: block; margin-bottom: 6px;">2. Riesgo de Condensación (Zonas Climáticas y f<sub>Rsi</sub>)</strong>
-                    <div style="background: #e3f2fd; padding: 12px; border-left: 4px solid #1976d2; margin-bottom: 15px; border-radius: 4px;">
-                        <p style="margin: 0 0 8px 0; font-size: 12px;">Según el DB-HE del Código Técnico de la Edificación (CTE), para evitar condensaciones superficiales y formación de moho, el factor de temperatura superficial interior <strong>(f<sub>Rsi</sub>)</strong> debe ser superior a un valor límite <strong>(f<sub>Rsi,min</sub>)</strong> que depende de la zona climática de invierno de la localidad:</p>
-                        <table style="width: 100%; font-size: 11px; background: white; border-collapse: collapse; text-align: center;">
+                    <strong style="font-size: 14px; color: #333; display: block; margin-bottom: 8px;">2. Evaluación del Riesgo de Condensación (Zonas Climáticas y f<sub>Rsi</sub>)</strong>
+                    <p style="margin: 0 0 10px 0;">Para prevenir patologías asociadas al vapor de agua, se localiza analíticamente el nodo frontera interior de menor nivel termodinámico (T<sub>si,min</sub>). Su cómputo penaliza obligatoriamente la capacidad de disipación interna sustituyendo temporalmente la resistividad convectiva estándar por el patrón de aire estancado estricto (R<sub>si,cond</sub> = 0.25 m²K/W):</p>
+                    <div style="text-align:center; padding: 15px; margin: 15px 0 25px 0; background: #fff8e1; border: 1px dashed #ffb300; border-radius: 4px;">
+                        <span style="font-size: 16px; font-family: 'Times New Roman', serif;"><i>f<sub>Rsi</sub> = (T<sub>si,min</sub> - T<sub>ext</sub>) / (T<sub>int</sub> - T<sub>ext</sub>)</i></span>
+                    </div>
+                    <div style="background: #e3f2fd; padding: 15px; border-left: 4px solid #1976d2; margin-bottom: 20px; border-radius: 4px;">
+                        <p style="margin: 0 0 10px 0; font-size: 13px;">Según el DB-HE del Código Técnico de la Edificación (CTE), para evitar condensaciones superficiales y formación de moho, el factor de temperatura superficial interior <strong>(f<sub>Rsi</sub>)</strong> debe ser superior a un valor límite <strong>(f<sub>Rsi,min</sub>)</strong> que depende de la zona climática de invierno de la localidad:</p>
+                        <table style="width: 100%; font-size: 12px; background: white; border-collapse: collapse; text-align: center;">
                             <tr style="background: #f0f0f0;">
-                                <th style="padding: 4px; border: 1px solid #ccc;">Zona Climática</th>
-                                <th style="padding: 4px; border: 1px solid #ccc;">&alpha;</th>
-                                <th style="padding: 4px; border: 1px solid #ccc;">A</th>
-                                <th style="padding: 4px; border: 1px solid #ccc;">B</th>
-                                <th style="padding: 4px; border: 1px solid #ccc;">C</th>
-                                <th style="padding: 4px; border: 1px solid #ccc;">D</th>
-                                <th style="padding: 4px; border: 1px solid #ccc;">E</th>
+                                <th style="padding: 6px; border: 1px solid #ccc;">Zona Climática</th>
+                                <th style="padding: 6px; border: 1px solid #ccc;">&alpha; (Canarias)</th>
+                                <th style="padding: 6px; border: 1px solid #ccc;">A (Litoral cálido)</th>
+                                <th style="padding: 6px; border: 1px solid #ccc;">B (Litoral / Sur)</th>
+                                <th style="padding: 6px; border: 1px solid #ccc;">C (Interior)</th>
+                                <th style="padding: 6px; border: 1px solid #ccc;">D (Meseta norte)</th>
+                                <th style="padding: 6px; border: 1px solid #ccc;">E (Montaña)</th>
                             </tr>
                             <tr>
-                                <td style="padding: 4px; border: 1px solid #ccc; font-weight: bold;">f<sub>Rsi,min</sub> exigido</td>
-                                <td style="padding: 4px; border: 1px solid #ccc;">0.52</td>
-                                <td style="padding: 4px; border: 1px solid #ccc;">0.50</td>
-                                <td style="padding: 4px; border: 1px solid #ccc;">0.56</td>
-                                <td style="padding: 4px; border: 1px solid #ccc;">0.61</td>
-                                <td style="padding: 4px; border: 1px solid #ccc;">0.64</td>
-                                <td style="padding: 4px; border: 1px solid #ccc;">0.68</td>
+                                <td style="padding: 6px; border: 1px solid #ccc; font-weight: bold;">f<sub>Rsi,min</sub> exigido</td>
+                                <td style="padding: 6px; border: 1px solid #ccc;">0.52</td>
+                                <td style="padding: 6px; border: 1px solid #ccc;">0.50</td>
+                                <td style="padding: 6px; border: 1px solid #ccc;">0.56</td>
+                                <td style="padding: 6px; border: 1px solid #ccc;">0.61</td>
+                                <td style="padding: 6px; border: 1px solid #ccc;">0.64</td>
+                                <td style="padding: 6px; border: 1px solid #ccc;">0.68</td>
                             </tr>
                         </table>
                     </div>
 
-                    <strong style="font-size: 14px; color: #333; display: block; margin-bottom: 6px;">3. Termodinámica de Cavidades Estancas</strong>
-                    <p style="margin: 0;">En rigurosa aplicación del Anexo D de ISO 10077-2, las cámaras de aire confinadas no se simulan como conductores puros. El algoritmo identifica paramétricamente cada geometría e implanta una conductividad equivalente (<i>&lambda;<sub>eq</sub></i>) que modela la disipación convectiva y radiativa.</p>
+                    <strong style="font-size: 14px; color: #333; display: block; margin-bottom: 8px;">3. Termodinámica de Cavidades Estancas</strong>
+                    <p style="margin: 0;">En rigurosa aplicación del Anexo D de ISO 10077-2, las cámaras de aire confinadas en la matriz extruida no se simulan como conductores isótropos puros. El algoritmo identifica de forma paramétrica cada geometría hueca e implanta una conductividad térmica equivalente (<i>&lambda;<sub>eq</sub></i>) iterativa, que modela la disipación conjunta de flujo convectivo tangencial y el puente radiativo infrarrojo transversal de Stefan-Boltzmann.</p>
                 </div>
             </div>
         `;
 
         html2pdf().from(report).set({
-            margin: 10,
+            margin: [10, 10, 10, 10], 
             filename: validWorkspaces.length > 1 ? 'Aislantherm_Estudio_Comparativo.pdf' : 'Aislantherm_Informe_Tecnico.pdf',
             image: { type: 'jpeg', quality: 0.98 },
-            html2canvas: { scale: 2, logging: false, windowWidth: 800 },
-            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-            pagebreak: { mode: 'css', after: '.pdf-page' }
+            html2canvas: { scale: 2, logging: false },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
         }).save().then(() => window.setStatus("✅ Informe PDF descargado correctamente.", "success"));
     };
 
-    updateMaterialUI();
+    window.updateMaterialUI();
 })();
 </script>
 </body>
