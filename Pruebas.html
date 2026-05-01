@@ -63,12 +63,10 @@
         canvas { display:block; width:100%; height:auto; cursor:crosshair; background-image:radial-gradient(#ddd 1px,transparent 1px); background-size:20px 20px; }
         canvas.grabbing { cursor:grabbing !important; }
 
-        .legend-panel { display:flex; flex-wrap:wrap; gap:0.5rem; background:#fff; padding:12px; border-radius:var(--radius); align-items:center; border:1px solid #ddd; margin-bottom:15px; }
-        .legend-item { display:flex; align-items:center; gap:8px; font-size:0.75rem; cursor:pointer; padding:6px 10px; border-radius:4px; transition:var(--transition); border:1px solid transparent; }
-        .legend-item:hover { background:#f0f0f0; border-color:#ddd; } .legend-item.active { background:var(--primary-light); border-color:var(--primary); font-weight:600; }
+        .legend-panel { display:flex; flex-wrap:wrap; gap:0.5rem; background:#fff; padding:12px; border-radius:var(--radius); align-items:center; border:1px solid #ddd; margin-bottom:15px; min-height:45px; }
         .legend-color { width:16px; height:16px; border-radius:3px; border:1px solid rgba(0,0,0,0.2); }
         .boundary-legend { display:flex; gap:1rem; align-items:center; margin-left:auto; font-size:0.75rem; font-weight:700; border-left:1px solid #ddd; padding-left:15px; }
-        .boundary-swatch { width:12px; height:12px; border-radius:50%; display:inline-block; border:1px solid #000; }
+        .boundary-swatch { width:12px; height:12px; border-radius:50%; display:inline-block; border:1px solid #000; vertical-align:-2px; margin-right:4px; }
 
         #customMatPanel { background:#fafafa; padding:15px; border-radius:8px; border:1px dashed #ccc; margin-top:10px; display:none; }
         .result-card { display:none; background:var(--green); color:#fff; padding:20px; border-radius:var(--radius); text-align:center; margin-bottom:20px; }
@@ -138,7 +136,7 @@
                         <div class="control-group" style="flex:1"><label>T. Int (ºC)</label><input type="number" id="tInt" value="20"></div>
                     </div>
                     <div class="btn-group-row" style="margin-top:5px;">
-                        <div class="control-group" style="flex:1"><label>Ancho b<sub>f</sub> (mm)</label><input type="number" id="LpInput" value="100"></div>
+                        <div class="control-group" style="flex:1"><label title="Se calcula automáticamente según el contorno interior (rojo)">Ancho b<sub>f</sub> (mm) <i class="fas fa-magic" style="color:var(--primary-dark)"></i></label><input type="number" id="LpInput" value="100"></div>
                         <div class="control-group" style="flex:1"><label>Emisividad (ε)</label><input type="number" id="emissInput" value="0.90" step="0.05" min="0.05" max="1.0"></div>
                     </div>
                 </div>
@@ -159,10 +157,12 @@
             <div class="status-bar" id="status"><div><i class="fas fa-info-circle"></i> <span id="statusText">Esperando archivo DXF...</span></div>
                 <div class="btn-group-row">
                     <button id="btnRotate" class="btn btn-outline btn-sm" title="Rotar 90º"><i class="fas fa-sync-alt"></i></button>
+                    <button id="btnZoomInterior" class="btn btn-outline btn-sm" title="Centrar en Medición Interior (Rojo)"><i class="fas fa-crosshairs"></i></button>
                     <button id="btnZoomReset" class="btn btn-outline btn-sm" title="Centrar Vista"><i class="fas fa-compress-arrows-alt"></i></button>
                 </div>
             </div>
             <div class="legend-panel" id="legend"></div>
+            <!-- EL BOTÓN DEL PDF ESTÁ AQUÍ. ESTÁ OCULTO (display:none) HASTA QUE CALCULAS. -->
             <div class="btn-group-row" style="justify-content:center;margin-bottom:20px;">
                 <button id="btnToggleIso" class="btn btn-outline" style="display:none;"><i class="fas fa-water"></i> Isotermas</button>
                 <button id="btnBackToEdit" class="btn btn-edit" style="display:none;"><i class="fas fa-pencil-alt"></i> Editar Geometría</button>
@@ -251,7 +251,7 @@ const App = (() => {
             $('tExt').value = w.settings.tExt; $('tInt').value = w.settings.tInt;
             $('gridRes').value = w.settings.res; $('emissInput').value = w.settings.emiss;
         }
-        updateResultUI(); updateCalcButton(); updatePdfButton(); renderTabs(); draw();
+        updateResultUI(); updateCalcButton(); updatePdfButton(); renderTabs(); draw(); updateLegendUI();
     };
 
     // ─── ACTUALIZACIÓN DE UI ───
@@ -275,12 +275,40 @@ const App = (() => {
         }
     };
     const updateLegendUI = () => {
-        const activeIdx = parseInt($('matSelect').value) || 0;
-        $('legend').innerHTML = materials.map((m, i) =>
-            `<div class="legend-item ${i === activeIdx ? 'active' : ''}" onclick="App.setBrush(${i})">
-                <div class="legend-color" style="background:${m.color}"></div><span>${m.name}</span>
-            </div>`).join('') +
-            `<div class="boundary-legend"><span><span class="boundary-swatch" style="background:#1976d2"></span> Ext.</span><span><span class="boundary-swatch" style="background:#d32f2f"></span> Int.</span></div>`;
+        const usedMatIndices = new Set();
+        polygons.forEach(p => usedMatIndices.add(p.matIdx));
+
+        const usedBoundTypes = new Set();
+        boundaryEdges.forEach(e => {
+            if (e.type > 0) usedBoundTypes.add(e.type);
+        });
+
+        let legendHTML = '';
+        if (usedMatIndices.size === 0 && usedBoundTypes.size === 0) {
+            legendHTML = '<span style="font-size:0.75rem; color:#888;">El diseño actual está vacío. Importa un DXF para visualizar la leyenda.</span>';
+        } else {
+            Array.from(usedMatIndices).sort((a,b) => a-b).forEach(idx => {
+                const m = materials[idx];
+                if (m) {
+                    legendHTML += `
+                    <div style="display:flex; align-items:center; gap:8px; font-size:0.75rem; padding:6px 10px; border-radius:4px; border:1px solid #ddd; background:#fafafa; cursor:default;">
+                        <div class="legend-color" style="background:${m.color}"></div><span>${m.name}</span>
+                    </div>`;
+                }
+            });
+
+            if (usedBoundTypes.size > 0) {
+                legendHTML += `<div class="boundary-legend">`;
+                const boundLabels = { 1: {n:'Ext.', c:'#1976d2'}, 2: {n:'Int.', c:'#d32f2f'}, 3: {n:'Adiab.', c:'#757575'}, 4: {n:'Int. Sec.', c:'#ff9800'} };
+                Array.from(usedBoundTypes).sort((a,b) => a-b).forEach(type => {
+                    if (boundLabels[type]) {
+                        legendHTML += `<span><span class="boundary-swatch" style="background:${boundLabels[type].c}"></span> ${boundLabels[type].n}</span>`;
+                    }
+                });
+                legendHTML += `</div>`;
+            }
+        }
+        $('legend').innerHTML = legendHTML;
     };
     const updateMaterialUI = () => {
         const sel = $('matSelect'), current = sel.value;
@@ -336,7 +364,7 @@ const App = (() => {
     };
     const setBrushMaterial = (idx) => {
         if (editMode !== 'MATERIAL') switchMode('MATERIAL', 'btnModeMat', 'Modo Materiales');
-        $('matSelect').value = idx; updateLegendUI(); setStatus(`Pincel: ${materials[idx].name}`);
+        $('matSelect').value = idx; setStatus(`Pincel: ${materials[idx].name}`);
     };
 
     // ─── TRANSFORMACIONES ───
@@ -572,6 +600,23 @@ const App = (() => {
         if (!polygons.length || !boundaryEdges.some(e => e.type === 1) || !boundaryEdges.some(e => e.type === 2)) {
             setStatus('❌ Falta marcar Borde Exterior (azul) e Interior de Medición (rojo).', 'error'); return;
         }
+
+        // Auto-calcular b_f justo antes de calcular según la proyección del contorno rojo
+        let tMinX = Infinity, tMaxX = -Infinity, tMinY = Infinity, tMaxY = -Infinity;
+        boundaryEdges.forEach(e => {
+            if (e.type === 2) {
+                tMinX = Math.min(tMinX, e.p1.x, e.p2.x);
+                tMaxX = Math.max(tMaxX, e.p1.x, e.p2.x);
+                tMinY = Math.min(tMinY, e.p1.y, e.p2.y);
+                tMaxY = Math.max(tMaxY, e.p1.y, e.p2.y);
+            }
+        });
+        const autoLp = Math.max(tMaxX - tMinX, tMaxY - tMinY);
+        if (autoLp > 0 && autoLp !== Infinity && autoLp !== -Infinity) {
+            $('LpInput').value = autoLp.toFixed(2);
+            if (ws()) ws().settings.Lp = autoLp;
+        }
+
         const res = parseInt($('gridRes').value), lp = (getVal('LpInput', 100)) / 1000;
         $('solverStatus').style.display = 'block'; $('calcBtn').disabled = true;
 
@@ -717,6 +762,9 @@ const App = (() => {
                 lastFRsi = Math.max(0, Math.min(1, (minTsi - te) / deltaT)); lastTsiMin = minTsi;
                 lastAlgo = `FDM Dinámico${res >= 600 ? ' Alta' : ''}${res >= 1000 ? ' Ultra' : ''}`;
                 showThermalMap = true;
+                
+                saveState(); // <-- AÑADIDO: Guarda los resultados en la pestaña actual inmediatamente
+                
                 updateResultUI(); updatePdfButton();
                 $('btnBackToEdit').style.display = 'inline-flex'; $('btnToggleIso').style.display = 'inline-flex';
                 $('solverStatus').style.display = 'none'; $('calcBtn').disabled = false;
@@ -1124,16 +1172,38 @@ const App = (() => {
             materials.push({ name, k, color }); updateMaterialUI(); $('matSelect').value = materials.length - 1;
             $('customMatPanel').style.display = 'none'; setStatus(`Material "${name}" añadido.`);
         };
-        $('matSelect').onchange = function () { if (this.value === 'CUSTOM') $('customMatPanel').style.display = 'block'; else { $('customMatPanel').style.display = 'none'; updateLegendUI(); } };
+        $('matSelect').onchange = function () { if (this.value === 'CUSTOM') $('customMatPanel').style.display = 'block'; else { $('customMatPanel').style.display = 'none'; } };
         $('btnBackToEdit').onclick = () => { showThermalMap = false; showIsotherms = false; updateResultUI(); updatePdfButton(); setStatus('Modo edición activado.'); draw(); };
         $('btnToggleIso').onclick = () => { showIsotherms = !showIsotherms; updateResultUI(); draw(); };
         $('btnRotate').onclick = () => {
             if (!polygons.length) return;
             const cx = (minX + maxX) / 2, cy = (minY + maxY) / 2;
             polygons.forEach(p => p.pts.forEach(pt => { const dx = pt.x - cx, dy = pt.y - cy; pt.x = cx - dy; pt.y = cy + dx; }));
-            recalcBounds(); calcBounds = null; boundaryEdges = extractBoundaryEdges(polygons, getVal('tolInput', 0.1)); draw();
+            recalcBounds(); calcBounds = null; boundaryEdges = extractBoundaryEdges(polygons, getVal('tolInput', 0.1)); draw(); updateLegendUI();
         };
         $('btnZoomReset').onclick = () => { zoomLevel = 1; offsetX = 0; offsetY = 0; draw(); };
+        $('btnZoomInterior').onclick = () => {
+            if (!polygons.length) return;
+            let tMinX = Infinity, tMaxX = -Infinity, tMinY = Infinity, tMaxY = -Infinity;
+            let found = false;
+            boundaryEdges.forEach(e => {
+                if (e.type === 2) {
+                    tMinX = Math.min(tMinX, e.p1.x, e.p2.x);
+                    tMaxX = Math.max(tMaxX, e.p1.x, e.p2.x);
+                    tMinY = Math.min(tMinY, e.p1.y, e.p2.y);
+                    tMaxY = Math.max(tMaxY, e.p1.y, e.p2.y);
+                    found = true;
+                }
+            });
+            if (!found) { setStatus('No hay contorno interior (rojo) marcado.', 'error'); return; }
+            const tw = tMaxX - tMinX || 10, th = tMaxY - tMinY || 10;
+            const tcx = (tMinX + tMaxX) / 2, tcy = (tMinY + tMaxY) / 2;
+            zoomLevel = Math.min((canvas.width - 80) / tw, (canvas.height - 80) / th) / baseScale;
+            const cgx = (minX + maxX) / 2, cgy = (minY + maxY) / 2, s = baseScale * zoomLevel;
+            offsetX = (cgx - tcx) * s; offsetY = (tcy - cgy) * s;
+            draw();
+            setStatus('Vista centrada en el borde interior de medición.');
+        };
         $('calcBtn').onclick = runSolver;
         $('btnPdf').onclick = buildPDF;
         $('btnSaveProject').onclick = () => {
@@ -1155,7 +1225,7 @@ const App = (() => {
                         recalcBounds(); cropRect = null; calcBounds = null; boundaryEdges = extractBoundaryEdges(polygons, tol);
                         T = null; showThermalMap = false; showIsotherms = false;
                         updateCalcButton(); updateResultUI(); saveState(); renderTabs();
-                        setStatus(`✅ DXF importado (${polygons.length} áreas).`, 'success'); draw();
+                        setStatus(`✅ DXF importado (${polygons.length} áreas).`, 'success'); draw(); updateLegendUI();
                     } else throw new Error('No se formaron áreas cerradas. Ajusta la Tolerancia.');
                 } catch (err) { setStatus('Error DXF: ' + err.message, 'error'); }
             };
@@ -1173,7 +1243,7 @@ const App = (() => {
                         const w = createWS('Perfil Importado'); Object.assign(w, data); workspaces = [w]; wsCounter = 1; loadState(0, true);
                         if (data.minX === undefined) recalcBounds();
                     } else throw new Error('Formato inválido.');
-                    updateMaterialUI(); recalcBounds(); draw(); setStatus('✅ Proyecto cargado.', 'success');
+                    updateMaterialUI(); recalcBounds(); draw(); updateLegendUI(); setStatus('✅ Proyecto cargado.', 'success');
                 } catch (err) { setStatus('Error: ' + err.message, 'error'); }
             };
             reader.readAsText(file); e.target.value = '';
@@ -1252,9 +1322,28 @@ const App = (() => {
                     let queue = [[hoveredEdgeIdx, [hoveredEdgeIdx]]], visited = new Set([hoveredEdgeIdx]);
                     while (queue.length) { const [curr, path] = queue.shift(); if (boundaryEdges[curr].type && curr !== hoveredEdgeIdx) { path.forEach(id => boundaryEdges[id].type = activeType); break; } for (const n of boundaryAdj[curr]) if (!visited.has(n)) { visited.add(n); queue.push([n, [...path, n]]); } }
                 } else boundaryEdges[hoveredEdgeIdx].type = activeType;
-                draw();
+                draw(); updateLegendUI();
+
+                // Auto-calcular b_f visualmente al marcar contornos
+                let tMinX = Infinity, tMaxX = -Infinity, tMinY = Infinity, tMaxY = -Infinity, hasType2 = false;
+                boundaryEdges.forEach(edge => {
+                    if (edge.type === 2) {
+                        tMinX = Math.min(tMinX, edge.p1.x, edge.p2.x);
+                        tMaxX = Math.max(tMaxX, edge.p1.x, edge.p2.x);
+                        tMinY = Math.min(tMinY, edge.p1.y, edge.p2.y);
+                        tMaxY = Math.max(tMaxY, edge.p1.y, edge.p2.y);
+                        hasType2 = true;
+                    }
+                });
+                if (hasType2) {
+                    const autoLp = Math.max(tMaxX - tMinX, tMaxY - tMinY);
+                    if (autoLp > 0 && autoLp !== Infinity && autoLp !== -Infinity) {
+                        $('LpInput').value = autoLp.toFixed(2);
+                        if (ws()) { ws().settings.Lp = autoLp; saveState(); }
+                    }
+                }
             }
-            if (editMode === 'MATERIAL' && hoveredPolyIdx !== -1) { const mat = parseInt($('matSelect').value); if (!isNaN(mat)) { polygons[hoveredPolyIdx].matIdx = mat; selectedPoly = hoveredPolyIdx; draw(); } }
+            if (editMode === 'MATERIAL' && hoveredPolyIdx !== -1) { const mat = parseInt($('matSelect').value); if (!isNaN(mat)) { polygons[hoveredPolyIdx].matIdx = mat; selectedPoly = hoveredPolyIdx; draw(); updateLegendUI(); } }
         };
         document.querySelectorAll('#tolInput, #LpInput, #tExt, #tInt, #gridRes, #emissInput').forEach(el => el.onchange = () => { if (ws()) saveState(); });
         updateMaterialUI(); renderTabs(); draw();
