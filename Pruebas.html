@@ -732,71 +732,377 @@ const App = (() => {
         saveState();
         const validWS = workspaces.filter(w => w.T !== null);
         if (!validWS.length) return;
-        setStatus('Generando informe...', 'info');
+        setStatus('Generando informe técnico profesional...', 'info');
 
-        let compHTML = '';
-        if (validWS.length > 1) {
-            compHTML = `<div class="html2pdf__page-break"></div><div style="padding-top:10px;">
-                <h3 style="color:#34495e;border-bottom:3px solid #EDD00E;padding-bottom:10px;margin-bottom:20px;">Comparativa Global</h3>
-                <table style="width:100%;font-size:14px;border-collapse:collapse;border:1px solid #ddd;"><thead style="background:#f5f5f5;"><tr><th style="padding:12px;">Perfil</th><th>U<sub>f</sub> (W/m²K)</th><th>f<sub>Rsi</sub></th><th>T<sub>si,min</sub></th><th>Ancho b<sub>f</sub></th></tr></thead><tbody>
-                ${validWS.map(w => `<tr><td style="padding:10px;"><strong>${w.name}</strong></td><td style="color:#2e7d32;font-weight:bold;">${w.lastU.toFixed(3)}</td><td style="color:${w.lastFRsi > 0.7 ? '#2e7d32' : '#d32f2f'};font-weight:bold;">${w.lastFRsi.toFixed(3)}</td><td>${w.lastTsiMin.toFixed(1)} ºC</td><td>${w.settings.Lp} mm</td></tr>`).join('')}
-                </tbody></table></div>`;
-        }
+        const reportDate = new Date();
+        const dateStr = reportDate.toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' });
+        const reportRef = `AT-${reportDate.getFullYear()}${String(reportDate.getMonth()+1).padStart(2,'0')}${String(reportDate.getDate()).padStart(2,'0')}-${String(Math.floor(Math.random()*9000)+1000)}`;
 
-        const origIdx = currentWsIdx; let detailHTML = '';
+        const S = (s) => `font-family:'Montserrat','Open Sans',sans-serif;${s}`;
+
+        // ─── PORTADA ───
+        const coverHTML = `
+        <div style="${S('min-height:277mm;display:flex;flex-direction:column;background:#fff;')}">
+            <!-- Header band -->
+            <div style="background:#1a1a2e;padding:28px 35px;display:flex;align-items:center;justify-content:space-between;">
+                <div>
+                    <span style="color:#EDD00E;font-size:28px;font-weight:800;letter-spacing:2px;">AISLAN</span><span style="color:#fff;font-size:28px;font-weight:800;letter-spacing:2px;">THERM</span>
+                    <div style="color:#aaa;font-size:10px;letter-spacing:3px;margin-top:3px;">AISLANTES TÉCNICOS DEL MEDITERRÁNEO</div>
+                </div>
+                <div style="text-align:right;color:#aaa;font-size:10px;line-height:1.8;">
+                    <div style="color:#EDD00E;font-weight:700;font-size:11px;">REF. ${reportRef}</div>
+                    <div>${dateStr}</div>
+                </div>
+            </div>
+            <!-- Hero section -->
+            <div style="background:linear-gradient(135deg,#1a1a2e 0%,#16213e 60%,#0f3460 100%);flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:50px 35px;text-align:center;">
+                <div style="width:60px;height:4px;background:#EDD00E;margin:0 auto 30px;"></div>
+                <h1 style="color:#fff;font-size:36px;font-weight:800;letter-spacing:1px;margin:0 0 12px;line-height:1.2;">INFORME TÉCNICO</h1>
+                <h2 style="color:#EDD00E;font-size:16px;font-weight:600;letter-spacing:3px;margin:0 0 30px;text-transform:uppercase;">Análisis de Transmitancia Térmica</h2>
+                <div style="width:60px;height:4px;background:#EDD00E;margin:0 auto 40px;"></div>
+                <div style="background:rgba(255,255,255,0.07);border:1px solid rgba(237,208,14,0.3);border-radius:8px;padding:22px 40px;display:inline-block;">
+                    <div style="color:#aaa;font-size:10px;letter-spacing:3px;margin-bottom:8px;">NORMATIVA APLICABLE</div>
+                    <div style="color:#fff;font-size:13px;font-weight:600;">UNE-EN ISO 10077-2 · UNE-EN ISO 13788 · UNE-EN ISO 10211</div>
+                </div>
+                <div style="margin-top:50px;color:#aaa;font-size:11px;line-height:2;">
+                    <div><span style="color:#EDD00E;font-weight:600;">MÉTODO DE CÁLCULO:</span> Diferencias Finitas (FDM) con SOR Dinámico</div>
+                    <div><span style="color:#EDD00E;font-weight:600;">PERFILES ANALIZADOS:</span> ${validWS.length} perfil${validWS.length > 1 ? 'es' : ''}</div>
+                </div>
+            </div>
+            <!-- Footer band -->
+            <div style="background:#111;padding:14px 35px;display:flex;justify-content:space-between;align-items:center;">
+                <div style="color:#555;font-size:9px;letter-spacing:1px;">DOCUMENTO DE USO TÉCNICO · GENERADO CON AISLANTHERM</div>
+                <div style="color:#555;font-size:9px;">Pág. 1</div>
+            </div>
+        </div>`;
+
+        // ─── ÍNDICE ───
+        const indexHTML = `
+        <div class="html2pdf__page-break"></div>
+        <div style="${S('padding:35px;min-height:257mm;display:flex;flex-direction:column;')}">
+            <div style="border-bottom:3px solid #EDD00E;padding-bottom:12px;margin-bottom:30px;display:flex;justify-content:space-between;align-items:flex-end;">
+                <h2 style="color:#1a1a2e;font-size:20px;font-weight:800;margin:0;">CONTENIDO DEL INFORME</h2>
+                <span style="color:#aaa;font-size:10px;">REF. ${reportRef}</span>
+            </div>
+            <div style="flex:1;">
+                ${[
+                    ['1.', 'Alcance y Metodología', '3'],
+                    ['2.', 'Parámetros de Simulación', '3'],
+                    ...validWS.map((w, i) => [`${3 + i}.`, `Análisis: ${w.name}`, `${4 + i}`]),
+                    ...(validWS.length > 1 ? [['·', 'Cuadro Comparativo Global', `${4 + validWS.length}`]] : []),
+                    [String.fromCharCode(validWS.length > 1 ? 65 + validWS.length : 65) + '.', 'Justificación Normativa y Metodología', `${5 + validWS.length}`]
+                ].map(([num, title, page]) => `
+                    <div style="display:flex;align-items:flex-end;margin-bottom:14px;gap:8px;">
+                        <span style="color:#EDD00E;font-weight:800;font-size:13px;min-width:30px;">${num}</span>
+                        <span style="color:#333;font-size:13px;flex:1;">${title}</span>
+                        <span style="border-bottom:1px dotted #ccc;flex:1;margin-bottom:4px;"></span>
+                        <span style="color:#666;font-size:12px;min-width:20px;text-align:right;">${page}</span>
+                    </div>`).join('')}
+            </div>
+            <div style="margin-top:auto;padding-top:20px;border-top:1px solid #eee;display:flex;justify-content:space-between;color:#aaa;font-size:9px;">
+                <span>AISLANTHERM · Aislantes Técnicos del Mediterráneo</span><span>REF. ${reportRef} · ${dateStr}</span>
+            </div>
+        </div>`;
+
+        // ─── ALCANCE Y PARÁMETROS ───
+        const scopeHTML = `
+        <div class="html2pdf__page-break"></div>
+        <div style="${S('padding:35px;')}">
+            <div style="border-bottom:3px solid #EDD00E;padding-bottom:12px;margin-bottom:25px;display:flex;justify-content:space-between;align-items:flex-end;">
+                <h2 style="color:#1a1a2e;font-size:18px;font-weight:800;margin:0;">1. ALCANCE Y METODOLOGÍA</h2>
+                <span style="color:#aaa;font-size:10px;">REF. ${reportRef}</span>
+            </div>
+            <p style="color:#444;font-size:11px;line-height:1.8;margin-bottom:20px;">
+                El presente informe recoge los resultados del análisis numérico de transmitancia térmica lineal realizado mediante el software <strong>Aislantherm</strong>, desarrollado conforme a los requisitos del método de las diferencias finitas en dos dimensiones (FDM 2D) definido en la norma <strong>UNE-EN ISO 10077-2:2018</strong>.
+            </p>
+            <p style="color:#444;font-size:11px;line-height:1.8;margin-bottom:25px;">
+                El objetivo del análisis es determinar el coeficiente de transmitancia térmica del perfil de marco (<strong>U<sub>f</sub></strong>), el flujo de calor lineal (<strong>L<sup>2D</sup></strong>), la temperatura superficial mínima interior (<strong>T<sub>si,min</sub></strong>) y el factor de temperatura superficial (<strong>f<sub>Rsi</sub></strong>), en condiciones de régimen estacionario y bajo las condiciones de contorno especificadas.
+            </p>
+            <div style="background:#f8f9fa;border-left:4px solid #1a1a2e;padding:18px 20px;border-radius:0 6px 6px 0;margin-bottom:25px;">
+                <div style="color:#1a1a2e;font-weight:700;font-size:11px;letter-spacing:1px;margin-bottom:10px;">NORMAS DE REFERENCIA</div>
+                ${[
+                    ['UNE-EN ISO 10077-2:2018', 'Comportamiento térmico de ventanas, puertas y persianas. Cálculo del coeficiente de transmitancia térmica. Método numérico para marcos.'],
+                    ['UNE-EN ISO 13788:2013', 'Comportamiento higrotérmico de los componentes y elementos de los edificios. Temperatura superficial interior para evitar la humedad superficial crítica y la condensación intersticial.'],
+                    ['UNE-EN ISO 10211:2018', 'Puentes térmicos en edificación. Flujos de calor y temperaturas superficiales. Cálculos detallados.']
+                ].map(([norm, desc]) => `
+                    <div style="display:flex;gap:12px;margin-bottom:8px;align-items:flex-start;">
+                        <span style="background:#EDD00E;color:#1a1a2e;font-size:9px;font-weight:800;padding:2px 6px;border-radius:3px;white-space:nowrap;margin-top:1px;">${norm}</span>
+                        <span style="color:#555;font-size:10px;line-height:1.6;">${desc}</span>
+                    </div>`).join('')}
+            </div>
+
+            <div style="border-bottom:3px solid #EDD00E;padding-bottom:12px;margin-bottom:25px;">
+                <h2 style="color:#1a1a2e;font-size:18px;font-weight:800;margin:0;">2. PARÁMETROS DE SIMULACIÓN</h2>
+            </div>
+            <table style="width:100%;border-collapse:collapse;font-size:11px;">
+                <thead>
+                    <tr style="background:#1a1a2e;color:#fff;">
+                        <th style="padding:10px 14px;text-align:left;font-weight:700;letter-spacing:0.5px;">PARÁMETRO</th>
+                        <th style="padding:10px 14px;text-align:left;font-weight:700;">SÍMBOLO</th>
+                        <th style="padding:10px 14px;text-align:left;font-weight:700;">VALOR</th>
+                        <th style="padding:10px 14px;text-align:left;font-weight:700;">REFERENCIA NORMATIVA</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${[
+                        ['Temperatura exterior', 'T<sub>ext</sub>', `${validWS[0].settings.tExt} ºC`, 'ISO 10077-2 §6.1'],
+                        ['Temperatura interior', 'T<sub>int</sub>', `${validWS[0].settings.tInt} ºC`, 'ISO 10077-2 §6.1'],
+                        ['ΔT simulación', 'ΔT', `${Math.abs(validWS[0].settings.tInt - validWS[0].settings.tExt)} K`, '—'],
+                        ['Resist. superficial exterior', 'R<sub>se</sub>', '0,04 m²·K/W', 'ISO 10077-2 Tab. 1'],
+                        ['Resist. superficial interior', 'R<sub>si</sub>', '0,13 m²·K/W', 'ISO 10077-2 Tab. 1'],
+                        ['R<sub>si</sub> condensaciones', 'R<sub>si,c</sub>', '0,25 m²·K/W', 'ISO 13788 §5.3'],
+                        ['Emisividad superficial', 'ε', `${validWS[0].settings.emiss}`, 'ISO 10077-2 §6.3'],
+                        ['Temperatura media radiante', 'T<sub>m</sub>', '283 K (10 ºC)', 'ISO 10077-2 §6.3'],
+                        ['Resolución de malla', 'N', `${validWS[0].settings.res}×${validWS[0].settings.res} nodos`, '—'],
+                        ['Método numérico', '—', 'FDM con SOR Dinámico', 'ISO 10077-2 Anexo B'],
+                    ].map((row, i) => `
+                        <tr style="background:${i % 2 === 0 ? '#fff' : '#f8f9fa'};">
+                            <td style="padding:9px 14px;color:#333;border-bottom:1px solid #eee;">${row[0]}</td>
+                            <td style="padding:9px 14px;color:#1a1a2e;font-weight:600;border-bottom:1px solid #eee;">${row[1]}</td>
+                            <td style="padding:9px 14px;color:#0f3460;font-weight:700;border-bottom:1px solid #eee;">${row[2]}</td>
+                            <td style="padding:9px 14px;color:#888;font-size:10px;border-bottom:1px solid #eee;">${row[3]}</td>
+                        </tr>`).join('')}
+                </tbody>
+            </table>
+            <div style="margin-top:auto;padding-top:20px;border-top:1px solid #eee;display:flex;justify-content:space-between;color:#aaa;font-size:9px;margin-top:30px;">
+                <span>AISLANTHERM · Aislantes Técnicos del Mediterráneo</span><span>REF. ${reportRef} · ${dateStr}</span>
+            </div>
+        </div>`;
+
+        // ─── DETALLE POR PERFIL ───
+        const origIdx = currentWsIdx;
+        let detailHTML = '';
         for (const w of validWS) {
             loadState(workspaces.indexOf(w), true);
             draw({ drawThermal: true, drawIsos: false, drawMarker: false });
             const imgT = canvas.toDataURL('image/jpeg', 0.95);
             draw({ drawThermal: false, drawIsos: true, drawMarker: true });
             const imgG = canvas.toDataURL('image/jpeg', 0.95);
+
             const mats = [...new Set(w.polygons.filter(p => {
                 if (!w.calcBounds) return true;
-                const box = w.calcBounds; return p.pts.some(pt => pt.x >= box.minX && pt.x <= box.maxX && pt.y >= box.minY && pt.y <= box.maxY);
+                const box = w.calcBounds;
+                return p.pts.some(pt => pt.x >= box.minX && pt.x <= box.maxX && pt.y >= box.minY && pt.y <= box.maxY);
             }).map(p => p.matIdx))];
-            detailHTML += `<div class="html2pdf__page-break"></div><div style="padding-top:10px;">
-                <h3 style="color:#34495e;border-bottom:3px solid #EDD00E;">${w.name}</h3>
-                <table style="width:100%;font-size:13px;background:#f9f9f9;border-radius:5px;border:1px solid #eee;margin-bottom:25px;border-collapse:collapse;">
-                    <tr><td style="padding:10px;"><strong>U<sub>f</sub>:</strong></td><td style="font-size:16px;font-weight:bold;color:#2e7d32;">${w.lastU.toFixed(3)} W/(m²·K)</td></tr>
-                    <tr><td style="padding:10px;">Flujo Q:</td><td>${Math.abs(w.lastFlux).toFixed(3)} W/m</td></tr>
-                    <tr><td style="padding:10px;">L<sup>2D</sup>:</td><td>${w.lastL2D.toFixed(3)} W/(m·K)</td></tr>
-                </table>
-                <p style="background:#e3f2fd;padding:12px;border-left:4px solid #1976d2;"><strong>T<sub>si,min</sub>:</strong> ${w.lastTsiMin.toFixed(1)} ºC | <strong>f<sub>Rsi</sub>:</strong> <span style="font-size:16px;color:${w.lastFRsi > 0.7 ? '#2e7d32' : '#d32f2f'};">${w.lastFRsi.toFixed(3)}</span></p>
-                <ul style="list-style:none;padding:0;">${mats.map(idx => `<li style="margin-bottom:8px;"><span style="display:inline-block;width:12px;height:12px;background:${materials[idx].color};border:1px solid #000;margin-right:5px;"></span>${materials[idx].name} (λ=${materials[idx].k})</li>`).join('')}</ul>
-                <div style="display:flex;gap:15px;"><div style="flex:1;"><strong>Geometría</strong><br><img src="${imgG}" style="width:100%;"></div><div style="flex:1;"><strong>Térmica</strong><br><img src="${imgT}" style="width:100%;"></div></div>
+
+            const fRsiOk = w.lastFRsi >= 0.70;
+            const fRsiColor = fRsiOk ? '#1b5e20' : '#b71c1c';
+            const fRsiBg = fRsiOk ? '#e8f5e9' : '#ffebee';
+            const fRsiLabel = fRsiOk ? '✓ CUMPLE' : '✗ NO CUMPLE';
+
+            detailHTML += `
+            <div class="html2pdf__page-break"></div>
+            <div style="${S('padding:35px;')}">
+                <!-- Section header -->
+                <div style="border-bottom:3px solid #EDD00E;padding-bottom:12px;margin-bottom:22px;display:flex;justify-content:space-between;align-items:flex-end;">
+                    <h2 style="color:#1a1a2e;font-size:18px;font-weight:800;margin:0;">ANÁLISIS: ${w.name.toUpperCase()}</h2>
+                    <span style="color:#aaa;font-size:10px;">REF. ${reportRef}</span>
+                </div>
+
+                <!-- KPIs row -->
+                <div style="display:flex;gap:12px;margin-bottom:22px;">
+                    <div style="flex:1;background:#1a1a2e;border-radius:8px;padding:18px;text-align:center;">
+                        <div style="color:#aaa;font-size:9px;letter-spacing:2px;margin-bottom:6px;">TRANSMITANCIA TÉRMICA</div>
+                        <div style="color:#EDD00E;font-size:28px;font-weight:800;line-height:1;">${w.lastU.toFixed(3)}</div>
+                        <div style="color:#888;font-size:10px;margin-top:4px;">W/(m²·K)</div>
+                        <div style="color:#aaa;font-size:9px;margin-top:2px;">U<sub>f</sub></div>
+                    </div>
+                    <div style="flex:1;background:${fRsiBg};border:2px solid ${fRsiColor};border-radius:8px;padding:18px;text-align:center;">
+                        <div style="color:${fRsiColor};font-size:9px;letter-spacing:2px;margin-bottom:6px;">FACTOR TEMPERATURA SUP.</div>
+                        <div style="color:${fRsiColor};font-size:28px;font-weight:800;line-height:1;">${w.lastFRsi.toFixed(3)}</div>
+                        <div style="color:${fRsiColor};font-size:10px;margin-top:4px;">adimensional</div>
+                        <div style="background:${fRsiColor};color:#fff;font-size:9px;font-weight:700;padding:3px 8px;border-radius:3px;display:inline-block;margin-top:6px;">${fRsiLabel}</div>
+                    </div>
+                    <div style="flex:1;background:#e3f2fd;border:2px solid #1565c0;border-radius:8px;padding:18px;text-align:center;">
+                        <div style="color:#1565c0;font-size:9px;letter-spacing:2px;margin-bottom:6px;">TEMP. SUPERFICIAL MÍN.</div>
+                        <div style="color:#1565c0;font-size:28px;font-weight:800;line-height:1;">${w.lastTsiMin.toFixed(1)}</div>
+                        <div style="color:#1565c0;font-size:10px;margin-top:4px;">ºC</div>
+                        <div style="color:#1565c0;font-size:9px;margin-top:2px;">T<sub>si,min</sub></div>
+                    </div>
+                </div>
+
+                <!-- Results table -->
+                <div style="margin-bottom:22px;">
+                    <div style="background:#f8f9fa;border-radius:6px;overflow:hidden;border:1px solid #e9ecef;">
+                        <table style="width:100%;border-collapse:collapse;font-size:11px;">
+                            <thead>
+                                <tr style="background:#f0f0f0;">
+                                    <th style="padding:9px 14px;text-align:left;color:#555;font-weight:700;letter-spacing:0.5px;">RESULTADO</th>
+                                    <th style="padding:9px 14px;text-align:left;color:#555;font-weight:700;">SÍMBOLO</th>
+                                    <th style="padding:9px 14px;text-align:left;color:#555;font-weight:700;">VALOR</th>
+                                    <th style="padding:9px 14px;text-align:left;color:#555;font-weight:700;">UNIDAD</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${[
+                                    ['Transmitancia térmica del marco', 'U<sub>f</sub>', w.lastU.toFixed(4), 'W/(m²·K)'],
+                                    ['Conductancia térmica lineal', 'L<sup>2D</sup>', w.lastL2D.toFixed(4), 'W/(m·K)'],
+                                    ['Flujo de calor lineal', 'Q', Math.abs(w.lastFlux).toFixed(4), 'W/m'],
+                                    ['Temperatura superficial mínima', 'T<sub>si,min</sub>', w.lastTsiMin.toFixed(2), 'ºC'],
+                                    ['Factor de temperatura superficial', 'f<sub>Rsi</sub>', w.lastFRsi.toFixed(4), '—'],
+                                    ['Ancho del marco analizado', 'b<sub>f</sub>', `${w.settings.Lp}`, 'mm'],
+                                    ['Temperatura exterior de diseño', 'T<sub>ext</sub>', `${w.settings.tExt}`, 'ºC'],
+                                    ['Temperatura interior de diseño', 'T<sub>int</sub>', `${w.settings.tInt}`, 'ºC'],
+                                    ['Algoritmo utilizado', '—', w.lastAlgo || 'FDM', '—'],
+                                ].map((row, i) => `
+                                    <tr style="background:${i % 2 === 0 ? '#fff' : '#fafafa'};">
+                                        <td style="padding:8px 14px;color:#444;border-bottom:1px solid #eee;">${row[0]}</td>
+                                        <td style="padding:8px 14px;color:#1a1a2e;font-weight:600;border-bottom:1px solid #eee;">${row[1]}</td>
+                                        <td style="padding:8px 14px;color:#0f3460;font-weight:700;border-bottom:1px solid #eee;">${row[2]}</td>
+                                        <td style="padding:8px 14px;color:#888;border-bottom:1px solid #eee;">${row[3]}</td>
+                                    </tr>`).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Visuals -->
+                <div style="display:flex;gap:14px;margin-bottom:22px;">
+                    <div style="flex:1;border:1px solid #e0e0e0;border-radius:6px;overflow:hidden;">
+                        <div style="background:#1a1a2e;padding:8px 12px;color:#EDD00E;font-size:9px;font-weight:700;letter-spacing:2px;">GEOMETRÍA Y CONDICIONES DE CONTORNO</div>
+                        <img src="${imgG}" style="width:100%;display:block;">
+                    </div>
+                    <div style="flex:1;border:1px solid #e0e0e0;border-radius:6px;overflow:hidden;">
+                        <div style="background:#1a1a2e;padding:8px 12px;color:#EDD00E;font-size:9px;font-weight:700;letter-spacing:2px;">MAPA TÉRMICO · DISTRIBUCIÓN DE TEMPERATURAS</div>
+                        <img src="${imgT}" style="width:100%;display:block;">
+                    </div>
+                </div>
+
+                <!-- Materials -->
+                <div style="background:#f8f9fa;border-radius:6px;padding:16px;border:1px solid #e9ecef;">
+                    <div style="color:#1a1a2e;font-size:10px;font-weight:700;letter-spacing:1px;margin-bottom:12px;">MATERIALES EN LA SECCIÓN ANALIZADA</div>
+                    <div style="display:flex;flex-wrap:wrap;gap:8px;">
+                        ${mats.map(idx => `
+                            <div style="display:flex;align-items:center;gap:7px;background:#fff;border:1px solid #e0e0e0;border-radius:4px;padding:6px 10px;">
+                                <span style="display:inline-block;width:14px;height:14px;background:${materials[idx].color};border:1px solid rgba(0,0,0,0.2);border-radius:2px;flex-shrink:0;"></span>
+                                <span style="font-size:10px;color:#333;">${materials[idx].name}</span>
+                                <span style="font-size:10px;color:#888;border-left:1px solid #ddd;padding-left:7px;">λ = ${materials[idx].k} W/m·K</span>
+                            </div>`).join('')}
+                    </div>
+                </div>
+
+                <div style="margin-top:25px;padding-top:12px;border-top:1px solid #eee;display:flex;justify-content:space-between;color:#aaa;font-size:9px;">
+                    <span>AISLANTHERM · Aislantes Técnicos del Mediterráneo</span><span>REF. ${reportRef} · ${dateStr}</span>
+                </div>
             </div>`;
         }
         loadState(origIdx, true);
 
-        const report = document.createElement('div');
-        report.innerHTML = `<div style="font-family:'Montserrat','Open Sans',sans-serif;color:#333;padding:20px;">
-            <div style="text-align:center;padding:40px;border:3px solid #EDD00E;border-radius:8px;margin-bottom:20px;">
-                <h1 style="font-size:32px;color:#2c3e50;">Informe Técnico</h1>
-                <h2 style="font-size:16px;color:#7f8c8d;">Análisis de Transmitancia Térmica</h2>
-                <hr style="border:none;border-top:5px solid #EDD00E;width:80px;margin:20px auto;">
-                <p style="font-size:12px;color:#777;">UNE-EN ISO 10077-2 / 13788</p>
-                <p style="font-size:24px;font-weight:bold;">Aislantherm</p>
-                <p style="font-size:20px;color:#1976d2;">Aislantes técnicos del Mediterráneo</p>
-                <p style="color:#999;font-size:12px;">${new Date().toLocaleDateString()}</p>
-            </div>
-            ${compHTML} ${detailHTML}
+        // ─── COMPARATIVA GLOBAL ───
+        let compHTML = '';
+        if (validWS.length > 1) {
+            compHTML = `
             <div class="html2pdf__page-break"></div>
-            <div style="font-size:12px;line-height:1.6;color:#444;">
-                <h4 style="color:#1976d2;">Justificación Normativa</h4>
-                <p>Resuelve ∇·(λ∇T)=0 mediante FDM con acoplamiento SOR dinámico, satisfaciendo UNE-EN ISO 10077-2, 13788 y 10211. Las cavidades aplican conductividad equivalente del Anexo D.</p>
-                <p style="background:#fff8e1;padding:15px;text-align:center;border:1px dashed #ffb300;">L<sup>2D</sup> = Q / ΔT ; U<sub>f</sub> = L<sup>2D</sup> / b<sub>f</sub></p>
-                <p style="background:#fff8e1;padding:15px;text-align:center;border:1px dashed #ffb300;">f<sub>Rsi</sub> = (T<sub>si,min</sub> - T<sub>ext</sub>) / (T<sub>int</sub> - T<sub>ext</sub>)</p>
+            <div style="${S('padding:35px;')}">
+                <div style="border-bottom:3px solid #EDD00E;padding-bottom:12px;margin-bottom:22px;display:flex;justify-content:space-between;align-items:flex-end;">
+                    <h2 style="color:#1a1a2e;font-size:18px;font-weight:800;margin:0;">CUADRO COMPARATIVO GLOBAL</h2>
+                    <span style="color:#aaa;font-size:10px;">REF. ${reportRef}</span>
+                </div>
+                <table style="width:100%;border-collapse:collapse;font-size:11px;">
+                    <thead>
+                        <tr style="background:#1a1a2e;color:#fff;">
+                            <th style="padding:11px 14px;text-align:left;font-weight:700;letter-spacing:0.5px;">PERFIL</th>
+                            <th style="padding:11px 14px;text-align:center;font-weight:700;">U<sub>f</sub> (W/m²·K)</th>
+                            <th style="padding:11px 14px;text-align:center;font-weight:700;">L<sup>2D</sup> (W/m·K)</th>
+                            <th style="padding:11px 14px;text-align:center;font-weight:700;">T<sub>si,min</sub> (ºC)</th>
+                            <th style="padding:11px 14px;text-align:center;font-weight:700;">f<sub>Rsi</sub></th>
+                            <th style="padding:11px 14px;text-align:center;font-weight:700;">b<sub>f</sub> (mm)</th>
+                            <th style="padding:11px 14px;text-align:center;font-weight:700;">ESTADO</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${validWS.map((w, i) => {
+                            const ok = w.lastFRsi >= 0.70;
+                            return `<tr style="background:${i % 2 === 0 ? '#fff' : '#f8f9fa'};">
+                                <td style="padding:10px 14px;font-weight:700;color:#1a1a2e;border-bottom:1px solid #eee;">${w.name}</td>
+                                <td style="padding:10px 14px;text-align:center;font-weight:700;color:#0f3460;border-bottom:1px solid #eee;">${w.lastU.toFixed(3)}</td>
+                                <td style="padding:10px 14px;text-align:center;color:#444;border-bottom:1px solid #eee;">${w.lastL2D.toFixed(3)}</td>
+                                <td style="padding:10px 14px;text-align:center;color:#444;border-bottom:1px solid #eee;">${w.lastTsiMin.toFixed(1)}</td>
+                                <td style="padding:10px 14px;text-align:center;font-weight:700;color:${ok ? '#2e7d32' : '#c62828'};border-bottom:1px solid #eee;">${w.lastFRsi.toFixed(3)}</td>
+                                <td style="padding:10px 14px;text-align:center;color:#444;border-bottom:1px solid #eee;">${w.settings.Lp}</td>
+                                <td style="padding:10px 14px;text-align:center;border-bottom:1px solid #eee;">
+                                    <span style="background:${ok ? '#e8f5e9' : '#ffebee'};color:${ok ? '#2e7d32' : '#c62828'};font-size:9px;font-weight:700;padding:3px 8px;border-radius:3px;">
+                                        ${ok ? '✓ CUMPLE' : '✗ REVISAR'}
+                                    </span>
+                                </td>
+                            </tr>`;
+                        }).join('')}
+                    </tbody>
+                </table>
+                <div style="margin-top:20px;background:#fff8e1;border-left:4px solid #f9a825;padding:14px 18px;border-radius:0 6px 6px 0;font-size:10px;color:#555;line-height:1.7;">
+                    <strong style="color:#f57f17;">CRITERIO DE EVALUACIÓN:</strong> Se considera que el perfil cumple con el requisito de higrotermia cuando f<sub>Rsi</sub> ≥ 0,70
+                    (valor de referencia para zona climática general según UNE-EN ISO 13788:2013). Para zonas específicas consulte el DB-HE del CTE.
+                </div>
+                <div style="margin-top:30px;padding-top:12px;border-top:1px solid #eee;display:flex;justify-content:space-between;color:#aaa;font-size:9px;">
+                    <span>AISLANTHERM · Aislantes Técnicos del Mediterráneo</span><span>REF. ${reportRef} · ${dateStr}</span>
+                </div>
+            </div>`;
+        }
+
+        // ─── JUSTIFICACIÓN NORMATIVA ───
+        const methodHTML = `
+        <div class="html2pdf__page-break"></div>
+        <div style="${S('padding:35px;')}">
+            <div style="border-bottom:3px solid #EDD00E;padding-bottom:12px;margin-bottom:22px;display:flex;justify-content:space-between;align-items:flex-end;">
+                <h2 style="color:#1a1a2e;font-size:18px;font-weight:800;margin:0;">JUSTIFICACIÓN NORMATIVA Y METODOLOGÍA</h2>
+                <span style="color:#aaa;font-size:10px;">REF. ${reportRef}</span>
+            </div>
+
+            <p style="color:#444;font-size:11px;line-height:1.8;margin-bottom:18px;">
+                El cálculo se ha realizado resolviendo la ecuación de conducción de calor en régimen estacionario en dos dimensiones mediante el método de las diferencias finitas (FDM), con acoplamiento de relajación sucesiva sobrelajada (SOR) de paso dinámico:
+            </p>
+            <div style="background:#f0f4f8;border:1px solid #cfd8e3;border-radius:6px;padding:18px;text-align:center;margin-bottom:22px;font-size:13px;color:#1a1a2e;font-weight:600;">
+                ∇·(λ∇T) = 0 &nbsp;&nbsp;⟹&nbsp;&nbsp; ∂/∂x(λ·∂T/∂x) + ∂/∂y(λ·∂T/∂y) = 0
+            </div>
+
+            <div style="margin-bottom:20px;">
+                <div style="font-weight:700;color:#1a1a2e;font-size:12px;margin-bottom:12px;letter-spacing:0.5px;">EXPRESIONES DE CÁLCULO PRINCIPALES</div>
+                ${[
+                    ['L²D = Q / ΔT', 'Conductancia térmica lineal del perfil, donde Q es el flujo de calor [W/m] y ΔT la diferencia de temperatura [K]'],
+                    ['Uf = L²D / bf', 'Transmitancia térmica del marco [W/(m²·K)], normalizando por el ancho proyectado bf [m]'],
+                    ['fRsi = (Tsi,min − Text) / (Tint − Text)', 'Factor de temperatura superficial interior, indicador de riesgo de condensación superficial (ISO 13788)'],
+                ].map(([formula, desc]) => `
+                    <div style="display:flex;gap:14px;align-items:flex-start;margin-bottom:12px;padding:12px;background:#fff;border:1px solid #e9ecef;border-radius:6px;">
+                        <div style="background:#1a1a2e;color:#EDD00E;font-family:monospace;font-size:10px;font-weight:700;padding:6px 12px;border-radius:4px;white-space:nowrap;min-width:fit-content;">${formula}</div>
+                        <div style="color:#555;font-size:10px;line-height:1.7;padding-top:4px;">${desc}</div>
+                    </div>`).join('')}
+            </div>
+
+            <div style="background:#f8f9fa;border-radius:6px;padding:18px;border:1px solid #e9ecef;margin-bottom:20px;">
+                <div style="font-weight:700;color:#1a1a2e;font-size:11px;letter-spacing:1px;margin-bottom:12px;">CONDICIONES DE CONTORNO (ISO 10077-2 §6.1)</div>
+                ${[
+                    ['Contorno Exterior', 'R_se = 0,04 m²·K/W', '#1565c0', '#e3f2fd'],
+                    ['Contorno Interior (medición U_f)', 'R_si = 0,13 m²·K/W', '#c62828', '#ffebee'],
+                    ['Contorno Interior Secundario', 'R_si = 0,13 m²·K/W', '#e65100', '#fff3e0'],
+                    ['Contorno Adiabático', 'dT/dn = 0 (flujo nulo)', '#37474f', '#f5f5f5'],
+                ].map(([label, val, color, bg]) => `
+                    <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 10px;background:${bg};border-radius:4px;margin-bottom:6px;">
+                        <span style="color:${color};font-weight:600;font-size:10px;">● ${label}</span>
+                        <span style="color:#444;font-size:10px;font-weight:700;">${val}</span>
+                    </div>`).join('')}
+            </div>
+
+            <div style="background:#fff3cd;border:1px solid #ffc107;border-radius:6px;padding:14px 18px;font-size:10px;color:#555;line-height:1.7;">
+                <strong style="color:#856404;">NOTA DE RESPONSABILIDAD:</strong> Los resultados contenidos en este informe han sido generados mediante simulación numérica y deben ser verificados por un técnico competente antes de su uso en documentación oficial, proyectos de obra o certificación de producto. Aislantherm no asume responsabilidad sobre el uso de los resultados sin la debida supervisión técnica.
+            </div>
+
+            <div style="margin-top:30px;padding-top:12px;border-top:1px solid #eee;display:flex;justify-content:space-between;color:#aaa;font-size:9px;">
+                <span>AISLANTHERM · Aislantes Técnicos del Mediterráneo</span><span>REF. ${reportRef} · ${dateStr}</span>
             </div>
         </div>`;
 
+        // ─── ENSAMBLADO FINAL ───
+        const report = document.createElement('div');
+        report.innerHTML = coverHTML + indexHTML + scopeHTML + detailHTML + compHTML + methodHTML;
+
         await html2pdf().from(report).set({
-            margin: [10, 10, 10, 10],
-            filename: validWS.length > 1 ? 'Aislantherm_Comparativa.pdf' : 'Aislantherm_Informe.pdf',
+            margin: [0, 0, 0, 0],
+            filename: validWS.length > 1 ? `Aislantherm_Comparativa_${reportRef}.pdf` : `Aislantherm_Informe_${reportRef}.pdf`,
             image: { type: 'jpeg', quality: 0.98 },
-            html2canvas: { scale: 2, logging: false },
+            html2canvas: { scale: 2, logging: false, useCORS: true },
             jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
         }).save();
-        setStatus('✅ Informe PDF descargado.', 'success');
+        setStatus('✅ Informe técnico profesional generado correctamente.', 'success');
     };
 
     // ─── EVENT LISTENERS ───
@@ -960,194 +1266,3 @@ window.addEventListener('DOMContentLoaded', () => { App.init(); window.setStatus
 </script>
 </body>
 </html>
-// ======================= CONFIGURACIÓN =======================
-
-const LOGO_EMPRESA = ""; // opcional
-const TECNICO = "Nombre Apellidos";
-const TITULACION = "Ingeniero / Arquitecto";
-const EMPRESA = "Nombre Empresa";
-
-// ======================= UTILIDADES =======================
-
-function clasificarUf(U){
-    if(U < 1.0) return "EXCELENTE";
-    if(U < 1.5) return "BUENO";
-    if(U < 2.5) return "ACEPTABLE";
-    return "DEFICIENTE";
-}
-
-function cumpleCTE(U){
-    // Valor orientativo marco (depende zona climática en realidad)
-    return U <= 2.2 ? "CUMPLE" : "NO CUMPLE";
-}
-
-function calcularUw(Uf){
-    const Ug = 1.1;
-    const Af = 0.3;
-    const Ag = 0.7;
-    return Uf * Af + Ug * Ag;
-}
-
-// ======================= PORTADA =======================
-
-function generarPortada(){
-    return `
-    <div style="height:100vh; display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center;">
-        
-        ${LOGO_EMPRESA ? `<img src="${LOGO_EMPRESA}" style="max-width:180px;">` : ""}
-
-        <h1 style="font-size:34px;">INFORME TÉCNICO JUSTIFICATIVO</h1>
-        <h2 style="font-weight:400;">Transmitancia térmica de perfiles</h2>
-
-        <div style="margin-top:40px;">
-            <p><b>Normativa:</b> UNE-EN ISO 10077-2 · CTE DB-HE</p>
-            <p><b>Fecha:</b> ${new Date().toLocaleDateString()}</p>
-        </div>
-
-    </div>
-    `;
-}
-
-// ======================= BLOQUE PERFIL =======================
-
-function generarPerfil(w){
-
-    const Uw = calcularUw(w.lastU);
-    const clase = clasificarUf(w.lastU);
-    const cumple = cumpleCTE(w.lastU);
-
-    return `
-    <div style="page-break-before:always; padding:30px; font-family:Arial;">
-
-        <h2>${w.name}</h2>
-
-        <h3>1. Condiciones de cálculo</h3>
-        <ul>
-            <li>Temperatura exterior: ${w.settings.tExt} °C</li>
-            <li>Temperatura interior: ${w.settings.tInt} °C</li>
-            <li>Salto térmico: ${w.settings.tInt - w.settings.tExt} °C</li>
-        </ul>
-
-        <h3>2. Metodología</h3>
-        <p>
-            Cálculo realizado mediante método de diferencias finitas (FDM),
-            conforme a UNE-EN ISO 10077-2.
-        </p>
-
-        <h3>3. Resultados</h3>
-        <ul>
-            <li>Uf = <b>${w.lastU.toFixed(3)} W/m²K</b></li>
-            <li>Uw estimado = <b>${Uw.toFixed(3)} W/m²K</b></li>
-            <li>fRsi = <b>${w.lastFRsi.toFixed(3)}</b></li>
-            <li>Tsi mínima = <b>${w.lastTsiMin.toFixed(1)} °C</b></li>
-        </ul>
-
-        <h3>4. Evaluación</h3>
-        <p>Clasificación térmica: <b>${clase}</b></p>
-        <p>Verificación CTE: <b>${cumple}</b></p>
-
-        <h3>5. Riesgo de condensaciones</h3>
-        <p>
-            ${w.lastFRsi < 0.75 
-                ? "Existe riesgo de condensaciones superficiales."
-                : "No existe riesgo de condensaciones."}
-        </p>
-
-    </div>
-    `;
-}
-
-// ======================= CONCLUSIÓN GLOBAL =======================
-
-function generarConclusion(){
-
-    return `
-    <div style="page-break-before:always; padding:30px;">
-
-        <h2>Conclusión general</h2>
-
-        <p>
-            De acuerdo con los resultados obtenidos, los perfiles analizados presentan
-            el comportamiento térmico indicado en cada caso, verificándose su adecuación
-            respecto a las exigencias del CTE DB-HE en los términos descritos.
-        </p>
-
-        <p>
-            Este informe tiene carácter técnico justificativo y se basa en un modelo
-            de cálculo en régimen estacionario conforme a normativa vigente.
-        </p>
-
-    </div>
-    `;
-}
-
-// ======================= FIRMA =======================
-
-function generarFirma(){
-
-    return `
-    <div style="page-break-before:always; padding:30px; text-align:left;">
-
-        <h2>Responsable técnico</h2>
-
-        <p><b>${TECNICO}</b></p>
-        <p>${TITULACION}</p>
-        <p>${EMPRESA}</p>
-
-        <div style="margin-top:60px;">
-            <p>Firma:</p>
-            <div style="height:80px;"></div>
-            <p>_________________________</p>
-        </div>
-
-    </div>
-    `;
-}
-
-// ======================= GENERADOR =======================
-
-function generarInformeFinal(){
-
-    let html = generarPortada();
-
-    const validos = workspaces.filter(w => w.T !== null);
-
-    validos.forEach(w => {
-        html += generarPerfil(w);
-    });
-
-    html += generarConclusion();
-    html += generarFirma();
-
-    return html;
-}
-
-// ======================= BOTÓN PDF =======================
-
-(function(){
-
-    const btn = document.getElementById('btnPdf');
-    if(!btn) return;
-
-    btn.onclick = null;
-
-    btn.addEventListener('click', () => {
-
-        const contenido = generarInformeFinal();
-
-        const opt = {
-            margin: 10,
-            filename: "Informe_Tecnico.pdf",
-            image: { type: 'jpeg', quality: 0.98 },
-            html2canvas: { scale: 2 },
-            jsPDF: { unit: 'mm', format: 'a4' }
-        };
-
-        html2pdf()
-            .set(opt)
-            .from(contenido)
-            .save();
-
-    });
-
-})();
