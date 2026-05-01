@@ -960,3 +960,194 @@ window.addEventListener('DOMContentLoaded', () => { App.init(); window.setStatus
 </script>
 </body>
 </html>
+// ======================= CONFIGURACIÓN =======================
+
+const LOGO_EMPRESA = ""; // opcional
+const TECNICO = "Nombre Apellidos";
+const TITULACION = "Ingeniero / Arquitecto";
+const EMPRESA = "Nombre Empresa";
+
+// ======================= UTILIDADES =======================
+
+function clasificarUf(U){
+    if(U < 1.0) return "EXCELENTE";
+    if(U < 1.5) return "BUENO";
+    if(U < 2.5) return "ACEPTABLE";
+    return "DEFICIENTE";
+}
+
+function cumpleCTE(U){
+    // Valor orientativo marco (depende zona climática en realidad)
+    return U <= 2.2 ? "CUMPLE" : "NO CUMPLE";
+}
+
+function calcularUw(Uf){
+    const Ug = 1.1;
+    const Af = 0.3;
+    const Ag = 0.7;
+    return Uf * Af + Ug * Ag;
+}
+
+// ======================= PORTADA =======================
+
+function generarPortada(){
+    return `
+    <div style="height:100vh; display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center;">
+        
+        ${LOGO_EMPRESA ? `<img src="${LOGO_EMPRESA}" style="max-width:180px;">` : ""}
+
+        <h1 style="font-size:34px;">INFORME TÉCNICO JUSTIFICATIVO</h1>
+        <h2 style="font-weight:400;">Transmitancia térmica de perfiles</h2>
+
+        <div style="margin-top:40px;">
+            <p><b>Normativa:</b> UNE-EN ISO 10077-2 · CTE DB-HE</p>
+            <p><b>Fecha:</b> ${new Date().toLocaleDateString()}</p>
+        </div>
+
+    </div>
+    `;
+}
+
+// ======================= BLOQUE PERFIL =======================
+
+function generarPerfil(w){
+
+    const Uw = calcularUw(w.lastU);
+    const clase = clasificarUf(w.lastU);
+    const cumple = cumpleCTE(w.lastU);
+
+    return `
+    <div style="page-break-before:always; padding:30px; font-family:Arial;">
+
+        <h2>${w.name}</h2>
+
+        <h3>1. Condiciones de cálculo</h3>
+        <ul>
+            <li>Temperatura exterior: ${w.settings.tExt} °C</li>
+            <li>Temperatura interior: ${w.settings.tInt} °C</li>
+            <li>Salto térmico: ${w.settings.tInt - w.settings.tExt} °C</li>
+        </ul>
+
+        <h3>2. Metodología</h3>
+        <p>
+            Cálculo realizado mediante método de diferencias finitas (FDM),
+            conforme a UNE-EN ISO 10077-2.
+        </p>
+
+        <h3>3. Resultados</h3>
+        <ul>
+            <li>Uf = <b>${w.lastU.toFixed(3)} W/m²K</b></li>
+            <li>Uw estimado = <b>${Uw.toFixed(3)} W/m²K</b></li>
+            <li>fRsi = <b>${w.lastFRsi.toFixed(3)}</b></li>
+            <li>Tsi mínima = <b>${w.lastTsiMin.toFixed(1)} °C</b></li>
+        </ul>
+
+        <h3>4. Evaluación</h3>
+        <p>Clasificación térmica: <b>${clase}</b></p>
+        <p>Verificación CTE: <b>${cumple}</b></p>
+
+        <h3>5. Riesgo de condensaciones</h3>
+        <p>
+            ${w.lastFRsi < 0.75 
+                ? "Existe riesgo de condensaciones superficiales."
+                : "No existe riesgo de condensaciones."}
+        </p>
+
+    </div>
+    `;
+}
+
+// ======================= CONCLUSIÓN GLOBAL =======================
+
+function generarConclusion(){
+
+    return `
+    <div style="page-break-before:always; padding:30px;">
+
+        <h2>Conclusión general</h2>
+
+        <p>
+            De acuerdo con los resultados obtenidos, los perfiles analizados presentan
+            el comportamiento térmico indicado en cada caso, verificándose su adecuación
+            respecto a las exigencias del CTE DB-HE en los términos descritos.
+        </p>
+
+        <p>
+            Este informe tiene carácter técnico justificativo y se basa en un modelo
+            de cálculo en régimen estacionario conforme a normativa vigente.
+        </p>
+
+    </div>
+    `;
+}
+
+// ======================= FIRMA =======================
+
+function generarFirma(){
+
+    return `
+    <div style="page-break-before:always; padding:30px; text-align:left;">
+
+        <h2>Responsable técnico</h2>
+
+        <p><b>${TECNICO}</b></p>
+        <p>${TITULACION}</p>
+        <p>${EMPRESA}</p>
+
+        <div style="margin-top:60px;">
+            <p>Firma:</p>
+            <div style="height:80px;"></div>
+            <p>_________________________</p>
+        </div>
+
+    </div>
+    `;
+}
+
+// ======================= GENERADOR =======================
+
+function generarInformeFinal(){
+
+    let html = generarPortada();
+
+    const validos = workspaces.filter(w => w.T !== null);
+
+    validos.forEach(w => {
+        html += generarPerfil(w);
+    });
+
+    html += generarConclusion();
+    html += generarFirma();
+
+    return html;
+}
+
+// ======================= BOTÓN PDF =======================
+
+(function(){
+
+    const btn = document.getElementById('btnPdf');
+    if(!btn) return;
+
+    btn.onclick = null;
+
+    btn.addEventListener('click', () => {
+
+        const contenido = generarInformeFinal();
+
+        const opt = {
+            margin: 10,
+            filename: "Informe_Tecnico.pdf",
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2 },
+            jsPDF: { unit: 'mm', format: 'a4' }
+        };
+
+        html2pdf()
+            .set(opt)
+            .from(contenido)
+            .save();
+
+    });
+
+})();
