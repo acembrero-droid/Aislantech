@@ -73,9 +73,27 @@
         hr.divider { border:none; border-top:1px solid #eee; margin:5px 0; }
         .btn-group-row { display:flex; gap:10px; flex-wrap:wrap; }
         .btn-sm { padding:8px; }
+
+        /* Estilo para modal de confirmación */
+        #confirmModal { display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); z-index:9999; align-items:center; justify-content:center; }
+        .modal-content { background:#fff; padding:25px; border-radius:var(--radius); width:320px; text-align:center; box-shadow:0 10px 25px rgba(0,0,0,0.2); }
     </style>
 </head>
 <body>
+
+<!-- MODAL DE CONFIRMACIÓN -->
+<div id="confirmModal">
+    <div class="modal-content">
+        <div style="color:var(--red); font-size:3rem; margin-bottom:15px;"><i class="fas fa-exclamation-circle"></i></div>
+        <h3 style="margin-top:0; color:var(--dark);">Eliminar Perfil</h3>
+        <p id="confirmMessage" style="font-size:0.9rem; color:var(--gray); margin-bottom:20px;">¿Estás seguro de que quieres eliminar esta pestaña?</p>
+        <div style="display:flex; gap:10px; justify-content:center;">
+            <button id="confirmCancelBtn" class="btn btn-outline" style="flex:1; padding:10px;">Cancelar</button>
+            <button id="confirmOkBtn" class="btn" style="flex:1; padding:10px; background:var(--red); color:#fff;">Eliminar</button>
+        </div>
+    </div>
+</div>
+
 <div class="container">
     <div class="header-container">
         <div>
@@ -111,20 +129,33 @@
                 </div>
                 <div class="control-group" style="background:#f9f9f9;padding:15px;border-radius:var(--radius);border:1px solid #eee;">
                     <label id="brushLabel">3. Acción Activa</label>
-                    <div id="matBrushContainer"><select id="matSelect"></select><button id="btnShowCustomMat" class="btn btn-outline btn-sm"><i class="fas fa-plus"></i> Crear Nuevo Material</button></div>
+                    
+                    <div id="matBrushContainer">
+                        <select id="matSelect" style="font-weight:bold;"></select>
+                        <button id="btnShowCustomMat" class="btn btn-outline btn-sm"><i class="fas fa-plus"></i> Crear Nuevo Material</button>
+                    </div>
+                    
                     <div id="customMatPanel">
                         <div class="control-group"><label>Nombre</label><input type="text" id="customMatName" placeholder="Ej: Espuma PUR"></div>
                         <div class="control-group"><label>Conductividad (λ) W/m·K</label><input type="number" id="customMatK" step="0.001" value="0.035"></div>
                         <div class="control-group"><label>Color</label><input type="color" id="customMatColor" value="#ff9800" style="height:38px;padding:0;width:100%;"></div>
                         <div class="btn-group-row" style="margin-top:10px;"><button id="btnCancelCustomMat" class="btn btn-outline" style="flex:1">Cancelar</button><button id="btnAddCustomMat" class="btn btn-primary" style="flex:1">Guardar</button></div>
                     </div>
-                    <select id="boundSelect" style="display:none;font-weight:bold;">
-                        <option value="1" style="color:var(--blue);">Exterior (Frío + Rse)</option>
-                        <option value="2" style="color:var(--red);">Interior (Medir Uf + Rsi)</option>
-                        <option value="4" style="color:var(--orange);">Interior Secundario</option>
-                        <option value="3" style="color:#757575;">Adiabático (Cortar flujo)</option>
-                        <option value="0" style="color:#000;">Borrar Contorno</option>
-                    </select>
+                    
+                    <div id="boundaryTools" style="display:none; flex-direction:column; gap:8px;">
+                        <select id="boundSelect" style="font-weight:bold;">
+                            <option value="1" style="color:var(--blue);">Exterior (Frío + Rse)</option>
+                            <option value="2" style="color:var(--red);">Interior (Medir Uf + Rsi)</option>
+                            <option value="4" style="color:var(--orange);">Interior Secundario</option>
+                            <option value="3" style="color:#757575;">Adiabático (Cortar flujo)</option>
+                            <option value="0" style="color:#000;">Borrar Contorno</option>
+                        </select>
+                        <div class="btn-group-row">
+                            <button id="btnAutoBound" class="btn btn-outline btn-sm" style="flex:1" title="Asignar Ext/Int/Adiabáticamente de forma automática (Respeta Medición Interior)"><i class="fas fa-magic"></i> Auto-Contorno</button>
+                            <button id="btnRotateBound" class="btn btn-outline btn-sm" style="flex:1" title="Rotar orientación de la auto-asignación"><i class="fas fa-sync-alt"></i> Girar</button>
+                        </div>
+                    </div>
+                    
                     <div id="cropHelpText" style="display:none;font-size:0.75rem;color:#666;"><i class="fas fa-info-circle"></i> Arrastra en el lienzo para delimitar la zona de simulación.</div>
                     <div id="panHelpText" style="display:none;font-size:0.75rem;color:#666;"><i class="fas fa-hand-paper"></i> Arrastra para mover la vista del perfil.</div>
                 </div>
@@ -162,7 +193,6 @@
                 </div>
             </div>
             <div class="legend-panel" id="legend"></div>
-            <!-- EL BOTÓN DEL PDF ESTÁ AQUÍ. ESTÁ OCULTO (display:none) HASTA QUE CALCULAS. -->
             <div class="btn-group-row" style="justify-content:center;margin-bottom:20px;">
                 <button id="btnToggleIso" class="btn btn-outline" style="display:none;"><i class="fas fa-water"></i> Isotermas</button>
                 <button id="btnBackToEdit" class="btn btn-edit" style="display:none;"><i class="fas fa-pencil-alt"></i> Editar Geometría</button>
@@ -220,6 +250,8 @@ const App = (() => {
     let selectedPoly = -1, hoveredPolyIdx = -1, hoveredEdgeIdx = -1, editMode = 'MATERIAL';
     let isDragging = false, dragStartX = 0, dragStartY = 0, hasDragged = false;
     let isCropping = false, cropStartX = 0, cropStartY = 0;
+    let autoBoundaryState = 0; // 0:Normal, 1:90º, 2:180º, 3:270º
+    let tabToDelete = null; // Variable global para la eliminación de pestañas con modal
     const canvas = document.getElementById('canvas'), ctx = canvas.getContext('2d', { willReadFrequently: true });
 
     // ─── UTILIDADES ───
@@ -257,9 +289,9 @@ const App = (() => {
     // ─── ACTUALIZACIÓN DE UI ───
     const updateCalcButton = () => { $('calcBtn').disabled = polygons.length === 0; };
     const updatePdfButton = () => {
-        const hasResults = workspaces.some(w => w.T !== null);
+        const hasResults = workspaces.some(w => w.T !== null && w.T !== undefined);
         $('btnPdf').style.display = hasResults ? 'inline-flex' : 'none';
-        $('btnPdf').innerHTML = workspaces.filter(w => w.T !== null).length > 1
+        $('btnPdf').innerHTML = workspaces.filter(w => w.T !== null && w.T !== undefined).length > 1
             ? '<i class="fas fa-file-pdf"></i> Generar Informe Comparativo'
             : '<i class="fas fa-file-pdf"></i> Generar Informe PDF';
     };
@@ -317,7 +349,7 @@ const App = (() => {
         updateLegendUI();
     };
 
-    // ─── PESTAÑAS ───
+    // ─── PESTAÑAS Y ELIMINACIÓN CON MODAL ───
     const renderTabs = () => {
         $('tabsContainer').innerHTML = workspaces.map((w, i) => `
             <div class="tab-item ${i === currentWsIdx ? 'active' : ''}" onclick="App.switchTab(${i})">
@@ -332,14 +364,33 @@ const App = (() => {
     };
     const addTab = () => { saveState(); wsCounter++; workspaces.push(createWS("Perfil " + wsCounter)); loadState(workspaces.length - 1, true); };
     const duplicateTab = () => { saveState(); wsCounter++; const clone = JSON.parse(JSON.stringify(ws())); clone.name = ws().name + " (Copia)"; workspaces.push(clone); loadState(workspaces.length - 1, true); };
+    
     const removeTab = (e, idx) => {
-        e.stopPropagation(); if (workspaces.length === 1) return;
-        if (confirm(`¿Eliminar perfil "${workspaces[idx].name}"?`)) {
-            workspaces.splice(idx, 1);
-            if (currentWsIdx >= workspaces.length) currentWsIdx = workspaces.length - 1;
-            loadState(currentWsIdx, true);
-        }
+        e.stopPropagation();
+        if (workspaces.length === 1) return;
+        tabToDelete = idx;
+        $('confirmMessage').innerText = `¿Eliminar perfil "${workspaces[idx].name}"?`;
+        $('confirmModal').style.display = 'flex';
     };
+
+    const executeRemoveTab = () => {
+        if (tabToDelete === null) return;
+        const idx = tabToDelete;
+        tabToDelete = null;
+        $('confirmModal').style.display = 'none';
+
+        if (idx !== currentWsIdx) saveState();
+        workspaces.splice(idx, 1);
+        if (idx < currentWsIdx) currentWsIdx--;
+        else if (currentWsIdx >= workspaces.length) currentWsIdx = workspaces.length - 1;
+        loadState(currentWsIdx, true);
+    };
+
+    const cancelRemoveTab = () => {
+        tabToDelete = null;
+        $('confirmModal').style.display = 'none';
+    };
+
     const renameTab = (idx) => {
         const span = document.getElementById('tab-name-' + idx);
         if (span) { span.contentEditable = "true"; span.focus(); document.getSelection().selectAllChildren(span); }
@@ -357,7 +408,7 @@ const App = (() => {
         document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
         $(btnId).classList.add('active');
         $('matBrushContainer').style.display = mode === 'MATERIAL' ? 'flex' : 'none';
-        $('boundSelect').style.display = mode === 'BOUNDARY' ? 'block' : 'none';
+        $('boundaryTools').style.display = mode === 'BOUNDARY' ? 'flex' : 'none';
         $('cropHelpText').style.display = mode === 'CROP' ? 'block' : 'none';
         $('panHelpText').style.display = mode === 'PAN' ? 'block' : 'none';
         setStatus(msg); draw();
@@ -389,6 +440,155 @@ const App = (() => {
         $('LpInput').value = Math.round(h);
         baseScale = Math.min((canvas.width - 80) / (maxX - minX || 1), (canvas.height - 80) / (maxY - minY || 1));
         zoomLevel = 1; offsetX = 0; offsetY = 0;
+    };
+    
+    // ─── AUTO BOUNDARIES ───
+    const applyAutoBoundaries = () => {
+        if (!polygons.length) {
+            setStatus('No hay geometría para asignar contornos.', 'error');
+            return;
+        }
+        let modified = false;
+        
+        // 1. Encontrar los límites absolutos de la figura
+        let bMinX = Infinity, bMaxX = -Infinity, bMinY = Infinity, bMaxY = -Infinity;
+        boundaryEdges.forEach(e => {
+            bMinX = Math.min(bMinX, e.p1.x, e.p2.x);
+            bMaxX = Math.max(bMaxX, e.p1.x, e.p2.x);
+            bMinY = Math.min(bMinY, e.p1.y, e.p2.y);
+            bMaxY = Math.max(bMaxY, e.p1.y, e.p2.y);
+        });
+
+        const eps = Math.max(getVal('tolInput', 0.1) * 2, 0.5); // Margen de seguridad para detectar líneas planas
+
+        // 2. Encontrar el bucle exterior perimetral mediante un trazado de ruta
+        let startEdgeIdx = -1;
+        for (let i = 0; i < boundaryEdges.length; i++) {
+            const e = boundaryEdges[i];
+            if (Math.abs(e.p1.x - bMinX) <= eps || Math.abs(e.p2.x - bMinX) <= eps) {
+                startEdgeIdx = i; break;
+            }
+        }
+
+        const outerLoop = new Set();
+        if (startEdgeIdx !== -1) {
+            const q = [startEdgeIdx];
+            outerLoop.add(startEdgeIdx);
+            let head = 0;
+            while(head < q.length) {
+                const curr = q[head++];
+                boundaryAdj[curr].forEach(nxt => {
+                    if (!outerLoop.has(nxt)) {
+                        outerLoop.add(nxt);
+                        q.push(nxt);
+                    }
+                });
+            }
+        } else {
+            boundaryEdges.forEach((_, i) => outerLoop.add(i)); // Fallback
+        }
+
+        // 3. Identificar estrictamente las caras adiabáticas (solo las líneas en los topes)
+        const isCut = new Array(boundaryEdges.length).fill(false);
+        boundaryEdges.forEach((e, i) => {
+            if (!outerLoop.has(i)) return;
+            const isTop = Math.abs(e.p1.y - bMaxY) <= eps && Math.abs(e.p2.y - bMaxY) <= eps;
+            const isBot = Math.abs(e.p1.y - bMinY) <= eps && Math.abs(e.p2.y - bMinY) <= eps;
+            const isLef = Math.abs(e.p1.x - bMinX) <= eps && Math.abs(e.p2.x - bMinX) <= eps;
+            const isRig = Math.abs(e.p1.x - bMaxX) <= eps && Math.abs(e.p2.x - bMaxX) <= eps;
+
+            if (autoBoundaryState === 0 || autoBoundaryState === 2) {
+                if (isTop || isBot) isCut[i] = true;
+            } else {
+                if (isLef || isRig) isCut[i] = true;
+            }
+        });
+
+        // 4. Asignar contorno Adiabático a esos cortes
+        outerLoop.forEach(i => {
+            if (isCut[i]) {
+                const e = boundaryEdges[i];
+                if (e.type !== 3) {
+                    e.type = 3;
+                    modified = true;
+                }
+            }
+        });
+
+        // 5. Agrupar todo el resto de líneas del perímetro en componentes conectados (los "Caminos")
+        const visited = new Set();
+        const components = [];
+
+        outerLoop.forEach(i => {
+            if (isCut[i] || visited.has(i)) return;
+            const comp = [];
+            const q = [i];
+            visited.add(i);
+            let head = 0;
+            while(head < q.length) {
+                const curr = q[head++];
+                comp.push(curr);
+                // Expandir la ruta excluyendo las caras adiabáticas
+                boundaryAdj[curr].forEach(nxt => {
+                    if (outerLoop.has(nxt) && !isCut[nxt] && !visited.has(nxt)) {
+                        visited.add(nxt);
+                        q.push(nxt);
+                    }
+                });
+            }
+            components.push(comp);
+        });
+
+        // 6. Evaluar en qué lado ha caído cada bloque de ruta completo y asignarle el color
+        let minCompCx = Infinity, maxCompCx = -Infinity;
+        let minCompCy = Infinity, maxCompCy = -Infinity;
+        
+        const compStats = components.map(comp => {
+            let sumX = 0, sumY = 0;
+            comp.forEach(i => {
+                const e = boundaryEdges[i];
+                sumX += (e.p1.x + e.p2.x) / 2;
+                sumY += (e.p1.y + e.p2.y) / 2;
+            });
+            const cx = sumX / comp.length;
+            const cy = sumY / comp.length;
+            minCompCx = Math.min(minCompCx, cx);
+            maxCompCx = Math.max(maxCompCx, cx);
+            minCompCy = Math.min(minCompCy, cy);
+            maxCompCy = Math.max(maxCompCy, cy);
+            return { comp, cx, cy };
+        });
+
+        // Calcular el punto medio exacto entre el bloque más a la izquierda y el más a la derecha
+        const cx = (bMinX + bMaxX) / 2;
+        const cy = (bMinY + bMaxY) / 2;
+        const midCx = minCompCx !== Infinity ? (minCompCx + maxCompCx) / 2 : cx;
+        const midCy = minCompCy !== Infinity ? (minCompCy + maxCompCy) / 2 : cy;
+
+        compStats.forEach(stat => {
+            let newType = 0;
+            if (autoBoundaryState === 0) newType = stat.cx <= midCx ? 1 : 2;      // Izq(Ext 1), Der(Int Medir 2)
+            else if (autoBoundaryState === 2) newType = stat.cx >= midCx ? 1 : 2; // Der(Ext 1), Izq(Int Medir 2)
+            else if (autoBoundaryState === 1) newType = stat.cy >= midCy ? 1 : 2; // Sup(Ext 1), Inf(Int Medir 2)
+            else if (autoBoundaryState === 3) newType = stat.cy <= midCy ? 1 : 2; // Inf(Ext 1), Sup(Int Medir 2)
+
+            stat.comp.forEach(i => {
+                const e = boundaryEdges[i];
+                if (e.type !== newType) {
+                    e.type = newType;
+                    modified = true;
+                }
+            });
+        });
+
+        if (modified) {
+            draw();
+            updateLegendUI();
+            const orientations = ['Izquierda (Ext)', 'Superior (Ext)', 'Derecha (Ext)', 'Inferior (Ext)'];
+            setStatus(`Contornos trazados automáticamente. Orientación: Exterior en la parte ${orientations[autoBoundaryState]}.`, 'success');
+        } else {
+            setStatus('Los contornos ya están asignados correctamente para esta orientación.', 'info');
+        }
     };
 
     // ─── PARSER DXF OPTIMIZADO ───
@@ -763,12 +963,34 @@ const App = (() => {
                 lastAlgo = `FDM Dinámico${res >= 600 ? ' Alta' : ''}${res >= 1000 ? ' Ultra' : ''}`;
                 showThermalMap = true;
                 
-                saveState(); // <-- AÑADIDO: Guarda los resultados en la pestaña actual inmediatamente
-                
+                saveState();
                 updateResultUI(); updatePdfButton();
                 $('btnBackToEdit').style.display = 'inline-flex'; $('btnToggleIso').style.display = 'inline-flex';
                 $('solverStatus').style.display = 'none'; $('calcBtn').disabled = false;
-                zoomLevel = 1; offsetX = 0; offsetY = 0; draw();
+                
+                // Auto Centrado en Interior de Medición (rojo) al terminar
+                let cMinX = Infinity, cMaxX = -Infinity, cMinY = Infinity, cMaxY = -Infinity;
+                let cFound = false;
+                boundaryEdges.forEach(e => {
+                    if (e.type === 2) {
+                        cMinX = Math.min(cMinX, e.p1.x, e.p2.x);
+                        cMaxX = Math.max(cMaxX, e.p1.x, e.p2.x);
+                        cMinY = Math.min(cMinY, e.p1.y, e.p2.y);
+                        cMaxY = Math.max(cMaxY, e.p1.y, e.p2.y);
+                        cFound = true;
+                    }
+                });
+                if (cFound) {
+                    const tw = cMaxX - cMinX || 10, th = cMaxY - cMinY || 10;
+                    const tcx = (cMinX + cMaxX) / 2, tcy = (cMinY + cMaxY) / 2;
+                    zoomLevel = Math.min((canvas.width - 80) / tw, (canvas.height - 80) / th) / baseScale;
+                    const cgx = (minX + maxX) / 2, cgy = (minY + maxY) / 2, s = baseScale * zoomLevel;
+                    offsetX = (cgx - tcx) * s; offsetY = (tcy - cgy) * s;
+                } else {
+                    zoomLevel = 1; offsetX = 0; offsetY = 0;
+                }
+                
+                draw();
                 setStatus('✅ Análisis completado. Matriz estabilizada.', 'success');
             };
             iterate();
@@ -778,7 +1000,7 @@ const App = (() => {
     // ─── PDF ───
     const buildPDF = async () => {
         saveState();
-        const validWS = workspaces.filter(w => w.T !== null);
+        const validWS = workspaces.filter(w => w.T !== null && w.T !== undefined);
         if (!validWS.length) return;
         setStatus('Generando informe técnico profesional...', 'info');
 
@@ -792,7 +1014,7 @@ const App = (() => {
         const coverHTML = `
         <div style="${S('min-height:277mm;display:flex;flex-direction:column;background:#fff;')}">
             <!-- Header band -->
-            <div style="background:#1a1a2e;padding:28px 35px;display:flex;align-items:center;justify-content:space-between;">
+            <div style="background:#333;padding:28px 35px;display:flex;align-items:center;justify-content:space-between;">
                 <div>
                     <span style="color:#EDD00E;font-size:28px;font-weight:800;letter-spacing:2px;">AISLAN</span><span style="color:#fff;font-size:28px;font-weight:800;letter-spacing:2px;">THERM</span>
                     <div style="color:#aaa;font-size:10px;letter-spacing:3px;margin-top:3px;">AISLANTES TÉCNICOS DEL MEDITERRÁNEO</div>
@@ -803,7 +1025,7 @@ const App = (() => {
                 </div>
             </div>
             <!-- Hero section -->
-            <div style="background:linear-gradient(135deg,#1a1a2e 0%,#16213e 60%,#0f3460 100%);flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:50px 35px;text-align:center;">
+            <div style="background:linear-gradient(135deg,#2c2c2c 0%,#3a3a3a 60%,#454545 100%);flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:50px 35px;text-align:center;">
                 <div style="width:60px;height:4px;background:#EDD00E;margin:0 auto 30px;"></div>
                 <h1 style="color:#fff;font-size:36px;font-weight:800;letter-spacing:1px;margin:0 0 12px;line-height:1.2;">INFORME TÉCNICO</h1>
                 <h2 style="color:#EDD00E;font-size:16px;font-weight:600;letter-spacing:3px;margin:0 0 30px;text-transform:uppercase;">Análisis de Transmitancia Térmica</h2>
@@ -829,7 +1051,7 @@ const App = (() => {
         <div class="html2pdf__page-break"></div>
         <div style="${S('padding:35px;min-height:257mm;display:flex;flex-direction:column;')}">
             <div style="border-bottom:3px solid #EDD00E;padding-bottom:12px;margin-bottom:30px;display:flex;justify-content:space-between;align-items:flex-end;">
-                <h2 style="color:#1a1a2e;font-size:20px;font-weight:800;margin:0;">CONTENIDO DEL INFORME</h2>
+                <h2 style="color:#333;font-size:20px;font-weight:800;margin:0;">CONTENIDO DEL INFORME</h2>
                 <span style="color:#aaa;font-size:10px;">REF. ${reportRef}</span>
             </div>
             <div style="flex:1;">
@@ -857,7 +1079,7 @@ const App = (() => {
         <div class="html2pdf__page-break"></div>
         <div style="${S('padding:35px;min-height:257mm;display:flex;flex-direction:column;')}">
             <div style="border-bottom:3px solid #EDD00E;padding-bottom:12px;margin-bottom:25px;display:flex;justify-content:space-between;align-items:flex-end;">
-                <h2 style="color:#1a1a2e;font-size:18px;font-weight:800;margin:0;">1. ALCANCE Y METODOLOGÍA</h2>
+                <h2 style="color:#333;font-size:18px;font-weight:800;margin:0;">1. ALCANCE Y METODOLOGÍA</h2>
                 <span style="color:#aaa;font-size:10px;">REF. ${reportRef}</span>
             </div>
             <p style="color:#444;font-size:11px;line-height:1.8;margin-bottom:20px;">
@@ -866,15 +1088,15 @@ const App = (() => {
             <p style="color:#444;font-size:11px;line-height:1.8;margin-bottom:25px;">
                 El objetivo del análisis es determinar el coeficiente de transmitancia térmica del perfil de marco (<strong>U<sub>f</sub></strong>), el flujo de calor lineal (<strong>L<sup>2D</sup></strong>), la temperatura superficial mínima interior (<strong>T<sub>si,min</sub></strong>) y el factor de temperatura superficial (<strong>f<sub>Rsi</sub></strong>), en condiciones de régimen estacionario y bajo las condiciones de contorno especificadas.
             </p>
-            <div style="background:#f8f9fa;border-left:4px solid #1a1a2e;padding:18px 20px;border-radius:0 6px 6px 0;margin-bottom:25px;">
-                <div style="color:#1a1a2e;font-weight:700;font-size:11px;letter-spacing:1px;margin-bottom:10px;">NORMAS DE REFERENCIA</div>
+            <div style="background:#f8f9fa;border-left:4px solid #333;padding:18px 20px;border-radius:0 6px 6px 0;margin-bottom:25px;">
+                <div style="color:#333;font-weight:700;font-size:11px;letter-spacing:1px;margin-bottom:10px;">NORMAS DE REFERENCIA</div>
                 ${[
                     ['UNE-EN ISO 10077-2:2018', 'Comportamiento térmico de ventanas, puertas y persianas. Cálculo del coeficiente de transmitancia térmica. Método numérico para marcos.'],
                     ['UNE-EN ISO 13788:2013', 'Comportamiento higrotérmico de los componentes y elementos de los edificios. Temperatura superficial interior para evitar la humedad superficial crítica y la condensación intersticial.'],
                     ['UNE-EN ISO 10211:2018', 'Puentes térmicos en edificación. Flujos de calor y temperaturas superficiales. Cálculos detallados.']
                 ].map(([norm, desc]) => `
                     <div style="display:flex;gap:12px;margin-bottom:8px;align-items:flex-start;">
-                        <span style="background:#EDD00E;color:#1a1a2e;font-size:9px;font-weight:800;padding:2px 6px;border-radius:3px;white-space:nowrap;margin-top:1px;">${norm}</span>
+                        <span style="background:#EDD00E;color:#333;font-size:9px;font-weight:800;padding:2px 6px;border-radius:3px;white-space:nowrap;margin-top:1px;">${norm}</span>
                         <span style="color:#555;font-size:10px;line-height:1.6;">${desc}</span>
                     </div>`).join('')}
             </div>
@@ -885,12 +1107,12 @@ const App = (() => {
         <div class="html2pdf__page-break"></div>
         <div style="${S('padding:35px;min-height:257mm;display:flex;flex-direction:column;')}">
             <div style="border-bottom:3px solid #EDD00E;padding-bottom:12px;margin-bottom:25px;display:flex;justify-content:space-between;align-items:flex-end;">
-                <h2 style="color:#1a1a2e;font-size:18px;font-weight:800;margin:0;">2. PARÁMETROS DE SIMULACIÓN</h2>
+                <h2 style="color:#333;font-size:18px;font-weight:800;margin:0;">2. PARÁMETROS DE SIMULACIÓN</h2>
                 <span style="color:#aaa;font-size:10px;">REF. ${reportRef}</span>
             </div>
             <table style="width:100%;border-collapse:collapse;font-size:11px;">
                 <thead>
-                    <tr style="background:#1a1a2e;color:#fff;">
+                    <tr style="background:#444;color:#fff;">
                         <th style="padding:10px 14px;text-align:left;font-weight:700;letter-spacing:0.5px;">PARÁMETRO</th>
                         <th style="padding:10px 14px;text-align:left;font-weight:700;">SÍMBOLO</th>
                         <th style="padding:10px 14px;text-align:left;font-weight:700;">VALOR</th>
@@ -912,8 +1134,8 @@ const App = (() => {
                     ].map((row, i) => `
                         <tr style="background:${i % 2 === 0 ? '#fff' : '#f8f9fa'};">
                             <td style="padding:9px 14px;color:#333;border-bottom:1px solid #eee;">${row[0]}</td>
-                            <td style="padding:9px 14px;color:#1a1a2e;font-weight:600;border-bottom:1px solid #eee;">${row[1]}</td>
-                            <td style="padding:9px 14px;color:#0f3460;font-weight:700;border-bottom:1px solid #eee;">${row[2]}</td>
+                            <td style="padding:9px 14px;color:#333;font-weight:600;border-bottom:1px solid #eee;">${row[1]}</td>
+                            <td style="padding:9px 14px;color:#333;font-weight:700;border-bottom:1px solid #eee;">${row[2]}</td>
                             <td style="padding:9px 14px;color:#888;font-size:10px;border-bottom:1px solid #eee;">${row[3]}</td>
                         </tr>`).join('')}
                 </tbody>
@@ -949,16 +1171,16 @@ const App = (() => {
             <div style="${S('padding:35px;')}">
                 <!-- Section header -->
                 <div style="border-bottom:3px solid #EDD00E;padding-bottom:12px;margin-bottom:22px;display:flex;justify-content:space-between;align-items:flex-end;">
-                    <h2 style="color:#1a1a2e;font-size:18px;font-weight:800;margin:0;">ANÁLISIS: ${w.name.toUpperCase()}</h2>
+                    <h2 style="color:#333;font-size:18px;font-weight:800;margin:0;">ANÁLISIS: ${w.name.toUpperCase()}</h2>
                     <span style="color:#aaa;font-size:10px;">REF. ${reportRef}</span>
                 </div>
 
                 <!-- KPIs row -->
                 <div style="display:flex;gap:12px;margin-bottom:22px;">
-                    <div style="flex:1;background:#1a1a2e;border-radius:8px;padding:18px;text-align:center;">
+                    <div style="flex:1;background:#444;border-radius:8px;padding:18px;text-align:center;">
                         <div style="color:#aaa;font-size:9px;letter-spacing:2px;margin-bottom:6px;">TRANSMITANCIA TÉRMICA</div>
                         <div style="color:#EDD00E;font-size:28px;font-weight:800;line-height:1;">${w.lastU.toFixed(3)}</div>
-                        <div style="color:#888;font-size:10px;margin-top:4px;">W/(m²·K)</div>
+                        <div style="color:#aaa;font-size:10px;margin-top:4px;">W/(m²·K)</div>
                         <div style="color:#aaa;font-size:9px;margin-top:2px;">U<sub>f</sub></div>
                     </div>
                     <div style="flex:1;background:${fRsiBg};border:2px solid ${fRsiColor};border-radius:8px;padding:18px;text-align:center;">
@@ -967,11 +1189,11 @@ const App = (() => {
                         <div style="color:${fRsiColor};font-size:10px;margin-top:4px;">adimensional</div>
                         <div style="background:${fRsiColor};color:#fff;font-size:9px;font-weight:700;padding:3px 8px;border-radius:3px;display:inline-block;margin-top:6px;">${fRsiLabel}</div>
                     </div>
-                    <div style="flex:1;background:#e3f2fd;border:2px solid #1565c0;border-radius:8px;padding:18px;text-align:center;">
-                        <div style="color:#1565c0;font-size:9px;letter-spacing:2px;margin-bottom:6px;">TEMP. SUPERFICIAL MÍN.</div>
-                        <div style="color:#1565c0;font-size:28px;font-weight:800;line-height:1;">${w.lastTsiMin.toFixed(1)}</div>
-                        <div style="color:#1565c0;font-size:10px;margin-top:4px;">ºC</div>
-                        <div style="color:#1565c0;font-size:9px;margin-top:2px;">T<sub>si,min</sub></div>
+                    <div style="flex:1;background:#f5f5f5;border:2px solid #555;border-radius:8px;padding:18px;text-align:center;">
+                        <div style="color:#555;font-size:9px;letter-spacing:2px;margin-bottom:6px;">TEMP. SUPERFICIAL MÍN.</div>
+                        <div style="color:#333;font-size:28px;font-weight:800;line-height:1;">${w.lastTsiMin.toFixed(1)}</div>
+                        <div style="color:#555;font-size:10px;margin-top:4px;">ºC</div>
+                        <div style="color:#555;font-size:9px;margin-top:2px;">T<sub>si,min</sub></div>
                     </div>
                 </div>
 
@@ -1001,8 +1223,8 @@ const App = (() => {
                                 ].map((row, i) => `
                                     <tr style="background:${i % 2 === 0 ? '#fff' : '#fafafa'};">
                                         <td style="padding:8px 14px;color:#444;border-bottom:1px solid #eee;">${row[0]}</td>
-                                        <td style="padding:8px 14px;color:#1a1a2e;font-weight:600;border-bottom:1px solid #eee;">${row[1]}</td>
-                                        <td style="padding:8px 14px;color:#0f3460;font-weight:700;border-bottom:1px solid #eee;">${row[2]}</td>
+                                        <td style="padding:8px 14px;color:#333;font-weight:600;border-bottom:1px solid #eee;">${row[1]}</td>
+                                        <td style="padding:8px 14px;color:#333;font-weight:700;border-bottom:1px solid #eee;">${row[2]}</td>
                                         <td style="padding:8px 14px;color:#888;border-bottom:1px solid #eee;">${row[3]}</td>
                                     </tr>`).join('')}
                             </tbody>
@@ -1013,18 +1235,18 @@ const App = (() => {
                 <!-- Visuals -->
                 <div style="display:flex;gap:14px;margin-bottom:22px;">
                     <div style="flex:1;border:1px solid #e0e0e0;border-radius:6px;overflow:hidden;">
-                        <div style="background:#1a1a2e;padding:8px 12px;color:#EDD00E;font-size:9px;font-weight:700;letter-spacing:2px;">GEOMETRÍA Y CONDICIONES DE CONTORNO</div>
+                        <div style="background:#444;padding:8px 12px;color:#EDD00E;font-size:9px;font-weight:700;letter-spacing:2px;">GEOMETRÍA Y CONDICIONES DE CONTORNO</div>
                         <img src="${imgG}" style="width:100%;display:block;">
                     </div>
                     <div style="flex:1;border:1px solid #e0e0e0;border-radius:6px;overflow:hidden;">
-                        <div style="background:#1a1a2e;padding:8px 12px;color:#EDD00E;font-size:9px;font-weight:700;letter-spacing:2px;">MAPA TÉRMICO · DISTRIBUCIÓN DE TEMPERATURAS</div>
+                        <div style="background:#444;padding:8px 12px;color:#EDD00E;font-size:9px;font-weight:700;letter-spacing:2px;">MAPA TÉRMICO · DISTRIBUCIÓN DE TEMPERATURAS</div>
                         <img src="${imgT}" style="width:100%;display:block;">
                     </div>
                 </div>
 
                 <!-- Materials -->
                 <div style="background:#f8f9fa;border-radius:6px;padding:16px;border:1px solid #e9ecef;">
-                    <div style="color:#1a1a2e;font-size:10px;font-weight:700;letter-spacing:1px;margin-bottom:12px;">MATERIALES EN LA SECCIÓN ANALIZADA</div>
+                    <div style="color:#333;font-size:10px;font-weight:700;letter-spacing:1px;margin-bottom:12px;">MATERIALES EN LA SECCIÓN ANALIZADA</div>
                     <div style="display:flex;flex-wrap:wrap;gap:8px;">
                         ${mats.map(idx => `
                             <div style="display:flex;align-items:center;gap:7px;background:#fff;border:1px solid #e0e0e0;border-radius:4px;padding:6px 10px;">
@@ -1049,12 +1271,12 @@ const App = (() => {
             <div class="html2pdf__page-break"></div>
             <div style="${S('padding:35px;')}">
                 <div style="border-bottom:3px solid #EDD00E;padding-bottom:12px;margin-bottom:22px;display:flex;justify-content:space-between;align-items:flex-end;">
-                    <h2 style="color:#1a1a2e;font-size:18px;font-weight:800;margin:0;">CUADRO COMPARATIVO GLOBAL</h2>
+                    <h2 style="color:#333;font-size:18px;font-weight:800;margin:0;">CUADRO COMPARATIVO GLOBAL</h2>
                     <span style="color:#aaa;font-size:10px;">REF. ${reportRef}</span>
                 </div>
                 <table style="width:100%;border-collapse:collapse;font-size:11px;">
                     <thead>
-                        <tr style="background:#1a1a2e;color:#fff;">
+                        <tr style="background:#444;color:#fff;">
                             <th style="padding:11px 14px;text-align:left;font-weight:700;letter-spacing:0.5px;">PERFIL</th>
                             <th style="padding:11px 14px;text-align:center;font-weight:700;">U<sub>f</sub> (W/m²·K)</th>
                             <th style="padding:11px 14px;text-align:center;font-weight:700;">L<sup>2D</sup> (W/m·K)</th>
@@ -1068,8 +1290,8 @@ const App = (() => {
                         ${validWS.map((w, i) => {
                             const ok = w.lastFRsi >= 0.70;
                             return `<tr style="background:${i % 2 === 0 ? '#fff' : '#f8f9fa'};">
-                                <td style="padding:10px 14px;font-weight:700;color:#1a1a2e;border-bottom:1px solid #eee;">${w.name}</td>
-                                <td style="padding:10px 14px;text-align:center;font-weight:700;color:#0f3460;border-bottom:1px solid #eee;">${w.lastU.toFixed(3)}</td>
+                                <td style="padding:10px 14px;font-weight:700;color:#333;border-bottom:1px solid #eee;">${w.name}</td>
+                                <td style="padding:10px 14px;text-align:center;font-weight:700;color:#333;border-bottom:1px solid #eee;">${w.lastU.toFixed(3)}</td>
                                 <td style="padding:10px 14px;text-align:center;color:#444;border-bottom:1px solid #eee;">${w.lastL2D.toFixed(3)}</td>
                                 <td style="padding:10px 14px;text-align:center;color:#444;border-bottom:1px solid #eee;">${w.lastTsiMin.toFixed(1)}</td>
                                 <td style="padding:10px 14px;text-align:center;font-weight:700;color:${ok ? '#2e7d32' : '#c62828'};border-bottom:1px solid #eee;">${w.lastFRsi.toFixed(3)}</td>
@@ -1098,34 +1320,34 @@ const App = (() => {
         <div class="html2pdf__page-break"></div>
         <div style="${S('padding:35px;')}">
             <div style="border-bottom:3px solid #EDD00E;padding-bottom:12px;margin-bottom:22px;display:flex;justify-content:space-between;align-items:flex-end;">
-                <h2 style="color:#1a1a2e;font-size:18px;font-weight:800;margin:0;">JUSTIFICACIÓN NORMATIVA Y METODOLOGÍA</h2>
+                <h2 style="color:#333;font-size:18px;font-weight:800;margin:0;">JUSTIFICACIÓN NORMATIVA Y METODOLOGÍA</h2>
                 <span style="color:#aaa;font-size:10px;">REF. ${reportRef}</span>
             </div>
 
             <p style="color:#444;font-size:11px;line-height:1.8;margin-bottom:18px;">
                 El cálculo se ha realizado resolviendo la ecuación de conducción de calor en régimen estacionario en dos dimensiones mediante el método de las diferencias finitas (FDM), con acoplamiento de relajación sucesiva sobrelajada (SOR) de paso dinámico:
             </p>
-            <div style="background:#f0f4f8;border:1px solid #cfd8e3;border-radius:6px;padding:18px;text-align:center;margin-bottom:22px;font-size:13px;color:#1a1a2e;font-weight:600;">
+            <div style="background:#f5f5f5;border:1px solid #ddd;border-radius:6px;padding:18px;text-align:center;margin-bottom:22px;font-size:13px;color:#333;font-weight:600;">
                 ∇·(λ∇T) = 0 &nbsp;&nbsp;⟹&nbsp;&nbsp; ∂/∂x(λ·∂T/∂x) + ∂/∂y(λ·∂T/∂y) = 0
             </div>
 
             <div style="margin-bottom:20px;">
-                <div style="font-weight:700;color:#1a1a2e;font-size:12px;margin-bottom:12px;letter-spacing:0.5px;">EXPRESIONES DE CÁLCULO PRINCIPALES</div>
+                <div style="font-weight:700;color:#333;font-size:12px;margin-bottom:12px;letter-spacing:0.5px;">EXPRESIONES DE CÁLCULO PRINCIPALES</div>
                 ${[
                     ['L²D = Q / ΔT', 'Conductancia térmica lineal del perfil, donde Q es el flujo de calor [W/m] y ΔT la diferencia de temperatura [K]'],
                     ['Uf = L²D / bf', 'Transmitancia térmica del marco [W/(m²·K)], normalizando por el ancho proyectado bf [m]'],
                     ['fRsi = (Tsi,min − Text) / (Tint − Text)', 'Factor de temperatura superficial interior, indicador de riesgo de condensación superficial (ISO 13788)'],
                 ].map(([formula, desc]) => `
                     <div style="display:flex;gap:14px;align-items:flex-start;margin-bottom:12px;padding:12px;background:#fff;border:1px solid #e9ecef;border-radius:6px;">
-                        <div style="background:#1a1a2e;color:#EDD00E;font-family:monospace;font-size:10px;font-weight:700;padding:6px 12px;border-radius:4px;white-space:nowrap;min-width:fit-content;">${formula}</div>
+                        <div style="background:#444;color:#EDD00E;font-family:monospace;font-size:10px;font-weight:700;padding:6px 12px;border-radius:4px;white-space:nowrap;min-width:fit-content;">${formula}</div>
                         <div style="color:#555;font-size:10px;line-height:1.7;padding-top:4px;">${desc}</div>
                     </div>`).join('')}
             </div>
 
             <div style="background:#f8f9fa;border-radius:6px;padding:18px;border:1px solid #e9ecef;margin-bottom:20px;">
-                <div style="font-weight:700;color:#1a1a2e;font-size:11px;letter-spacing:1px;margin-bottom:12px;">CONDICIONES DE CONTORNO (ISO 10077-2 §6.1)</div>
+                <div style="font-weight:700;color:#333;font-size:11px;letter-spacing:1px;margin-bottom:12px;">CONDICIONES DE CONTORNO (ISO 10077-2 §6.1)</div>
                 ${[
-                    ['Contorno Exterior', 'R_se = 0,04 m²·K/W', '#1565c0', '#e3f2fd'],
+                    ['Contorno Exterior', 'R_se = 0,04 m²·K/W', '#555', '#f5f5f5'],
                     ['Contorno Interior (medición U_f)', 'R_si = 0,13 m²·K/W', '#c62828', '#ffebee'],
                     ['Contorno Interior Secundario', 'R_si = 0,13 m²·K/W', '#e65100', '#fff3e0'],
                     ['Contorno Adiabático', 'dT/dn = 0 (flujo nulo)', '#37474f', '#f5f5f5'],
@@ -1173,6 +1395,11 @@ const App = (() => {
             $('customMatPanel').style.display = 'none'; setStatus(`Material "${name}" añadido.`);
         };
         $('matSelect').onchange = function () { if (this.value === 'CUSTOM') $('customMatPanel').style.display = 'block'; else { $('customMatPanel').style.display = 'none'; } };
+        
+        // Listener botones de Herramientas Auto-Contornos
+        $('btnAutoBound').onclick = () => { applyAutoBoundaries(); saveState(); };
+        $('btnRotateBound').onclick = () => { autoBoundaryState = (autoBoundaryState + 1) % 4; applyAutoBoundaries(); saveState(); };
+
         $('btnBackToEdit').onclick = () => { showThermalMap = false; showIsotherms = false; updateResultUI(); updatePdfButton(); setStatus('Modo edición activado.'); draw(); };
         $('btnToggleIso').onclick = () => { showIsotherms = !showIsotherms; updateResultUI(); draw(); };
         $('btnRotate').onclick = () => {
@@ -1250,6 +1477,10 @@ const App = (() => {
         };
         $('btnAddTab').onclick = addTab;
         $('btnDuplicateTab').onclick = duplicateTab;
+        
+        $('confirmOkBtn').onclick = executeRemoveTab;
+        $('confirmCancelBtn').onclick = cancelRemoveTab;
+
         $('canvas').onwheel = e => {
             e.preventDefault(); if (!polygons.length) return;
             const rect = canvas.getBoundingClientRect();
@@ -1305,17 +1536,25 @@ const App = (() => {
             }
             if (updated) draw();
         };
-        $('canvas').onmouseup = e => {
-            if (!polygons.length) return;
-            isDragging = false; canvas.classList.remove('grabbing');
-            if (hasDragged) return;
-            if (showThermalMap || editMode === 'PAN') return;
+
+        // Prevención de enganche de herramienta fuera del lienzo
+        window.addEventListener('mouseup', e => {
+            if (isDragging) {
+                isDragging = false; canvas.classList.remove('grabbing');
+            }
             if (isCropping) {
                 isCropping = false;
                 if (Math.hypot(cropRect.x1 - cropRect.x2, cropRect.y1 - cropRect.y2) < 5 / baseScale / zoomLevel) { cropRect = null; calcBounds = null; setStatus('Área restablecida.'); }
                 else { const m = 5 / baseScale / zoomLevel; calcBounds = { minX: Math.min(cropRect.x1, cropRect.x2) - m, maxX: Math.max(cropRect.x1, cropRect.x2) + m, minY: Math.min(cropRect.y1, cropRect.y2) - m, maxY: Math.max(cropRect.y1, cropRect.y2) + m }; setStatus('Área acotada.'); }
-                draw(); return;
+                draw();
             }
+        });
+
+        $('canvas').onmouseup = e => {
+            if (!polygons.length) return;
+            if (hasDragged) return;
+            if (showThermalMap || editMode === 'PAN') return;
+            
             if (editMode === 'BOUNDARY' && hoveredEdgeIdx !== -1) {
                 const activeType = parseInt($('boundSelect').value);
                 if (e.shiftKey) {
