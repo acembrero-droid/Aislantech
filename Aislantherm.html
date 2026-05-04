@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>AISLANTHERM · Informes Térmicos CTE · Justifica HE1 en 24h</title>
+    
+    <!-- Google Fonts: Montserrat + Open Sans -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Open+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        /* ========== VARIABLES AISLANTECH (amarillo corporativo) ========== */
+        :root {
+            --color-primary: #EDD00E;
+            --color-primary-dark: #EDD00E;   /* Reemplazo del marrón por amarillo */
+            --color-primary-light: #FFF8DC;
+            --color-secondary: #3E3E3E;
+            --color-secondary-dark: #696969;
+            --color-secondary-light: #D3D3D3;
+            --color-accent: #EDD00E;
+            --color-light: #F5F5F5;
+            --color-dark: #333333;
+            --color-gray: #666666;
+            --color-white: #FFFFFF;
+            --transition: all 0.3s ease;
+            --border-radius: 12px;
+            --box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+            --box-shadow-hover: 0 20px 35px rgba(0, 0, 0, 0.1);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Open Sans', sans-serif;
+            color: var(--color-gray);
+            background-color: var(--color-white);
+            line-height: 1.5;
+            overflow-x: hidden;
+        }
+        
+        h1, h2, h3, h4, .btn, .logo-text, .card-title, .price {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 700;
+            color: var(--color-dark);
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+        
+        section {
+            padding: 80px 0;
+        }
+        
+        .section-title {
+            text-align: center;
+            margin-bottom: 48px;
+            position: relative;
+        }
+        
+        .section-title h2 {
+            font-size: 2.2rem;
+            display: inline-block;
+            position: relative;
+        }
+        
+        .section-title h2:after {
+            content: '';
+            position: absolute;
+            width: 70px;
+            height: 4px;
+            background-color: var(--color-primary);
+            bottom: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        
+        .section-title p {
+            margin-top: 24px;
+            color: var(--color-secondary-dark);
+            font-size: 1.1rem;
+        }
+        
+        /* ========== HEADER ========== */
+        header {
+            position: sticky;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 1000;
+            background-color: rgba(255, 255, 255, 0.97);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            backdrop-filter: blur(2px);
+            transition: var(--transition);
+        }
+        
+        .header-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 24px;
+        }
+        
+        .logo-container {
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+        }
+        
+        .logo-text {
+            font-weight: 700;
+            display: flex;
+            flex-direction: column;
+            line-height: 1.1;
+        }
+        
+        .logo-aislan {
+            color: var(--color-secondary);
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+        
+        .logo-tech {
+            color: var(--color-primary);
+            font-size: 1.5rem;
+            font-weight: 800;
+        }
+        
+        .logo-tagline {
+            font-size: 0.7rem;
+            color: var(--color-gray);
+            font-weight: 400;
+            margin-top: 2px;
+        }
+        
+        .btn-yellow {
+            background-color: var(--color-primary);
+            color: var(--color-dark);
+            font-weight: 700;
+            padding: 10px 24px;
+            border-radius: 40px;
+            text-decoration: none;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85rem;
+            border: none;
+            cursor: pointer;
+        }
+        
+        .btn-yellow:hover {
+            background-color: var(--color-primary-dark);
+            color: var(--color-white);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(237, 208, 14, 0.3);
+        }
+        
+        /* ========== HERO ========== */
+        .hero {
+            background: linear-gradient(135deg, var(--color-secondary) 0%, var(--color-dark) 100%);
+            color: white;
+            padding: 100px 0 80px;
+            text-align: center;
+        }
+        
+        .hero h1 {
+            color: white;
+            font-size: 2.8rem;
+            margin-bottom: 20px;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .hero h1 span {
+            color: var(--color-primary);
+        }
+        
+        .hero p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            max-width: 700px;
+            margin: 0 auto 32px;
+        }
+        
+        .hero-buttons {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .btn-primary {
+            background-color: var(--color-primary);
+            color: var(--color-dark);
+            padding: 14px 32px;
+            border-radius: 40px;
+            font-weight: 700;
+            font-size: 1rem;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--color-primary-dark);
+            color: white;
+            transform: translateY(-3px);
+        }
+        
+        .btn-outline-light {
+            background: transparent;
+            border: 2px solid white;
+            color: white;
+            padding: 12px 30px;
+            border-radius: 40px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: var(--transition);
+        }
+        
+        .btn-outline-light:hover {
+            background: white;
+            color: var(--color-dark);
+            transform: translateY(-3px);
+        }
+        
+        /* ========== CARDS ========== */
+        .card {
+            background: var(--color-white);
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            box-shadow: var(--box-shadow);
+            transition: var(--transition);
+            border-top: 4px solid var(--color-primary);
+            height: 100%;
+        }
+        
+        .card:hover {
+            transform: translateY(-8px);
+            box-shadow: var(--box-shadow-hover);
+        }
+        
+        .card-body {
+            padding: 28px;
+        }
+        
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
+        }
+        
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 40px;
+        }
+        
+        .benefit-icon {
+            font-size: 2.5rem;
+            color: var(--color-primary);
+            margin-bottom: 20px;
+        }
+        
+        .price-card {
+            text-align: center;
+            border-top: 4px solid var(--color-primary);
+        }
+        
+        .price {
+            font-size: 2.8rem;
+            font-weight: 800;
+            color: var(--color-secondary);
+            margin: 20px 0;
+        }
+        
+        .price small {
+            font-size: 1rem;
+            font-weight: 400;
+        }
+        
+        .badge-free {
+            background: #2e7d32;
+            color: white;
+            display: inline-block;
+            padding: 6px 16px;
+            border-radius: 40px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            margin-top: 10px;
+        }
+        
+        .example-img {
+            width: 100%;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            margin-bottom: 20px;
+            border: 1px solid var(--color-secondary-light);
+        }
+        
+        .testimonial {
+            background: var(--color-primary-light);
+            border-radius: var(--border-radius);
+            padding: 32px;
+            text-align: center;
+            font-style: italic;
+            border-left: 6px solid var(--color-primary);
+        }
+        
+        /* ========== FORM MODAL ========== */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-content {
+            background: white;
+            max-width: 500px;
+            width: 90%;
+            border-radius: 20px;
+            padding: 30px;
+            position: relative;
+            border-top: 5px solid var(--color-primary);
+        }
+        
+        .modal-close {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 1.8rem;
+            cursor: pointer;
+            color: var(--color-gray);
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group input, .form-group textarea {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid var(--color-secondary-light);
+            border-radius: var(--border-radius);
+            font-family: 'Open Sans', sans-serif;
+        }
+        
+        .form-group input:focus {
+            border-color: var(--color-primary);
+            outline: none;
+        }
+        
+        /* ========== FOOTER ========== */
+        footer {
+            background-color: var(--color-dark);
+            color: var(--color-white);
+            padding: 60px 0 30px;
+        }
+        
+        .footer-content {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            gap: 40px;
+            margin-bottom: 40px;
+        }
+        
+        .footer-about {
+            flex: 1;
+            min-width: 250px;
+        }
+        
+        .footer-logo {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+        }
+        
+        .footer-logo .logo-aislan {
+            color: var(--color-white);
+        }
+        .footer-logo .logo-tech {
+            color: var(--color-primary);
+        }
+        
+        .footer-description {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 0.9rem;
+        }
+        
+        .footer-legal {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .footer-legal a {
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+            font-size: 0.85rem;
+            transition: var(--transition);
+        }
+        
+        .footer-legal a:hover {
+            color: var(--color-primary);
+        }
+        
+        .footer-bottom {
+            text-align: center;
+            padding-top: 30px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 0.9rem;
+        }
+        
+        /* ========== RESPONSIVE ========== */
+        @media (max-width: 768px) {
+            section { padding: 60px 0; }
+            .hero h1 { font-size: 2rem; }
+            .hero p { font-size: 1rem; }
+            .section-title h2 { font-size: 1.8rem; }
+            .grid-2 { grid-template-columns: 1fr; }
+        }
+        
+        .whatsapp-float {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: #25D366;
+            color: white;
+            width: 55px;
+            height: 55px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            transition: var(--transition);
+            z-index: 99;
+            text-decoration: none;
+        }
+        .whatsapp-float:hover {
+            transform: scale(1.1);
+            background: #128C7E;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="container header-container">
+        <a href="#" class="logo-container">
+            <div class="logo-text">
+                <div><span class="logo-aislan">AISLAN</span><span class="logo-tech">THERM</span></div>
+                <div class="logo-tagline">Informes térmicos profesionales</div>
+            </div>
+        </a>
+        <a href="#" class="btn-yellow" id="ctaHeaderBtn"><i class="fas fa-file-alt"></i> Solicitar informe gratuito</a>
+    </div>
+</header>
+
+<!-- HERO -->
+<section class="hero">
+    <div class="container">
+        <h1>Justifica el <span>CTE (HE1)</span> sin perder horas en cálculos térmicos</h1>
+        <p>Informes de transmitancia y puentes térmicos listos para proyecto en 24–48h. Ahorra tiempo, evita errores y cumple normativa sin complicaciones.</p>
+        <div class="hero-buttons">
+            <a href="#" class="btn-primary" id="ctaHeroBtn"><i class="fas fa-chart-line"></i> Solicitar informe gratuito</a>
+            <a href="#ejemplo" class="btn-outline-light"><i class="fas fa-eye"></i> Ver ejemplo de informe</a>
+        </div>
+    </div>
+</section>
+
+<!-- PROBLEMA -->
+<section>
+    <div class="container">
+        <div class="section-title">
+            <h2>¿Te suena esto?</h2>
+        </div>
+        <div class="grid-2" style="margin-top: 20px;">
+            <div class="card">
+                <div class="card-body">
+                    <i class="fas fa-clock" style="font-size: 2rem; color: var(--color-primary); margin-bottom: 15px; display: inline-block;"></i>
+                    <h3>Pierdes horas calculando transmitancias y detalles constructivos</h3>
+                    <p style="margin-top: 12px;">El tiempo es limitado y los cálculos manuales consumen recursos valiosos que podrías dedicar al diseño.</p>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-body">
+                    <i class="fas fa-balance-scale" style="font-size: 2rem; color: var(--color-primary); margin-bottom: 15px; display: inline-block;"></i>
+                    <h3>Dudas si el encuentro cumple el CTE</h3>
+                    <p style="margin-top: 12px;">La normativa es exigente y un error puede significar retrasos en la aprobación del proyecto.</p>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-body">
+                    <i class="fas fa-tasks" style="font-size: 2rem; color: var(--color-primary); margin-bottom: 15px; display: inline-block;"></i>
+                    <h3>Tienes que justificar HE1 deprisa para entregar proyecto</h3>
+                    <p style="margin-top: 12px;">Los plazos aprietan y la documentación técnica debe estar impecable.</p>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-body">
+                    <i class="fas fa-hard-hat" style="font-size: 2rem; color: var(--color-primary); margin-bottom: 15px; display: inline-block;"></i>
+                    <h3>Riesgo de errores o problemas en obra (condensaciones, puentes térmicos)</h3>
+                    <p style="margin-top: 12px;">Las patologías constructivas pueden aparecer si la simulación no es precisa.</p>
+                </div>
+            </div>
+        </div>
+        <p style="text-align: center; margin-top: 40px; font-weight: 700; font-size: 1.2rem;">No deberías perder tiempo en esto.</p>
+    </div>
+</section>
+
+<!-- SOLUCIÓN -->
+<section style="background: var(--color-light);">
+    <div class="container">
+        <div class="section-title">
+            <h2>Externaliza el cálculo térmico y céntrate en el proyecto</h2>
+        </div>
+        <div class="grid-2">
+            <div>
+                <div class="card" style="height: auto;">
+                    <div class="card-body">
+                        <h3><i class="fas fa-check-circle" style="color: var(--color-primary); margin-right: 10px;"></i> Te entregamos:</h3>
+                        <ul style="margin-top: 20px; list-style: none;">
+                            <li style="margin-bottom: 12px;"><i class="fas fa-file-pdf" style="color: var(--color-primary); width: 24px;"></i> Informe técnico completo listo para memoria</li>
+                            <li style="margin-bottom: 12px;"><i class="fas fa-gavel" style="color: var(--color-primary); width: 24px;"></i> Justificación directa de CTE (HE1)</li>
+                            <li style="margin-bottom: 12px;"><i class="fas fa-chart-simple" style="color: var(--color-primary); width: 24px;"></i> Análisis de puentes térmicos (FEM 2D)</li>
+                            <li style="margin-bottom: 12px;"><i class="fas fa-lightbulb" style="color: var(--color-primary); width: 24px;"></i> Conclusiones claras y utilizables</li>
+                            <li><i class="fas fa-rocket" style="color: var(--color-primary); width: 24px;"></i> Entrega rápida (24–48h)</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-body">
+                    <i class="fas fa-calculator" style="font-size: 3rem; color: var(--color-primary); margin-bottom: 20px; display: block;"></i>
+                    <h3>Metodología contrastada</h3>
+                    <p>Utilizamos software de simulación por elementos finitos (FEM) conforme a ISO 10211 y EN ISO 6946. Garantizamos precisión y trazabilidad.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- BENEFICIOS (sin emojis) -->
+<section>
+    <div class="container">
+        <div class="section-title">
+            <h2>Por qué usar Aislantherm</h2>
+        </div>
+        <div class="grid-3">
+            <div class="card"><div class="card-body"><div class="benefit-icon"><i class="fas fa-hourglass-half"></i></div><h3>Ahorra 3–6 horas por proyecto</h3><p>Automatizamos el proceso con simulaciones validadas.</p></div></div>
+            <div class="card"><div class="card-body"><div class="benefit-icon"><i class="fas fa-chart-line"></i></div><h3>Evita errores de cálculo y rehacer trabajo</h3><p>Resultados precisos que cumplen la normativa.</p></div></div>
+            <div class="card"><div class="card-body"><div class="benefit-icon"><i class="fas fa-stamp"></i></div><h3>Documentación lista para visado</h3><p>Informes profesionales con estructura clara.</p></div></div>
+            <div class="card"><div class="card-body"><div class="benefit-icon"><i class="fas fa-brain"></i></div><h3>Toma mejores decisiones constructivas</h3><p>Análisis detallado de puentes térmicos.</p></div></div>
+            <div class="card"><div class="card-body"><div class="benefit-icon"><i class="fas fa-shield-alt"></i></div><h3>Reduce riesgos de patologías en obra</h3><p>Prevén condensaciones y puentes térmicos.</p></div></div>
+        </div>
+    </div>
+</section>
+
+<!-- EJEMPLO REAL -->
+<section id="ejemplo" style="background: var(--color-light);">
+    <div class="container">
+        <div class="section-title">
+            <h2>Así son nuestros informes</h2>
+            <p>mapas térmicos · valores U · análisis de condensaciones · conclusión lista para proyecto</p>
+        </div>
+        <div class="grid-2">
+            <div><img src="https://placehold.co/600x400/EDD00E/333333?text=Mapa+t%C3%A9rmico+FEM" alt="Mapa térmico" class="example-img"></div>
+            <div><img src="https://placehold.co/600x400/3E3E3E/FFFFFF?text=Tabla+U+values+y+puentes" alt="Tabla de resultados" class="example-img"></div>
+        </div>
+        <div style="text-align: center; margin-top: 30px;">
+            <a href="#" class="btn-primary" id="ctaEjemploBtn"><i class="fas fa-download"></i> Solicitar informe gratuito</a>
+        </div>
+    </div>
+</section>
+
+<!-- PRECIO -->
+<section>
+    <div class="container">
+        <div class="section-title">
+            <h2>Precios </h2>
+        </div>
+        <div class="grid-3">
+            <div class="card price-card">
+                <div class="card-body"><h3>Informe individual</h3><div class="price">160 €</div><p>Informe completo de transmitancia térmica + puentes térmicos.</p><div class="badge-free">Sin permanencia</div></div>
+            </div>
+            <div class="card price-card">
+                <div class="card-body"><h3>Pack 5 informes</h3><div class="price">700 €</div><p>Ahorra 100 € · Ideal para proyectos de cierta envergadura.</p><div class="badge-free">Transferible</div></div>
+            </div>
+            <div class="card price-card">
+                <div class="card-body"><h3>Pack 10 informes</h3><div class="price">1.200 €</div><p>Ahorro de 400 € · Para estudios con volumen habitual.</p><div class="badge-free">Mejor valor</div></div>
+            </div>
+        </div>
+        <div style="text-align: center; margin-top: 30px;">
+            <span class="badge-free" style="background: var(--color-primary); color: var(--color-dark); padding: 10px 24px; font-size: 1rem;">Primer informe GRATIS (sin compromiso)</span>
+        </div>
+    </div>
+</section>
+
+<!-- DIFERENCIACIÓN -->
+<section style="background: var(--color-light);">
+    <div class="container">
+        <div class="section-title">
+            <h2>No es solo un cálculo</h2>
+        </div>
+        <div class="grid-2">
+            <div class="card"><div class="card-body"><i class="fas fa-clipboard-list" style="font-size: 2rem; color: var(--color-primary);"></i><h3 style="margin-top: 12px;">Otros te dan datos.</h3><p>Nosotros te damos: conclusión clara, cumplimiento normativo, recomendaciones técnicas y documento listo para usar.</p></div></div>
+            <div class="card"><div class="card-body"><i class="fas fa-certificate" style="font-size: 2rem; color: var(--color-primary);"></i><h3 style="margin-top: 12px;">Informes con garantía técnica</h3><p>Respaldados por ingenieros especialistas en eficiencia energética.</p></div></div>
+        </div>
+    </div>
+</section>
+
+<!-- PARA QUIÉN ES -->
+<section>
+    <div class="container">
+        <div class="section-title">
+            <h2>Pensado para:</h2>
+        </div>
+        <div class="grid-3">
+            <div class="card"><div class="card-body"><i class="fas fa-building"></i><h3>Estudios de arquitectura</h3></div></div>
+            <div class="card"><div class="card-body"><i class="fas fa-microchip"></i><h3>Ingenierías</h3></div></div>
+            <div class="card"><div class="card-body"><i class="fas fa-tools"></i><h3>Proyectos de rehabilitación</h3></div></div>
+            <div class="card"><div class="card-body"><i class="fas fa-home"></i><h3>Vivienda residencial</h3></div></div>
+        </div>
+    </div>
+</section>
+
+<!-- TESTIMONIO -->
+<section style="background: var(--color-light);">
+    <div class="container">
+        <div class="section-title">
+            <h2>Lo que dicen otros técnicos</h2>
+        </div>
+        <div class="testimonial">
+            <i class="fas fa-quote-left" style="font-size: 2rem; color: var(--color-primary); opacity: 0.5;"></i>
+            <p style="font-size: 1.1rem; margin: 15px 0;">“Nos ha ahorrado muchísimo tiempo en la justificación del HE1. Los informes son claros y los aceptan directamente en los ayuntamientos.”</p>
+            <p><strong>Estudio de arquitectura</strong></p>
+        </div>
+    </div>
+</section>
+
+<!-- CTA FINAL -->
+<section style="background: linear-gradient(135deg, var(--color-secondary) 0%, var(--color-dark) 100%); color: white;">
+    <div class="container" style="text-align: center;">
+        <h2 style="color: white; font-size: 2rem;">Prueba sin riesgo</h2>
+        <p style="margin: 20px auto; max-width: 600px;">Solicita tu primer informe gratuito y comprueba cómo funciona.<br>Entrega en 24–48h · Sin compromiso</p>
+        <a href="#" class="btn-primary" id="ctaFinalBtn" style="background-color: var(--color-primary); color: var(--color-dark); font-size: 1.2rem; padding: 16px 36px;"><i class="fas fa-paper-plane"></i> Solicitar informe ahora</a>
+    </div>
+</section>
+
+<footer>
+    <div class="container">
+        <div class="footer-content">
+            <div class="footer-about">
+                <div class="footer-logo"><span class="logo-aislan">AISLAN</span><span class="logo-tech">THERM</span></div>
+                <p class="footer-description">Informes térmicos profesionales para la edificación. Especialistas en simulación 2D por elementos finitos y justificación del CTE HE1.</p>
+            </div>
+        </div>
+        <div class="footer-legal">
+            <a href="#">Política de Privacidad</a>
+            <a href="#">Política de Cookies</a>
+            <a href="#">Aviso Legal</a>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2025 Aislantherm · Todos los derechos reservados. | <a href="#" style="color: var(--color-primary);">aislantherm.es</a></p>
+        </div>
+    </div>
+</footer>
+
+<a href="https://wa.me/34622562499?text=Hola%2C%20me%20interesa%20un%20informe%20t%C3%A9rmico" class="whatsapp-float" target="_blank"><i class="fab fa-whatsapp"></i></a>
+
+<!-- MODAL -->
+<div id="modalForm" class="modal">
+    <div class="modal-content">
+        <span class="modal-close" id="closeModal">&times;</span>
+        <h3 style="margin-bottom: 20px;">Solicitar informe gratuito</h3>
+        <p style="margin-bottom: 20px;">Rellena el formulario y te contactaremos en menos de 24h.</p>
+        <form id="leadForm">
+            <div class="form-group"><input type="text" id="nombre" placeholder="Nombre completo" required></div>
+            <div class="form-group"><input type="email" id="email" placeholder="Correo electrónico" required></div>
+            <div class="form-group"><input type="tel" id="telefono" placeholder="Teléfono" required></div>
+            <div class="form-group"><textarea id="proyecto" rows="3" placeholder="Breve descripción del proyecto (opcional)"></textarea></div>
+            <button type="submit" class="btn-yellow" style="width: 100%; justify-content: center;">Enviar solicitud</button>
+        </form>
+        <p style="font-size: 0.7rem; margin-top: 15px; text-align: center;">Sin compromiso. Te enviaremos el primer informe sin coste.</p>
+    </div>
+</div>
+
+<script>
+    const modal = document.getElementById('modalForm');
+    const btns = document.querySelectorAll('#ctaHeaderBtn, #ctaHeroBtn, #ctaEjemploBtn, #ctaFinalBtn');
+    const closeBtn = document.getElementById('closeModal');
+    
+    function openModal(e) {
+        e.preventDefault();
+        modal.style.display = 'flex';
+    }
+    
+    btns.forEach(btn => btn.addEventListener('click', openModal));
+    
+    closeBtn.addEventListener('click', () => {
+        modal.style.display = 'none';
+    });
+    
+    window.addEventListener('click', (e) => {
+        if (e.target === modal) modal.style.display = 'none';
+    });
+    
+    const form = document.getElementById('leadForm');
+    form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const nombre = document.getElementById('nombre').value;
+        if (!nombre) return;
+        alert(`Gracias ${nombre}, en breve recibirás un email con las instrucciones para tu informe gratuito.`);
+        modal.style.display = 'none';
+        form.reset();
+    });
+</script>
+</body>
+</html>
