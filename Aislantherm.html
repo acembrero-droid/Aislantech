@@ -323,10 +323,11 @@
             margin-top: 10px;
         }
         
+        /* Imágenes sin recorte, se estiran para llenar el contenedor */
         .example-img {
             width: 100%;
             height: 280px;
-            object-fit: cover;
+            object-fit: fill;  /* No recorta, deforma si es necesario */
             border-radius: var(--border-radius);
             box-shadow: var(--box-shadow);
             margin-bottom: 20px;
@@ -405,7 +406,7 @@
             .hero p { font-size: 1rem; }
             .section-title h2 { font-size: 1.8rem; }
             .grid-2 { grid-template-columns: 1fr; }
-            .example-img { height: 200px; }
+            .example-img { height: 200px; } /* Altura menor en móviles, se deformará igual */
         }
         
         .whatsapp-float {
