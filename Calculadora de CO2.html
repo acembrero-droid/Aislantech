@@ -5,8 +5,32 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
   <title>Aislantech · Calculadora profesional de Huella de CO₂ para Premarcos</title>
   
-  <!-- Favicon -->
+  <!-- ========== META TAGS PARA REDES SOCIALES ========== -->
+  <meta property="og:title" content="Aislantech · Calculadora profesional de Huella de CO₂ para Premarcos">
+  <meta property="og:description" content="Calcula la huella de carbono de tus premarcos y cajones de persiana según EN 15804. Herramienta gratuita con datos actualizados a 2025. Genera informes PDF profesionales.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://www.aislantech.es/herramientas/huella-premarcos.html">
+  <meta property="og:image" content="images/social-preview.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:site_name" content="Aislantech">
+  
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Aislantech · Calculadora de Huella de CO₂ para Premarcos">
+  <meta name="twitter:description" content="Calculadora profesional gratuita para la huella de carbono de premarcos y cajones de persiana. Informes PDF y datos actualizados a 2025.">
+  <meta name="twitter:image" content="images/social-preview.png">
+  
+  <!-- ========== FAVICONS (estilo Aislantech) ========== -->
   <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="icon" type="image/png" sizes="16x16" href="images/favicon-16x16.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="images/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="64x64" href="images/favicon-64x64.png">
+  <link rel="icon" type="image/png" sizes="96x96" href="images/favicon-96x96.png">
+  <link rel="icon" type="image/png" sizes="128x128" href="images/favicon-128x128.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="images/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="images/favicon-192x192.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="images/favicon-512x512.png">
+  <link rel="manifest" href="site.webmanifest">
   
   <!-- Google Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Open+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
@@ -256,7 +280,6 @@
     
     @media (max-width: 992px) { .grid-2cols { grid-template-columns: 1fr; } }
     
-    /* Ocultar elementos en impresión (ya no se usa) */
     .print-only { display: none; }
   </style>
 </head>
@@ -394,7 +417,6 @@
   </div>
 </div>
 
-<!-- El div print-only ya no se usa porque generamos PDF con jsPDF -->
 <div id="informeImprimible" class="print-only container" style="margin-top: 2rem;"></div>
 
 <footer class="no-print">
@@ -435,9 +457,8 @@
 
     let sistemas = {};
     let sistemaActualId = null;
-    let lastCalculation = null; // Guardar últimos resultados para el PDF
+    let lastCalculation = null;
 
-    // ---------- Funciones de gestión de sistemas (sin cambios) ----------
     function inicializarSistemas() {
       const guardados = localStorage.getItem('sistemasPremarcosV5');
       if (guardados) {
@@ -718,7 +739,6 @@
       calcularImpacto();
     };
 
-    // CÁLCULO PRINCIPAL (guarda lastCalculation para el PDF)
     window.calcularImpacto = function() {
       if (!sistemaActualId) return;
       const sistema = sistemas[sistemaActualId];
@@ -782,13 +802,12 @@
       
       const huellaNeta = huellaA1A3 + carbonoBio;
       
-      // Mostrar en pantalla
       let html = `<h5 style="color: var(--color-secondary);">${sistema.nombre} (${tipoProducto === 'premarco' ? 'Premarco' : 'Cajón de persiana'})</h5>`;
       html += `<p>${descripcionDimensiones}<br>`;
       html += `Longitud vertical: ${largoVertical.toFixed(3)} m · Longitud horizontal: ${largoHorizontal.toFixed(3)} m</p>`;
       html += `<table class="table-custom"><thead><tr><th>Material</th><th>Peso vert.(kg)</th><th>Peso horiz.(kg)</th><th>Peso fijo(kg)</th><th>Peso total(kg)</th><th>Huella(kgCO₂e)</th></tr></thead><tbody>`;
       detalles.forEach(d => {
-        html += `<tr><td>${d.nombre}</td><td>${d.pesoVert.toFixed(2)}</td><td>${d.pesoHoriz.toFixed(2)}</td><td>${d.pesoFijo.toFixed(2)}</td><td>${d.pesoTotalMat.toFixed(2)}</td><td>${d.huella.toFixed(2)}</td></tr>`;
+        html += `<tr><tr>${d.nombre}</td><td>${d.pesoVert.toFixed(2)}</td><td>${d.pesoHoriz.toFixed(2)}</td><td>${d.pesoFijo.toFixed(2)}</td><td>${d.pesoTotalMat.toFixed(2)}</td><td>${d.huella.toFixed(2)}</td></tr>`;
       });
       html += `</tbody></table>`;
       html += `<p><strong>Peso total:</strong> ${pesoTotal.toFixed(2)} kg</p>`;
@@ -801,7 +820,6 @@
       }
       document.getElementById('resultadosCalculo').innerHTML = html;
       
-      // Guardar datos para el PDF
       lastCalculation = {
         sistema: sistema,
         tipoProducto,
@@ -816,7 +834,6 @@
       };
     };
 
-    // ---------- GENERACIÓN DE PDF ESTILO AISLANTECH ----------
     async function generarPDF() {
       if (!lastCalculation) {
         alert('Primero realice un cálculo.');
@@ -835,11 +852,8 @@
       const C_GREY = [100,100,100];
       const C_BG = [248,249,250];
       
-      // ---- PORTADA (página 1) ----
-      // Franja lateral oscura
       doc.setFillColor(...C_DARK);
       doc.rect(0, 0, 15, 297, 'F');
-      // Logotipo
       doc.setFont("helvetica", "bold");
       doc.setFontSize(28);
       doc.setTextColor(...C_GOLD);
@@ -848,16 +862,13 @@
       doc.setTextColor(...C_GREY);
       doc.setFont("helvetica", "normal");
       doc.text("INGENIERÍA DE SOLUCIONES SOSTENIBLES", 25, 40);
-      // Línea decorativa dorada
       doc.setDrawColor(...C_GOLD);
       doc.line(25, 55, 100, 55);
-      // Título
       doc.setFontSize(22);
       doc.setTextColor(...C_DARK);
       doc.setFont("helvetica", "bold");
       doc.text("INFORME DE HUELLA", 25, 72);
       doc.text("DE CARBONO", 25, 84);
-      // Bloque de datos
       doc.setFillColor(...C_BG);
       doc.roundedRect(25, 100, 165, 60, 3, 3, 'F');
       doc.setFontSize(9);
@@ -875,7 +886,6 @@
       doc.text("FECHA DE EMISIÓN:", 140, 112);
       doc.setTextColor(0);
       doc.text(fecha, 140, 119);
-      // Resultado principal
       doc.setFillColor(...C_DARK);
       doc.roundedRect(25, 175, 165, 55, 4, 4, 'F');
       doc.setTextColor(255,255,255);
@@ -893,9 +903,7 @@
       doc.setTextColor(...C_GREY);
       doc.text("Página 1 de 3", 107.5, 285, {align: "center"});
       
-      // ---- PÁGINA 2: MEMORIA TÉCNICA ----
       doc.addPage();
-      // Franja de encabezado oscura
       doc.setFillColor(...C_DARK);
       doc.rect(0, 0, 210, 15, 'F');
       doc.setTextColor(255,255,255);
@@ -978,7 +986,6 @@
         yFuente += splitLine.length * 5;
       });
       
-      // Notas
       yFuente += 5;
       doc.setFont("helvetica", "bold");
       doc.setTextColor(...C_DARK);
@@ -1002,7 +1009,6 @@
       doc.setTextColor(...C_GREY);
       doc.text("Página 2 de 3", 107.5, 285, {align: "center"});
       
-      // ---- PÁGINA 3: IMÁGENES DE REFERENCIA (si existen) ----
       if (sistema.imagenVertical || sistema.imagenHorizontal) {
         doc.addPage();
         doc.setFillColor(...C_DARK);
@@ -1032,19 +1038,15 @@
         doc.text("Página 3 de 3", 107.5, 285, {align: "center"});
       }
       
-      // Guardar PDF
       doc.save(`Informe_Huella_CO2_${sistema.nombre.replace(/\s+/g, '_')}.pdf`);
     }
 
-    // Evento del botón "Generar informe (PDF)"
     document.getElementById('btnGenerarInforme').addEventListener('click', async function() {
       if (!sistemaActualId) {
         alert('Seleccione un sistema antes de generar el informe.');
         return;
       }
-      // Recalcular para asegurar datos actualizados
       calcularImpacto();
-      // Pequeña pausa para que lastCalculation se actualice
       await new Promise(resolve => setTimeout(resolve, 100));
       if (!lastCalculation) {
         alert('No se pudo generar el informe. Verifique los datos.');
@@ -1053,7 +1055,6 @@
       generarPDF();
     });
 
-    // Inicialización
     window.onload = function() {
       inicializarSistemas();
       llenarSelectSistemas();
