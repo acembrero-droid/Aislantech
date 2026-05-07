@@ -5,6 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>AISLANTHERM · Informes Térmicos CTE · Justifica HE1 en 24h</title>
     
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" sizes="96x96" href="images/favicon-96x96.png">
+    <link rel="apple-touch-icon" href="images/favicon-96x96.png">
+    <link rel="shortcut icon" href="images/favicon-96x96.png">
+    
     <!-- Google Fonts: Montserrat + Open Sans -->
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Open+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
     
@@ -15,7 +20,7 @@
         /* ========== VARIABLES AISLANTECH (amarillo corporativo) ========== */
         :root {
             --color-primary: #EDD00E;
-            --color-primary-dark: #EDD00E;   /* Reemplazo del marrón por amarillo */
+            --color-primary-dark: #EDD00E;
             --color-primary-light: #FFF8DC;
             --color-secondary: #3E3E3E;
             --color-secondary-dark: #696969;
@@ -170,13 +175,27 @@
         .hero {
             background: linear-gradient(135deg, var(--color-secondary) 0%, var(--color-dark) 100%);
             color: white;
-            padding: 100px 0 80px;
+            padding: 80px 0 60px;
             text-align: center;
+        }
+        
+        .brand-large {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 4rem;
+            font-weight: 800;
+            margin-bottom: 20px;
+            line-height: 1.2;
+        }
+        .brand-large .aislan {
+            color: var(--color-white);
+        }
+        .brand-large .therm {
+            color: var(--color-primary);
         }
         
         .hero h1 {
             color: white;
-            font-size: 2.8rem;
+            font-size: 2.2rem;
             margin-bottom: 20px;
             max-width: 800px;
             margin-left: auto;
@@ -312,65 +331,6 @@
             border: 1px solid var(--color-secondary-light);
         }
         
-        .testimonial {
-            background: var(--color-primary-light);
-            border-radius: var(--border-radius);
-            padding: 32px;
-            text-align: center;
-            font-style: italic;
-            border-left: 6px solid var(--color-primary);
-        }
-        
-        /* ========== FORM MODAL ========== */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.8);
-            z-index: 2000;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .modal-content {
-            background: white;
-            max-width: 500px;
-            width: 90%;
-            border-radius: 20px;
-            padding: 30px;
-            position: relative;
-            border-top: 5px solid var(--color-primary);
-        }
-        
-        .modal-close {
-            position: absolute;
-            top: 15px;
-            right: 20px;
-            font-size: 1.8rem;
-            cursor: pointer;
-            color: var(--color-gray);
-        }
-        
-        .form-group {
-            margin-bottom: 20px;
-        }
-        
-        .form-group input, .form-group textarea {
-            width: 100%;
-            padding: 12px 16px;
-            border: 1px solid var(--color-secondary-light);
-            border-radius: var(--border-radius);
-            font-family: 'Open Sans', sans-serif;
-        }
-        
-        .form-group input:focus {
-            border-color: var(--color-primary);
-            outline: none;
-        }
-        
         /* ========== FOOTER ========== */
         footer {
             background-color: var(--color-dark);
@@ -438,7 +398,8 @@
         /* ========== RESPONSIVE ========== */
         @media (max-width: 768px) {
             section { padding: 60px 0; }
-            .hero h1 { font-size: 2rem; }
+            .hero h1 { font-size: 1.8rem; }
+            .brand-large { font-size: 2.5rem; }
             .hero p { font-size: 1rem; }
             .section-title h2 { font-size: 1.8rem; }
             .grid-2 { grid-template-columns: 1fr; }
@@ -474,21 +435,24 @@
     <div class="container header-container">
         <a href="#" class="logo-container">
             <div class="logo-text">
-                <div><span class="logo-aislan">AISLAN</span><span class="logo-tech">THERM</span></div>
-                <div class="logo-tagline">Informes térmicos profesionales</div>
+                <div><span class="logo-aislan">AISLAN</span><span class="logo-tech">TECH</span></div>
+                <div class="logo-tagline">Soluciones Técnicas Avanzadas</div>
             </div>
         </a>
-        <a href="#" class="btn-yellow" id="ctaHeaderBtn"><i class="fas fa-file-alt"></i> Solicitar informe gratuito</a>
+        <a href="../#footer" class="btn-yellow"><i class="fas fa-file-alt"></i> Solicitar informe gratuito</a>
     </div>
 </header>
 
-<!-- HERO -->
+<!-- HERO con AISLANTHERM destacado -->
 <section class="hero">
     <div class="container">
+        <div class="brand-large">
+            <span class="aislan">AISLAN</span><span class="therm">THERM</span>
+        </div>
         <h1>Justifica el <span>CTE (HE1)</span> sin perder horas en cálculos térmicos</h1>
         <p>Informes de transmitancia y puentes térmicos listos para proyecto en 24–48h. Ahorra tiempo, evita errores y cumple normativa sin complicaciones.</p>
         <div class="hero-buttons">
-            <a href="#" class="btn-primary" id="ctaHeroBtn"><i class="fas fa-chart-line"></i> Solicitar informe gratuito</a>
+            <a href="../#footer" class="btn-primary"><i class="fas fa-chart-line"></i> Solicitar informe gratuito</a>
             <a href="#ejemplo" class="btn-outline-light"><i class="fas fa-eye"></i> Ver ejemplo de informe</a>
         </div>
     </div>
@@ -566,7 +530,7 @@
     </div>
 </section>
 
-<!-- BENEFICIOS (sin emojis) -->
+<!-- BENEFICIOS -->
 <section>
     <div class="container">
         <div class="section-title">
@@ -590,11 +554,11 @@
             <p>mapas térmicos · valores U · análisis de condensaciones · conclusión lista para proyecto</p>
         </div>
         <div class="grid-2">
-            <div><img src="https://placehold.co/600x400/EDD00E/333333?text=Mapa+t%C3%A9rmico+FEM" alt="Mapa térmico" class="example-img"></div>
-            <div><img src="https://placehold.co/600x400/3E3E3E/FFFFFF?text=Tabla+U+values+y+puentes" alt="Tabla de resultados" class="example-img"></div>
+            <div><img src="images/Mapatermico.png" alt="Mapa térmico" class="example-img"></div>
+            <div><img src="images/Tabla%20U.png" alt="Tabla de resultados" class="example-img"></div>
         </div>
         <div style="text-align: center; margin-top: 30px;">
-            <a href="#" class="btn-primary" id="ctaEjemploBtn"><i class="fas fa-download"></i> Solicitar informe gratuito</a>
+            <a href="../#footer" class="btn-primary"><i class="fas fa-download"></i> Solicitar informe gratuito</a>
         </div>
     </div>
 </section>
@@ -650,30 +614,16 @@
     </div>
 </section>
 
-<!-- TESTIMONIO -->
-<section style="background: var(--color-light);">
-    <div class="container">
-        <div class="section-title">
-            <h2>Lo que dicen otros técnicos</h2>
-        </div>
-        <div class="testimonial">
-            <i class="fas fa-quote-left" style="font-size: 2rem; color: var(--color-primary); opacity: 0.5;"></i>
-            <p style="font-size: 1.1rem; margin: 15px 0;">“Nos ha ahorrado muchísimo tiempo en la justificación del HE1. Los informes son claros y los aceptan directamente en los ayuntamientos.”</p>
-            <p><strong>Estudio de arquitectura</strong></p>
-        </div>
-    </div>
-</section>
-
 <!-- CTA FINAL -->
 <section style="background: linear-gradient(135deg, var(--color-secondary) 0%, var(--color-dark) 100%); color: white;">
     <div class="container" style="text-align: center;">
         <h2 style="color: white; font-size: 2rem;">Prueba sin riesgo</h2>
         <p style="margin: 20px auto; max-width: 600px;">Solicita tu primer informe gratuito y comprueba cómo funciona.<br>Entrega en 24–48h · Sin compromiso</p>
-        <a href="#" class="btn-primary" id="ctaFinalBtn" style="background-color: var(--color-primary); color: var(--color-dark); font-size: 1.2rem; padding: 16px 36px;"><i class="fas fa-paper-plane"></i> Solicitar informe ahora</a>
+        <a href="../#footer" class="btn-primary" style="background-color: var(--color-primary); color: var(--color-dark); font-size: 1.2rem; padding: 16px 36px;"><i class="fas fa-paper-plane"></i> Solicitar informe ahora</a>
     </div>
 </section>
 
-<footer>
+<footer id="footer">
     <div class="container">
         <div class="footer-content">
             <div class="footer-about">
@@ -694,52 +644,5 @@
 
 <a href="https://wa.me/34622562499?text=Hola%2C%20me%20interesa%20un%20informe%20t%C3%A9rmico" class="whatsapp-float" target="_blank"><i class="fab fa-whatsapp"></i></a>
 
-<!-- MODAL -->
-<div id="modalForm" class="modal">
-    <div class="modal-content">
-        <span class="modal-close" id="closeModal">&times;</span>
-        <h3 style="margin-bottom: 20px;">Solicitar informe gratuito</h3>
-        <p style="margin-bottom: 20px;">Rellena el formulario y te contactaremos en menos de 24h.</p>
-        <form id="leadForm">
-            <div class="form-group"><input type="text" id="nombre" placeholder="Nombre completo" required></div>
-            <div class="form-group"><input type="email" id="email" placeholder="Correo electrónico" required></div>
-            <div class="form-group"><input type="tel" id="telefono" placeholder="Teléfono" required></div>
-            <div class="form-group"><textarea id="proyecto" rows="3" placeholder="Breve descripción del proyecto (opcional)"></textarea></div>
-            <button type="submit" class="btn-yellow" style="width: 100%; justify-content: center;">Enviar solicitud</button>
-        </form>
-        <p style="font-size: 0.7rem; margin-top: 15px; text-align: center;">Sin compromiso. Te enviaremos el primer informe sin coste.</p>
-    </div>
-</div>
-
-<script>
-    const modal = document.getElementById('modalForm');
-    const btns = document.querySelectorAll('#ctaHeaderBtn, #ctaHeroBtn, #ctaEjemploBtn, #ctaFinalBtn');
-    const closeBtn = document.getElementById('closeModal');
-    
-    function openModal(e) {
-        e.preventDefault();
-        modal.style.display = 'flex';
-    }
-    
-    btns.forEach(btn => btn.addEventListener('click', openModal));
-    
-    closeBtn.addEventListener('click', () => {
-        modal.style.display = 'none';
-    });
-    
-    window.addEventListener('click', (e) => {
-        if (e.target === modal) modal.style.display = 'none';
-    });
-    
-    const form = document.getElementById('leadForm');
-    form.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const nombre = document.getElementById('nombre').value;
-        if (!nombre) return;
-        alert(`Gracias ${nombre}, en breve recibirás un email con las instrucciones para tu informe gratuito.`);
-        modal.style.display = 'none';
-        form.reset();
-    });
-</script>
 </body>
 </html>
