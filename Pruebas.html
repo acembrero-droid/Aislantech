@@ -1010,9 +1010,9 @@ const App = (() => {
 
         const S = (s) => `font-family:'Montserrat','Open Sans',sans-serif;${s}`;
 
-        // ─── PORTADA ───
+        // ─── PORTADA (AJUSTE PARA EVITAR PÁGINA EN BLANCO) ───
         const coverHTML = `
-        <div style="${S('min-height:277mm;display:flex;flex-direction:column;background:#fff;')}">
+        <div style="${S('height:296mm;margin:0;overflow:hidden;display:flex;flex-direction:column;background:#fff;')}">
             <!-- Header band -->
             <div style="background:#333;padding:28px 35px;display:flex;align-items:center;justify-content:space-between;">
                 <div>
@@ -1046,7 +1046,21 @@ const App = (() => {
             </div>
         </div>`;
 
-        // ─── ÍNDICE ───
+        // ─── ÍNDICE (NUMERACIÓN CORRELATIVA CON NÚMEROS) ───
+        const indexItems = [
+            ['1.', 'Alcance y Metodología', '3'],
+            ['2.', 'Parámetros de Simulación', '4'],
+        ];
+        validWS.forEach((w, i) => {
+            indexItems.push([`${3 + i}.`, `Análisis: ${w.name}`, `${5 + i}`]);
+        });
+        let nextItemNum = 3 + validWS.length;
+        if (validWS.length > 1) {
+            indexItems.push([`${nextItemNum}.`, 'Cuadro Comparativo Global', `${5 + validWS.length}`]);
+            nextItemNum++;
+        }
+        indexItems.push([`${nextItemNum}.`, 'Justificación Normativa y Metodología', `${6 + validWS.length}`]);
+
         const indexHTML = `
         <div class="html2pdf__page-break"></div>
         <div style="${S('padding:35px;min-height:257mm;display:flex;flex-direction:column;')}">
@@ -1055,13 +1069,7 @@ const App = (() => {
                 <span style="color:#aaa;font-size:10px;">REF. ${reportRef}</span>
             </div>
             <div style="flex:1;">
-                ${[
-                    ['1.', 'Alcance y Metodología', '3'],
-                    ['2.', 'Parámetros de Simulación', '4'],
-                    ...validWS.map((w, i) => [`${3 + i}.`, `Análisis: ${w.name}`, `${5 + i}`]),
-                    ...(validWS.length > 1 ? [['·', 'Cuadro Comparativo Global', `${5 + validWS.length}`]] : []),
-                    [String.fromCharCode(validWS.length > 1 ? 65 + validWS.length : 65) + '.', 'Justificación Normativa y Metodología', `${6 + validWS.length}`]
-                ].map(([num, title, page]) => `
+                ${indexItems.map(([num, title, page]) => `
                     <div style="display:flex;align-items:flex-end;margin-bottom:14px;gap:8px;">
                         <span style="color:#EDD00E;font-weight:800;font-size:13px;min-width:30px;">${num}</span>
                         <span style="color:#333;font-size:13px;flex:1;">${title}</span>
@@ -1244,15 +1252,15 @@ const App = (() => {
                     </div>
                 </div>
 
-                <!-- Materials -->
-                <div style="background:#f8f9fa;border-radius:6px;padding:16px;border:1px solid #e9ecef;">
-                    <div style="color:#333;font-size:10px;font-weight:700;letter-spacing:1px;margin-bottom:12px;">MATERIALES EN LA SECCIÓN ANALIZADA</div>
-                    <div style="display:flex;flex-wrap:wrap;gap:8px;">
+                <!-- Materials (LEYENDA REDUCIDA ≥30%) -->
+                <div style="background:#f8f9fa;border-radius:6px;padding:11px;border:1px solid #e9ecef;">
+                    <div style="color:#555;font-size:8px;font-weight:700;letter-spacing:1px;margin-bottom:8px;">MATERIALES EN LA SECCIÓN ANALIZADA</div>
+                    <div style="display:flex;flex-wrap:wrap;gap:5px;">
                         ${mats.map(idx => `
-                            <div style="display:flex;align-items:center;gap:7px;background:#fff;border:1px solid #e0e0e0;border-radius:4px;padding:6px 10px;">
-                                <span style="display:inline-block;width:14px;height:14px;background:${materials[idx].color};border:1px solid rgba(0,0,0,0.2);border-radius:2px;flex-shrink:0;"></span>
-                                <span style="font-size:10px;color:#333;">${materials[idx].name}</span>
-                                <span style="font-size:10px;color:#888;border-left:1px solid #ddd;padding-left:7px;">λ = ${materials[idx].k} W/m·K</span>
+                            <div style="display:flex;align-items:center;gap:5px;background:#fff;border:1px solid #e0e0e0;border-radius:3px;padding:4px 7px;">
+                                <span style="display:inline-block;width:10px;height:10px;background:${materials[idx].color};border:1px solid rgba(0,0,0,0.2);border-radius:2px;flex-shrink:0;"></span>
+                                <span style="font-size:7px;color:#333;">${materials[idx].name}</span>
+                                <span style="font-size:7px;color:#888;border-left:1px solid #ddd;padding-left:5px;">λ = ${materials[idx].k} W/m·K</span>
                             </div>`).join('')}
                     </div>
                 </div>
