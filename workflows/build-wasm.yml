@@ -1,0 +1,53 @@
+name: Compile WebAssembly solver
+
+on:
+  push:
+    branches:
+      - main          # O la rama que uses para producción
+    paths:
+      - 'aislantherm_solver.c'   # Solo se activa si cambia el código C
+  workflow_dispatch:  # Permite ejecutarlo manualmente desde la web
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Emscripten
+        uses: mymindstorm/setup-emsdk@v14
+        with:
+          version: 3.1.44   # Versión estable de Emscripten (puedes usar 'latest')
+          actions-cache-folder: 'emsdk-cache'
+
+      - name: Compile C to WebAssembly
+        run: |
+          emcc aislantherm_solver.c -O3 \
+            -s WASM=1 \
+            -s EXPORTED_FUNCTIONS='["_solve_thermal","_malloc","_free"]' \
+            -s EXPORTED_RUNTIME_METHODS='["ccall","cwrap","getValue","setValue"]' \
+            -s ALLOW_MEMORY_GROWTH=1 \
+            -o aislantherm_solver.js
+          ls -l aislantherm_solver.js aislantherm_solver.wasm
+
+      - name: Upload artifacts (optional)
+        uses: actions/upload-artifact@v4
+        with:
+          name: wasm-solver
+          path: |
+            aislantherm_solver.js
+            aislantherm_solver.wasm
+
+      # Opción A: Commit automático al repositorio (recomendado para GitHub Pages)
+      - name: Commit compiled files
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add aislantherm_solver.js aislantherm_solver.wasm
+          # Solo hace commit si realmente hubo cambios
+          git diff --staged --quiet || git commit -m "Auto-compile WebAssembly [skip ci]"
+          git push
+        env:
+          # Necesitas un token con permisos de escritura en el repositorio
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
