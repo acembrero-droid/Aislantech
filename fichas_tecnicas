@@ -1,0 +1,604 @@
+html_code = """<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+    <title>Aislantech · Generador de Fichas Técnicas</title>
+    
+    <!-- Favicon (estilo Aislantech) -->
+    <link rel="icon" type="image/x-icon" href="favicon.ico" />
+    <link rel="icon" type="image/png" sizes="96x96" href="images/favicon-96x96.png" />
+    
+    <!-- Google Fonts: Montserrat + Open Sans -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Open+Sans:wght@300;400;600;700&display=swap" rel="stylesheet" />
+    
+    <!-- Font Awesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    
+    <!-- jsPDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    
+    <style>
+        /* ========== VARIABLES AISLANTECH ========== */
+        :root {
+            --color-primary: #EDD00E;
+            --color-primary-dark: #B8860B;
+            --color-primary-light: #FFF8DC;
+            --color-secondary: #3E3E3E;
+            --color-secondary-dark: #696969;
+            --color-secondary-light: #D3D3D3;
+            --color-accent: #EDD00E;
+            --color-light: #F5F5F5;
+            --color-dark: #333333;
+            --color-gray: #666666;
+            --color-white: #FFFFFF;
+            --transition: all 0.3s ease;
+            --border-radius: 12px;
+            --box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
+            --box-shadow-hover: 0 12px 30px rgba(0, 0, 0, 0.1);
+        }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Open Sans', sans-serif; background-color: var(--color-light); color: var(--color-gray); line-height: 1.6; padding: 0; min-height: 100vh; }
+        h1, h2, h3, h4, .btn, .logo-text, .card-title { font-family: 'Montserrat', sans-serif; font-weight: 700; color: var(--color-dark); }
+        .container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+        
+        /* HEADER */
+        header { background-color: rgba(255, 255, 255, 0.97); box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05); position: sticky; top: 0; z-index: 1000; backdrop-filter: blur(2px); }
+        .header-container { display: flex; justify-content: space-between; align-items: center; padding: 15px 24px; max-width: 1200px; margin: 0 auto; }
+        .logo-container { display: flex; align-items: center; text-decoration: none; }
+        .logo-text { font-weight: 700; display: flex; flex-direction: column; line-height: 1.1; }
+        .logo-aislan { color: var(--color-secondary); font-size: 1.5rem; font-weight: 700; }
+        .logo-tech { color: var(--color-primary); font-size: 1.5rem; font-weight: 800; }
+        .logo-tagline { font-size: 0.7rem; color: var(--color-gray); font-weight: 400; margin-top: 2px; font-family: 'Open Sans', sans-serif; }
+        
+        .btn-yellow { background-color: var(--color-primary); color: var(--color-dark); font-weight: 700; padding: 10px 24px; border-radius: 40px; text-decoration: none; transition: var(--transition); display: inline-flex; align-items: center; gap: 8px; font-size: 0.85rem; border: none; cursor: pointer; }
+        .btn-yellow:hover { background-color: var(--color-primary-dark); color: var(--color-white); transform: translateY(-3px); box-shadow: 0 8px 20px rgba(237, 208, 14, 0.3); }
+        
+        /* HERO */
+        .hero-tool { background: linear-gradient(135deg, var(--color-secondary) 0%, var(--color-dark) 100%); color: white; padding: 40px 0 30px; text-align: center; margin-bottom: 40px; }
+        .hero-tool h1 { color: white; font-size: 2.2rem; font-weight: 700; }
+        .hero-tool h1 i { color: var(--color-primary); margin-right: 12px; }
+        .hero-tool p { font-size: 1.1rem; opacity: 0.9; max-width: 700px; margin: 8px auto 0; }
+        
+        /* CARDS */
+        .card { background: var(--color-white); border-radius: var(--border-radius); box-shadow: var(--box-shadow); transition: var(--transition); border-top: 4px solid var(--color-primary); margin-bottom: 30px; overflow: hidden; }
+        .card:hover { box-shadow: var(--box-shadow-hover); transform: translateY(-3px); }
+        .card-header { background: var(--color-primary-light); padding: 16px 24px; border-bottom: 1px solid var(--color-secondary-light); display: flex; align-items: center; gap: 12px; }
+        .card-header i { font-size: 1.3rem; color: var(--color-primary-dark); }
+        .card-title { font-size: 1.2rem; font-weight: 600; color: var(--color-secondary); margin: 0; }
+        .card-body { padding: 24px; }
+        
+        /* FORMS */
+        .form-group { margin-bottom: 20px; }
+        label { display: block; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--color-secondary-dark); margin-bottom: 6px; }
+        input, textarea, select { width: 100%; padding: 10px 14px; border: 1px solid var(--color-secondary-light); border-radius: var(--border-radius); font-size: 0.9rem; font-family: 'Open Sans', sans-serif; transition: var(--transition); background: var(--color-white); }
+        input:focus, textarea:focus, select:focus { border-color: var(--color-primary); outline: none; box-shadow: 0 0 0 3px rgba(237, 208, 14, 0.2); }
+        textarea { min-height: 80px; resize: vertical; }
+        .row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        
+        /* UPLOAD */
+        .upload-area { border: 2px dashed var(--color-secondary-light); border-radius: var(--border-radius); padding: 20px; background: var(--color-light); text-align: center; cursor: pointer; transition: var(--transition); }
+        .upload-area:hover { border-color: var(--color-primary); background: var(--color-primary-light); }
+        .upload-area i { font-size: 2rem; color: var(--color-secondary-dark); display: block; margin-bottom: 8px; }
+        .upload-area p { font-size: 0.9rem; color: var(--color-gray); }
+        .upload-area input[type="file"] { display: none; }
+        .preview-grid { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
+        .preview-grid img { width: 100px; height: 100px; object-fit: cover; border-radius: var(--border-radius); border: 2px solid var(--color-secondary-light); padding: 3px; background: white; }
+        
+        /* TABLES */
+        .table-materials { width: 100%; border-collapse: collapse; font-size: 0.85rem; margin-top: 12px; }
+        .table-materials th { background: var(--color-primary-light); color: var(--color-secondary); padding: 10px 8px; text-align: left; font-weight: 600; font-family: 'Montserrat', sans-serif; }
+        .table-materials td { padding: 6px 4px; border-bottom: 1px solid var(--color-secondary-light); vertical-align: middle; }
+        .table-materials input { width: 100%; padding: 6px 8px; border: 1px solid var(--color-secondary-light); border-radius: 6px; font-size: 0.8rem; }
+        
+        /* BUTTONS */
+        .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; background-color: var(--color-primary); color: var(--color-dark); padding: 12px 28px; border-radius: 40px; font-weight: 700; font-size: 0.95rem; border: none; cursor: pointer; transition: var(--transition); font-family: 'Montserrat', sans-serif; }
+        .btn:hover { background-color: var(--color-primary-dark); color: var(--color-white); transform: translateY(-3px); box-shadow: 0 6px 16px rgba(237, 208, 14, 0.3); }
+        .btn-secondary { background: transparent; border: 2px solid var(--color-secondary-light); color: var(--color-secondary-dark); padding: 8px 20px; font-size: 0.8rem; }
+        .btn-secondary:hover { border-color: var(--color-primary); color: var(--color-primary-dark); background: var(--color-primary-light); transform: translateY(-2px); box-shadow: none; }
+        .footer-actions { display: flex; justify-content: flex-end; gap: 12px; flex-wrap: wrap; margin-top: 20px; }
+        .help-text { font-size: 0.8rem; color: var(--color-gray); margin-top: 4px; }
+        
+        /* FOOTER */
+        footer { background-color: var(--color-dark); color: var(--color-white); padding: 60px 0 30px; margin-top: 60px; }
+        .footer-content { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 40px; margin-bottom: 40px; }
+        .footer-about { flex: 1; min-width: 250px; }
+        .footer-logo { font-family: 'Montserrat', sans-serif; font-size: 1.8rem; font-weight: 700; margin-bottom: 15px; }
+        .footer-logo .logo-aislan { color: var(--color-white); }
+        .footer-logo .logo-tech { color: var(--color-primary); }
+        .footer-description { color: rgba(255, 255, 255, 0.8); margin-bottom: 20px; font-size: 0.9rem; }
+        .footer-legal { display: flex; justify-content: center; gap: 30px; margin-top: 15px; flex-wrap: wrap; }
+        .footer-legal a { color: rgba(255, 255, 255, 0.7); text-decoration: none; font-size: 0.85rem; transition: var(--transition); }
+        .footer-legal a:hover { color: var(--color-primary); }
+        .footer-bottom { text-align: center; padding-top: 30px; border-top: 1px solid rgba(255, 255, 255, 0.1); font-size: 0.9rem; color: rgba(255, 255, 255, 0.7); }
+        
+        /* RESPONSIVE */
+        @media (max-width: 768px) {
+            .row { grid-template-columns: 1fr; }
+            .hero-tool h1 { font-size: 1.6rem; }
+            .card-body { padding: 16px; }
+            .header-container { flex-wrap: wrap; gap: 10px; }
+            .logo-aislan, .logo-tech { font-size: 1.3rem; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- HEADER AISLANTECH -->
+<header>
+    <div class="header-container">
+        <a href="../#" class="logo-container">
+            <div class="logo-text">
+                <div><span class="logo-aislan">AISLAN</span><span class="logo-tech">TECH</span></div>
+                <div class="logo-tagline">Soluciones Técnicas Avanzadas</div>
+            </div>
+        </a>
+        <a href="../#footer" class="btn-yellow"><i class="fas fa-envelope"></i> Contacto</a>
+    </div>
+</header>
+
+<!-- HERO -->
+<section class="hero-tool">
+    <div class="container">
+        <h1><i class="fas fa-file-pdf"></i> Generador de Fichas Técnicas</h1>
+        <p>Rellena los campos, sube imágenes y obtén un PDF profesional con la imagen corporativa de Aislantech.</p>
+    </div>
+</section>
+
+<!-- CONTENIDO PRINCIPAL -->
+<div class="container">
+    <form id="formFicha">
+        <div class="card">
+            <div class="card-header"><i class="fas fa-tag"></i><div class="card-title">Datos generales del producto</div></div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="form-group"><label>Nombre del producto *</label><input type="text" id="nombreProducto" value="Sistema Ákra® de premarco" /></div>
+                    <div class="form-group"><label>Referencia / Código</label><input type="text" id="referencia" value="P01" /></div>
+                </div>
+                <div class="row">
+                    <div class="form-group"><label>Descripción breve</label><textarea id="descripcion" rows="2">Sistema de premarco con persiana enrollable, para muro modular autoportante.</textarea></div>
+                    <div class="form-group"><label>Logo (opcional)</label>
+                        <div class="upload-area" onclick="document.getElementById('logoInput').click()">
+                            <i class="fas fa-image"></i><p>Sube tu logo (PNG/JPG)</p><input type="file" id="logoInput" accept="image/*" />
+                        </div>
+                        <div class="preview-grid" id="previewLogo"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header"><i class="fas fa-ruler-combined"></i><div class="card-title">Detalles constructivos (planos, secciones)</div></div>
+            <div class="card-body">
+                <div class="upload-area" onclick="document.getElementById('imagenesTecnicas').click()">
+                    <i class="fas fa-drafting-compass"></i><p>Sube imágenes de planos, secciones, acotaciones</p><input type="file" id="imagenesTecnicas" accept="image/*" multiple />
+                </div>
+                <div class="preview-grid" id="previewTecnicas"></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header"><i class="fas fa-hard-hat"></i><div class="card-title">Ejemplos en obra</div></div>
+            <div class="card-body">
+                <div class="upload-area" onclick="document.getElementById('imagenesObra').click()">
+                    <i class="fas fa-building"></i><p>Sube fotos de instalación en obra</p><input type="file" id="imagenesObra" accept="image/*" multiple />
+                </div>
+                <div class="preview-grid" id="previewObra"></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header"><i class="fas fa-chart-line"></i><div class="card-title">Imágenes para análisis térmico</div></div>
+            <div class="card-body">
+                <div class="upload-area" onclick="document.getElementById('imagenesTermicas').click()">
+                    <i class="fas fa-thermometer-half"></i><p>Sube gráficos, diagramas o simulaciones térmicas</p><input type="file" id="imagenesTermicas" accept="image/*" multiple />
+                </div>
+                <div class="preview-grid" id="previewTermicas"></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header"><i class="fas fa-cubes"></i><div class="card-title">Hoja de materiales</div></div>
+            <div class="card-body">
+                <table class="table-materials" id="tablaMateriales">
+                    <thead><tr><th>Material</th><th>Referencia</th><th>Conductividad</th><th>Ficha técnica</th></tr></thead>
+                    <tbody>
+                        <tr><td><input type="text" value="EPS grafitado Grafipol® D9" /></td><td><input type="text" value="Grafipol D9" /></td><td><input type="text" value="0,029" /></td><td><input type="text" value="https://ejemplo.com/ficha-eps.pdf" /></td></tr>
+                        <tr><td><input type="text" value="Madera de Paulownia" /></td><td><input type="text" value="Paulownia 15mm" /></td><td><input type="text" value="0,09" /></td><td><input type="text" value="https://ejemplo.com/ficha-paulownia.pdf" /></td></tr>
+                        <tr><td><input type="text" value="Acero galvanizado DX51+Z275" /></td><td><input type="text" value="DX51 Z275" /></td><td><input type="text" value="50" /></td><td><input type="text" value="https://ejemplo.com/ficha-acero.pdf" /></td></tr>
+                    </tbody>
+                </table>
+                <button type="button" class="btn btn-secondary" onclick="agregarFilaMaterial()"><i class="fas fa-plus"></i> Añadir material</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header"><i class="fas fa-thermometer-half"></i><div class="card-title">Análisis térmico de la sección</div></div>
+            <div class="card-body">
+                <div class="form-group"><label>Tabla de transmitancias</label><textarea id="tablaTermica" rows="4">EPS grafitado Grafipol® D9 → 0,029 W/(m·K)
+Madera de Paulownia → 0,09 W/(m·K)
+Acero galvanizado → 50 W/(m·K)
+Aluminio 6063 T5 → 230 W/(m·K)</textarea></div>
+                <div class="form-group"><label>Resultado final</label><input type="text" id="resultadoTermico" value="μ 0,6119 W/m²K" /></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header"><i class="fas fa-cog"></i><div class="card-title">Sistema de fijación y límites</div></div>
+            <div class="card-body">
+                <textarea id="fijacionLimites" rows="4">Anclajes de acero galvanizado de 3mm, con 8 fijaciones por anclaje. Número mínimo 4, distancia máxima 900mm entre ejes.
+Límites: ancho ≤ 2400mm, alto ≤ 2400mm, superficie ≤ 4,5m², peso persiana ≤ 50Kg, peso hoja ≤ 80Kg.</textarea>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header"><i class="fas fa-list-check"></i><div class="card-title">Recomendaciones de colocación y acopio</div></div>
+            <div class="card-body">
+                <textarea id="recomendaciones" rows="5">- El acopio debe ceñirse a la norma UNE_85219:2023.
+- Los palets no pueden exponerse a radiación solar ni al agua.
+- Almacenar en zona seca y alejada de polvo y materiales pulverulentos.
+- Desempaquetar solo para instalar inmediatamente.
+- No apilar palets unos sobre otros.
+- Una vez instalados, no deben transcurrir más de 2 meses sin recibir el acabado final.</textarea>
+            </div>
+        </div>
+
+        <div class="footer-actions">
+            <button type="button" class="btn" onclick="generarPDF()"><i class="fas fa-file-pdf"></i> Generar PDF (Ajustado)</button>
+        </div>
+    </form>
+</div>
+
+<footer id="footer">
+    <div class="container">
+        <div class="footer-content">
+            <div class="footer-about">
+                <div class="footer-logo"><span class="logo-aislan">AISLAN</span><span class="logo-tech">TECH</span></div>
+                <p class="footer-description">Herramienta profesional de generación de fichas técnicas para productos de construcción. Integración con análisis térmico y documentación técnica.</p>
+            </div>
+        </div>
+        <div class="footer-legal"><a href="#">Política de Privacidad</a><a href="#">Política de Cookies</a><a href="#">Aviso Legal</a></div>
+        <div class="footer-bottom"><p>&copy; 2026 Aislantech.</p></div>
+    </div>
+</footer>
+
+<script>
+    function setupPreview(inputId, previewId) {
+        const input = document.getElementById(inputId);
+        const preview = document.getElementById(previewId);
+        if (!input || !preview) return;
+        input.addEventListener('change', function() {
+            preview.innerHTML = '';
+            for (const file of this.files) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = document.createElement('img');
+                    img.src = e.target.result;
+                    preview.appendChild(img);
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    }
+    setupPreview('imagenesTecnicas', 'previewTecnicas');
+    setupPreview('imagenesObra', 'previewObra');
+    setupPreview('imagenesTermicas', 'previewTermicas');
+    setupPreview('logoInput', 'previewLogo');
+
+    function agregarFilaMaterial() {
+        const tbody = document.querySelector('#tablaMateriales tbody');
+        if (!tbody) return;
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td><input type="text" placeholder="Material" /></td><td><input type="text" placeholder="Referencia" /></td><td><input type="text" placeholder="Conductividad" /></td><td><input type="text" placeholder="Enlace ficha" /></td>`;
+        tbody.appendChild(tr);
+    }
+
+    function getImagesFromPreview(previewId) {
+        const preview = document.getElementById(previewId);
+        if (!preview) return [];
+        const imgs = preview.querySelectorAll('img');
+        const result = [];
+        imgs.forEach(img => { if (img.src && img.src.startsWith('data:image')) result.push(img.src); });
+        return result;
+    }
+
+    // SANITIZAR TEXTOS - FIX PARA LOS SÍMBOLOS ≤ y ≥
+    function sanitizeText(text) {
+        if (!text) return '';
+        return text
+            .replace(/\u03BC/g, '\u00B5') 
+            .replace(/≤/g, '<=') // SOLUCIONA EL SÍMBOLO ROTO EN EL PDF
+            .replace(/≥/g, '>=')
+            .replace(/–/g, '-')
+            .replace(/—/g, '-')
+            .replace(/“/g, '"')
+            .replace(/”/g, '"')
+            .replace(/‘/g, "'")
+            .replace(/’/g, "'")
+            .replace(/…/g, '...');
+    }
+
+    function getImageDimensions(dataUrl, maxWidth, maxHeight) {
+        return new Promise((resolve) => {
+            const img = new Image();
+            img.onload = function() {
+                let w = this.width; let h = this.height;
+                const ratio = Math.min(maxWidth / w, maxHeight / h, 1);
+                w = w * ratio; h = h * ratio;
+                resolve({ width: w, height: h });
+            };
+            img.onerror = () => resolve({ width: maxWidth, height: maxHeight });
+            img.src = dataUrl;
+        });
+    }
+
+    async function generarPDF() {
+        if (typeof window.jspdf === 'undefined') {
+            alert('La librería jsPDF no se ha cargado.');
+            return;
+        }
+
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        const pageW = 210; const pageH = 297;
+        const margin = 18; const maxW = pageW - 2 * margin;
+        let y = margin;
+
+        const nombre = document.getElementById('nombreProducto').value || 'Producto sin nombre';
+        const referencia = document.getElementById('referencia').value || 'Sin ref.';
+        const descripcion = document.getElementById('descripcion').value || '';
+        const analisisTabla = document.getElementById('tablaTermica').value || '';
+        const resultadoTermico = document.getElementById('resultadoTermico').value || '';
+        const fijacion = document.getElementById('fijacionLimites').value || '';
+        const recomendaciones = document.getElementById('recomendaciones').value || '';
+
+        const tecnicas = getImagesFromPreview('previewTecnicas');
+        const obra = getImagesFromPreview('previewObra');
+        const termicas = getImagesFromPreview('previewTermicas');
+        const logoData = getImagesFromPreview('previewLogo');
+
+        const filas = document.querySelectorAll('#tablaMateriales tbody tr');
+        const materiales = [];
+        filas.forEach(tr => {
+            const inputs = tr.querySelectorAll('input');
+            if (inputs.length >= 4) {
+                materiales.push({
+                    material: inputs[0].value || '-', referencia: inputs[1].value || '-',
+                    conductividad: inputs[2].value || '-', ficha: inputs[3].value || '-'
+                });
+            }
+        });
+
+        function newPage() { pdf.addPage(); y = margin; }
+
+        // =========================================================================
+        // FUNCIÓN DINÁMICA PARA MAXIMIZAR IMÁGENES (NUEVA IMPLEMENTACIÓN)
+        // =========================================================================
+        async function renderDynamicImages(imagesArray) {
+            for (let idx = 0; idx < imagesArray.length; idx++) {
+                const dimRaw = await new Promise(res => {
+                    const img = new Image();
+                    img.onload = () => res({w: img.width, h: img.height});
+                    img.onerror = () => res({w: maxW, h: maxW}); 
+                    img.src = imagesArray[idx];
+                });
+
+                const ratio = dimRaw.w / dimRaw.h;
+                let availableW = maxW;
+                let availableH = pageH - y - margin;
+
+                let scaledW = availableW;
+                let scaledH = scaledW / ratio;
+
+                // Si la altura máxima excede el espacio de la página, encogerla para que quepa
+                if (scaledH > availableH) {
+                    scaledH = availableH;
+                    scaledW = scaledH * ratio;
+                }
+
+                // Si el espacio restante es muy poco (hace que la imagen mida menos de 65mm de alto)
+                // Y NO estamos ya al inicio de la página, saltamos de página para que sea ENORME
+                if (scaledH < 65 && y > margin + 40) {
+                    newPage();
+                    availableH = pageH - y - margin;
+                    scaledW = availableW;
+                    scaledH = scaledW / ratio;
+                    if (scaledH > availableH) {
+                        scaledH = availableH;
+                        scaledW = scaledH * ratio;
+                    }
+                }
+
+                // Centramos horizontalmente de forma perfecta
+                const x = margin + (maxW - scaledW) / 2;
+                pdf.addImage(imagesArray[idx], 'JPEG', x, y, scaledW, scaledH);
+                y += scaledH + 10;
+            }
+        }
+
+        pdf.setFont('helvetica');
+
+        /* PÁGINA 1: PORTADA */
+        pdf.setFillColor(62, 62, 62);
+        pdf.rect(0, 0, pageW, 38, 'F');
+
+        if (logoData.length > 0) {
+            try {
+                const dim = await getImageDimensions(logoData[0], 40, 30);
+                pdf.addImage(logoData[0], 'JPEG', margin + (40 - dim.width)/2, 6 + (30 - dim.height)/2, dim.width, dim.height);
+            } catch (e) {}
+        }
+
+        pdf.setTextColor(255, 255, 255); pdf.setFontSize(22);
+        pdf.text('FICHA TÉCNICA', pageW - margin, 28, { align: 'right' });
+
+        pdf.setTextColor(30, 43, 58); pdf.setFontSize(26);
+        const titleLines = pdf.splitTextToSize(sanitizeText(nombre), maxW);
+        pdf.text(titleLines, margin, 70);
+        let currY = 70 + (titleLines.length * 10);
+
+        pdf.setFontSize(14);
+        const refLines = pdf.splitTextToSize(`Referencia: ${sanitizeText(referencia)}`, maxW);
+        pdf.text(refLines, margin, currY);
+        currY += (refLines.length * 7) + 5;
+        
+        pdf.text(`Fecha: ${new Date().toLocaleDateString()}`, margin, currY);
+        currY += 10;
+
+        pdf.setDrawColor(237, 208, 14); pdf.setLineWidth(2);
+        pdf.line(margin, currY, pageW - margin, currY);
+        currY += 10;
+
+        if (descripcion) {
+            pdf.setFontSize(12); pdf.setTextColor(50, 50, 50);
+            const descLines = pdf.splitTextToSize(sanitizeText(descripcion), maxW);
+            pdf.text(descLines, margin, currY);
+            currY += descLines.length * 6 + 10;
+        } else { currY += 5; }
+        y = currY;
+
+        pdf.setFontSize(11); pdf.setTextColor(80, 80, 80);
+        const indice = [
+            '1. Composición y fichas técnicas de materiales', '2. Detalles constructivos (planos y secciones)',
+            '3. Ejemplos en obra', '4. Análisis térmico', '5. Sistema de fijación y límites', '6. Recomendaciones de acopio e instalación'
+        ];
+        indice.forEach((item, i) => { pdf.text(item, margin + 5, y + i * 7); });
+        y += indice.length * 7 + 10;
+
+        /* PÁGINA 2: MATERIALES */
+        newPage();
+        pdf.setFillColor(237, 208, 14); pdf.rect(margin, y, maxW, 12, 'F');
+        pdf.setTextColor(62, 62, 62); pdf.setFontSize(16);
+        pdf.text('1. Composición y fichas técnicas de materiales', margin + 4, y + 9);
+        y += 18;
+
+        if (materiales.length > 0) {
+            pdf.setFontSize(8); pdf.setTextColor(30, 43, 58);
+            const col1 = 45, col2 = 45, col3 = 35, col4 = maxW - col1 - col2 - col3, pad = 2;
+            pdf.setFillColor(220, 232, 242); pdf.rect(margin, y, maxW, 8, 'F');
+            pdf.text('Material', margin + pad, y + 6); pdf.text('Referencia', margin + col1 + pad, y + 6);
+            pdf.text('Conductividad', margin + col1 + col2 + pad, y + 6); pdf.text('Ficha técnica', margin + col1 + col2 + col3 + pad, y + 6);
+            y += 10;
+
+            materiales.forEach((mat) => {
+                const matL = pdf.splitTextToSize(sanitizeText(mat.material), col1 - (pad*2));
+                const refL = pdf.splitTextToSize(sanitizeText(mat.referencia), col2 - (pad*2));
+                const condL = pdf.splitTextToSize(sanitizeText(mat.conductividad), col3 - (pad*2));
+                const fichL = pdf.splitTextToSize(sanitizeText(mat.ficha), col4 - (pad*2));
+                const numLines = Math.max(matL.length, refL.length, condL.length, fichL.length);
+                const rowH = (numLines * 4) + 4;
+
+                if (y + rowH > pageH - 25) {
+                    newPage();
+                    pdf.setFillColor(220, 232, 242); pdf.rect(margin, y, maxW, 8, 'F');
+                    pdf.text('Material', margin + pad, y + 6); pdf.text('Referencia', margin + col1 + pad, y + 6);
+                    pdf.text('Conductividad', margin + col1 + col2 + pad, y + 6); pdf.text('Ficha técnica', margin + col1 + col2 + col3 + pad, y + 6);
+                    y += 10;
+                }
+                pdf.text(matL, margin + pad, y + 4); pdf.text(refL, margin + col1 + pad, y + 4);
+                pdf.text(condL, margin + col1 + col2 + pad, y + 4); pdf.text(fichL, margin + col1 + col2 + col3 + pad, y + 4);
+                y += rowH;
+            }); y += 6;
+        } else {
+            pdf.setFontSize(11); pdf.text('No se han añadido materiales.', margin + 2, y); y += 10;
+        }
+
+        /* PÁGINA 3: IMÁGENES TÉCNICAS */
+        newPage();
+        pdf.setFillColor(237, 208, 14); pdf.rect(margin, y, maxW, 12, 'F');
+        pdf.setTextColor(62, 62, 62); pdf.setFontSize(16);
+        pdf.text('2. Detalles constructivos', margin + 4, y + 9);
+        y += 18;
+
+        if (tecnicas.length > 0) {
+            await renderDynamicImages(tecnicas);
+        } else {
+            pdf.setFontSize(11); pdf.text('No se cargaron imágenes técnicas.', margin + 2, y); y += 10;
+        }
+
+        /* PÁGINA 4: IMÁGENES DE OBRA */
+        newPage();
+        pdf.setFillColor(237, 208, 14); pdf.rect(margin, y, maxW, 12, 'F');
+        pdf.setTextColor(62, 62, 62); pdf.setFontSize(16);
+        pdf.text('3. Ejemplos en obra', margin + 4, y + 9);
+        y += 18;
+
+        if (obra.length > 0) {
+            await renderDynamicImages(obra);
+        } else {
+            pdf.setFontSize(11); pdf.text('No se cargaron imágenes de obra.', margin + 2, y); y += 10;
+        }
+
+        /* PÁGINA 5: ANÁLISIS TÉRMICO */
+        newPage();
+        pdf.setFillColor(237, 208, 14); pdf.rect(margin, y, maxW, 12, 'F');
+        pdf.setTextColor(62, 62, 62); pdf.setFontSize(16);
+        pdf.text('4. Análisis térmico', margin + 4, y + 9);
+        y += 18;
+
+        if (analisisTabla) {
+            pdf.setFontSize(10); pdf.setTextColor(30, 43, 58);
+            const lines = pdf.splitTextToSize(sanitizeText(analisisTabla), maxW);
+            pdf.text(lines, margin, y); y += lines.length * 5 + 6;
+        }
+        if (resultadoTermico) {
+            pdf.setFontSize(13); pdf.setTextColor(237, 208, 14);
+            const resLines = pdf.splitTextToSize(`Resultado: ${sanitizeText(resultadoTermico)}`, maxW);
+            pdf.text(resLines, margin, y); y += resLines.length * 6 + 4;
+        }
+
+        if (termicas.length > 0) {
+            await renderDynamicImages(termicas);
+        } else {
+            pdf.setFontSize(11); pdf.text('No se subieron imágenes para el análisis térmico.', margin + 2, y); y += 10;
+        }
+
+        /* PÁGINA 6: FIJACIÓN + RECOMENDACIONES */
+        if (fijacion) {
+            newPage();
+            pdf.setFillColor(237, 208, 14); pdf.rect(margin, y, maxW, 12, 'F');
+            pdf.setTextColor(62, 62, 62); pdf.setFontSize(16);
+            pdf.text('5. Sistema de fijación y límites', margin + 4, y + 9);
+            y += 18;
+            
+            pdf.setFontSize(10); pdf.setTextColor(30, 43, 58);
+            const fijLines = pdf.splitTextToSize(sanitizeText(fijacion), maxW);
+            pdf.text(fijLines, margin, y); y += fijLines.length * 5 + 10;
+        }
+
+        if (recomendaciones) {
+            if (!fijacion) newPage(); else if (y + 30 > pageH - margin) newPage();
+            
+            pdf.setFillColor(237, 208, 14); pdf.rect(margin, y, maxW, 12, 'F');
+            pdf.setTextColor(62, 62, 62); pdf.setFontSize(16);
+            pdf.text('6. Recomendaciones de acopio e instalación', margin + 4, y + 9);
+            y += 18;
+            
+            pdf.setFontSize(10); pdf.setTextColor(30, 43, 58);
+            const recLines = pdf.splitTextToSize(sanitizeText(recomendaciones), maxW);
+            pdf.text(recLines, margin, y); y += recLines.length * 5 + 10;
+        }
+
+        /* PIE DE PÁGINA */
+        const totalPages = pdf.internal.getNumberOfPages();
+        const footerName = sanitizeText(nombre).length > 40 ? sanitizeText(nombre).substring(0, 38) + '...' : sanitizeText(nombre);
+        
+        for (let i = 1; i <= totalPages; i++) {
+            pdf.setPage(i); pdf.setFontSize(8); pdf.setTextColor(160, 160, 160);
+            pdf.text(`Aislantech.es - ${footerName} - Página ${i} de ${totalPages}`, pageW - margin, pageH - 10, { align: 'right' });
+            pdf.setDrawColor(200, 200, 200); pdf.setLineWidth(0.5);
+            pdf.line(margin, pageH - 14, pageW - margin, pageH - 14);
+        }
+
+        const safeName = sanitizeText(nombre).replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_\-]/g, '');
+        pdf.save(`Ficha_Tecnica_${safeName || 'Producto'}.pdf`);
+    }
+</script>
+</body>
+</html>"""
+
+with open("Aislantech_Generador_Fichas.html", "w", encoding="utf-8") as f:
+    f.write(html_code)
+
+print("HTML guardado")
