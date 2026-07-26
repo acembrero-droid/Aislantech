@@ -60,7 +60,7 @@
         .calculator-section { padding: 100px 0 60px; }
         .calc-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; border-bottom: 2px solid #ddd; padding-bottom: 15px; flex-wrap: wrap; gap: 15px;}
         
-        .calc-grid { display: grid; grid-template-columns: 320px 1fr; gap: 30px; align-items: start; }
+        .calc-grid { display: grid; grid-template-columns: 300px 1fr; gap: 30px; align-items: start; }
         
         .panel { background: var(--color-white); padding: 25px; border-radius: var(--border-radius); box-shadow: var(--box-shadow); }
         .panel h3 { margin-bottom: 20px; font-size: 1.2rem; color: var(--color-secondary); border-bottom: 1px solid #eee; padding-bottom: 10px;}
@@ -69,8 +69,6 @@
         .form-group label { display: block; font-weight: 600; margin-bottom: 6px; color: var(--color-secondary); font-size: 0.9rem; }
         .form-group input { width: 100%; padding: 10px; border: 1px solid var(--color-secondary-light); border-radius: 4px; font-family: inherit; font-size: 1rem; }
         .form-group input:focus { outline: none; border-color: var(--color-primary); }
-        
-        .input-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 
         /* ========== ZONA DE REPORTE (EXPORTABLE) ========== */
         .informe-container { background: #fff; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden; }
@@ -125,7 +123,7 @@
             <div class="calc-header">
                 <div>
                     <h2>Análisis de Viento y Geometría de Paño</h2>
-                    <p>Cálculo estructural. Las lamas 1 y 2 asumen la inclinación, el resto caen verticales.</p>
+                    <p>Cálculo de comportamiento estructural considerando la salida del emboque.</p>
                 </div>
                 <div class="btn-group">
                     <button class="btn btn-outline" onclick="exportarPDF()" title="Exportar informe técnico">
@@ -140,32 +138,23 @@
             <div class="calc-grid">
                 <!-- Panel Lateral de Inputs -->
                 <div class="panel">
-                    <h3>Configuración de Paño</h3>
+                    <h3>Configuración</h3>
                     
-                    <div class="input-row">
-                        <div class="form-group">
-                            <label>Total Lamas</label>
-                            <input type="number" id="inp-lamas" value="45" step="1" onchange="calcular()">
-                        </div>
-                        <div class="form-group">
-                            <label>Paso (mm)</label>
-                            <input type="number" id="inp-paso" value="45" step="0.1" onchange="calcular()">
-                        </div>
-                    </div>
-                    
-                    <h3 style="margin-top: 15px; font-size: 1rem;">Ángulos de Emboque</h3>
-
                     <div class="form-group">
-                        <label>Grados Lama 1 (Salida eje)</label>
-                        <input type="number" id="inp-angulo1" value="15" step="1" onchange="calcular()">
-                    </div>
-
-                    <div class="form-group">
-                        <label>Grados Lama 2 (Transición)</label>
-                        <input type="number" id="inp-angulo2" value="15" step="1" onchange="calcular()">
+                        <label>Cantidad total de lamas</label>
+                        <input type="number" id="inp-lamas" value="45" step="1" onchange="calcular()">
                     </div>
                     
-                    <p style="font-size: 0.8rem; color: var(--color-gray); font-style: italic;">Nota: De la Lama 3 en adelante, el ángulo es siempre 0º (vertical perfecta).</p>
+                    <div class="form-group">
+                        <label>Paso de lama (mm)</label>
+                        <input type="number" id="inp-paso" value="45" step="0.1" onchange="calcular()">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Grado de salida (º)</label>
+                        <input type="number" id="inp-angulo" value="15" step="1" onchange="calcular()">
+                        <small style="color: #888; font-size: 0.8rem; display: block; margin-top: 4px;">Aplicado solo a las 2 primeras lamas.</small>
+                    </div>
 
                     <button class="btn" style="width: 100%; margin-top: 15px;" onclick="calcular()">
                         <i class="fas fa-sync-alt"></i> Actualizar Gráfico
@@ -175,7 +164,7 @@
                 <!-- Panel de Informe Exportable -->
                 <div class="informe-container" id="informe-export">
                     <div class="informe-header">
-                        <h3 style="margin: 0; color: white;">Informe Técnico de Perfil</h3>
+                        <h3 style="margin: 0; color: white;">Informe Técnico de Paño</h3>
                         <div style="font-size: 0.8rem; opacity: 0.8;">Aislantech Tools</div>
                     </div>
                     
@@ -202,30 +191,28 @@
                                 </div>
                             </div>
 
-                            <h4 style="margin-bottom: 10px; color: var(--color-secondary);">Distribución de Ángulos</h4>
+                            <h4 style="margin-bottom: 10px; color: var(--color-secondary);">Distribución de Fuerzas y Caída</h4>
                             <table class="results-table">
                                 <thead>
                                     <tr>
                                         <th>Sección</th>
-                                        <th>Ángulo respecto vertical</th>
-                                        <th>Comportamiento Estructural</th>
+                                        <th>Cantidad</th>
+                                        <th>Ángulo</th>
+                                        <th>Exposición al Viento</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <tr>
-                                        <td>Lama 1 (Salida)</td>
-                                        <td><span id="out-grado-1" style="font-weight: bold; color: var(--color-primary-dark);">0</span>º</td>
-                                        <td>Sufre estrés vertical directo del viento</td>
+                                        <td>Lamas de Emboque (1 y 2)</td>
+                                        <td>2 lamas</td>
+                                        <td><span id="out-grado-salida">0</span>º</td>
+                                        <td>Sufren componente vertical de estrés</td>
                                     </tr>
                                     <tr>
-                                        <td>Lama 2 (Transición)</td>
-                                        <td><span id="out-grado-2" style="font-weight: bold; color: var(--color-primary-dark);">0</span>º</td>
-                                        <td>Absorbe desviación hacia la guía</td>
-                                    </tr>
-                                    <tr>
-                                        <td>Paño (Resto: <span id="out-resto-lamas">0</span> lamas)</td>
-                                        <td><strong>0º (Plomo)</strong></td>
-                                        <td>Impacto aerodinámico ortogonal (90º)</td>
+                                        <td>Paño Principal (Resto)</td>
+                                        <td><span id="out-resto-lamas">0</span> lamas</td>
+                                        <td>0º (Plomo)</td>
+                                        <td>Impacto ortogonal puro (90º)</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -244,14 +231,14 @@
     </footer>
 
     <script>
+        // Calcular al cargar la página
         window.onload = calcular;
 
         function calcular() {
             // Recoger valores
             const numLamas = parseInt(document.getElementById('inp-lamas').value);
             const paso = parseFloat(document.getElementById('inp-paso').value);
-            const angulo1 = parseFloat(document.getElementById('inp-angulo1').value);
-            const angulo2 = parseFloat(document.getElementById('inp-angulo2').value);
+            const anguloGrados = parseFloat(document.getElementById('inp-angulo').value);
 
             if (isNaN(numLamas) || isNaN(paso) || numLamas < 3) {
                 alert("Por favor, introduce un número válido de lamas (mínimo 3).");
@@ -259,71 +246,74 @@
             }
 
             // Cálculos matemáticos
-            const rad1 = angulo1 * Math.PI / 180;
-            const rad2 = angulo2 * Math.PI / 180;
-            
-            // El desplazamiento total en X lo dictan solo la lama 1 y la lama 2
-            const desplazamientoX = (paso * Math.sin(rad1)) + (paso * Math.sin(rad2)); 
-            
-            // La altura en Y la dictan la lama 1, la lama 2, y el resto que cae a plomo
-            const alturaReal = (paso * Math.cos(rad1)) + (paso * Math.cos(rad2)) + ((numLamas - 2) * paso);
+            const rad = anguloGrados * Math.PI / 180;
+            // Desplazamiento X solo aplica a la lama 1 y lama 2 (por eso se multiplica por 2)
+            const desplazamientoX = 2 * (paso * Math.sin(rad)); 
+            // La altura real es el tramo inclinado (2 lamas) más el tramo vertical (el resto)
+            const alturaReal = (2 * (paso * Math.cos(rad))) + ((numLamas - 2) * paso);
             const alturaTotalEstirada = numLamas * paso;
 
-            // Actualizar textos
+            // Actualizar textos en el reporte
             document.getElementById('out-altura-total').innerText = alturaTotalEstirada.toFixed(1);
             document.getElementById('out-altura-real').innerText = alturaReal.toFixed(1);
             document.getElementById('out-desplazamiento').innerText = desplazamientoX.toFixed(1);
-            document.getElementById('out-grado-1').innerText = angulo1;
-            document.getElementById('out-grado-2').innerText = angulo2;
+            document.getElementById('out-grado-salida').innerText = anguloGrados;
             document.getElementById('out-resto-lamas').innerText = numLamas - 2;
 
-            // Dibujar
-            dibujarPersiana(numLamas, paso, angulo1, angulo2, alturaReal, desplazamientoX);
+            // Dibujar en Canvas
+            dibujarPersiana(numLamas, paso, anguloGrados, alturaReal, desplazamientoX);
         }
 
-        function dibujarPersiana(numLamas, paso, angulo1, angulo2, alturaReal, maxDesplazamientoX) {
+        function dibujarPersiana(numLamas, paso, anguloGrados, alturaReal, maxDesplazamientoX) {
             const canvas = document.getElementById('visorCanvas');
             const ctx = canvas.getContext('2d');
             
+            // Limpiar canvas
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+            // Márgenes y escala para encajar el dibujo en el canvas (500px alto)
             const paddingY = 40; 
+            // Escalar para que quepa verticalmente
             const scale = (canvas.height - paddingY * 2) / alturaReal;
 
+            // Punto de inicio (Eje). Centramos en X considerando el desplazamiento
             let currentX = (canvas.width / 2) - ((maxDesplazamientoX * scale) / 2);
             let currentY = paddingY;
 
-            // Eje
+            // Dibujar punto del eje
             ctx.fillStyle = "#EDD00E";
             ctx.beginPath();
             ctx.arc(currentX, currentY, 6, 0, Math.PI * 2);
             ctx.fill();
             ctx.stroke();
 
+            // Dibujar lamas
             ctx.lineWidth = 3;
             ctx.lineCap = "round";
             ctx.lineJoin = "round";
 
             for (let i = 0; i < numLamas; i++) {
-                // LÓGICA PRINCIPAL: Lama 1, Lama 2 y Resto
-                let anguloActual = 0;
-                if (i === 0) anguloActual = angulo1;
-                else if (i === 1) anguloActual = angulo2;
-                else anguloActual = 0;
-
+                // LÓGICA: Primeras 2 lamas al ángulo indicado. Resto a 0º vertical.
+                let anguloActual = (i < 2) ? anguloGrados : 0;
                 let rad = anguloActual * Math.PI / 180;
+
+                // Calcular siguiente punto
                 let nextX = currentX + (paso * Math.sin(rad)) * scale;
                 let nextY = currentY + (paso * Math.cos(rad)) * scale;
 
+                // Estilos de línea (Rojo para emboque, Gris oscuro para paño recto)
                 ctx.beginPath();
                 ctx.moveTo(currentX, currentY);
                 ctx.lineTo(nextX, nextY);
                 
-                // Color rojo para lamas 1 y 2, gris para el resto
-                ctx.strokeStyle = (i < 2) ? "#e74c3c" : "#333333"; 
+                if (i < 2) {
+                    ctx.strokeStyle = "#e74c3c"; // Rojo para indicar tensión/ángulo
+                } else {
+                    ctx.strokeStyle = "#333333"; // Gris oscuro para plomo
+                }
                 ctx.stroke();
 
-                // Articulación
+                // Dibujar articulación (engarce)
                 ctx.beginPath();
                 ctx.arc(nextX, nextY, 2, 0, Math.PI * 2);
                 ctx.fillStyle = "#ffffff";
@@ -331,13 +321,14 @@
                 ctx.lineWidth = 1;
                 ctx.fill();
                 ctx.stroke();
-                ctx.lineWidth = 3;
+                ctx.lineWidth = 3; // Restaurar grosor
 
+                // Avanzar coordenandas
                 currentX = nextX;
                 currentY = nextY;
             }
 
-            // Línea de plomo referencial
+            // Dibujar línea guía de plomo (0º vertical)
             const startPlomoX = currentX; 
             ctx.beginPath();
             ctx.setLineDash([5, 5]);
@@ -346,11 +337,17 @@
             ctx.strokeStyle = "#cccccc";
             ctx.lineWidth = 1;
             ctx.stroke();
-            ctx.setLineDash([]);
+            ctx.setLineDash([]); // Resetear
         }
 
+        // ==========================================
+        // EXPORTACIÓN A PDF
+        // ==========================================
         function exportarPDF() {
+            // Selecciona la caja del informe para convertirla a PDF
             const elemento = document.getElementById('informe-export');
+            
+            // Opciones de html2pdf
             const opciones = {
                 margin:       10,
                 filename:     'Aislantech_Informe_Persiana.pdf',
@@ -358,61 +355,68 @@
                 html2canvas:  { scale: 2 },
                 jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
             };
+            
+            // Generar PDF
             html2pdf().set(opciones).from(elemento).save();
         }
 
+        // ==========================================
+        // EXPORTACIÓN A DXF (Escala 1:1 en milímetros)
+        // ==========================================
         function exportarDXF() {
             const numLamas = parseInt(document.getElementById('inp-lamas').value);
             const paso = parseFloat(document.getElementById('inp-paso').value);
-            const angulo1 = parseFloat(document.getElementById('inp-angulo1').value);
-            const angulo2 = parseFloat(document.getElementById('inp-angulo2').value);
+            const anguloGrados = parseFloat(document.getElementById('inp-angulo').value);
 
             if (isNaN(numLamas) || isNaN(paso) || numLamas < 3) return;
 
-            // Header DXF
+            // Iniciar estructura básica DXF
             let dxf = "  0\nSECTION\n  2\nENTITIES\n";
 
+            // En CAD, el eje Y suele ser positivo hacia arriba. 
+            // Para que la persiana se dibuje hacia abajo, restaremos al eje Y.
             let currentX = 0;
             let currentY = 0; 
-            const radioArticulacion = 1.5;
+            const radioArticulacion = 1.5; // Radio en mm para dibujar los puntos
 
             for (let i = 0; i < numLamas; i++) {
-                // Misma lógica matemática para DXF
-                let anguloActual = 0;
-                if (i === 0) anguloActual = angulo1;
-                else if (i === 1) anguloActual = angulo2;
-                else anguloActual = 0;
-
+                // LÓGICA DXF: Primeras 2 lamas al ángulo indicado. Resto a 0º vertical.
+                let anguloActual = (i < 2) ? anguloGrados : 0;
                 let rad = anguloActual * Math.PI / 180;
-                let nextX = currentX + (paso * Math.sin(rad));
-                let nextY = currentY - (paso * Math.cos(rad)); // Negativo porque en CAD Y sube
 
-                // LÍNEA (Rojo = 1, Gris = 8)
+                // Calcular coordenada siguiente
+                let nextX = currentX + (paso * Math.sin(rad));
+                let nextY = currentY - (paso * Math.cos(rad)); // Hacia abajo en Y negativo
+
+                // 1. DIBUJAR LA LÍNEA DE LA LAMA
                 dxf += "  0\nLINE\n";
-                dxf += "  8\nAislantech_Lamas\n";
+                dxf += "  8\nAislantech_Lamas\n"; // Nombre de la capa
+                // Color (1 = Rojo para emboque, 8 = Gris oscuro para el resto)
                 dxf += (i < 2) ? " 62\n1\n" : " 62\n8\n"; 
                 dxf += ` 10\n${currentX.toFixed(4)}\n 20\n${currentY.toFixed(4)}\n 30\n0.0\n`;
                 dxf += ` 11\n${nextX.toFixed(4)}\n 21\n${nextY.toFixed(4)}\n 31\n0.0\n`;
 
-                // ARTICULACIÓN
+                // 2. DIBUJAR LA ARTICULACIÓN COMO UN CÍRCULO
                 dxf += "  0\nCIRCLE\n";
-                dxf += "  8\nAislantech_Articulaciones\n";
-                dxf += " 62\n7\n"; 
+                dxf += "  8\nAislantech_Articulaciones\n"; // Capa de articulaciones
+                dxf += " 62\n7\n"; // Color blanco/negro por defecto CAD
                 dxf += ` 10\n${nextX.toFixed(4)}\n 20\n${nextY.toFixed(4)}\n 30\n0.0\n`;
                 dxf += ` 40\n${radioArticulacion.toFixed(2)}\n`;
 
+                // Avanzar coordenandas
                 currentX = nextX;
                 currentY = nextY;
             }
 
+            // Cerrar estructura DXF
             dxf += "  0\nENDSEC\n  0\nEOF\n";
 
-            // Descarga
+            // Crear y descargar el archivo
             const blob = new Blob([dxf], { type: "text/plain" });
             const url = URL.createObjectURL(blob);
             const link = document.createElement("a");
             link.href = url;
-            link.download = `Aislantech_Perfil_Persiana.dxf`;
+            link.download = `Aislantech_Perfil_Persiana_${anguloGrados}grados.dxf`;
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
