@@ -2,259 +2,907 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cálculo Viento Persianas | Aislantech</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Aislantech · Simulador Cinemático de Persianas Enrollables</title>
     
-    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <!-- Librerías externas -->
+    <script src="https://cdn.jsdelivr.net/npm/dxf-parser@1.1.2/dist/dxf-parser.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Google Fonts: Montserrat + Open Sans -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Open+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome 6 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Open+Sans:wght@300;400;600&display=swap" rel="stylesheet">
     
     <style>
-        /* ========== VARIABLES HEREDADAS AISLANTECH ========== */
+        /* ========== VARIABLES AISLANTECH ========== */
         :root {
             --color-primary: #EDD00E;
             --color-primary-dark: #B8860B;
             --color-primary-light: #FFF8DC;
             --color-secondary: #3E3E3E;
+            --color-secondary-dark: #696969;
             --color-secondary-light: #D3D3D3;
-            --color-accent: #EDD00E;
             --color-light: #F5F5F5;
             --color-dark: #333333;
             --color-gray: #666666;
             --color-white: #FFFFFF;
             --transition: all 0.3s ease;
             --border-radius: 8px;
-            --box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            --box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
         }
-
-        /* ========== ESTILOS BASE ========== */
+        
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Open Sans', sans-serif; color: var(--color-gray); background-color: var(--color-light); line-height: 1.6; }
-        h1, h2, h3, h4 { font-family: 'Montserrat', sans-serif; color: var(--color-dark); font-weight: 600; }
-        .container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
         
-        .btn { display: inline-block; background-color: var(--color-accent); color: var(--color-dark); padding: 12px 30px; border-radius: var(--border-radius); text-decoration: none; font-weight: 700; border: none; cursor: pointer; transition: var(--transition); font-family: 'Montserrat', sans-serif; }
-        .btn:hover { background-color: var(--color-primary-dark); color: var(--color-white); }
-        .btn-outline { background-color: transparent; border: 2px solid var(--color-accent); color: var(--color-dark); }
-
-        /* ========== HEADER ========== */
-        header { position: fixed; top: 0; left: 0; width: 100%; z-index: 1000; background-color: rgba(255, 255, 255, 0.97); box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05); }
-        .header-container { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; }
+        body {
+            font-family: 'Open Sans', sans-serif;
+            background-color: var(--color-light);
+            color: var(--color-gray);
+            line-height: 1.5;
+            /* Uso de dvh para dispositivos móviles */
+            height: 100dvh; 
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        h1, h2, h3, h4, .card-title, .btn, .logo-text {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 600;
+            color: var(--color-dark);
+        }
+        
+        /* ========== HEADER FIJO ========== */
+        header {
+            background-color: rgba(255, 255, 255, 0.97);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            position: relative;
+            z-index: 100;
+            flex-shrink: 0;
+        }
+        
+        .header-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 24px;
+            max-width: 100%;
+            margin: 0 auto;
+        }
+        
         .logo-container { display: flex; align-items: center; text-decoration: none; }
-        .logo-img { height: 40px; margin-right: 12px; }
         .logo-text { font-family: 'Montserrat', sans-serif; font-weight: 700; display: flex; flex-direction: column; line-height: 1.1; }
-        .logo-aislan { color: var(--color-secondary); font-size: 1.5rem; }
+        .logo-aislan { color: var(--color-secondary); font-size: 1.5rem; font-weight: 700; }
         .logo-tech { color: var(--color-primary); font-size: 1.5rem; font-weight: 800; }
-        .logo-tagline { font-size: 0.7rem; color: var(--color-gray); font-family: 'Open Sans', sans-serif; }
-        nav ul { display: flex; list-style: none; }
-        nav li { margin-left: 30px; }
-        nav a { text-decoration: none; color: var(--color-dark); font-weight: 500; font-size: 0.95rem; }
-
-        /* ========== ESTRUCTURA DE LA CALCULADORA ========== */
-        .calculator-section { padding: 120px 0 60px; }
-        .calc-grid { display: grid; grid-template-columns: 1fr 2fr; gap: 30px; align-items: start; }
+        .logo-tagline { font-size: 0.7rem; color: var(--color-gray); font-weight: 400; margin-top: 2px; font-family: 'Open Sans', sans-serif; }
         
-        .calc-panel { background: var(--color-white); padding: 30px; border-radius: var(--border-radius); box-shadow: var(--box-shadow); border-top: 4px solid var(--color-primary); }
-        .calc-panel h2 { margin-bottom: 20px; font-size: 1.5rem; border-bottom: 2px solid var(--color-light); padding-bottom: 10px; }
+        /* ========== LAYOUT PRINCIPAL ========== */
+        .main-layout {
+            display: flex;
+            flex-direction: row;
+            flex: 1;
+            overflow: hidden; /* Evita que crezca más allá de la pantalla */
+        }
         
-        .form-group { margin-bottom: 20px; }
-        .form-group label { display: block; font-weight: 600; margin-bottom: 8px; color: var(--color-secondary); font-size: 0.9rem; }
-        .form-group input { width: 100%; padding: 10px 15px; border: 1px solid var(--color-secondary-light); border-radius: 4px; font-family: inherit; font-size: 1rem; }
-        .form-group input:focus { outline: none; border-color: var(--color-primary); }
-
-        /* ========== TABLA DE RESULTADOS ========== */
-        .results-table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 0.9rem; }
-        .results-table th, .results-table td { padding: 12px; text-align: left; border-bottom: 1px solid var(--color-light); }
-        .results-table th { background-color: var(--color-secondary); color: var(--color-white); font-family: 'Montserrat', sans-serif; }
-        .results-table tr:hover { background-color: var(--color-light); }
+        /* Sidebar estilo Aislantech */
+        #sidebar {
+            width: 400px;
+            background: var(--color-white);
+            border-right: 1px solid var(--color-secondary-light);
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            padding: 20px;
+            gap: 16px;
+            box-shadow: 2px 0 8px rgba(0,0,0,0.02);
+            flex-shrink: 0;
+        }
         
-        .alert { background-color: #fff3cd; color: #856404; padding: 15px; border-radius: 4px; border-left: 4px solid #ffeeba; margin-bottom: 20px; display: none; }
-        .alert.active { display: block; }
+        #sidebar::-webkit-scrollbar { width: 6px; }
+        #sidebar::-webkit-scrollbar-track { background: var(--color-light); }
+        #sidebar::-webkit-scrollbar-thumb { background: var(--color-secondary-light); border-radius: 4px; }
         
-        /* Highlight para lamas clave */
-        .lama-inclinada { font-weight: bold; color: var(--color-primary-dark); }
-        .lama-vertical { color: var(--color-gray); }
+        /* Tarjetas */
+        .card { background: var(--color-white); border-radius: var(--border-radius); box-shadow: var(--box-shadow); border-top: 3px solid var(--color-primary); overflow: hidden; flex-shrink: 0; }
+        .card-header { background: var(--color-primary-light); padding: 10px 16px; border-bottom: 1px solid var(--color-secondary-light); display: flex; align-items: center; gap: 10px; }
+        .card-header i { font-size: 1.2rem; color: var(--color-primary-dark); }
+        .card-title { font-size: 0.95rem; font-weight: 600; margin: 0; color: var(--color-secondary); }
+        .card-body { padding: 12px 16px; }
+        
+        /* Formularios */
+        .form-group { margin-bottom: 12px; }
+        .form-group label { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--color-secondary-dark); display: block; margin-bottom: 4px; }
+        input, select { width: 100%; padding: 8px 12px; border: 1px solid var(--color-secondary-light); border-radius: var(--border-radius); font-size: 0.85rem; font-family: 'Open Sans', sans-serif; transition: var(--transition); background: var(--color-white); }
+        input:focus, select:focus { border-color: var(--color-primary); outline: none; box-shadow: 0 0 0 3px rgba(237, 208, 14, 0.2); }
+        
+        /* Botones */
+        .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border-radius: var(--border-radius); font-weight: 700; border: none; cursor: pointer; transition: var(--transition); font-family: 'Montserrat', sans-serif; font-size: 0.85rem; padding: 10px 16px; text-decoration: none;}
+        .btn-yellow { background-color: var(--color-primary); color: var(--color-dark); }
+        .btn-yellow:hover { background-color: var(--color-primary-dark); color: var(--color-white); box-shadow: 0 4px 10px rgba(237, 208, 14, 0.3); }
+        .btn-outline { background: transparent; border: 2px solid var(--color-primary); color: var(--color-primary-dark); }
+        .btn-outline:hover { background: var(--color-primary-light); }
+        .btn-success { background-color: #2e7d32; color: white; padding: 12px; font-size: 0.9rem;}
+        .btn-success:hover { background-color: #1b5e20; box-shadow: 0 4px 10px rgba(46, 125, 50, 0.2); }
+        
+        .checkbox-group { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
+        .checkbox-group input { width: 18px; height: 18px; margin: 0; cursor: pointer;}
+        .checkbox-group label { margin: 0; font-size: 0.8rem; font-weight: normal; text-transform: none; cursor: pointer;}
+        
+        /* Panel de datos info */
+        .data-panel { background: var(--color-light); border-radius: var(--border-radius); padding: 12px; font-size: 0.85rem; margin-top: 5px; flex-shrink: 0; }
+        .data-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+        .highlight { color: var(--color-primary-dark); font-weight: 700; font-size: 1.1rem; }
+        .status { padding: 8px; border-radius: var(--border-radius); font-size: 0.75rem; background: var(--color-light); color: var(--color-gray); text-align: center; margin-top: 8px; }
+        .status.ok { background: #e8f5e9; color: #2e7d32; border-left: 3px solid #2e7d32; font-weight: bold;}
+        
+        .chart-wrapper { background: var(--color-white); border: 1px solid var(--color-secondary-light); border-radius: var(--border-radius); padding: 8px; height: 200px; position: relative; width: 100%;}
+        
+        /* Canvas container */
+        #canvas-container { flex: 1; position: relative; background: radial-gradient(circle at center, #e9ecef 0%, #d5d8dc 100%); cursor: crosshair; overflow: hidden; display: flex; flex-direction: column;}
+        canvas { width: 100%; height: 100%; display: block; touch-action: none; /* Prevenir scroll del navegador al arrastrar en movil */ }
+        
+        #instructionOverlay { position: absolute; top: 15px; left: 50%; transform: translateX(-50%); background: var(--color-primary); color: var(--color-dark); padding: 12px 20px; border-radius: 40px; font-weight: bold; display: none; pointer-events: none; box-shadow: 0 4px 15px rgba(0,0,0,0.2); z-index: 20; font-size: 0.9rem; text-align: center; font-family: 'Montserrat', sans-serif; border: 2px solid white; white-space: nowrap; max-width: 90%; text-overflow: ellipsis; overflow: hidden;}
+        
+        /* Botones de Zoom Flotantes */
+        .zoom-controls { position: absolute; bottom: 20px; right: 20px; display: flex; flex-direction: column; gap: 10px; z-index: 10; }
+        .zoom-controls button { width: 40px; height: 40px; border-radius: 50%; background: white; border: 1px solid var(--color-secondary-light); box-shadow: var(--box-shadow); display: flex; align-items: center; justify-content: center; font-size: 1.2rem; color: var(--color-dark); cursor: pointer; transition: background 0.2s; }
+        .zoom-controls button:active { background: var(--color-light); }
 
-        /* ========== FOOTER ========== */
-        footer { background-color: var(--color-dark); color: var(--color-white); padding: 40px 0; text-align: center; margin-top: 40px;}
-        footer a { color: var(--color-primary); text-decoration: none; }
-
-        @media (max-width: 992px) {
-            .calc-grid { grid-template-columns: 1fr; }
-            nav { display: none; } /* Oculto en móvil para simplificar */
+        /* Footer */
+        footer { background-color: var(--color-dark); color: var(--color-white); padding: 12px 0; flex-shrink: 0; font-size: 0.75rem; text-align: center; }
+        .footer-legal { display: flex; justify-content: center; gap: 15px; margin-bottom: 5px; flex-wrap: wrap; }
+        .footer-legal a { color: rgba(255, 255, 255, 0.7); text-decoration: none; transition: var(--transition); }
+        .footer-legal a:hover { color: var(--color-primary); }
+        
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .input-group { margin-bottom: 10px; }
+        .input-group label { display: block; font-size: 0.75rem; font-weight: 600; margin-bottom: 4px; color: var(--color-secondary); }
+        
+        /* ========== RESPONSIVE DESIGN ========== */
+        @media (max-width: 850px) {
+            .header-container { flex-direction: column; gap: 10px; padding: 10px 15px; }
+            .logo-aislan, .logo-tech { font-size: 1.3rem; }
+            
+            /* En móviles, dividimos la pantalla 50/50 verticalmente */
+            .main-layout { flex-direction: column; }
+            #sidebar { width: 100%; flex: 0 0 50%; border-right: none; border-bottom: 3px solid var(--color-primary); padding: 15px; }
+            #canvas-container { flex: 0 0 50%; }
+            .chart-wrapper { height: 160px; } /* Más bajo para encajar bien */
+            
+            /* Textos superpuestos más adaptables */
+            #instructionOverlay { font-size: 0.8rem; padding: 8px 15px; white-space: normal; line-height: 1.2; }
+            .zoom-controls { bottom: 15px; right: 15px; }
         }
     </style>
 </head>
 <body>
 
-    <!-- Header -->
-    <header>
-        <div class="container header-container">
-            <a href="index.html" class="logo-container">
-                <img src="images/logo.png" alt="Aislantech Logo" class="logo-img" onerror="this.style.display='none'">
-                <div class="logo-text">
-                    <div><span class="logo-aislan">AISLAN</span><span class="logo-tech">TECH</span></div>
-                    <div class="logo-tagline">Soluciones Técnicas Avanzadas</div>
+<header>
+    <div class="header-container">
+        <a href="#" class="logo-container">
+            <div class="logo-text">
+                <div><span class="logo-aislan">AISLAN</span><span class="logo-tech">TECH</span></div>
+                <div class="logo-tagline">Soluciones Técnicas Avanzadas</div>
+            </div>
+        </a>
+        <a href="mailto:info@aislantech.es" class="btn btn-yellow"><i class="fas fa-envelope"></i> Contacto técnico</a>
+    </div>
+</header>
+
+<div class="main-layout">
+    <!-- Sidebar (controles) -->
+    <div id="sidebar">
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-drafting-compass"></i>
+                <div class="card-title">Diseño DXF del perfil</div>
+            </div>
+            <div class="card-body">
+                <div class="form-group">
+                    <label><i class="fas fa-file-upload"></i> Archivo DXF (sección lama)</label>
+                    <input type="file" id="fileDxf" accept=".dxf">
+                    <div id="dxfStatus" class="status">Esperando archivo...</div>
                 </div>
-            </a>
-            <nav>
-                <ul id="mainMenu">
-                    <li><a href="index.html">Volver a Inicio</a></li>
-                </ul>
-            </nav>
-        </div>
-    </header>
-
-    <!-- Calculator Section -->
-    <section class="calculator-section">
-        <div class="container">
-            <div class="calc-grid">
-                
-                <!-- Panel de Datos -->
-                <div class="calc-panel">
-                    <h2>Parámetros de Cálculo</h2>
-                    
-                    <div class="form-group">
-                        <label>Altura del paño (mm)</label>
-                        <input type="number" id="inp-altura" value="2000" step="10">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>Paso de lama (mm)</label>
-                        <input type="number" id="inp-paso" value="45" step="1">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>Ángulo de salida desde el eje (º)</label>
-                        <input type="number" id="inp-angulo" value="12" step="0.5">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>Tolerancia del engarce por lama (º)</label>
-                        <input type="number" id="inp-tolerancia" value="8" step="0.5">
-                        <small style="color: #888; display: block; margin-top: 4px;">Grados que puede rotar la bisagra de la lama antes de hacer tope.</small>
-                    </div>
-
-                    <button class="btn" style="width: 100%; margin-top: 10px;" onclick="calcularPaño()">Calcular Incidencia</button>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="chkFlipX" onchange="if(appState==='SIMULATING') simular();">
+                    <label for="chkFlipX">Invertir cara de lama (Flip)</label>
                 </div>
-
-                <!-- Panel de Resultados -->
-                <div class="calc-panel">
-                    <h2>Análisis Aerodinámico del Paño</h2>
-                    
-                    <div id="alerta-tope" class="alert">
-                        <i class="fas fa-exclamation-triangle"></i> <strong>Advertencia geométrica:</strong> El ángulo de salida es superior a la tolerancia sumada de las dos primeras lamas. La tercera lama no podrá caer a plomo (90º) y la persiana rozará o formará "barriga".
-                    </div>
-                    
-                    <div style="margin-bottom: 15px; font-size: 0.95rem;">
-                        <strong>Total lamas estimadas:</strong> <span id="out-lamas">0</span> ud.
-                    </div>
-
-                    <div style="overflow-x: auto; max-height: 500px; border: 1px solid #eee;">
-                        <table class="results-table">
-                            <thead>
-                                <tr>
-                                    <th>Nº Lama</th>
-                                    <th>Posición</th>
-                                    <th>Ángulo (Respecto vertical)</th>
-                                    <th>Comportamiento</th>
-                                </tr>
-                            </thead>
-                            <tbody id="tabla-resultados">
-                                <!-- Filas inyectadas por JS -->
-                                <tr>
-                                    <td colspan="4" style="text-align: center; color: #888;">Presiona "Calcular Incidencia" para generar el informe</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-                
+                <button id="btnRecalibrar" class="btn btn-outline" onclick="iniciarCalibracion()" style="display:none; width:100%; margin-top:12px;">
+                    <i class="fas fa-sync-alt"></i> Re-calibrar puntos
+                </button>
             </div>
         </div>
-    </section>
 
-    <!-- Footer -->
-    <footer>
-        <div class="container">
-            <p>&copy; 2026 Aislantech. Herramienta de uso técnico interno. | <a href="index.html">Volver a Aislantech.es</a></p>
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-cog"></i>
+                <div class="card-title">Geometría y cálculo inverso</div>
+            </div>
+            <div class="card-body">
+                <div class="grid-2">
+                    <div class="input-group">
+                        <label>Diámetro eje (mm)</label>
+                        <input type="number" id="valEje" value="60" step="1" oninput="if(appState==='SIMULATING') simular();">
+                    </div>
+                    <div class="input-group">
+                        <label>Espesor lama (e) (mm)</label>
+                        <input type="number" id="valEspesor" value="9" step="0.1" oninput="if(appState==='SIMULATING') simular();">
+                    </div>
+                </div>
+                <div class="input-group" style="border: 1px solid var(--color-primary); background: var(--color-primary-light); border-radius: var(--border-radius); padding: 10px; margin-top: 5px;">
+                    <label style="color: var(--color-primary-dark); font-weight: 700; margin-bottom: 6px;"><i class="fas fa-crosshairs"></i> 1. Ø máx. cajón deseado</label>
+                    <input type="number" id="valDiametroObjetivo" value="160" step="5" style="background: white; border-color: var(--color-primary);">
+                </div>
+                <div class="input-group">
+                    <label>📏 2. Altura total paño (mm)</label>
+                    <input type="number" id="valAlturaTotal" value="1500" step="10">
+                </div>
+                
+                <div class="input-group">
+                    <label>🔢 3. Número de lamas (Total)</label>
+                    <input type="number" id="valLamas" value="30" step="1">
+                </div>
+                <!-- NUEVOS CONTROLES DE CAÍDA -->
+                <div class="grid-2">
+                    <div class="input-group">
+                        <label>⬇️ Lamas colgantes</label>
+                        <input type="number" id="valLamasColgantes" value="2" min="0" step="1" oninput="if(appState==='SIMULATING') simular();">
+                    </div>
+                    <div class="input-group">
+                        <label>📐 Ángulo salida (°)</label>
+                        <input type="number" id="valAnguloSalida" value="90" step="1" title="90º es vertical hacia abajo" oninput="if(appState==='SIMULATING') simular();">
+                    </div>
+                </div>
+
+            </div>
         </div>
-    </footer>
 
-    <script>
-        function calcularPaño() {
-            // 1. Obtener valores del formulario
-            const altura = parseFloat(document.getElementById('inp-altura').value);
-            const paso = parseFloat(document.getElementById('inp-paso').value);
-            const anguloSalida = parseFloat(document.getElementById('inp-angulo').value);
-            const tolerancia = parseFloat(document.getElementById('inp-tolerancia').value);
+        <div class="data-panel">
+            <div class="data-row">
+                <span>Paso de lama (alto útil):</span>
+                <strong id="infoAlto" style="color: var(--color-primary-dark);">-- mm</strong>
+            </div>
+            <div class="data-row" style="border-top: 1px solid var(--color-secondary-light); padding-top: 8px; margin-top: 4px;">
+                <span>Ø exterior resultante:</span>
+                <span id="infoDiam" class="highlight">-- mm</span>
+            </div>
+        </div>
 
-            // Validaciones básicas
-            if (!altura || !paso || paso <= 0) {
-                alert("Por favor, introduce valores válidos para altura y paso.");
-                return;
-            }
+        <div class="card" style="margin-bottom: 5px;">
+            <div class="card-header">
+                <i class="fas fa-chart-line"></i>
+                <div class="card-title">Evolución del enrollamiento</div>
+            </div>
+            <div class="card-body">
+                <div class="chart-wrapper">
+                    <canvas id="chartEvolucion"></canvas>
+                </div>
+            </div>
+        </div>
 
-            // 2. Cálculo de lamas
-            const numLamas = Math.ceil(altura / paso);
-            document.getElementById('out-lamas').innerText = numLamas;
+        <button id="btnExportar" class="btn btn-success" onclick="exportarDXF()" style="width:100%; margin-top: 5px;">
+            <i class="fas fa-download"></i> Exportar gráfico a DXF
+        </button>
+    </div>
 
-            // 3. Lógica de absorción del ángulo solicitada
-            const tabla = document.getElementById('tabla-resultados');
-            const alerta = document.getElementById('alerta-tope');
-            tabla.innerHTML = ""; // Limpiar tabla
-            alerta.classList.remove('active'); // Limpiar alerta
+    <!-- Canvas interactivo -->
+    <div id="canvas-container">
+        <div id="instructionOverlay"></div>
+        <div class="zoom-controls">
+            <button onclick="controlZoom(1.2)" title="Acercar"><i class="fas fa-plus"></i></button>
+            <button onclick="controlZoom(0.8)" title="Alejar"><i class="fas fa-minus"></i></button>
+        </div>
+        <canvas id="simCanvas"></canvas>
+    </div>
+</div>
 
-            // Verificación matemática: ¿Pueden 2 articulaciones absorber el ángulo total?
-            // La primera lama sale al ángulo X. 
-            // La articulación entre lama 1 y 2 absorbe 'tolerancia'.
-            // La articulación entre lama 2 y 3 absorbe otra 'tolerancia'.
-            const capacidadAbsorcion = tolerancia * 2;
-            
-            if (anguloSalida > capacidadAbsorcion) {
-                alerta.classList.add('active');
-            }
+<footer>
+    <div class="footer-legal">
+        <a href="#">Política de Privacidad</a>
+        <a href="#">Política de Cookies</a>
+        <a href="#">Aviso Legal</a>
+    </div>
+    <div>&copy; 2025 Aislantech. Todos los derechos reservados. | <a href="https://www.aislantech.es" style="color: var(--color-primary); text-decoration:none;">www.aislantech.es</a></div>
+</footer>
 
-            // 4. Generar el paño iterativamente
-            for (let i = 0; i < numLamas; i++) {
-                let anguloLama = 0;
-                let estado = "";
-                let claseCss = "";
-                let posicion = "";
+<script>
+    // ================= VARIABLES GLOBALES =================
+    let ejeSegmentos = [];
+    let ejeBBox = { cx: 0, cy: 0, width: 1 };
 
-                if (i === 0) {
-                    // LAMA 1: Asume el ángulo de salida del eje completo
-                    anguloLama = anguloSalida;
-                    posicion = "Salida del embudo";
-                    estado = "Estrés máximo (Absorbe componente vertical del viento)";
-                    claseCss = "lama-inclinada";
-                    
-                } else if (i === 1) {
-                    // LAMA 2: Absorbe la tolerancia del primer engarce
-                    anguloLama = Math.max(0, anguloSalida - tolerancia);
-                    posicion = "Transición superior";
-                    estado = "Compensación geométrica";
-                    claseCss = "lama-inclinada";
-                    
-                } else {
-                    // LAMA 3 en adelante: Forzamos la caída a plomo (0º respecto a la vertical)
-                    anguloLama = 0;
-                    posicion = "Paño continuo";
-                    estado = "Caída a 90º (Exposición frontal pura)";
-                    claseCss = "lama-vertical";
-                }
+    const canvas = document.getElementById('simCanvas');
+    const ctx = canvas.getContext('2d');
+    
+    let dxfPoligons = []; 
+    let bbox = { minX: 0, maxX: 0, minY: 0, maxY: 0 };
+    
+    let appState = 'IDLE'; 
+    let pSup = null; let pInf = null; let pEje = null; 
+    let cursorPoint = null; 
+    let renderData = null; 
 
-                // Crear fila HTML
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td><strong>Lama ${i + 1}</strong></td>
-                    <td>${posicion}</td>
-                    <td class="${claseCss}">${anguloLama.toFixed(1)} º</td>
-                    <td style="font-size: 0.85rem;">${estado}</td>
-                `;
-                tabla.appendChild(tr);
-            }
+    let calibConfig = { cx: 0, cy: 0, scale: 1, midX: 0, midY: 0 };
+    let simCam = { x: 0, y: 0, zoom: 1 };
+    let isDragging = false;
+    let lastMouse = { x: 0, y: 0 };
+    let altoLama = 45; 
+    
+    // Función dinámica para leer las lamas colgantes del UI
+    function getLamasColgantes() { 
+        return parseInt(document.getElementById('valLamasColgantes').value) || 0; 
+    }
+
+    // Función de reescalado responsiva
+    function resizeCanvas() {
+        const container = document.getElementById('canvas-container');
+        canvas.width = container.clientWidth;
+        canvas.height = container.clientHeight;
+        if (appState === 'SIMULATING') simular();
+        else if (appState.startsWith('CALIBRATING')) { updateCalibConfig(); renderCalibracion(); }
+    }
+
+    window.addEventListener('resize', resizeCanvas);
+    // Disparar inicialmente
+    setTimeout(resizeCanvas, 100); 
+
+    const inputAltura = document.getElementById('valAlturaTotal');
+    const inputLamas = document.getElementById('valLamas');
+    const inputDiametroObj = document.getElementById('valDiametroObjetivo');
+    let ignoreNextEvent = false;
+
+    // Eventos de Formulario (Calculos)
+    inputAltura.addEventListener('input', function() {
+        if (appState !== 'SIMULATING' || ignoreNextEvent) return;
+        let lamas = Math.ceil(parseFloat(this.value) / altoLama);
+        if (lamas < 1) lamas = 1;
+        inputLamas.value = lamas;
+        simular();
+    });
+
+    inputLamas.addEventListener('input', function() {
+        if (appState !== 'SIMULATING' || ignoreNextEvent) return;
+        let lamas = parseInt(this.value);
+        if (lamas < 1) lamas = 1;
+        inputAltura.value = (lamas * altoLama).toFixed(0);
+        simular();
+    });
+
+    inputDiametroObj.addEventListener('input', function() {
+        if (appState !== 'SIMULATING' || ignoreNextEvent || !pSup || !pInf || !pEje) return;
+        let targetMaxRadius = parseFloat(this.value) / 2;
+        let eLama = parseFloat(document.getElementById('valEspesor').value);
+        let radioEje = parseFloat(document.getElementById('valEje').value) / 2;
+        let rActual = radioEje + (eLama / 2); 
+        
+        if (targetMaxRadius <= rActual) {
+            inputLamas.value = getLamasColgantes();
+            inputAltura.value = (getLamasColgantes() * altoLama).toFixed(0);
+            simular();
+            return;
         }
-    </script>
+
+        let lamasCalculadas = 0;
+        let testTheta = Math.atan2(pSup.y - pEje.y, pSup.x - pEje.x);
+        let pAnt = { x: rActual * Math.cos(testTheta), y: rActual * Math.sin(testTheta), thetaGlobal: testTheta };
+        
+        while (rActual < targetMaxRadius && lamasCalculadas < 150) { 
+            lamasCalculadas++;
+            let dist = 0, targetX = 0, targetY = 0;
+            while (dist < altoLama) {
+                testTheta += 0.005;
+                let rTest = rActual + (eLama * ((testTheta - pAnt.thetaGlobal) / (2 * Math.PI)));
+                targetX = rTest * Math.cos(testTheta);
+                targetY = rTest * Math.sin(testTheta);
+                dist = Math.hypot(targetX - pAnt.x, targetY - pAnt.y);
+            }
+            rActual = Math.hypot(targetX, targetY);
+            pAnt = { x: targetX, y: targetY, thetaGlobal: testTheta };
+        }
+        if (rActual + (eLama/2) > targetMaxRadius && lamasCalculadas > 1) lamasCalculadas--;
+
+        ignoreNextEvent = true;
+        let lamasTotales = lamasCalculadas + getLamasColgantes();
+        inputLamas.value = lamasTotales;
+        inputAltura.value = (lamasTotales * altoLama).toFixed(0);
+        ignoreNextEvent = false;
+        simular();
+    });
+
+    // ================= FUNCIONES CORE (DXF y Polígonos) =================
+    function extraerSegmentosRaw(entities, blocks, offX = 0, offY = 0) {
+        let segs = []; if(!entities) return segs;
+        entities.forEach(ent => {
+            if (ent.type === 'LINE') {
+                segs.push({ p1: {x: ent.vertices[0].x+offX, y: ent.vertices[0].y+offY}, p2: {x: ent.vertices[1].x+offX, y: ent.vertices[1].y+offY} });
+            }
+            else if (ent.type === 'LWPOLYLINE' || ent.type === 'POLYLINE') {
+                for(let i=0; i<ent.vertices.length-1; i++) {
+                    segs.push({ p1: {x: ent.vertices[i].x+offX, y: ent.vertices[i].y+offY}, p2: {x: ent.vertices[i+1].x+offX, y: ent.vertices[i+1].y+offY} });
+                }
+                if (ent.shape || ent.closed) {
+                    segs.push({ p1: {x: ent.vertices[ent.vertices.length-1].x+offX, y: ent.vertices[ent.vertices.length-1].y+offY}, p2: {x: ent.vertices[0].x+offX, y: ent.vertices[0].y+offY} });
+                }
+            } 
+            else if (ent.type === 'ARC' || ent.type === 'CIRCLE') {
+                let cx = ent.center.x + offX, cy = ent.center.y + offY, r = ent.radius;
+                let sa = ent.startAngle || 0;
+                let ea = ent.endAngle;
+                if (ea === undefined) ea = Math.PI * 2;
+                if (ea < sa) ea += Math.PI * 2;
+                let steps = Math.max(8, Math.ceil((ea - sa) / (Math.PI * 2) * 32)); 
+                let lastP = {x: cx + r*Math.cos(sa), y: cy + r*Math.sin(sa)};
+                for(let i=1; i<=steps; i++) { 
+                    let newP = {x: cx + r*Math.cos(sa + (ea-sa)*(i/steps)), y: cy + r*Math.sin(sa + (ea-sa)*(i/steps))}; 
+                    segs.push({ p1: lastP, p2: newP }); 
+                    lastP = newP; 
+                }
+            } else if (ent.type === 'INSERT' && blocks && blocks[ent.name]) {
+                let pos = ent.position || {x:0, y:0};
+                segs = segs.concat(extraerSegmentosRaw(blocks[ent.name].entities, blocks, pos.x + offX, pos.y + offY));
+            }
+        });
+        return segs;
+    }
+
+    function construirPoligonos(segmentosRaw) {
+        let pool = [...segmentosRaw], poligonos = [];
+        while(pool.length > 0) {
+            let path = []; let current = pool.shift(); path.push(current.p1, current.p2);
+            let conectando = true;
+            while(conectando && pool.length > 0) {
+                conectando = false; let head = path[0], tail = path[path.length - 1];
+                for(let i=0; i<pool.length; i++) {
+                    let s = pool[i];
+                    if (Math.hypot(tail.x-s.p1.x, tail.y-s.p1.y) < 0.05) { path.push(s.p2); pool.splice(i,1); conectando = true; break; }
+                    if (Math.hypot(tail.x-s.p2.x, tail.y-s.p2.y) < 0.05) { path.push(s.p1); pool.splice(i,1); conectando = true; break; }
+                    if (Math.hypot(head.x-s.p1.x, head.y-s.p1.y) < 0.05) { path.unshift(s.p2); pool.splice(i,1); conectando = true; break; }
+                    if (Math.hypot(head.x-s.p2.x, head.y-s.p2.y) < 0.05) { path.unshift(s.p1); pool.splice(i,1); conectando = true; break; }
+                }
+            }
+            let cerrado = Math.hypot(path[0].x-path[path.length-1].x, path[0].y-path[path.length-1].y) < 0.05;
+            poligonos.push({ pts: path, closed: cerrado });
+        }
+        return poligonos;
+    }
+
+    // Inicializar eje de ejemplo original
+    function inicializarEjeFisico() {
+        try {
+            const parsedEje = new DxfParser().parseSync(`0\nSECTION\n2\nHEADER\n9\n$ACADVER\n1\nAC1009\n9\n$DWGCODEPAGE\n3\nansi_1252\n9\n$INSBASE\n10\n0.0\n20\n0.0\n30\n0.0\n9\n$EXTMIN\n10\n0.1983387231844163\n20\n2.967647815967849\n30\n0.0\n9\n$EXTMAX\n10\n61.05982102949751\n20\n63.82909454073202\n30\n0.0\n9\n$LIMMIN\n10\n0.0\n20\n0.0\n9\n$LIMMAX\n10\n420.0\n20\n297.0\n0\nENDSEC\n0\nSECTION\n2\nTABLES\n0\nTABLE\n2\nVPORT\n70\n1\n0\nVPORT\n2\n*ACTIVE\n70\n0\n10\n0.0\n20\n0.0\n11\n1.0\n21\n1.0\n12\n184.2311827553483\n22\n-64.25576796940668\n13\n0.0\n23\n0.0\n14\n10.0\n24\n10.0\n15\n10.0\n25\n10.0\n16\n0.0\n26\n0.0\n36\n1.0\n17\n0.0\n27\n0.0\n37\n0.0\n40\n435.4770368917229\n41\n2.527704485488127\n42\n50.0\n43\n0.0\n44\n0.0\n50\n0.0\n51\n0.0\n71\n0\n72\n1000\n73\n1\n74\n3\n75\n0\n76\n0\n77\n0\n78\n0\n0\nENDTAB\n0\nTABLE\n2\nLTYPE\n70\n1\n0\nLTYPE\n2\nCONTINUOUS\n70\n0\n3\nSolid line\n72\n65\n73\n0\n40\n0.0\n0\nENDTAB\n0\nTABLE\n2\nLAYER\n70\n2\n0\nLAYER\n2\n0\n70\n0\n62\n7\n6\nCONTINUOUS\n0\nLAYER\n2\nA-DETL-GENF\n70\n0\n62\n7\n6\nCONTINUOUS\n0\nENDTAB\n0\nTABLE\n2\nSTYLE\n70\n2\n0\nSTYLE\n2\nSTANDARD\n70\n0\n40\n0.0\n41\n1.0\n50\n0.0\n71\n0\n42\n2.5\n3\narial.ttf\n4\n\n0\nENDTAB\n0\nTABLE\n2\nVIEW\n70\n0\n0\nENDTAB\n0\nTABLE\n2\nUCS\n70\n0\n0\nENDTAB\n0\nENDSEC\n0\nSECTION\n2\nBLOCKS\n0\nBLOCK\n8\n0\n2\n$MODEL_SPACE\n70\n0\n10\n0.0\n20\n0.0\n30\n0.0\n3\n$MODEL_SPACE\n1\n\n0\nENDBLK\n0\nBLOCK\n67\n1\n8\n0\n2\n$PAPER_SPACE\n70\n0\n10\n0.0\n20\n0.0\n30\n0.0\n3\n$PAPER_SPACE\n1\n\n0\nENDBLK\n0\nENDSEC\n0\nSECTION\n2\nENTITIES\n0\nARC\n8\nA-DETL-GENF\n10\n2.519710430099849\n20\n37.33136935434874\n30\n0.0\n40\n1.600144416845772\n50\n357.5872189999994\n51\n42.58288499999997\n0\nARC\n8\nA-DETL-GENF\n10\n2.627447430099835\n20\n31.57674435434876\n30\n0.0\n40\n1.250005036512578\n50\n177.585213\n51\n357.5852390000002\n0\nARC\n8\nA-DETL-GENF\n10\n2.627446430099837\n20\n31.57674935434875\n30\n0.0\n40\n0.4500004183521021\n50\n177.5855229999992\n51\n357.5844350000029\n0\nARC\n8\nA-DETL-GENF\n10\n2.519832430099825\n20\n37.33143335434875\n30\n0.0\n40\n0.8000200486324494\n50\n357.5841760000012\n51\n42.58353000000006\n0\nARC\n8\nA-DETL-GENF\n10\n2.519182430099818\n20\n40.87866235434876\n30\n0.0\n40\n1.599848577528754\n50\n177.5828119999992\n51\n222.5871940000001\n0\nARC\n8\nA-DETL-GENF\n10\n5.106053430099848\n20\n45.25396435434874\n30\n0.0\n40\n4.000053986936225\n50\n132.5851229999996\n51\n177.5845370000004\n0\nARC\n8\nA-DETL-GENF\n10\n20.96472343009981\n20\n59.82909735434873\n30\n0.0\n40\n3.99999718638328\n50\n87.58474200000018\n51\n132.5845249999998\n0\nARC\n8\nA-DETL-GENF\n10\n42.48469343009981\n20\n58.92136635434872\n30\n0.0\n40\n4.000069071026324\n50\n42.58553600000032\n51\n87.58476499999962\n0\nARC\n8\nA-DETL-GENF\n10\n57.05971143009981\n20\n43.06264935434876\n30\n0.0\n40\n4.000109599397697\n50\n357.5860039999997\n51\n42.58446199999972\n0\nARC\n8\nA-DETL-GENF\n10\n56.15209743009984\n20\n21.54278035434874\n30\n0.0\n40\n4.000065958252054\n50\n312.5852259999998\n51\n357.5845029999998\n0\nARC\n8\nA-DETL-GENF\n10\n40.29344643009983\n20\n6.967626354348738\n30\n0.0\n40\n3.999978538380889\n50\n267.5846309999998\n51\n312.5846359999995\n0\nARC\n8\nA-DETL-GENF\n10\n18.77356843009983\n20\n7.875510354348762\n30\n0.0\n40\n4.000232707896576\n50\n222.5860039999999\n51\n267.5832029999997\n0\nARC\n8\nA-DETL-GENF\n10\n4.198147430099823\n20\n23.73398135434871\n30\n0.0\n40\n3.999808706915406\n50\n177.5842259999996\n51\n222.5862789999998\n0\nARC\n8\nA-DETL-GENF\n10\n1.993118430099855\n20\n36.70803235434875\n30\n0.0\n40\n1.249997294478042\n50\n357.5848349999993\n51\n177.5844489999991\n0\nARC\n8\nA-DETL-GENF\n10\n1.993110430099819\n20\n36.70801935434872\n30\n0.0\n40\n0.4500008085544247\n50\n357.5855080000005\n51\n177.5843850000025\n0\nARC\n8\nA-DETL-GENF\n10\n18.91012943009986\n20\n8.169551354348755\n30\n0.0\n40\n3.499745681600187\n50\n222.5832659999996\n51\n267.586728\n0\nARC\n8\nA-DETL-GENF\n10\n40.18192843009984\n20\n7.272605354348741\n30\n0.0\n40\n3.499989961546246\n50\n267.5847249999999\n51\n312.584533\n0\nARC\n8\nA-DETL-GENF\n10\n55.85758643009984\n20\n21.67957335434875\n30\n0.0\n40\n3.500076578305018\n50\n312.5850829999997\n51\n357.5844219999997\n0\nARC\n8\nA-DETL-GENF\n10\n56.75483143009984\n20\n42.95120935434875\n30\n0.0\n40\n3.500016139790877\n50\n357.5847899999995\n51\n42.58463599999957\n0\nARC\n8\nA-DETL-GENF\n10\n42.34787243009981\n20\n58.62684135434876\n30\n0.0\n40\n3.500100748134637\n50\n42.58566799999996\n51\n87.58432199999974\n0\nARC\n8\nA-DETL-GENF\n10\n21.07624443009985\n20\n59.52410535434876\n30\n0.0\n40\n3.500020580876542\n50\n87.58489099999994\n51\n132.5843019999996\n0\nARC\n8\nA-DETL-GENF\n10\n5.400536430099862\n20\n45.11717835434871\n30\n0.0\n40\n3.500036129949801\n50\n132.5851849999999\n51\n177.5845540000002\n0\nARC\n8\nA-DETL-GENF\n10\n2.519361430099821\n20\n40.87870835434876\n30\n0.0\n40\n0.8000200486324518\n50\n177.5841760000011\n51\n222.5835300000001\n0\nCIRCLE\n8\nA-DETL-GENF\n10\n48.41014643009981\n20\n49.74021835434871\n30\n0.0\n40\n1.999999991388449\n0\nCIRCLE\n8\nA-DETL-GENF\n10\n46.97092843009983\n20\n15.61730035434874\n30\n0.0\n40\n2.000000245520255\n0\nCIRCLE\n8\nA-DETL-GENF\n10\n54.75762443009984\n20\n32.38068635434871\n30\n0.0\n40\n2.000000245523836\n0\nCIRCLE\n8\nA-DETL-GENF\n10\n31.64676743009983\n20\n57.52690635434874\n30\n0.0\n40\n2.000000245550837\n0\nCIRCLE\n8\nA-DETL-GENF\n10\n12.84800943009981\n20\n17.05652335434871\n30\n0.0\n40\n2.000000137316931\n0\nCIRCLE\n8\nA-DETL-GENF\n10\n14.28722943009984\n20\n51.17944035434874\n30\n0.0\n40\n1.999999737256928\n0\nCIRCLE\n8\nA-DETL-GENF\n10\n29.61140243009982\n20\n9.26981035434875\n30\n0.0\n40\n2.000000245546403\n0\nCIRCLE\n8\nA-DETL-GENF\n10\n10.49698443009981\n20\n34.24748135434874\n30\n0.0\n40\n1.999999991418179\n0\nARC\n8\nA-DETL-GENF\n10\n30.62918443009983\n20\n33.39838235434871\n30\n0.0\n40\n10.0000962296614\n50\n177.584876\n51\n222.584503\n0\nARC\n8\nA-DETL-GENF\n10\n30.62910743009985\n20\n33.39838735434876\n30\n0.0\n40\n9.999982820581426\n50\n42.58488199999993\n51\n87.58498000000014\n0\nARC\n8\nA-DETL-GENF\n10\n30.62906043009986\n20\n33.39843035434876\n30\n0.0\n40\n9.999941826281965\n50\n87.58469599999997\n51\n132.5849499999998\n0\nARC\n8\nA-DETL-GENF\n10\n30.62905543009981\n20\n33.39835335434873\n30\n0.0\n40\n9.99998177728512\n50\n222.5848810000001\n51\n267.584982\n0\nARC\n8\nA-DETL-GENF\n10\n30.62905343009982\n20\n33.39839335434874\n30\n0.0\n40\n9.999964874495006\n50\n132.5847790000001\n51\n177.5849080000001\n0\nARC\n8\nA-DETL-GENF\n10\n30.62910443009986\n20\n33.39834935434874\n30\n0.0\n40\n9.999970859868549\n50\n312.5847999999999\n51\n357.5849019999999\n0\nARC\n8\nA-DETL-GENF\n10\n30.62910343009986\n20\n33.39831735434876\n30\n0.0\n40\n9.999947602972453\n50\n267.584702\n51\n312.5849319999999\n0\nARC\n8\nA-DETL-GENF\n10\n30.62898143009983\n20\n33.39836035434871\n30\n0.0\n40\n10.00009374994369\n50\n357.58487\n51\n42.58450699999995\n0\nLINE\n8\nA-DETL-GENF\n10\n3.697895430099834\n20\n38.41411735434872\n30\n0.0\n11\n1.930313430099829\n21\n40.33736335434872\n31\n0.0\n0\nLINE\n8\nA-DETL-GENF\n10\n3.876342430099839\n20\n31.52407735434872\n30\n0.0\n11\n4.118436430099848\n21\n37.26400635434874\n31\n0.0\n0\nPOLYLINE\n8\nA-DETL-GENF\n66\n1\n10\n0.0\n20\n0.0\n30\n0.0\n70\n128\n0\nVERTEX\n8\nA-DETL-GENF\n10\n2.177845430099808\n20\n31.59570735434875\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n2.396968430099832\n20\n36.79107735434872\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n1.597690430099817\n20\n36.82480735434876\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n1.37855243009983\n20\n31.62941135434875\n30\n0.0\n0\nSEQEND\n8\nA-DETL-GENF\n0\nLINE\n8\nA-DETL-GENF\n10\n3.319141430099819\n20\n37.29771135434873\n30\n0.0\n11\n3.07704743009981\n21\n31.55778335434871\n31\n0.0\n0\nLINE\n8\nA-DETL-GENF\n10\n1.341296430099817\n20\n39.79602635434873\n30\n0.0\n11\n3.108880430099816\n21\n37.87277835434872\n31\n0.0\n0\nPOLYLINE\n8\nA-DETL-GENF\n66\n1\n10\n0.0\n20\n0.0\n30\n0.0\n70\n128\n0\nVERTEX\n8\nA-DETL-GENF\n10\n60.14860943009984\n20\n21.37419435434873\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n61.05627043009986\n20\n42.89416535434873\n30\n0.0\n0\nSEQEND\n8\nA-DETL-GENF\n0\nPOLYLINE\n8\nA-DETL-GENF\n66\n1\n10\n0.0\n20\n0.0\n30\n0.0\n70\n128\n0\nVERTEX\n8\nA-DETL-GENF\n10\n43.00014643009985\n20\n4.022527354348711\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n58.85888643009986\n20\n18.59764535434874\n30\n0.0\n0\nSEQEND\n8\nA-DETL-GENF\n0\nLINE\n8\nA-DETL-GENF\n10\n18.60488443009984\n20\n3.878835354348723\n30\n0.0\n11\n40.12487243009986\n21\n2.97120135434875\n31\n0.0\n0\nLINE\n8\nA-DETL-GENF\n10\n1.253251430099851\n20\n21.02731235434874\n30\n0.0\n11\n15.82834743009983\n21\n5.168568354348736\n31\n0.0\n0\nPOLYLINE\n8\nA-DETL-GENF\n66\n1\n10\n0.0\n20\n0.0\n30\n0.0\n70\n128\n0\nVERTEX\n8\nA-DETL-GENF\n10\n18.25801643009981\n20\n62.77421435434871\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n2.399277430099858\n20\n48.19909535434874\n30\n0.0\n0\nSEQEND\n8\nA-DETL-GENF\n0\nPOLYLINE\n8\nA-DETL-GENF\n66\n1\n10\n0.0\n20\n0.0\n30\n0.0\n70\n128\n0\nVERTEX\n8\nA-DETL-GENF\n10\n2.442711430099848\n20\n36.68906235434872\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n2.223588430099824\n20\n31.49369135434875\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n3.022883430099853\n20\n31.45998635434876\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n3.242004430099826\n20\n36.65535735434872\n30\n0.0\n0\nSEQEND\n8\nA-DETL-GENF\n0\nLINE\n8\nA-DETL-GENF\n10\n16.33328543009986\n20\n5.801410354348718\n30\n0.0\n11\n1.926345430099843\n21\n21.47714635434875\n31\n0.0\n0\nLINE\n8\nA-DETL-GENF\n10\n40.03443243009986\n20\n3.775724354348711\n30\n0.0\n11\n18.76276543009982\n21\n4.672909354348747\n31\n0.0\n0\nLINE\n8\nA-DETL-GENF\n10\n58.22603343009985\n20\n19.10256035434873\n30\n0.0\n11\n42.55029243009983\n21\n4.695633354348729\n31\n0.0\n0\nLINE\n8\nA-DETL-GENF\n10\n60.25173843009986\n20\n42.80371535434875\n30\n0.0\n11\n59.35455343009983\n21\n21.53205435434876\n31\n0.0\n0\nLINE\n8\nA-DETL-GENF\n10\n44.92487943009985\n20\n60.99533135434876\n30\n0.0\n11\n59.33181843009982\n21\n45.31959535434873\n31\n0.0\n0\nLINE\n8\nA-DETL-GENF\n10\n21.22373243009986\n20\n63.02101635434872\n30\n0.0\n11\n42.49539843009984\n21\n62.12383235434874\n31\n0.0\n0\nLINE\n8\nA-DETL-GENF\n10\n3.032112430099858\n20\n47.69415735434876\n30\n0.0\n11\n18.70787043009983\n21\n62.10110935434875\n31\n0.0\n0\nLINE\n8\nA-DETL-GENF\n10\n1.720052430099827\n20\n40.91243135434871\n30\n0.0\n11\n1.903610430099832\n21\n45.26468735434872\n31\n0.0\n0\nPOLYLINE\n8\nA-DETL-GENF\n66\n1\n10\n0.0\n20\n0.0\n30\n0.0\n70\n129\n0\nVERTEX\n8\nA-DETL-GENF\n10\n40.38636143009984\n20\n6.713504354348743\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n56.39756343009981\n20\n21.42873535434876\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n57.31396443009982\n20\n43.15564935434872\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n42.59870643009981\n20\n59.16686035434873\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n20.87180543009981\n20\n60.08323535434874\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n4.860583430099837\n20\n45.36798135434873\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n4.735311430099841\n20\n42.39753635434874\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n8.731749430099853\n20\n42.22896235434871\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n8.065945430099816\n20\n26.44301135434876\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n4.069490430099847\n20\n26.61156135434874\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n3.944200430099841\n20\n23.64109135434876\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n18.65945743009985\n20\n7.629881354348754\n30\n0.0\n0\nSEQEND\n8\nA-DETL-GENF\n0\nPOLYLINE\n8\nA-DETL-GENF\n66\n1\n10\n0.0\n20\n0.0\n30\n0.0\n70\n129\n0\nVERTEX\n8\nA-DETL-GENF\n10\n41.12977019849777\n20\n4.680370741396458\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n58.36088743009981\n20\n20.51677935434873\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n59.34709443009984\n20\n43.89905735434871\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n43.51067243009982\n20\n61.13016735434871\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n20.12839743009982\n20\n62.11637635434874\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n2.897277430099848\n20\n46.27996235434875\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n2.652794430099846\n20\n40.48357535434872\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n6.649249430099815\n20\n40.31502635434873\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n6.151988430099834\n20\n28.52549835434871\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n2.155552430099817\n20\n28.69407135434875\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n1.911069430099815\n20\n22.89768435434871\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n17.74749143009984\n20\n5.666574354348711\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n41.12977019849777\n20\n4.680370741396459\n30\n0.0\n0\nSEQEND\n8\nA-DETL-GENF\n0\nPOLYLINE\n8\nA-DETL-GENF\n66\n1\n10\n0.0\n20\n0.0\n30\n0.0\n70\n128\n0\nVERTEX\n8\nA-DETL-GENF\n10\n47.81156243009985\n20\n47.83189435434872\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n46.14801643009986\n20\n46.30300035434874\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n44.62542443009983\n20\n44.90364735434872\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n43.24748443009986\n20\n43.63723835434871\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n42.01753543009983\n20\n42.50684635434874\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n40.93854443009985\n20\n41.51518735434871\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n40.01312943009981\n20\n40.66467635434873\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n39.24353443009983\n20\n39.95737435434876\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n38.63162143009981\n20\n39.39499135434875\n30\n0.0\n0\nSEQEND\n8\nA-DETL-GENF\n0\nPOLYLINE\n8\nA-DETL-GENF\n66\n1\n10\n0.0\n20\n0.0\n30\n0.0\n70\n128\n0\nVERTEX\n8\nA-DETL-GENF\n10\n46.45819743009986\n20\n49.30444235434874\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n44.79465143009986\n20\n47.77554835434876\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n43.27205843009983\n20\n46.37619535434874\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n41.89411843009981\n20\n45.10978735434873\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n40.66417043009983\n20\n43.97939435434876\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n39.58517843009986\n20\n42.98773535434873\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n38.65976443009981\n20\n42.13722435434875\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n37.89016943009983\n20\n41.42992235434872\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n37.27825643009982\n20\n40.86753935434876\n30\n0.0\n0\nSEQEND\n8\nA-DETL-GENF\n0\nPOLYLINE\n8\nA-DETL-GENF\n66\n1\n10\n0.0\n20\n0.0\n30\n0.0\n70\n128\n0\nVERTEX\n8\nA-DETL-GENF\n10\n13.44660143009986\n20\n18.96484735434876\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n15.11014843009985\n20\n20.49374135434874\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n16.63273943009983\n20\n21.89309435434876\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n18.01067943009986\n20\n23.15950335434871\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n19.24062843009983\n20\n24.28989535434874\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n20.31962043009986\n20\n25.28155435434871\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n21.24503443009985\n20\n26.13206535434875\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n22.01462943009983\n20\n26.83936735434872\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n22.62654243009985\n20\n27.40175035434874\n30\n0.0\n0\nSEQEND\n8\nA-DETL-GENF\n0\nPOLYLINE\n8\nA-DETL-GENF\n66\n1\n10\n0.0\n20\n0.0\n30\n0.0\n70\n128\n0\nVERTEX\n8\nA-DETL-GENF\n10\n14.79996643009986\n20\n17.49229935434875\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n16.46351343009985\n20\n19.02119335434872\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n17.98610543009983\n20\n20.42054635434874\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n19.36404543009985\n20\n21.68695535434875\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n20.59399343009983\n20\n22.81734735434873\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n21.67298543009986\n20\n23.80900635434875\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n22.59839943009985\n20\n24.65951735434874\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n23.36799443009983\n20\n25.36681935434876\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n23.97990743009984\n20\n25.92920235434872\n30\n0.0\n0\nSEQEND\n8\nA-DETL-GENF\n0\nPOLYLINE\n8\nA-DETL-GENF\n66\n1\n10\n0.0\n20\n0.0\n30\n0.0\n70\n128\n0\nVERTEX\n8\nA-DETL-GENF\n10\n45.06260843009983\n20\n16.21588435434876\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n43.53371043009986\n20\n17.87944435434872\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n42.13435643009984\n20\n19.40202435434873\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n40.86794443009984\n20\n20.77995835434876\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n39.73755043009982\n20\n22.00991635434872\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n38.74589243009984\n20\n23.08890035434871\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n37.89538343009986\n20\n24.01431035434871\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n37.18808043009983\n20\n24.78391135434873\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n36.62569243009983\n20\n25.39582635434874\n30\n0.0\n0\nSEQEND\n8\nA-DETL-GENF\n0\nPOLYLINE\n8\nA-DETL-GENF\n66\n1\n10\n0.0\n20\n0.0\n30\n0.0\n70\n128\n0\nVERTEX\n8\nA-DETL-GENF\n10\n46.53516543009982\n20\n17.56925435434874\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n45.00625143009984\n20\n19.23278935434871\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n43.60691243009984\n20\n20.75539535434876\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n42.34050243009983\n20\n22.13332735434875\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n41.21010843009981\n20\n23.36328535434876\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n40.21845043009984\n20\n24.44226935434875\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n39.36793943009985\n20\n25.36768035434875\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n38.66063843009982\n20\n26.13728035434872\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n38.09825043009982\n20\n26.74919535434873\n30\n0.0\n0\nSEQEND\n8\nA-DETL-GENF\n0\nPOLYLINE\n8\nA-DETL-GENF\n66\n1\n10\n0.0\n20\n0.0\n30\n0.0\n70\n128\n0\nVERTEX\n8\nA-DETL-GENF\n10\n32.57289443009984\n20\n55.75427635434875\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n32.47768143009984\n20\n53.49686835434875\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n32.39053443009982\n20\n51.43074135434875\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n32.31166743009982\n20\n49.56090335434874\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n32.24126443009982\n20\n47.89187335434872\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n32.17951843009985\n20\n46.42772035434876\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n32.12654943009983\n20\n45.17194835434873\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n32.08250943009983\n20\n44.12763335434875\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n32.04748643009981\n20\n43.29727335434876\n30\n0.0\n0\nSEQEND\n8\nA-DETL-GENF\n0\nPOLYLINE\n8\nA-DETL-GENF\n66\n1\n10\n0.0\n20\n0.0\n30\n0.0\n70\n128\n0\nVERTEX\n8\nA-DETL-GENF\n10\n30.57465843009982\n20\n55.83853935434871\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n30.47944543009982\n20\n53.58113035434872\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n30.39231543009981\n20\n51.51502835434871\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n30.31344843009981\n20\n49.64519035434876\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n30.24304543009981\n20\n47.97615935434874\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n30.18130043009984\n20\n46.51200735434873\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n30.12833143009982\n20\n45.25623535434875\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n30.08427443009981\n20\n44.21189535434871\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n30.04925043009985\n20\n43.38153535434873\n30\n0.0\n0\nSEQEND\n8\nA-DETL-GENF\n0\nPOLYLINE\n8\nA-DETL-GENF\n66\n1\n10\n0.0\n20\n0.0\n30\n0.0\n70\n128\n0\nVERTEX\n8\nA-DETL-GENF\n10\n52.98496843009985\n20\n31.45455235434872\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n50.72757343009982\n20\n31.54978135434874\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n48.66144843009982\n20\n31.63691835434872\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n46.79161443009986\n20\n31.71578635434872\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n45.12258543009983\n20\n31.78616935434871\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n43.65843543009981\n20\n31.84794435434873\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n42.40265443009986\n20\n31.90089035434875\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n41.35834243009981\n20\n31.94495835434873\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n40.52797043009986\n20\n31.97996035434875\n30\n0.0\n0\nSEQEND\n8\nA-DETL-GENF\n0\nPOLYLINE\n8\nA-DETL-GENF\n66\n1\n10\n0.0\n20\n0.0\n30\n0.0\n70\n128\n0\nVERTEX\n8\nA-DETL-GENF\n10\n53.06924943009983\n20\n33.45277535434872\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n50.81185443009986\n20\n33.54800435434873\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n48.74572743009986\n20\n33.63514235434872\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n46.87589443009983\n20\n33.71401035434872\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n45.20686543009981\n20\n33.78439335434871\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n43.74271443009985\n20\n33.84616835434872\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n42.48693443009984\n20\n33.89911435434874\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n41.44262243009985\n20\n33.94318135434872\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n40.61225043009983\n20\n33.97818335434874\n30\n0.0\n0\nSEQEND\n8\nA-DETL-GENF\n0\nPOLYLINE\n8\nA-DETL-GENF\n66\n1\n10\n0.0\n20\n0.0\n30\n0.0\n70\n128\n0\nVERTEX\n8\nA-DETL-GENF\n10\n16.19555743009983\n20\n50.58085535434873\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n17.72445443009985\n20\n48.91729635434876\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n19.12380943009981\n20\n47.39471535434876\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n20.39021943009982\n20\n46.01678335434872\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n21.52061443009984\n20\n44.78682435434871\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n22.51227243009981\n20\n43.70784135434872\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n23.36278143009986\n20\n42.78243035434872\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n24.07008343009983\n20\n42.01283035434875\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n24.63247143009983\n20\n41.40091535434874\n30\n0.0\n0\nSEQEND\n8\nA-DETL-GENF\n0\nPOLYLINE\n8\nA-DETL-GENF\n66\n1\n10\n0.0\n20\n0.0\n30\n0.0\n70\n128\n0\nVERTEX\n8\nA-DETL-GENF\n10\n14.72299943009983\n20\n49.22748635434874\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n16.25189643009986\n20\n47.56392735434872\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n17.65125143009982\n20\n46.04134635434872\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n18.91766243009982\n20\n44.66341435434873\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n20.04805643009985\n20\n43.43345535434872\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n21.03971443009982\n20\n42.35447235434873\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n21.89022443009986\n20\n41.42906135434873\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n22.59752543009984\n20\n40.65946035434871\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n23.15991343009983\n20\n40.04754635434875\n30\n0.0\n0\nSEQEND\n8\nA-DETL-GENF\n0\nPOLYLINE\n8\nA-DETL-GENF\n66\n1\n10\n0.0\n20\n0.0\n30\n0.0\n70\n128\n0\nVERTEX\n8\nA-DETL-GENF\n10\n28.68526843009982\n20\n11.04246535434874\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n28.78048243009982\n20\n13.29987335434873\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n28.86762943009984\n20\n15.36600035434873\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n28.94649643009984\n20\n17.23583735434875\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n29.01689943009984\n20\n18.90486835434876\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n29.07864443009981\n20\n20.36902135434872\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n29.13161443009983\n20\n21.62479235434876\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n29.17565443009983\n20\n22.66910835434874\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n29.21067743009985\n20\n23.49946835434872\n30\n0.0\n0\nSEQEND\n8\nA-DETL-GENF\n0\nPOLYLINE\n8\nA-DETL-GENF\n66\n1\n10\n0.0\n20\n0.0\n30\n0.0\n70\n128\n0\nVERTEX\n8\nA-DETL-GENF\n10\n30.68350543009984\n20\n10.95820235434871\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n30.77871843009984\n20\n13.21561135434871\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n30.86584843009985\n20\n15.28171335434871\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n30.94471643009985\n20\n17.15155035434873\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n31.01511843009985\n20\n18.82058235434874\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n31.07686343009982\n20\n20.28473435434876\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n31.12983343009984\n20\n21.54050635434874\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n31.17389043009985\n20\n22.58484635434871\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n31.20889643009986\n20\n23.41518135434876\n30\n0.0\n0\nSEQEND\n8\nA-DETL-GENF\n0\nPOLYLINE\n8\nA-DETL-GENF\n66\n1\n10\n0.0\n20\n0.0\n30\n0.0\n70\n128\n0\nVERTEX\n8\nA-DETL-GENF\n10\n20.73019443009986\n20\n34.81678135434873\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n20.15798443009982\n20\n34.84090535434876\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n19.44500243009986\n20\n34.87097035434874\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n18.59210243009983\n20\n34.90695435434873\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n17.60026743009985\n20\n34.94877935434874\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n16.47069543009985\n20\n34.99643135434872\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n15.20469843009982\n20\n35.04981835434876\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n13.80379943009984\n20\n35.10891435434871\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n12.26963343009982\n20\n35.17361535434873\n30\n0.0\n0\nSEQEND\n8\nA-DETL-GENF\n0\nPOLYLINE\n8\nA-DETL-GENF\n66\n1\n10\n0.0\n20\n0.0\n30\n0.0\n70\n128\n0\nVERTEX\n8\nA-DETL-GENF\n10\n20.64591343009982\n20\n32.81855835434874\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n20.07370443009984\n20\n32.84268135434871\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n19.36072343009982\n20\n32.87274635434875\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n18.50782243009985\n20\n32.90873135434873\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n17.51598743009981\n20\n32.95055535434875\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n16.38641543009982\n20\n32.99820835434872\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n15.12041843009985\n20\n33.05159435434871\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n13.71951943009981\n20\n33.11069035434872\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n12.18535243009984\n20\n33.17539235434873\n30\n0.0\n0\nSEQEND\n8\nA-DETL-GENF\n0\nPOLYLINE\n8\nA-DETL-GENF\n66\n1\n10\n0.0\n20\n0.0\n30\n0.0\n70\n128\n0\nVERTEX\n8\nA-DETL-GENF\n10\n1.109553430099822\n20\n45.42254735434875\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n0.9207574300998544\n20\n40.94613635434871\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n0.9207549811384389\n20\n40.94607828963253\n30\n0.0\n0\nSEQEND\n8\nA-DETL-GENF\n0\nPOLYLINE\n8\nA-DETL-GENF\n66\n1\n10\n0.0\n20\n0.0\n30\n0.0\n70\n128\n0\nVERTEX\n8\nA-DETL-GENF\n10\n42.65326143009986\n20\n62.91788135434871\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n21.13329043009986\n20\n63.82554035434873\n30\n0.0\n0\nSEQEND\n8\nA-DETL-GENF\n0\nPOLYLINE\n8\nA-DETL-GENF\n66\n1\n10\n0.0\n20\n0.0\n30\n0.0\n70\n128\n0\nVERTEX\n8\nA-DETL-GENF\n10\n60.00491443009986\n20\n45.76942835434875\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n45.42981643009983\n20\n61.62817335434875\n30\n0.0\n0\nSEQEND\n8\nA-DETL-GENF\n0\nPOLYLINE\n8\nA-DETL-GENF\n66\n1\n10\n0.0\n20\n0.0\n30\n0.0\n70\n128\n0\nVERTEX\n8\nA-DETL-GENF\n10\n0.7442314300998305\n20\n36.76071635434874\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n0.2018934300998581\n20\n23.90257635434875\n30\n0.0\n0\nSEQEND\n8\nA-DETL-GENF\n0\nPOLYLINE\n8\nA-DETL-GENF\n66\n1\n10\n0.0\n20\n0.0\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n1.926345557576004\n20\n21.47714674063061\n30\n0.0\n42\n-0.1989108795842367\n0\nVERTEX\n8\nA-DETL-GENF\n10\n1.006425437278081\n20\n23.9930263571232\n30\n0.0\n0\nVERTEX\n8\nA-DETL-GENF\n10\n1.543509430099846\n20\n36.72698635434875\n30\n0.0\n0\nSEQEND\n8\nA-DETL-GENF\n0\nENDSEC\n0\nEOF`);
+            ejeSegmentos = extraerSegmentosRaw(parsedEje.entities, parsedEje.blocks);
+            let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+            ejeSegmentos.forEach(seg => {
+                if(seg.p1.x < minX) minX = seg.p1.x; if(seg.p1.x > maxX) maxX = seg.p1.x;
+                if(seg.p1.y < minY) minY = seg.p1.y; if(seg.p1.y > maxY) maxY = seg.p1.y;
+                if(seg.p2.x < minX) minX = seg.p2.x; if(seg.p2.x > maxX) maxX = seg.p2.x;
+                if(seg.p2.y < minY) minY = seg.p2.y; if(seg.p2.y > maxY) maxY = seg.p2.y;
+            });
+            ejeBBox = { cx: (minX + maxX) / 2, cy: (minY + maxY) / 2, width: maxX - minX };
+        } catch(e) { console.error("Fallo cargando eje dinámico", e); }
+    }
+    inicializarEjeFisico();
+
+    document.getElementById('fileDxf').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(evt) {
+            try {
+                const dxfData = new DxfParser().parseSync(evt.target.result);
+                let segmentos = extraerSegmentosRaw(dxfData.entities, dxfData.blocks);
+                dxfPoligons = construirPoligonos(segmentos);
+                let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+                dxfPoligons.forEach(pol => pol.pts.forEach(p => {
+                    if(p.x < minX) minX = p.x; if(p.x > maxX) maxX = p.x;
+                    if(p.y < minY) minY = p.y; if(p.y > maxY) maxY = p.y;
+                }));
+                if (dxfPoligons.length > 0) bbox = { minX, maxX, minY, maxY };
+                document.getElementById('dxfStatus').className = "status ok";
+                document.getElementById('dxfStatus').innerHTML = `<i class="fas fa-check-circle"></i> Geometría OK (${dxfPoligons.length} contornos)`;
+                iniciarCalibracion(); 
+            } catch(err) { alert("Error al leer el DXF principal."); }
+        };
+        reader.readAsText(file);
+    });
+
+    // ================= RENDERIZADO Y CALIBRACIÓN =================
+    function updateCalibConfig() {
+        calibConfig.cx = canvas.width / 2; calibConfig.cy = canvas.height / 2;
+        calibConfig.scale = Math.min(canvas.width / ((bbox.maxX - bbox.minX)||1), canvas.height / ((bbox.maxY - bbox.minY)||1)) * 0.6; 
+        calibConfig.midX = (bbox.minX + bbox.maxX) / 2; calibConfig.midY = (bbox.minY + bbox.maxY) / 2;
+    }
+
+    function toScreen(pt) { return { x: calibConfig.cx + (pt.x - calibConfig.midX) * calibConfig.scale, y: calibConfig.cy - (pt.y - calibConfig.midY) * calibConfig.scale }; }
+    function fromScreen(sx, sy) { return { x: calibConfig.midX + (sx - calibConfig.cx) / calibConfig.scale, y: calibConfig.midY - (sy - calibConfig.cy) / calibConfig.scale }; }
+
+    function iniciarCalibracion() {
+        if(dxfPoligons.length === 0) return;
+        appState = 'CALIBRATING_P1'; pSup = null; pInf = null; pEje = null; simCam = { x: 0, y: 0, zoom: 1 }; 
+        let overlay = document.getElementById('instructionOverlay');
+        overlay.style.display = 'block';
+        overlay.innerHTML = "<i class='fas fa-hand-pointer'></i> 1. Clic en BISAGRA SUPERIOR";
+        overlay.style.backgroundColor = '#3b82f6';
+        document.getElementById('btnRecalibrar').style.display = 'none';
+        updateCalibConfig(); renderCalibracion();
+    }
+
+    function renderCalibracion() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.save(); ctx.translate(calibConfig.cx, calibConfig.cy); ctx.scale(calibConfig.scale, -calibConfig.scale); ctx.translate(-calibConfig.midX, -calibConfig.midY);
+        dxfPoligons.forEach(pol => {
+            ctx.beginPath(); ctx.moveTo(pol.pts[0].x, pol.pts[0].y);
+            for(let k=1; k<pol.pts.length; k++) ctx.lineTo(pol.pts[k].x, pol.pts[k].y);
+            ctx.strokeStyle = "rgba(80,80,80,0.8)"; ctx.lineWidth = 2.0 / calibConfig.scale; ctx.stroke();
+        });
+        ctx.restore();
+        if (cursorPoint) {
+            let hp = toScreen(cursorPoint);
+            ctx.beginPath(); ctx.moveTo(hp.x - 15, hp.y); ctx.lineTo(hp.x + 15, hp.y);
+            ctx.moveTo(hp.x, hp.y - 15); ctx.lineTo(hp.x, hp.y + 15);
+            ctx.strokeStyle = "rgba(0,0,0,0.8)"; ctx.lineWidth = 2; ctx.stroke();
+        }
+        if (pSup) { let sp = toScreen(pSup); ctx.beginPath(); ctx.arc(sp.x, sp.y, 8, 0, Math.PI*2); ctx.fillStyle = '#3b82f6'; ctx.fill(); ctx.strokeStyle='#fff'; ctx.lineWidth=2; ctx.stroke(); }
+        if (pInf) { let ip = toScreen(pInf); ctx.beginPath(); ctx.arc(ip.x, ip.y, 8, 0, Math.PI*2); ctx.fillStyle = '#ef4444'; ctx.fill(); ctx.strokeStyle='#fff'; ctx.lineWidth=2; ctx.stroke(); }
+        if (pEje) { let ep = toScreen(pEje); ctx.beginPath(); ctx.arc(ep.x, ep.y, 8, 0, Math.PI*2); ctx.fillStyle = '#8b5cf6'; ctx.fill(); ctx.strokeStyle='#fff'; ctx.lineWidth=2; ctx.stroke(); }
+    }
+
+    // ================= EVENTOS TÁCTILES Y MOUSE (RESPONSIVE) =================
+    canvas.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        const zoomFactor = e.deltaY < 0 ? 1.1 : 0.9;
+        if (appState === 'SIMULATING') { simCam.zoom *= zoomFactor; simular(); } 
+        else if (appState.startsWith('CALIBRATING')) { calibConfig.scale *= zoomFactor; renderCalibracion(); }
+    }, { passive: false });
+
+    function controlZoom(factor) {
+        if (appState === 'SIMULATING') { simCam.zoom *= factor; simular(); } 
+        else if (appState.startsWith('CALIBRATING')) { calibConfig.scale *= factor; renderCalibracion(); }
+    }
+
+    function getPointerCoords(e) {
+        if (e.touches && e.touches.length > 0) return { x: e.touches[0].clientX, y: e.touches[0].clientY };
+        return { x: e.clientX, y: e.clientY };
+    }
+
+    function handleDown(e) {
+        if (e.type === 'touchstart') e.preventDefault(); // Prevenir pull-to-refresh
+        const rect = canvas.getBoundingClientRect();
+        const coords = getPointerCoords(e);
+        const mx = coords.x - rect.left; const my = coords.y - rect.top;
+
+        // Click derecho, boton central o inicio tactil en simulacion -> Iniciar Paneo
+        if (e.button === 1 || e.button === 2 || (appState === 'SIMULATING' && e.type === 'touchstart')) { 
+            isDragging = true; lastMouse = { x: mx, y: my }; return; 
+        }
+
+        if (appState !== 'SIMULATING' && cursorPoint) {
+            let overlay = document.getElementById('instructionOverlay');
+            if (appState === 'CALIBRATING_P1') {
+                pSup = cursorPoint; appState = 'CALIBRATING_P2';
+                overlay.innerHTML = "📍 2. Clic en BISAGRA INFERIOR";
+                overlay.style.backgroundColor = '#ef4444';
+            } 
+            else if (appState === 'CALIBRATING_P2') {
+                pInf = cursorPoint; appState = 'CALIBRATING_AXIS';
+                overlay.innerHTML = "⚙️ 3. Centro del EJE FÍSICO";
+                overlay.style.backgroundColor = '#8b5cf6';
+            }
+            else if (appState === 'CALIBRATING_AXIS') {
+                pEje = cursorPoint; appState = 'SIMULATING';
+                overlay.style.display = 'none';
+                document.getElementById('btnRecalibrar').style.display = 'block';
+                altoLama = Math.hypot(pInf.x - pSup.x, pInf.y - pSup.y);
+                document.getElementById('valEje').value = "60";
+                
+                // Cálculo del espesor estimado
+                let dx = pInf.x - pSup.x; let dy = pInf.y - pSup.y;
+                let maxDist = -Infinity; let minDist = Infinity;
+                dxfPoligons.forEach(pol => {
+                    pol.pts.forEach(p => {
+                        let distPerp = (dx * (pSup.y - p.y) - (pSup.x - p.x) * dy) / altoLama;
+                        if(distPerp > maxDist) maxDist = distPerp;
+                        if(distPerp < minDist) minDist = distPerp;
+                    });
+                });
+                let espesorOptimo = (maxDist - minDist) * 0.70;
+                document.getElementById('valEspesor').value = espesorOptimo.toFixed(1);
+                document.getElementById('infoAlto').innerHTML = altoLama.toFixed(2) + " mm";
+                
+                let lamasActuales = parseInt(inputLamas.value);
+                inputAltura.value = (lamasActuales * altoLama).toFixed(0);
+                simular();
+            }
+        } else if (appState === 'SIMULATING') {
+            isDragging = true; lastMouse = { x: mx, y: my };
+        }
+    }
+
+    function handleMove(e) {
+        if (e.type === 'touchmove') e.preventDefault();
+        const rect = canvas.getBoundingClientRect();
+        const coords = getPointerCoords(e);
+        const mx = coords.x - rect.left; const my = coords.y - rect.top;
+
+        if (isDragging) {
+            const dx = mx - lastMouse.x; const dy = my - lastMouse.y;
+            if (appState === 'SIMULATING') { simCam.x += dx; simCam.y += dy; simular(); } 
+            else { calibConfig.cx += dx; calibConfig.cy += dy; renderCalibracion(); }
+            lastMouse = { x: mx, y: my };
+        } else {
+            if (appState.startsWith('CALIBRATING')) { cursorPoint = fromScreen(mx, my); renderCalibracion(); }
+        }
+    }
+
+    function handleUp(e) { isDragging = false; }
+
+    canvas.addEventListener('mousedown', handleDown);
+    canvas.addEventListener('mousemove', handleMove);
+    canvas.addEventListener('mouseup', handleUp);
+    canvas.addEventListener('mouseleave', handleUp);
+    
+    canvas.addEventListener('touchstart', handleDown, {passive: false});
+    canvas.addEventListener('touchmove', handleMove, {passive: false});
+    canvas.addEventListener('touchend', handleUp);
+    canvas.addEventListener('touchcancel', handleUp);
+
+    // ================= SIMULACIÓN Y GRÁFICOS =================
+    function simular() {
+        if(appState !== 'SIMULATING' || !pSup || !pInf || !pEje) return;
+
+        const dEje = parseFloat(document.getElementById('valEje').value) || 60;
+        const eLama = parseFloat(document.getElementById('valEspesor').value) || 9;
+        const numLamas = parseInt(document.getElementById('valLamas').value) || 30;
+        const flipCara = document.getElementById('chkFlipX').checked ? -1 : 1;
+
+        const radioEjeFisico = dEje / 2; 
+        const radioArranqueBisagra = radioEjeFisico + (eLama / 2); 
+
+        let lamasEnRollo = Math.max(1, numLamas - getLamasColgantes());
+        let lamasRealesColgantes = numLamas - lamasEnRollo;
+
+        let bisagras = [];
+        let radioMaximoEnrollado = radioArranqueBisagra;
+        let anguloInicial = Math.atan2(pSup.y - pEje.y, pSup.x - pEje.x);
+        
+        bisagras.push({ x: radioArranqueBisagra * Math.cos(anguloInicial), y: radioArranqueBisagra * Math.sin(anguloInicial), thetaGlobal: anguloInicial });
+
+        for (let i = 0; i < lamasEnRollo; i++) {
+            let pAnt = bisagras[i];
+            let rActual = Math.hypot(pAnt.x, pAnt.y);
+            let dTheta = 0.005, dist = 0, targetX = 0, targetY = 0;
+            let testTheta = pAnt.thetaGlobal;
+            
+            while (dist < altoLama) {
+                testTheta += 0.005;
+                let rTest = rActual + (eLama * ((testTheta - pAnt.thetaGlobal) / (2 * Math.PI)));
+                targetX = rTest * Math.cos(testTheta);
+                targetY = rTest * Math.sin(testTheta);
+                dist = Math.hypot(targetX - pAnt.x, targetY - pAnt.y);
+            }
+            let pNuevo = { x: targetX, y: targetY, thetaGlobal: testTheta };
+            bisagras.push(pNuevo);
+            if (Math.hypot(pNuevo.x, pNuevo.y) > radioMaximoEnrollado) radioMaximoEnrollado = Math.hypot(pNuevo.x, pNuevo.y);
+        }
+
+        let pUltimo = bisagras[bisagras.length - 1];
+        let pPenultimo = bisagras[bisagras.length - 2];
+        let anguloUltimaLama = Math.atan2(pUltimo.y - pPenultimo.y, pUltimo.x - pPenultimo.x);
+        
+        let anguloCorreccion = (Math.PI / 2) - anguloUltimaLama;
+        let cosC = Math.cos(anguloCorreccion);
+        let sinC = Math.sin(anguloCorreccion);
+        
+        for (let i = 0; i < bisagras.length; i++) {
+            let rx = bisagras[i].x * cosC - bisagras[i].y * sinC;
+            let ry = bisagras[i].x * sinC + bisagras[i].y * cosC;
+            bisagras[i].x = rx; bisagras[i].y = ry; 
+        }
+
+        let xFijo = bisagras[bisagras.length - 1].x;
+        let yFijo = bisagras[bisagras.length - 1].y;
+        
+        // Calcular el ángulo de salida en radianes (90º = Hacia abajo en el canvas)
+        let anguloGrados = parseFloat(document.getElementById('valAnguloSalida').value) || 90;
+        let anguloRad = anguloGrados * (Math.PI / 180);
+        
+        for (let i = 0; i < lamasRealesColgantes; i++) {
+            // Aplicamos Seno y Coseno para desplazar en X e Y según el ángulo
+            xFijo += altoLama * Math.cos(anguloRad);
+            yFijo += altoLama * Math.sin(anguloRad);
+            bisagras.push({ x: xFijo, y: yFijo }); 
+        }
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        const radioEstimado = radioArranqueBisagra + (numLamas * eLama / 2) + 20;
+        let baseScale = Math.min(canvas.width / (radioEstimado*2.5), canvas.height / (radioEstimado*2.5));
+        let scale = baseScale * simCam.zoom;
+
+        ctx.save();
+        ctx.translate((canvas.width / 2) + simCam.x, (canvas.height / 2) + simCam.y);
+        ctx.scale(scale, scale);
+
+        if (ejeSegmentos.length > 0) {
+            let scaleEje = dEje / ejeBBox.width; 
+            ctx.save();
+            ctx.scale(scaleEje, -scaleEje); 
+            ctx.translate(-ejeBBox.cx, -ejeBBox.cy); 
+            ctx.beginPath();
+            ctx.arc(ejeBBox.cx, ejeBBox.cy, ejeBBox.width / 2, 0, Math.PI * 2);
+            ctx.fillStyle = "#d1d5db"; ctx.fill();
+            ctx.strokeStyle = "#475569";
+            ctx.lineWidth = 1.0 / (scale * scaleEje);
+            ctx.beginPath();
+            ejeSegmentos.forEach(seg => {
+                ctx.moveTo(seg.p1.x, seg.p1.y);
+                ctx.lineTo(seg.p2.x, seg.p2.y);
+            });
+            ctx.stroke();
+            ctx.restore();
+        } else {
+            ctx.beginPath(); ctx.arc(0, 0, radioEjeFisico, 0, Math.PI * 2);
+            ctx.fillStyle = "#cbd5e1"; ctx.fill();
+            ctx.lineWidth = 1.5 / scale; ctx.strokeStyle = "#475569"; ctx.stroke();
+        }
+
+        let dxfAngle = Math.atan2(pInf.y - pSup.y, pInf.x - pSup.x);
+        renderData = { bisagras: bisagras, numLamas: numLamas, flipCara: flipCara, dxfAngle: dxfAngle, pSup: pSup };
+
+        for (let i = 0; i < numLamas; i++) {
+            let p1 = bisagras[i], p2 = bisagras[i+1];
+
+            ctx.save();
+            ctx.translate(p1.x, p1.y);
+            ctx.rotate(Math.atan2(p2.y - p1.y, p2.x - p1.x));
+            ctx.scale(1, flipCara * -1); 
+            ctx.rotate(-dxfAngle);
+            ctx.translate(-pSup.x, -pSup.y);
+
+            dxfPoligons.forEach((pol, index) => {
+                ctx.beginPath(); ctx.moveTo(pol.pts[0].x, pol.pts[0].y);
+                for(let k=1; k<pol.pts.length; k++) ctx.lineTo(pol.pts[k].x, pol.pts[k].y);
+                if (pol.closed) { ctx.fillStyle = index === 0 ? '#cbd5e1' : '#fef08a'; ctx.fill(); }
+                ctx.strokeStyle = '#475569'; ctx.lineWidth = 1.0 / scale; ctx.stroke();
+            });
+            ctx.restore();
+            
+            ctx.beginPath(); ctx.arc(p1.x, p1.y, 2.0 / scale, 0, Math.PI*2);
+            ctx.fillStyle = "#ef4444"; ctx.fill();
+        }
+
+        ctx.restore();
+        
+        let diametroFinal = (radioMaximoEnrollado * 2) + eLama;
+        document.getElementById('infoDiam').innerHTML = diametroFinal.toFixed(1) + " mm";
+        
+        if(!ignoreNextEvent) document.getElementById('valDiametroObjetivo').value = diametroFinal.toFixed(0);
+        generarGraficoEvolucion();
+    }
+
+    let chartInstancia = null;
+
+    function generarGraficoEvolucion() {
+        if(!pSup || !pInf || !pEje) return;
+        const alturaTotal = parseFloat(document.getElementById('valAlturaTotal').value) || 1500;
+        const dEje = parseFloat(document.getElementById('valEje').value) || 60;
+        const eLama = parseFloat(document.getElementById('valEspesor').value) || 9;
+        let labelsAltura = [];
+        let dataDiametro = [];
+        const radioArranqueBisagra = (dEje / 2) + (eLama / 2);
+        let bisagrasVirtual = [{ x: radioArranqueBisagra, y: 0, thetaGlobal: 0 }];
+        let alturaMaximaGrafico = Math.ceil(alturaTotal / 100) * 100; 
+        let lamasParaGrafico = Math.ceil(alturaMaximaGrafico / altoLama);
+        let lamasEnRolloVirtual = Math.max(1, lamasParaGrafico - getLamasColgantes());
+        for (let i = 0; i < lamasEnRolloVirtual; i++) {
+            let pAnt = bisagrasVirtual[i];
+            let rActual = Math.hypot(pAnt.x, pAnt.y);
+            let dTheta = 0.02, dist = 0, targetX = 0, targetY = 0;
+            let testTheta = pAnt.thetaGlobal;
+            while (dist < altoLama) {
+                testTheta += dTheta;
+                let rTest = rActual + (eLama * ((testTheta - pAnt.thetaGlobal) / (2 * Math.PI)));
+                targetX = rTest * Math.cos(testTheta);
+                targetY = rTest * Math.sin(testTheta);
+                dist = Math.hypot(targetX - pAnt.x, targetY - pAnt.y);
+            }
+            bisagrasVirtual.push({ x: targetX, y: targetY, thetaGlobal: testTheta });
+        }
+        for(let h = 900; h <= Math.max(alturaMaximaGrafico, 900); h += 100) {
+            let lamasNecesarias = Math.ceil(h / altoLama);
+            let indiceRollo = Math.max(1, lamasNecesarias - getLamasColgantes());
+            if (indiceRollo >= bisagrasVirtual.length) indiceRollo = bisagrasVirtual.length - 1;
+            let pFin = bisagrasVirtual[indiceRollo];
+            let diametroEnEsaAltura = (Math.hypot(pFin.x, pFin.y) * 2) + eLama;
+            labelsAltura.push(h);
+            dataDiametro.push(diametroEnEsaAltura.toFixed(1));
+        }
+        if (chartInstancia) {
+            chartInstancia.data.labels = labelsAltura;
+            chartInstancia.data.datasets[0].data = dataDiametro;
+            chartInstancia.update();
+        } else {
+            const ctxChart = document.getElementById('chartEvolucion').getContext('2d');
+            chartInstancia = new Chart(ctxChart, {
+                type: 'line',
+                data: {
+                    labels: labelsAltura,
+                    datasets: [{
+                        label: 'Ø exterior (mm)',
+                        data: dataDiametro,
+                        borderColor: '#EDD00E',
+                        backgroundColor: 'rgba(237, 208, 14, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.2,
+                        pointRadius: 3,
+                        pointBackgroundColor: '#B8860B'
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false, // Permite que se adapte al contenedor CSS (crucial para movil)
+                    scales: {
+                        x: { title: { display: true, text: 'Diámetro de cajón (mm)', color: '#666', font: {size: 10} }, grid: { color: '#eee' }, ticks: { color: '#555', font: {size: 9} } },
+                        y: { reverse: true, title: { display: true, text: 'Altura (mm)', color: '#666', font: {size: 10} }, grid: { color: '#eee' }, ticks: { color: '#555', font: {size: 9} } }
+                    },
+                    plugins: { legend: { position: 'top', labels: { color: '#333', font: {size: 10} } } }
+                }
+            });
+        }
+    }
+
+    function exportarDXF() {
+        if (!renderData || appState !== 'SIMULATING' || dxfPoligons.length === 0) {
+            alert("⚠️ Primero carga un DXF, calibra y genera simulación.");
+            return;
+        }
+        let dxfString = "0\nSECTION\n2\nENTITIES\n";
+        const { bisagras, numLamas, flipCara, dxfAngle, pSup } = renderData;
+        const sy_mult = flipCara * -1;
+        const cosA = Math.cos(-dxfAngle);
+        const sinA = Math.sin(-dxfAngle);
+
+        for (let i = 0; i < numLamas; i++) {
+            let p1 = bisagras[i]; let p2 = bisagras[i+1];
+            let theta = Math.atan2(p2.y - p1.y, p2.x - p1.x);
+            let cosT = Math.cos(theta); let sinT = Math.sin(theta);
+
+            dxfPoligons.forEach(pol => {
+                let ptsTransformados = pol.pts.map(pt => {
+                    let tx = pt.x - pSup.x; let ty = pt.y - pSup.y;
+                    let rx1 = tx * cosA - ty * sinA; let ry1 = tx * sinA + ty * cosA;
+                    let sx = rx1; let sy_val = ry1 * sy_mult;
+                    let rx2 = sx * cosT - sy_val * sinT; let ry2 = sx * sinT + sy_val * cosT;
+                    return { x: rx2 + p1.x, y: -(ry2 + p1.y) };
+                });
+                for (let k = 0; k < ptsTransformados.length - 1; k++) {
+                    dxfString += `0\nLINE\n8\nLamas\n10\n${ptsTransformados[k].x.toFixed(4)}\n20\n${ptsTransformados[k].y.toFixed(4)}\n30\n0.0\n11\n${ptsTransformados[k+1].x.toFixed(4)}\n21\n${ptsTransformados[k+1].y.toFixed(4)}\n31\n0.0\n`;
+                }
+                if (pol.closed) dxfString += `0\nLINE\n8\nLamas\n10\n${ptsTransformados[ptsTransformados.length-1].x.toFixed(4)}\n20\n${ptsTransformados[ptsTransformados.length-1].y.toFixed(4)}\n30\n0.0\n11\n${ptsTransformados[0].x.toFixed(4)}\n21\n${ptsTransformados[0].y.toFixed(4)}\n31\n0.0\n`;
+            });
+        }
+        const dEje = parseFloat(document.getElementById('valEje').value) || 60;
+        if (ejeSegmentos.length > 0) {
+            let scaleEje = dEje / ejeBBox.width;
+            ejeSegmentos.forEach(seg => {
+                let tx1 = (seg.p1.x - ejeBBox.cx) * scaleEje;
+                let ty1 = (seg.p1.y - ejeBBox.cy) * scaleEje;
+                let tx2 = (seg.p2.x - ejeBBox.cx) * scaleEje;
+                let ty2 = (seg.p2.y - ejeBBox.cy) * scaleEje;
+                dxfString += `0\nLINE\n8\nEje_Fisico\n10\n${tx1.toFixed(4)}\n20\n${-ty1.toFixed(4)}\n30\n0.0\n11\n${tx2.toFixed(4)}\n21\n${-ty2.toFixed(4)}\n31\n0.0\n`;
+            });
+        } else {
+            dxfString += `0\nCIRCLE\n8\nEje\n10\n0.0\n20\n0.0\n30\n0.0\n40\n${(dEje/2).toFixed(4)}\n`;
+        }
+        dxfString += "0\nENDSEC\n0\nEOF\n";
+        const blob = new Blob([dxfString], { type: "text/plain" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a'); a.href = url;
+        a.download = `Persiana_Roll_D${document.getElementById('valDiametroObjetivo').value}mm.dxf`;
+        document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+    }
+</script>
 </body>
 </html>
