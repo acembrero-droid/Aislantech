@@ -238,10 +238,23 @@
                     <label>📏 2. Altura total paño (mm)</label>
                     <input type="number" id="valAlturaTotal" value="1500" step="10">
                 </div>
+                
                 <div class="input-group">
-                    <label>🔢 3. Número de lamas</label>
+                    <label>🔢 3. Número de lamas (Total)</label>
                     <input type="number" id="valLamas" value="30" step="1">
                 </div>
+                <!-- NUEVOS CONTROLES DE CAÍDA -->
+                <div class="grid-2">
+                    <div class="input-group">
+                        <label>⬇️ Lamas colgantes</label>
+                        <input type="number" id="valLamasColgantes" value="2" min="0" step="1" oninput="if(appState==='SIMULATING') simular();">
+                    </div>
+                    <div class="input-group">
+                        <label>📐 Ángulo salida (°)</label>
+                        <input type="number" id="valAnguloSalida" value="90" step="1" title="90º es vertical hacia abajo" oninput="if(appState==='SIMULATING') simular();">
+                    </div>
+                </div>
+
             </div>
         </div>
 
@@ -315,7 +328,10 @@
     let lastMouse = { x: 0, y: 0 };
     let altoLama = 45; 
     
-    const LAMAS_COLGANTES = 2;
+    // Función dinámica para leer las lamas colgantes del UI
+    function getLamasColgantes() { 
+        return parseInt(document.getElementById('valLamasColgantes').value) || 0; 
+    }
 
     // Función de reescalado responsiva
     function resizeCanvas() {
@@ -360,8 +376,8 @@
         let rActual = radioEje + (eLama / 2); 
         
         if (targetMaxRadius <= rActual) {
-            inputLamas.value = LAMAS_COLGANTES;
-            inputAltura.value = (LAMAS_COLGANTES * altoLama).toFixed(0);
+            inputLamas.value = getLamasColgantes();
+            inputAltura.value = (getLamasColgantes() * altoLama).toFixed(0);
             simular();
             return;
         }
@@ -386,7 +402,7 @@
         if (rActual + (eLama/2) > targetMaxRadius && lamasCalculadas > 1) lamasCalculadas--;
 
         ignoreNextEvent = true;
-        let lamasTotales = lamasCalculadas + LAMAS_COLGANTES;
+        let lamasTotales = lamasCalculadas + getLamasColgantes();
         inputLamas.value = lamasTotales;
         inputAltura.value = (lamasTotales * altoLama).toFixed(0);
         ignoreNextEvent = false;
@@ -642,7 +658,7 @@
         const radioEjeFisico = dEje / 2; 
         const radioArranqueBisagra = radioEjeFisico + (eLama / 2); 
 
-        let lamasEnRollo = Math.max(1, numLamas - LAMAS_COLGANTES);
+        let lamasEnRollo = Math.max(1, numLamas - getLamasColgantes());
         let lamasRealesColgantes = numLamas - lamasEnRollo;
 
         let bisagras = [];
@@ -686,8 +702,14 @@
         let xFijo = bisagras[bisagras.length - 1].x;
         let yFijo = bisagras[bisagras.length - 1].y;
         
+        // Calcular el ángulo de salida en radianes (90º = Hacia abajo en el canvas)
+        let anguloGrados = parseFloat(document.getElementById('valAnguloSalida').value) || 90;
+        let anguloRad = anguloGrados * (Math.PI / 180);
+        
         for (let i = 0; i < lamasRealesColgantes; i++) {
-            yFijo += altoLama;
+            // Aplicamos Seno y Coseno para desplazar en X e Y según el ángulo
+            xFijo += altoLama * Math.cos(anguloRad);
+            yFijo += altoLama * Math.sin(anguloRad);
             bisagras.push({ x: xFijo, y: yFijo }); 
         }
 
@@ -771,7 +793,7 @@
         let bisagrasVirtual = [{ x: radioArranqueBisagra, y: 0, thetaGlobal: 0 }];
         let alturaMaximaGrafico = Math.ceil(alturaTotal / 100) * 100; 
         let lamasParaGrafico = Math.ceil(alturaMaximaGrafico / altoLama);
-        let lamasEnRolloVirtual = Math.max(1, lamasParaGrafico - LAMAS_COLGANTES);
+        let lamasEnRolloVirtual = Math.max(1, lamasParaGrafico - getLamasColgantes());
         for (let i = 0; i < lamasEnRolloVirtual; i++) {
             let pAnt = bisagrasVirtual[i];
             let rActual = Math.hypot(pAnt.x, pAnt.y);
@@ -788,7 +810,7 @@
         }
         for(let h = 900; h <= Math.max(alturaMaximaGrafico, 900); h += 100) {
             let lamasNecesarias = Math.ceil(h / altoLama);
-            let indiceRollo = Math.max(1, lamasNecesarias - LAMAS_COLGANTES);
+            let indiceRollo = Math.max(1, lamasNecesarias - getLamasColgantes());
             if (indiceRollo >= bisagrasVirtual.length) indiceRollo = bisagrasVirtual.length - 1;
             let pFin = bisagrasVirtual[indiceRollo];
             let diametroEnEsaAltura = (Math.hypot(pFin.x, pFin.y) * 2) + eLama;
