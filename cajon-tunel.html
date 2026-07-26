@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Soluciones de Cajón Túnel | Aislantech</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    
+    <!-- CSS y fuentes -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Open+Sans:wght@300;400;600&display=swap" rel="stylesheet">
+    
+    <style>
+        /* ========== VARIABLES DE COLOR (Heredadas) ========== */
+        :root {
+            --color-primary: #EDD00E;
+            --color-primary-dark: #B8860B;
+            --color-primary-light: #FFF8DC;
+            --color-secondary: #3E3E3E;
+            --color-secondary-dark: #696969;
+            --color-secondary-light: #D3D3D3;
+            --color-accent: #EDD00E;
+            --color-light: #F5F5F5;
+            --color-dark: #333333;
+            --color-gray: #666666;
+            --color-white: #FFFFFF;
+            --transition: all 0.3s ease;
+            --border-radius: 8px;
+            --box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            --box-shadow-hover: 0 15px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        /* ========== ESTILOS GENERALES Y COMPARTIDOS ========== */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+        body { font-family: 'Open Sans', sans-serif; color: var(--color-gray); line-height: 1.6; overflow-x: hidden; background-color: var(--color-white); }
+        h1, h2, h3, h4, h5 { font-family: 'Montserrat', sans-serif; font-weight: 600; color: var(--color-dark); line-height: 1.3; }
+        .container { width: 100%; max-width: 1200px; margin: 0 auto; padding: 0 20px; }
+        .section-title { text-align: center; margin-bottom: 3rem; position: relative; }
+        .section-title h2 { font-size: 2.5rem; display: inline-block; }
+        .section-title h2:after { content: ''; position: absolute; width: 70px; height: 4px; background-color: var(--color-accent); bottom: -10px; left: 50%; transform: translateX(-50%); }
+        .section-title p { margin-top: 20px; color: var(--color-secondary); }
+        
+        .btn { display: inline-block; background-color: var(--color-accent); color: var(--color-dark); padding: 12px 30px; border-radius: var(--border-radius); text-decoration: none; font-weight: 700; border: none; cursor: pointer; transition: var(--transition); font-family: 'Montserrat', sans-serif; }
+        .btn:hover { background-color: var(--color-primary-dark); color: var(--color-white); transform: translateY(-3px); box-shadow: 0 5px 15px rgba(237, 208, 14, 0.3); }
+        .btn-outline { background-color: transparent; border: 2px solid var(--color-accent); color: var(--color-dark); font-weight: 600;}
+        .btn-outline:hover { background-color: var(--color-accent); color: var(--color-dark); }
+
+        /* ========== HEADER ========== */
+        header { position: fixed; top: 0; left: 0; width: 100%; z-index: 1000; background-color: rgba(255, 255, 255, 0.97); box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05); transition: var(--transition); }
+        .header-container { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; }
+        .logo-container { display: flex; align-items: center; text-decoration: none; }
+        .logo-img { height: 40px; width: auto; margin-right: 12px; transition: var(--transition); }
+        .logo-text { font-family: 'Montserrat', sans-serif; font-weight: 700; display: flex; flex-direction: column; line-height: 1.1; }
+        .logo-aislan { color: var(--color-secondary); font-size: 1.5rem; font-weight: 700; }
+        .logo-tech { color: var(--color-primary); font-size: 1.5rem; font-weight: 800; }
+        .logo-tagline { font-size: 0.7rem; color: var(--color-gray); font-weight: 400; margin-top: 2px; font-family: 'Open Sans', sans-serif; }
+        nav ul { display: flex; list-style: none; }
+        nav li { margin-left: 30px; }
+        nav a { text-decoration: none; color: var(--color-dark); font-weight: 500; transition: var(--transition); position: relative; font-size: 0.95rem; }
+        nav a:hover { color: var(--color-primary); }
+        .mobile-menu-btn { display: none; font-size: 1.5rem; background: none; border: none; color: var(--color-secondary); cursor: pointer; z-index: 1001; }
+
+        /* ========== SUBPAGE HERO ========== */
+        .page-hero {
+            height: 40vh;
+            min-height: 300px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            background: linear-gradient(rgba(62, 62, 62, 0.8), rgba(62, 62, 62, 0.9)), url('images/cajon-tunel-bg.jpg') no-repeat center center/cover;
+            color: var(--color-white);
+            text-align: center;
+            margin-top: 70px; /* Offset for fixed header */
+        }
+        .page-hero h1 { font-size: 2.8rem; color: var(--color-white); margin-bottom: 15px; }
+        .page-hero p { font-size: 1.1rem; max-width: 600px; margin: 0 auto; color: rgba(255, 255, 255, 0.9); }
+
+        /* ========== PRODUCT GRID (NUEVO) ========== */
+        .products-section { padding: 80px 0; background-color: var(--color-light); }
+        .product-card {
+            background: var(--color-white);
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            margin-bottom: 40px;
+            display: flex;
+            overflow: hidden;
+            transition: var(--transition);
+            border-left: 5px solid var(--color-primary);
+        }
+        .product-card:hover { box-shadow: var(--box-shadow-hover); transform: translateY(-5px); }
+        
+        .product-image {
+            flex: 0 0 35%;
+            background-color: var(--color-secondary-light);
+            min-height: 300px;
+            background-position: center;
+            background-size: cover;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .product-image i { font-size: 4rem; color: rgba(255,255,255,0.7); } /* Placeholder icon if image fails */
+        
+        .product-info {
+            flex: 1;
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+        }
+        .product-info h3 { font-size: 1.8rem; color: var(--color-secondary); margin-bottom: 15px; }
+        .product-info p.desc { margin-bottom: 25px; color: var(--color-gray); }
+        
+        .tech-specs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        .tech-item { display: flex; align-items: flex-start; }
+        .tech-item i { color: var(--color-primary); margin-top: 4px; margin-right: 12px; width: 16px; text-align: center;}
+        .tech-item div { font-size: 0.9rem; }
+        .tech-item strong { display: block; color: var(--color-dark); }
+        
+        .product-actions { margin-top: auto; border-top: 1px solid var(--color-secondary-light); padding-top: 20px; display: flex; gap: 15px; }
+        
+        /* ========== FOOTER ========== */
+        footer { background-color: var(--color-dark); color: var(--color-white); padding: 60px 0 30px; margin-top: auto;}
+        .footer-content { display: flex; flex-wrap: wrap; justify-content: space-between; margin-bottom: 40px; gap: 40px; }
+        .footer-about { flex: 1; min-width: 250px; }
+        .footer-logo { font-family: 'Montserrat', sans-serif; font-size: 1.8rem; font-weight: 700; color: var(--color-white); margin-bottom: 15px; }
+        .footer-description { color: rgba(255, 255, 255, 0.8); margin-bottom: 20px; line-height: 1.6; }
+        .footer-bottom { text-align: center; padding-top: 30px; border-top: 1px solid rgba(255, 255, 255, 0.1); font-size: 0.9rem; color: rgba(255, 255, 255, 0.7); }
+        .footer-bottom a { color: var(--color-primary); text-decoration: none; }
+
+        /* ========== RESPONSIVE ========== */
+        @media (max-width: 768px) {
+            .mobile-menu-btn { display: block; }
+            nav ul { position: fixed; top: 70px; left: 0; width: 100%; background-color: var(--color-white); flex-direction: column; align-items: center; padding: 20px 0; box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1); transform: translateY(-100%); opacity: 0; transition: var(--transition); z-index: 999; }
+            nav ul.active { transform: translateY(0); opacity: 1; }
+            nav li { margin: 15px 0; }
+            .product-card { flex-direction: column; }
+            .product-image { height: 250px; min-height: 250px; }
+            .tech-specs { grid-template-columns: 1fr; }
+            .product-actions { flex-direction: column; }
+            .product-actions .btn { width: 100%; text-align: center; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header (Enlaces actualizados para volver a index.html) -->
+    <header>
+        <div class="container header-container">
+            <a href="index.html" class="logo-container">
+                <img src="images/logo.png" alt="Aislantech Logo" class="logo-img" id="header-logo">
+                <div class="logo-text">
+                    <div><span class="logo-aislan">AISLAN</span><span class="logo-tech">TECH</span></div>
+                    <div class="logo-tagline">Soluciones Técnicas Avanzadas</div>
+                </div>
+            </a>
+            
+            <button class="mobile-menu-btn" id="mobileMenuBtn">
+                <i class="fas fa-bars"></i>
+            </button>
+            
+            <nav>
+                <ul id="mainMenu">
+                    <li><a href="index.html#inicio">Inicio</a></li>
+                    <li><a href="index.html#servicios">Servicios</a></li>
+                    <li><a href="index.html#proceso">Proceso</a></li>
+                    <li><a href="index.html#innovacion">I+D+i</a></li>
+                    <li><a href="index.html#software">Software</a></li>
+                </ul>
+            </nav>
+            
+            <a href="index.html#footer" class="btn btn-outline">Contacto</a>
+        </div>
+    </header>
+
+    <!-- Subpage Hero -->
+    <section class="page-hero">
+        <div class="container">
+            <h1>Sistemas de Cajón Túnel</h1>
+            <p>Diseños constructivos orientados a la máxima eficiencia energética, control térmico y cumplimiento normativo.</p>
+        </div>
+    </section>
+
+    <!-- Productos / Modelos -->
+    <section class="products-section">
+        <div class="container">
+            
+            <!-- Producto 1 -->
+            <div class="product-card">
+                <div class="product-image" style="background-image: url('images/cajon-tunel-1.jpg');">
+                    <!-- Icono visible si falla la imagen -->
+                    <i class="fas fa-cube"></i>
+                </div>
+                <div class="product-info">
+                    <h3>Cajón Túnel Estándar CTE</h3>
+                    <p class="desc">Solución versátil para proyectos de obra nueva y rehabilitación. Diseñado para garantizar la rotura de puente térmico y alineado con las exigencias del Código Técnico de la Edificación (DB-HE).</p>
+                    
+                    <div class="tech-specs">
+                        <div class="tech-item">
+                            <i class="fas fa-thermometer-half"></i>
+                            <div><strong>Aislamiento Térmico</strong> Núcleo de EPS de alta densidad (U-value optimizado)</div>
+                        </div>
+                        <div class="tech-item">
+                            <i class="fas fa-volume-up"></i>
+                            <div><strong>Aislamiento Acústico</strong> Reducción de decibelios según configuración del testero</div>
+                        </div>
+                        <div class="tech-item">
+                            <i class="fas fa-ruler-combined"></i>
+                            <div><strong>Dimensiones</strong> Adaptables al hueco estructural de persiana</div>
+                        </div>
+                        <div class="tech-item">
+                            <i class="fas fa-check-circle"></i>
+                            <div><strong>Normativa</strong> Cumplimiento estricto CTE</div>
+                        </div>
+                    </div>
+                    
+                    <div class="product-actions">
+                        <!-- Enlace listo para añadir tu PDF cuando lo desarrolles -->
+                        <a href="archivos/ficha-tecnica-estandar.pdf" download class="btn btn-outline" onclick="alert('La ficha técnica estará disponible próximamente.'); return false;">
+                            <i class="fas fa-file-pdf" style="margin-right: 8px;"></i> Descargar Ficha Técnica
+                        </a>
+                        <a href="index.html#footer" class="btn">Solicitar Presupuesto</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Producto 2 -->
+            <div class="product-card">
+                <div class="product-image" style="background-image: url('images/cajon-tunel-2.jpg');">
+                    <i class="fas fa-leaf"></i>
+                </div>
+                <div class="product-info">
+                    <h3>Cajón Túnel Passivhaus (EPS Grafitado)</h3>
+                    <p class="desc">Sistema de altas prestaciones orientado a construcciones ECCN (Edificios de Consumo de Energía Casi Nulo). Su núcleo de poliestireno expandido con partículas de grafito maximiza la reflectancia térmica.</p>
+                    
+                    <div class="tech-specs">
+                        <div class="tech-item">
+                            <i class="fas fa-layer-group"></i>
+                            <div><strong>Material Base</strong> EPS Grafitado / Poliuretano inyectado</div>
+                        </div>
+                        <div class="tech-item">
+                            <i class="fas fa-wind"></i>
+                            <div><strong>Hermeticidad</strong> Sellado continuo, infiltración de aire Clase 4</div>
+                        </div>
+                        <div class="tech-item">
+                            <i class="fas fa-temperature-low"></i>
+                            <div><strong>Puente Térmico</strong> Psi (Ψ) cercano a cero absoluto</div>
+                        </div>
+                        <div class="tech-item">
+                            <i class="fas fa-certificate"></i>
+                            <div><strong>Idoneidad</strong> Certificaciones Passivhaus / ECCN</div>
+                        </div>
+                    </div>
+                    
+                    <div class="product-actions">
+                        <a href="#" download class="btn btn-outline" onclick="alert('La ficha técnica estará disponible próximamente.'); return false;">
+                            <i class="fas fa-file-pdf" style="margin-right: 8px;"></i> Descargar Ficha Técnica
+                        </a>
+                        <a href="index.html#footer" class="btn">Solicitar Presupuesto</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Producto 3 -->
+            <div class="product-card">
+                <div class="product-image" style="background-image: url('images/cajon-tunel-3.jpg');">
+                    <i class="fas fa-cogs"></i>
+                </div>
+                <div class="product-info">
+                    <h3>Cajón Túnel Domótico</h3>
+                    <p class="desc">Estructura interior ampliada diseñada específicamente para alojar motorizaciones voluminosas y sistemas de automatización IoT, sin sacrificar la transmitancia térmica de la fachada.</p>
+                    
+                    <div class="tech-specs">
+                        <div class="tech-item">
+                            <i class="fas fa-microchip"></i>
+                            <div><strong>Compatibilidad</strong> Espacio extra para receptores y actuadores</div>
+                        </div>
+                        <div class="tech-item">
+                            <i class="fas fa-shield-alt"></i>
+                            <div><strong>Estructura</strong> Refuerzo metálico integrado anti-flexión</div>
+                        </div>
+                        <div class="tech-item">
+                            <i class="fas fa-tools"></i>
+                            <div><strong>Mantenimiento</strong> Tapa de registro inferior de acceso rápido</div>
+                        </div>
+                    </div>
+                    
+                    <div class="product-actions">
+                        <a href="#" download class="btn btn-outline" onclick="alert('La ficha técnica estará disponible próximamente.'); return false;">
+                            <i class="fas fa-file-pdf" style="margin-right: 8px;"></i> Descargar Ficha Técnica
+                        </a>
+                        <a href="index.html#footer" class="btn">Solicitar Presupuesto</a>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- Footer simplificado -->
+    <footer>
+        <div class="container">
+            <div class="footer-content" style="margin-bottom: 20px;">
+                <div class="footer-about">
+                    <div class="footer-logo"><span class="logo-aislan">AISLAN</span><span class="logo-tech">TECH</span></div>
+                    <p class="footer-description">Soluciones técnicas avanzadas para industria y construcción.</p>
+                </div>
+                <div>
+                    <a href="index.html" class="btn btn-outline" style="color: white; border-color: white;"><i class="fas fa-arrow-left"></i> Volver a la web principal</a>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 Aislantech. Todos los derechos reservados. | <a href="index.html">www.aislantech.es</a></p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Lógica simple para el menú móvil
+        document.addEventListener('DOMContentLoaded', function() {
+            const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+            const mainMenu = document.getElementById('mainMenu');
+            
+            if (mobileMenuBtn && mainMenu) {
+                mobileMenuBtn.addEventListener('click', () => {
+                    mainMenu.classList.toggle('active');
+                    mobileMenuBtn.innerHTML = mainMenu.classList.contains('active') 
+                        ? '<i class="fas fa-times"></i>' 
+                        : '<i class="fas fa-bars"></i>';
+                });
+            }
+
+            // Fallback para el logo si no carga
+            const logoImg = document.getElementById('header-logo');
+            if(logoImg) {
+                logoImg.onerror = function() { this.style.display = 'none'; };
+            }
+        });
+    </script>
+</body>
+</html>
