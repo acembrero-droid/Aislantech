@@ -3,7 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aislantech | Soluciones Técnicas Avanzadas</title>
+    
+    <!-- Título y Meta Descripción Optimizados -->
+    <title>Sistemas de Cajón Túnel en Catalunya | Aislantech</title>
+    <meta name="description" content="Oficina técnica especialista en diseño, cálculo y consultoría de cajón túnel y precercos avanzados en Catalunya. Soluciones de alta eficiencia energética.">
     
     <!-- Favicon tradicional -->
     <link rel="icon" type="image/x-icon" href="favicon.ico">
@@ -25,9 +28,9 @@
     <!-- Manifest para PWA (opcional) -->
     <link rel="manifest" href="site.webmanifest">
     
-    <!-- Meta tags para redes sociales -->
-    <meta property="og:title" content="Aislantech | Soluciones Técnicas Avanzadas">
-    <meta property="og:description" content="Oficina técnica especializada, consultoría industrial, sistemas de precercos avanzados">
+    <!-- Meta tags para redes sociales optimizados -->
+    <meta property="og:title" content="Expertos en Cajón Túnel y Sistemas de Precerco en Catalunya">
+    <meta property="og:description" content="Desarrollo integral y consultoría industrial para cerramientos de alta eficiencia térmica.">
     <meta property="og:image" content="images/og-image.png">
     <meta property="og:url" content="https://www.aislantech.es">
     <meta name="twitter:card" content="summary_large_image">
@@ -51,6 +54,39 @@
         });
     </script>
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-100G9QWNGY"></script>
+
+    <!-- Datos Estructurados LocalBusiness (SEO e IA) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "LocalBusiness",
+      "name": "Aislantech",
+      "legalName": "Aislantes Técnicos del Mediterráneo S.L.",
+      "image": "https://www.aislantech.es/images/logo.png",
+      "@id": "https://www.aislantech.es",
+      "url": "https://www.aislantech.es",
+      "telephone": "+34623976341",
+      "email": "info@aislantech.es",
+      "address": {
+        "@type": "PostalAddress",
+        "addressLocality": "Caldes d'Estrac",
+        "addressRegion": "Barcelona, Catalunya",
+        "postalCode": "08393",
+        "addressCountry": "ES"
+      },
+      "geo": {
+        "@type": "GeoCoordinates",
+        "latitude": 41.5719,
+        "longitude": 2.5283
+      },
+      "areaServed": {
+        "@type": "State",
+        "name": "Catalunya"
+      },
+      "description": "Oficina técnica e ingeniería especializada en consultoría industrial, sistemas de precercos avanzados y soluciones de cajón túnel.",
+      "knowsAbout": ["Cajón Túnel", "Transmitancia Térmica", "Precercos", "Consultoría Industrial", "Eficiencia Energética", "Calaix Túnel", "Passivhaus", "BREEAM"]
+    }
+    </script>
     
     <style>
         /* ========== VARIABLES DE COLOR ========== */
@@ -188,7 +224,7 @@
             text-decoration: underline;
         }
 
-        /* ========== ESTILOS GENERALES (MANTENIDOS) ========== */
+        /* ========== ESTILOS GENERALES ========== */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         html { scroll-behavior: smooth; }
         body { font-family: 'Open Sans', sans-serif; color: var(--color-gray); line-height: 1.6; overflow-x: hidden; background-color: var(--color-white); }
@@ -285,13 +321,12 @@
         .scroll-indicator { position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); animation: bounce 2s infinite; }
         .scroll-indicator i { color: var(--color-primary); font-size: 1.5rem; }
 
-        /* ========== SERVICES SECTION CON IMÁGENES PERSONALIZADAS ========== */
+        /* ========== SERVICES SECTION ========== */
         .services { padding: 100px 0; background-color: var(--color-light); }
         .services-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; }
         .service-card { background-color: var(--color-white); border-radius: var(--border-radius); overflow: hidden; box-shadow: var(--box-shadow); transition: var(--transition); height: 100%; border-top: 4px solid var(--color-primary); }
         .service-card:hover { transform: translateY(-10px); box-shadow: var(--box-shadow-hover); border-top-color: var(--color-accent); }
         
-        /* Contenedor de imagen del servicio */
         .service-img { 
             height: 200px; 
             background-color: var(--color-secondary); 
@@ -312,7 +347,6 @@
             transform: scale(1.05);
         }
         
-        /* Superposición para mejorar legibilidad */
         .service-img::before {
             content: '';
             position: absolute;
@@ -329,7 +363,6 @@
             opacity: 0.1;
         }
         
-        /* Icono sobre la imagen */
         .service-img i {
             z-index: 2;
             position: relative;
@@ -481,7 +514,6 @@
             .footer-content { flex-direction: column; gap: 30px; }
             .innovation-content, .software-content { flex-direction: column; }
             
-            /* Responsive para logo */
             .logo-img { 
                 height: 35px; 
                 margin-right: 10px; 
@@ -496,7 +528,6 @@
                 font-size: 0.65rem;
             }
             
-            /* Responsive para banner de cookies */
             .cookie-content {
                 flex-direction: column;
                 text-align: center;
@@ -519,7 +550,6 @@
             nav { order: 3; width: 100%; margin-top: 15px; }
             .btn-yellow { order: 4; margin-top: 15px; width: 100%; text-align: center; }
             
-            /* Responsive para logo en móviles pequeños */
             .logo-img { 
                 height: 30px; 
                 margin-right: 8px; 
@@ -539,7 +569,6 @@
                 padding: 10px 15px;
             }
             
-            /* Responsive para banner de cookies */
             .cookie-buttons {
                 flex-direction: column;
                 width: 100%;
@@ -597,11 +626,11 @@
         </div>
     </header>
 
-    <!-- Hero Section -->
+    <!-- Hero Section Optimizada -->
     <section class="hero" id="inicio">
         <div class="hero-content">
-            <h1>Soluciones Técnicas Avanzadas para Industria y Construcción</h1>
-            <p>Oficina técnica especializada, consultoría industrial, sistemas de precercos avanzados, soluciones de cajón túnel integrales e innovación en I+D+i.</p>
+            <h1>Ingeniería de Cerramientos y Cajón Túnel en Catalunya</h1>
+            <p>Consultoría industrial y oficina técnica. Desarrollamos sistemas de precercos avanzados y soluciones integrales de cajón túnel con la máxima eficiencia térmica.</p>
             <div class="hero-btns">
                 <a href="#servicios" class="btn btn-yellow">Explora Nuestros Servicios</a>
             </div>
@@ -611,7 +640,7 @@
         </div>
     </section>
 
-    <!-- Services Section CON IMÁGENES PERSONALIZADAS -->
+    <!-- Services Section -->
     <section class="services" id="servicios">
         <div class="container">
             <div class="section-title">
@@ -668,7 +697,7 @@
                     </div>
                 </div>
                 
-                <!-- Soluciones de Cajón Túnel (INTEGRACIÓN DEL ENLACE AQUÍ) -->
+                <!-- Soluciones de Cajón Túnel (Optimizado) -->
                 <a href="cajon-tunel.html" style="text-decoration: none; color: inherit; display: block; height: 100%;">
                     <div class="service-card" style="height: 100%;">
                         <div class="service-img" id="cajon-tunel-img">
@@ -676,7 +705,7 @@
                         </div>
                         <div class="service-content">
                             <h3>Soluciones de Cajón Túnel</h3>
-                            <p>Diseños especializados para control solar, optimizando el confort térmico y la eficiencia energética.</p>
+                            <p>Diseños especializados para control solar y aislamiento térmico en Catalunya. Optimizamos cerramientos y sistemas de <em>calaix túnel</em> para erradicar puentes térmicos y cumplir con las normativas más exigentes.</p>
                             <ul class="service-features">
                                 <li><i class="fas fa-check service-icon"></i> Análisis solar</li>
                                 <li><i class="fas fa-check service-icon"></i> Diseños personalizados</li>
@@ -915,7 +944,7 @@
         </div>
     </section>
 
-    <!-- Footer -->
+    <!-- Footer Optimizado E-E-A-T -->
     <footer id="footer">
         <div class="container">
             <div class="section-title" style="margin-bottom: 40px;">
@@ -928,7 +957,7 @@
                     <div class="footer-logo">
                         <span class="logo-aislan">AISLAN</span><span class="logo-tech">TECH</span>
                     </div>
-                    <p class="footer-description">Soluciones técnicas avanzadas para industria y construcción. Especialistas en consultoría industrial, sistemas de precercos avanzados y soluciones de cajón túnel.</p>
+                    <p class="footer-description">Aislantes Técnicos del Mediterráneo S.L. ofrece soluciones avanzadas para industria y construcción en Catalunya. Dirigido por profesionales con certificaciones <strong>Passivhaus Tradesperson</strong> y <strong>BREEAM Associate</strong>, garantizamos el máximo rigor en el cálculo de transmitancia y diseño de cajón túnel.</p>
                     
                     <div class="social-links">
                         <a href="https://www.linkedin.com/company/aislantech/" target="_blank" title="LinkedIn Aislantech">
@@ -989,7 +1018,7 @@
             </div>
             
             <div class="footer-bottom">
-                <p>&copy; 2025 Aislantech. Todos los derechos reservados. | <a href="https://www.aislantech.es" style="color: var(--color-primary);">www.aislantech.es</a></p>
+                <p>&copy; 2026 Aislantech. Todos los derechos reservados. | <a href="https://www.aislantech.es" style="color: var(--color-primary);">www.aislantech.es</a></p>
             </div>
         </div>
     </footer>
