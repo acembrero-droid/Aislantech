@@ -111,15 +111,15 @@
 <script>
 // ===== CONSTANTES =====
 const LONGITUD_MM = 2000;
-const PRECIO_FIG = 600;            // €/m³ para la pieza
-const PRECIO_DESP = 600;           // €/m³ para el retal
+const PRECIO_FIG = 500;            // €/m³ para la pieza
+const PRECIO_DESP = 500;           // €/m³ para el retal
 const DIVISOR = 1;               // dividir por 0.7 en lugar de +30%
-const COSTE_MANEJO = 12;           // € por línea (una vez, no por pieza)
-const COSTE_PREPARACION = 12;      // € por pedido
+const COSTE_MANEJO = 12,5;           // € por línea (una vez, no por pieza)
+const COSTE_PREPARACION = 11;      // € por pedido
 const COSTE_CORTE_POR_M = 4;       // € por metro de corte
 const MARGEN = 4;                  // margen del rectángulo en mm
-const BLOQUE_MAX_ANCHO = 1200;
-const BLOQUE_MAX_ALTO = 1000;
+const BLOQUE_MAX_ANCHO = 1200;     // mm
+const BLOQUE_MAX_ALTO = 1000;      // mm
 const TOLERANCIA_DISCRET = 0.2;
 const TOLERANCIA_SIMPLIFICA = 0.3;
 const MIN_DIST = 0.01;
@@ -537,6 +537,16 @@ function rectCorners(cx, cy, width, height, angle, margin = 0) {
   }));
 }
 
+// ===== CÁLCULO DE NESTING =====
+function calcularNesting(W, H, blockW = BLOQUE_MAX_ANCHO, blockH = BLOQUE_MAX_ALTO) {
+  // W y H son las dimensiones del rectángulo con margen
+  if (W <= 0 || H <= 0) return 0;
+  // Intentar dos orientaciones: sin rotar y rotado 90°
+  const opcion1 = Math.floor(blockW / W) * Math.floor(blockH / H);
+  const opcion2 = Math.floor(blockW / H) * Math.floor(blockH / W);
+  return Math.max(opcion1, opcion2);
+}
+
 function drawAll(vertices, rectNoMargin, rectWithMargin, dims, showDimensions = true) {
   const canvas = els.viewer2d;
   const ctx = canvas.getContext('2d');
@@ -845,6 +855,9 @@ function calcularPrecio() {
     const porcentajeDesperdicio = (volDesp / volRect) * 100;
     const porcentajeAprovechado = (volFig / volRect) * 100;
 
+    // Nesting: piezas por bloque (sección transversal)
+    const piezasPorBloque = calcularNesting(wM, hM);
+
     ultimoCalculo = {
       descripcion: `Perfil (${perfilActual.length} vértices)`,
       cantidad: cant,
@@ -874,7 +887,8 @@ function calcularPrecio() {
       <p><strong>Precio base línea:</strong> ${precioBaseLinea.toFixed(2)} €</p>
       <p><strong>Precio línea (dividido por 0.7):</strong> ${precioTotalLinea.toFixed(2)} €</p>
       <p><strong>Precio unitario efectivo:</strong> ${precioUnitEfectivo.toFixed(2)} €/ud</p>
-      <p><strong>Total línea (${cant} uds):</strong> ${precioTotalLinea.toFixed(2)} €</p>`;
+      <p><strong>Total línea (${cant} uds):</strong> ${precioTotalLinea.toFixed(2)} €</p>
+      <p style="margin-top: 10px; color: #0066cc;"><strong>Nesting:</strong> ${piezasPorBloque} pieza(s) por bloque de 1200 × 1000 mm (sección transversal).</p>`;
 
     els.avisoTolerancia.style.display = 'block';
     els.avisoTolerancia.textContent = 'Tolerancia ±0.5 mm';
