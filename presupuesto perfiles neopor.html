@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Presupuesto EPS Grafito – Versión Final</title>
+  <title>Presupuesto EPS Grafito – Versión Estable con Nesting</title>
   <style>
     body { font-family: Arial, sans-serif; margin: 20px; background: #f4f4f4; }
     .container { max-width: 1100px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
@@ -30,9 +30,9 @@
   <h1>Presupuestador EPS Grafito</h1>
   <p>Sube tu archivo DXF (unidades en mm). Longitud fija: 2000 mm.<br>
   <strong>Tolerancia de unión (mm):</strong> 
-  <input type="range" id="toleranciaSlider" min="0.1" max="1" value="0.01" step="0.01">
-  <span id="toleranciaValor">0.01 mm</span>
-  <br><small>Solo se unen extremos que coinciden exactamente (dentro de esta tolerancia).</small></p>
+  <input type="range" id="toleranciaSlider" min="0.1" max="2" value="1" step="0.1">
+  <span id="toleranciaValor">1 mm</span>
+  <br><small>Ajusta la tolerancia si el contorno no se cierra.</small></p>
   
   <input type="file" id="dxfInput" accept=".dxf">
   <br><br>
@@ -111,13 +111,13 @@
 <script>
 // ===== CONSTANTES =====
 const LONGITUD_MM = 2000;
-const PRECIO_FIG = 500;            // €/m³ para la pieza
-const PRECIO_DESP = 500;           // €/m³ para el retal
-const DIVISOR = 1;               // dividir por 0.7 en lugar de +30%
-const COSTE_MANEJO = 12,5;           // € por línea (una vez, no por pieza)
+const PRECIO_FIG = 600;            // €/m³ para la pieza
+const PRECIO_DESP = 250;           // €/m³ para el retal
+const DIVISOR = 0.7;               // dividir por 0.7 en lugar de +30%
+const COSTE_MANEJO = 11;           // € por línea (una vez, no por pieza)
 const COSTE_PREPARACION = 11;      // € por pedido
 const COSTE_CORTE_POR_M = 4;       // € por metro de corte
-const MARGEN = 4;                  // margen del rectángulo en mm
+const MARGEN = 5;                  // margen del rectángulo en mm
 const BLOQUE_MAX_ANCHO = 1200;     // mm
 const BLOQUE_MAX_ALTO = 1000;      // mm
 const TOLERANCIA_DISCRET = 0.2;
@@ -151,7 +151,7 @@ const els = {
 let perfilActual = null;
 let ultimoCalculo = null;
 let lineasPresupuesto = [];
-let toleranciaUnion = 0.01;
+let toleranciaUnion = 1;
 let editandoIndice = null;
 
 let rectNoMargin = null;
@@ -175,7 +175,7 @@ els.cantidadInput.addEventListener('input', () => {
   }
 });
 
-// ===== PARSER DXF =====
+// ===== PARSER DXF (simple) =====
 function parseDXF(texto) {
   const lines = texto.split(/\r?\n/);
   const entities = [];
@@ -269,176 +269,68 @@ function buildSegments(entities) {
   return segments;
 }
 
-function extraerContornoPorGrafo(segments, tolerance) {
-  if (segments.length === 0) return null;
+// ===== ENCADENADO POR PROXIMIDAD =====
+function encadenarPuntos(segments, tolerance) {
+  if (segments.length === 0) return [];
+  let points = [];
+  // Aplanar todos los puntos de todos los segmentos
+  segments.forEach(seg => points.push(...seg));
+  if (points.length < 3) return [];
 
-  const puntoClave = (p) => `${Math.round(p.x / tolerance) * tolerance},${Math.round(p.y / tolerance) * tolerance}`;
-
-  const aristas = segments.map((pts, idx) => ({
-    start: pts[0],
-    end: pts[pts.length - 1],
-    points: pts,
-    idx
-  }));
-
-  const adj = new Map();
-
-  aristas.forEach((arista, idx) => {
-    const sk = puntoClave(arista.start);
-    const ek = puntoClave(arista.end);
-    if (!adj.has(sk)) adj.set(sk, []);
-    if (!adj.has(ek)) adj.set(ek, []);
-    adj.get(sk).push({ aristaIdx: idx, extremo: 'start' });
-    adj.get(ek).push({ aristaIdx: idx, extremo: 'end' });
-  });
-
-  let inicioKey = null;
-  for (const [key, vecinos] of adj) {
-    if (vecinos.length === 2) {
-      inicioKey = key;
+  // Ordenar por cercanía
+  const ordenados = [points.shift()];
+  while (points.length) {
+    const last = ordenados[ordenados.length - 1];
+    let bestIdx = 0, bestDist = Infinity;
+    for (let i = 0; i < points.length; i++) {
+      const d = Math.hypot(points[i].x - last.x, points[i].y - last.y);
+      if (d < bestDist) {
+        bestDist = d;
+        bestIdx = i;
+      }
+    }
+    if (bestDist > tolerance * 3) {
+      console.warn('Salto grande, se detiene el encadenado.');
       break;
     }
-  }
-  if (!inicioKey) return null;
-
-  const usados = new Array(aristas.length).fill(false);
-  const camino = [];
-  let currentKey = inicioKey;
-  const firstKey = inicioKey;
-
-  do {
-    const vecinos = adj.get(currentKey);
-    let encontrado = false;
-    for (const vec of vecinos) {
-      if (!usados[vec.aristaIdx]) {
-        usados[vec.aristaIdx] = true;
-        const arista = aristas[vec.aristaIdx];
-        let direccion;
-        if (vec.extremo === 'start') {
-          currentKey = puntoClave(arista.end);
-          direccion = 'forward';
-        } else {
-          currentKey = puntoClave(arista.start);
-          direccion = 'backward';
-        }
-        camino.push({ aristaIdx: vec.aristaIdx, direccion });
-        encontrado = true;
-        break;
-      }
-    }
-    if (!encontrado) return null;
-  } while (currentKey !== firstKey && camino.length < aristas.length);
-
-  if (currentKey !== firstKey) return null;
-
-  const puntos = [];
-  camino.forEach(({aristaIdx, direccion}) => {
-    const pts = aristas[aristaIdx].points.slice();
-    if (direccion === 'backward') pts.reverse();
-    if (puntos.length === 0) {
-      puntos.push(...pts);
-    } else {
-      puntos.push(...pts.slice(1));
-    }
-  });
-
-  if (puntos.length > 1 && Math.hypot(puntos[0].x - puntos[puntos.length-1].x, puntos[0].y - puntos[puntos.length-1].y) < 0.01) {
-    puntos.pop();
-  }
-  return puntos;
-}
-
-function concatenarSecuencial(segments, tolerance) {
-  if (segments.length === 0) return null;
-  const puntos = [];
-  segments.forEach(seg => {
-    if (puntos.length === 0) {
-      puntos.push(...seg);
-    } else {
-      const last = puntos[puntos.length - 1];
-      const first = seg[0];
-      if (Math.hypot(last.x - first.x, last.y - first.y) <= tolerance) {
-        puntos.push(...seg.slice(1));
-      } else {
-        puntos.push(...seg);
-      }
-    }
-  });
-  return puntos;
-}
-
-function douglasPeucker(points, tolerance) {
-  if (points.length <= 2) return points;
-  const sqTolerance = tolerance * tolerance;
-  const keep = new Array(points.length).fill(false);
-  keep[0] = true;
-  keep[points.length - 1] = true;
-
-  function simplify(start, end) {
-    if (end <= start + 1) return;
-    let maxDistSq = 0;
-    let index = -1;
-    const p1 = points[start];
-    const p2 = points[end];
-    const dx = p2.x - p1.x;
-    const dy = p2.y - p1.y;
-    const lengthSq = dx*dx + dy*dy;
-    for (let i = start + 1; i < end; i++) {
-      let distSq;
-      if (lengthSq === 0) {
-        distSq = (points[i].x - p1.x)**2 + (points[i].y - p1.y)**2;
-      } else {
-        let t = ((points[i].x - p1.x) * dx + (points[i].y - p1.y) * dy) / lengthSq;
-        t = Math.max(0, Math.min(1, t));
-        const projX = p1.x + t * dx;
-        const projY = p1.y + t * dy;
-        distSq = (points[i].x - projX)**2 + (points[i].y - projY)**2;
-      }
-      if (distSq > maxDistSq) {
-        maxDistSq = distSq;
-        index = i;
-      }
-    }
-    if (index !== -1 && maxDistSq > sqTolerance) {
-      keep[index] = true;
-      simplify(start, index);
-      simplify(index, end);
-    }
+    ordenados.push(points[bestIdx]);
+    points.splice(bestIdx, 1);
   }
 
-  simplify(0, points.length - 1);
-  return points.filter((_, i) => keep[i]);
-}
-
-function removeClosePoints(points, minDist) {
-  if (points.length < 2) return points;
-  const result = [points[0]];
-  for (let i = 1; i < points.length; i++) {
-    const last = result[result.length - 1];
-    if (Math.hypot(points[i].x - last.x, points[i].y - last.y) >= minDist) {
-      result.push(points[i]);
+  // Cerrar contorno
+  if (ordenados.length >= 3) {
+    const first = ordenados[0];
+    const last = ordenados[ordenados.length - 1];
+    if (Math.hypot(last.x - first.x, last.y - first.y) > tolerance) {
+      ordenados.push({x: first.x, y: first.y});
+    } else if (Math.hypot(last.x - first.x, last.y - first.y) < 0.1) {
+      ordenados.pop();
     }
   }
-  return result;
+  return ordenados;
 }
 
 function importarDXF(texto) {
   const entities = parseDXF(texto);
-  if (entities.length === 0) return null;
-  const segments = buildSegments(entities);
-  if (segments.length === 0) return null;
-
-  let contorno = extraerContornoPorGrafo(segments, toleranciaUnion);
-  if (!contorno || contorno.length < 3) {
-    contorno = concatenarSecuencial(segments, toleranciaUnion);
+  if (entities.length === 0) {
+    alert('No se encontraron entidades.');
+    return null;
   }
-  if (!contorno || contorno.length < 3) return null;
-
-  const simplificado = douglasPeucker(contorno, TOLERANCIA_SIMPLIFICA);
-  const final = removeClosePoints(simplificado, MIN_DIST);
-  return final;
+  const segments = buildSegments(entities);
+  if (segments.length === 0) {
+    alert('No se encontraron líneas o arcos.');
+    return null;
+  }
+  const contorno = encadenarPuntos(segments, toleranciaUnion);
+  if (contorno.length < 3) {
+    alert('No se pudo formar un contorno.');
+    return null;
+  }
+  // Simplificar ligeramente
+  return removeClosePoints(douglasPeucker(contorno, TOLERANCIA_SIMPLIFICA), MIN_DIST);
 }
 
+// ===== CÁLCULOS GEOMÉTRICOS =====
 function polygonArea(vertices) {
   let area = 0;
   const n = vertices.length;
@@ -456,7 +348,7 @@ function calcularPerimetro(vertices) {
     const p2 = vertices[(i+1) % vertices.length];
     per += Math.hypot(p2.x - p1.x, p2.y - p1.y);
   }
-  return per; // en mm
+  return per;
 }
 
 function convexHull(points) {
@@ -476,7 +368,7 @@ function convexHull(points) {
 }
 
 function minimumBoundingRectangle(hull) {
-  if (hull.length<3) return {width:0,height:0,area:0,angle:0,cx:0,cy:0};
+  if (hull.length<3) return {width:0,height:0,angle:0,cx:0,cy:0};
   let cx=0,cy=0;
   hull.forEach(p=>{cx+=p.x;cy+=p.y;});
   cx/=hull.length; cy/=hull.length;
@@ -515,7 +407,7 @@ function minimumBoundingRectangle(hull) {
     bestAng += Math.PI/2;
   }
   bestAng = bestAng%Math.PI;
-  return {width:bestW, height:bestH, angle:bestAng, area:bestArea, cx:bestCX, cy:bestCY};
+  return {width:bestW, height:bestH, angle:bestAng, cx:bestCX, cy:bestCY};
 }
 
 function rectCorners(cx, cy, width, height, angle, margin = 0) {
@@ -537,16 +429,15 @@ function rectCorners(cx, cy, width, height, angle, margin = 0) {
   }));
 }
 
-// ===== CÁLCULO DE NESTING =====
-function calcularNesting(W, H, blockW = BLOQUE_MAX_ANCHO, blockH = BLOQUE_MAX_ALTO) {
-  // W y H son las dimensiones del rectángulo con margen
+// ===== NESTING =====
+function calcularNesting(W, H) {
   if (W <= 0 || H <= 0) return 0;
-  // Intentar dos orientaciones: sin rotar y rotado 90°
-  const opcion1 = Math.floor(blockW / W) * Math.floor(blockH / H);
-  const opcion2 = Math.floor(blockW / H) * Math.floor(blockH / W);
+  const opcion1 = Math.floor(BLOQUE_MAX_ANCHO / W) * Math.floor(BLOQUE_MAX_ALTO / H);
+  const opcion2 = Math.floor(BLOQUE_MAX_ANCHO / H) * Math.floor(BLOQUE_MAX_ALTO / W);
   return Math.max(opcion1, opcion2);
 }
 
+// ===== DIBUJO =====
 function drawAll(vertices, rectNoMargin, rectWithMargin, dims, showDimensions = true) {
   const canvas = els.viewer2d;
   const ctx = canvas.getContext('2d');
@@ -566,7 +457,7 @@ function drawAll(vertices, rectNoMargin, rectWithMargin, dims, showDimensions = 
   });
 
   let marginExtraX = 0, marginExtraY = 0;
-  if (showDimensions && rectWithMargin && dims) {
+  if (showDimensions && rectWithMargin) {
     marginExtraX = 60 / (canvas.width / (maxX - minX || 1));
     marginExtraY = 60 / (canvas.height / (maxY - minY || 1));
   }
@@ -597,6 +488,7 @@ function drawAll(vertices, rectNoMargin, rectWithMargin, dims, showDimensions = 
     ctx.setLineDash([]);
   }
 
+  // Relleno del perfil
   ctx.beginPath();
   ctx.moveTo(vertices[0].x * scale + offsetX, vertices[0].y * scale + offsetY);
   for (let i = 1; i < vertices.length; i++) {
@@ -610,7 +502,7 @@ function drawAll(vertices, rectNoMargin, rectWithMargin, dims, showDimensions = 
   drawPolygon(rectNoMargin, '#2196F3', 1.5, [5, 3]);
   drawPolygon(rectWithMargin, '#FF0000', 1.5, [3, 3]);
 
-  if (showDimensions && rectWithMargin && dims) {
+  if (showDimensions && rectWithMargin) {
     const corners = rectWithMargin;
     let minRX = Infinity, minRY = Infinity, maxRX = -Infinity, maxRY = -Infinity;
     corners.forEach(p => {
@@ -674,35 +566,7 @@ function drawAll(vertices, rectNoMargin, rectWithMargin, dims, showDimensions = 
   }
 }
 
-function drawMini(canvas, vertices) {
-  const ctx = canvas.getContext('2d');
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  if (!vertices || vertices.length < 2) return;
-
-  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-  vertices.forEach(p => {
-    if (p.x < minX) minX = p.x;
-    if (p.y < minY) minY = p.y;
-    if (p.x > maxX) maxX = p.x;
-    if (p.y > maxY) maxY = p.y;
-  });
-  const width = maxX - minX;
-  const height = maxY - minY;
-  const scale = Math.min((canvas.width - 4) / width, (canvas.height - 4) / height);
-  const offsetX = (canvas.width - width * scale) / 2 - minX * scale;
-  const offsetY = (canvas.height - height * scale) / 2 - minY * scale;
-
-  ctx.strokeStyle = '#333';
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  ctx.moveTo(vertices[0].x * scale + offsetX, vertices[0].y * scale + offsetY);
-  for (let i = 1; i < vertices.length; i++) {
-    ctx.lineTo(vertices[i].x * scale + offsetX, vertices[i].y * scale + offsetY);
-  }
-  ctx.closePath();
-  ctx.stroke();
-}
-
+// ===== PRESUPUESTO =====
 function recalcularSubtotalLinea(linea) {
   const base = (linea.precioPiezaUnit + linea.precioRetalUnit + linea.costeCorteUnit) * linea.cantidad + linea.manejo;
   return base / DIVISOR;
@@ -814,7 +678,7 @@ function calcularPrecio() {
       alert('Casco convexo inválido');
       return;
     }
-    const { width, height, angle, area, cx, cy } = minimumBoundingRectangle(hull);
+    const { width, height, angle, cx, cy } = minimumBoundingRectangle(hull);
     if (width < 0.1 || height < 0.1) {
       alert('Dimensiones del rectángulo muy pequeñas');
       return;
@@ -855,7 +719,6 @@ function calcularPrecio() {
     const porcentajeDesperdicio = (volDesp / volRect) * 100;
     const porcentajeAprovechado = (volFig / volRect) * 100;
 
-    // Nesting: piezas por bloque (sección transversal)
     const piezasPorBloque = calcularNesting(wM, hM);
 
     ultimoCalculo = {
@@ -911,23 +774,29 @@ els.dxfInput.addEventListener('change', async e => {
   const file = e.target.files[0];
   if (!file) return;
   const text = await file.text();
-  const puntos = importarDXF(text);
-  if (!puntos) {
-    els.seleccionDiv.style.display = 'none';
+  try {
+    const puntos = importarDXF(text);
+    if (!puntos) {
+      els.seleccionDiv.style.display = 'none';
+      els.resultadoDiv.style.display = 'none';
+      return;
+    }
+    perfilActual = puntos;
+    editandoIndice = null;
+    els.agregarPresupuestoBtn.textContent = 'Agregar al presupuesto';
+    const area = polygonArea(puntos);
+    els.perfilSelect.innerHTML = `<option>Perfil (${puntos.length} vértices, ${(area/100).toFixed(2)} cm²)</option>`;
+    els.seleccionDiv.style.display = 'block';
     els.resultadoDiv.style.display = 'none';
-    return;
+    rectNoMargin = null;
+    rectWithMargin = null;
+    dimsRect = null;
+    drawAll(puntos, null, null, null, false);
+    els.debugInfo.innerHTML = `Importado correctamente. ${puntos.length} puntos.`;
+  } catch (err) {
+    console.error(err);
+    alert('Error al importar DXF: ' + err.message);
   }
-  perfilActual = puntos;
-  editandoIndice = null;
-  els.agregarPresupuestoBtn.textContent = 'Agregar al presupuesto';
-  const area = polygonArea(puntos);
-  els.perfilSelect.innerHTML = `<option>Perfil (${puntos.length} vértices, ${(area/100).toFixed(2)} cm²)</option>`;
-  els.seleccionDiv.style.display = 'block';
-  els.resultadoDiv.style.display = 'none';
-  rectNoMargin = null;
-  rectWithMargin = null;
-  dimsRect = null;
-  drawAll(puntos, null, null, null, false);
 });
 
 els.calcularBtn.addEventListener('click', () => {
