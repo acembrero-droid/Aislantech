@@ -1,0 +1,962 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Presupuesto EPS Grafito – Versión Final</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; background: #f4f4f4; }
+    .container { max-width: 1100px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+    h1 { font-size: 1.5rem; margin-bottom: 0.5rem; }
+    .flex { display: flex; gap: 20px; flex-wrap: wrap; margin-top:20px; }
+    canvas { border: 1px solid #ccc; background: #fafafa; }
+    .info-box { background: #e9f5ff; padding: 10px; border-left: 4px solid #2196F3; margin: 10px 0; }
+    .error { color: red; font-weight: bold; }
+    button { padding: 6px 12px; cursor: pointer; margin-right: 5px; }
+    select, input[type=number] { padding: 6px; }
+    label { font-weight: bold; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    th, td { border: 1px solid #ddd; padding: 6px; text-align: right; }
+    th { background: #f2f2f2; }
+    td:first-child, th:first-child { text-align: left; }
+    .total-row { font-weight: bold; }
+    .fijo-row td { background: #f9f9f9; }
+    .debug { font-size: 0.75rem; color: #555; background: #f9f9f9; padding: 5px; border: 1px dashed #ccc; min-height: 30px; }
+    .mini-canvas { cursor: pointer; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h1>Presupuestador EPS Grafito</h1>
+  <p>Sube tu archivo DXF (unidades en mm). Longitud fija: 2000 mm.<br>
+  <strong>Tolerancia de unión (mm):</strong> 
+  <input type="range" id="toleranciaSlider" min="0.1" max="1" value="0.01" step="0.01">
+  <span id="toleranciaValor">0.01 mm</span>
+  <br><small>Solo se unen extremos que coinciden exactamente (dentro de esta tolerancia).</small></p>
+  
+  <input type="file" id="dxfInput" accept=".dxf">
+  <br><br>
+
+  <div id="seleccionPerfil" style="display:none;">
+    <label for="perfilSelect">Perfil:</label>
+    <select id="perfilSelect"></select>
+    <br><br>
+    <label for="cantidad">Cantidad:</label>
+    <input type="number" id="cantidad" min="1" value="1">
+    <button id="calcularBtn">Calcular precio</button>
+  </div>
+
+  <div id="resultado" style="display:none;">
+    <div class="info-box" id="datosCalculo"></div>
+    <p class="tolerancia" id="avisoTolerancia" style="display:none;"></p>
+    <div style="margin-top:10px;">
+      <button id="agregarPresupuestoBtn" style="display:none;">Agregar al presupuesto</button>
+    </div>
+  </div>
+
+  <div class="flex">
+    <div>
+      <p><strong>Vista del perfil y cotas:</strong></p>
+      <canvas id="viewer2d" width="500" height="400"></canvas>
+      <p><strong>Depuración:</strong></p>
+      <div class="debug" id="debugInfo">Sin datos.</div>
+    </div>
+    <div style="flex:1;">
+      <h2>Presupuesto acumulado</h2>
+      <button id="limpiarPresupuestoBtn">Limpiar presupuesto</button>
+      <table id="tablaPresupuesto">
+        <thead>
+          <tr>
+            <th>Miniatura</th>
+            <th>Perfil</th>
+            <th>Cantidad</th>
+            <th>Precio unitario (€)</th>
+            <th>Subtotal (€)</th>
+            <th>Acción</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+        <tfoot>
+          <tr class="fijo-row">
+            <td colspan="5">Subtotal líneas</td>
+            <td id="subtotalPresupuesto">0.00</td>
+          </tr>
+          <tr class="fijo-row">
+            <td colspan="5">Preparación de pedido</td>
+            <td id="preparacionPresupuesto">11.00</td>
+          </tr>
+          <tr class="fijo-row">
+            <td colspan="5">
+              <label for="portesSelect">Portes:</label>
+              <select id="portesSelect">
+                <option value="75">2 metros – 75 €</option>
+                <option value="19">1 metro – 19 €</option>
+              </select>
+            </td>
+            <td id="portesPresupuesto">75.00</td>
+          </tr>
+          <tr class="total-row">
+            <td colspan="5">Total</td>
+            <td id="totalPresupuesto">0.00</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
+
+  <p class="tolerancia" style="margin-top:10px;">* Discretización de arcos: 0.2 mm. Simplificación posterior: ±0.3 mm.</p>
+  <p class="tolerancia">Azul: rectángulo mínimo sin margen. Rojo: rectángulo con margen de 5 mm. Cotas en mm. Área de la figura rellena en gris claro.</p>
+</div>
+
+<script>
+// ===== CONSTANTES =====
+const LONGITUD_MM = 2000;
+const PRECIO_FIG = 600;            // €/m³ para la pieza
+const PRECIO_DESP = 250;           // €/m³ para el retal
+const DIVISOR = 0.7;               // dividir por 0.7 en lugar de +30%
+const COSTE_MANEJO = 11;           // € por línea (una vez, no por pieza)
+const COSTE_PREPARACION = 11;      // € por pedido
+const COSTE_CORTE_POR_M = 4;       // € por metro de corte
+const MARGEN = 5;                  // margen del rectángulo en mm
+const BLOQUE_MAX_ANCHO = 1200;
+const BLOQUE_MAX_ALTO = 1000;
+const TOLERANCIA_DISCRET = 0.2;
+const TOLERANCIA_SIMPLIFICA = 0.3;
+const MIN_DIST = 0.01;
+
+// ===== ELEMENTOS DOM =====
+const els = {
+  dxfInput: document.getElementById('dxfInput'),
+  seleccionDiv: document.getElementById('seleccionPerfil'),
+  perfilSelect: document.getElementById('perfilSelect'),
+  cantidadInput: document.getElementById('cantidad'),
+  calcularBtn: document.getElementById('calcularBtn'),
+  resultadoDiv: document.getElementById('resultado'),
+  datosCalculo: document.getElementById('datosCalculo'),
+  avisoTolerancia: document.getElementById('avisoTolerancia'),
+  agregarPresupuestoBtn: document.getElementById('agregarPresupuestoBtn'),
+  limpiarPresupuestoBtn: document.getElementById('limpiarPresupuestoBtn'),
+  tablaPresupuestoBody: document.querySelector('#tablaPresupuesto tbody'),
+  subtotalPresupuesto: document.getElementById('subtotalPresupuesto'),
+  preparacionPresupuesto: document.getElementById('preparacionPresupuesto'),
+  portesSelect: document.getElementById('portesSelect'),
+  portesPresupuesto: document.getElementById('portesPresupuesto'),
+  totalPresupuesto: document.getElementById('totalPresupuesto'),
+  viewer2d: document.getElementById('viewer2d'),
+  toleranciaSlider: document.getElementById('toleranciaSlider'),
+  toleranciaValor: document.getElementById('toleranciaValor'),
+  debugInfo: document.getElementById('debugInfo')
+};
+
+let perfilActual = null;
+let ultimoCalculo = null;
+let lineasPresupuesto = [];
+let toleranciaUnion = 0.01;
+let editandoIndice = null;
+
+let rectNoMargin = null;
+let rectWithMargin = null;
+let dimsRect = null;
+
+els.toleranciaSlider.addEventListener('input', () => {
+  toleranciaUnion = parseFloat(els.toleranciaSlider.value);
+  els.toleranciaValor.textContent = toleranciaUnion + ' mm';
+});
+
+els.portesSelect.addEventListener('change', () => {
+  const costePortes = parseFloat(els.portesSelect.value);
+  els.portesPresupuesto.textContent = costePortes.toFixed(2);
+  actualizarTabla();
+});
+
+els.cantidadInput.addEventListener('input', () => {
+  if (perfilActual) {
+    calcularPrecio();
+  }
+});
+
+// ===== PARSER DXF =====
+function parseDXF(texto) {
+  const lines = texto.split(/\r?\n/);
+  const entities = [];
+  let currentEntity = null;
+  let inEntities = false;
+  let i = 0;
+
+  while (i < lines.length - 1) {
+    const code = parseInt(lines[i].trim(), 10);
+    const value = lines[i+1].trim();
+    if (code === 2 && value === 'ENTITIES') {
+      inEntities = true;
+      i += 2;
+      break;
+    }
+    i++;
+  }
+
+  if (!inEntities) return entities;
+
+  while (i < lines.length) {
+    const code = parseInt(lines[i].trim(), 10);
+    i++;
+    const value = lines[i].trim();
+    i++;
+
+    if (code === 0) {
+      if (value === 'ENDSEC') break;
+      if (currentEntity) entities.push(currentEntity);
+      currentEntity = { type: value, data: {} };
+    } else if (currentEntity) {
+      if ([10, 11, 20, 21, 30, 31, 40, 50, 51, 42, 70].includes(code)) {
+        currentEntity.data[code] = parseFloat(value);
+      } else if (code === 8) {
+        currentEntity.layer = value;
+      }
+    }
+  }
+  if (currentEntity) entities.push(currentEntity);
+  return entities;
+}
+
+function entityToSegment(ent) {
+  const d = ent.data;
+  switch (ent.type) {
+    case 'LINE': {
+      const x1 = d[10], y1 = d[20];
+      const x2 = d[11], y2 = d[21];
+      if (isNaN(x1)||isNaN(y1)||isNaN(x2)||isNaN(y2)) return null;
+      return [{x:x1, y:y1}, {x:x2, y:y2}];
+    }
+    case 'CIRCLE': {
+      const cx = d[10], cy = d[20], r = d[40];
+      if (isNaN(cx)||isNaN(cy)||isNaN(r)) return null;
+      const steps = Math.max(24, Math.ceil((2*Math.PI*r) / TOLERANCIA_DISCRET));
+      const pts = [];
+      for (let i = 0; i <= steps; i++) {
+        const a = (i/steps)*2*Math.PI;
+        pts.push({x: cx + r*Math.cos(a), y: cy + r*Math.sin(a)});
+      }
+      return pts;
+    }
+    case 'ARC': {
+      const cx = d[10], cy = d[20], r = d[40];
+      let sa = (d[50] || 0) * Math.PI / 180;
+      let ea = (d[51] || 0) * Math.PI / 180;
+      if (ea < sa) ea += 2*Math.PI;
+      const delta = ea - sa;
+      const steps = Math.max(2, Math.ceil((r * delta) / TOLERANCIA_DISCRET));
+      const pts = [];
+      for (let i = 0; i <= steps; i++) {
+        const a = sa + (delta * i) / steps;
+        pts.push({x: cx + r * Math.cos(a), y: cy + r * Math.sin(a)});
+      }
+      return pts;
+    }
+    default: return null;
+  }
+}
+
+function buildSegments(entities) {
+  const segments = [];
+  entities.forEach(ent => {
+    if (ent.type === 'LINE' || ent.type === 'ARC' || ent.type === 'CIRCLE') {
+      const pts = entityToSegment(ent);
+      if (pts && pts.length >= 2) {
+        segments.push(pts);
+      }
+    }
+  });
+  return segments;
+}
+
+function extraerContornoPorGrafo(segments, tolerance) {
+  if (segments.length === 0) return null;
+
+  const puntoClave = (p) => `${Math.round(p.x / tolerance) * tolerance},${Math.round(p.y / tolerance) * tolerance}`;
+
+  const aristas = segments.map((pts, idx) => ({
+    start: pts[0],
+    end: pts[pts.length - 1],
+    points: pts,
+    idx
+  }));
+
+  const adj = new Map();
+
+  aristas.forEach((arista, idx) => {
+    const sk = puntoClave(arista.start);
+    const ek = puntoClave(arista.end);
+    if (!adj.has(sk)) adj.set(sk, []);
+    if (!adj.has(ek)) adj.set(ek, []);
+    adj.get(sk).push({ aristaIdx: idx, extremo: 'start' });
+    adj.get(ek).push({ aristaIdx: idx, extremo: 'end' });
+  });
+
+  let inicioKey = null;
+  for (const [key, vecinos] of adj) {
+    if (vecinos.length === 2) {
+      inicioKey = key;
+      break;
+    }
+  }
+  if (!inicioKey) return null;
+
+  const usados = new Array(aristas.length).fill(false);
+  const camino = [];
+  let currentKey = inicioKey;
+  const firstKey = inicioKey;
+
+  do {
+    const vecinos = adj.get(currentKey);
+    let encontrado = false;
+    for (const vec of vecinos) {
+      if (!usados[vec.aristaIdx]) {
+        usados[vec.aristaIdx] = true;
+        const arista = aristas[vec.aristaIdx];
+        let direccion;
+        if (vec.extremo === 'start') {
+          currentKey = puntoClave(arista.end);
+          direccion = 'forward';
+        } else {
+          currentKey = puntoClave(arista.start);
+          direccion = 'backward';
+        }
+        camino.push({ aristaIdx: vec.aristaIdx, direccion });
+        encontrado = true;
+        break;
+      }
+    }
+    if (!encontrado) return null;
+  } while (currentKey !== firstKey && camino.length < aristas.length);
+
+  if (currentKey !== firstKey) return null;
+
+  const puntos = [];
+  camino.forEach(({aristaIdx, direccion}) => {
+    const pts = aristas[aristaIdx].points.slice();
+    if (direccion === 'backward') pts.reverse();
+    if (puntos.length === 0) {
+      puntos.push(...pts);
+    } else {
+      puntos.push(...pts.slice(1));
+    }
+  });
+
+  if (puntos.length > 1 && Math.hypot(puntos[0].x - puntos[puntos.length-1].x, puntos[0].y - puntos[puntos.length-1].y) < 0.01) {
+    puntos.pop();
+  }
+  return puntos;
+}
+
+function concatenarSecuencial(segments, tolerance) {
+  if (segments.length === 0) return null;
+  const puntos = [];
+  segments.forEach(seg => {
+    if (puntos.length === 0) {
+      puntos.push(...seg);
+    } else {
+      const last = puntos[puntos.length - 1];
+      const first = seg[0];
+      if (Math.hypot(last.x - first.x, last.y - first.y) <= tolerance) {
+        puntos.push(...seg.slice(1));
+      } else {
+        puntos.push(...seg);
+      }
+    }
+  });
+  return puntos;
+}
+
+function douglasPeucker(points, tolerance) {
+  if (points.length <= 2) return points;
+  const sqTolerance = tolerance * tolerance;
+  const keep = new Array(points.length).fill(false);
+  keep[0] = true;
+  keep[points.length - 1] = true;
+
+  function simplify(start, end) {
+    if (end <= start + 1) return;
+    let maxDistSq = 0;
+    let index = -1;
+    const p1 = points[start];
+    const p2 = points[end];
+    const dx = p2.x - p1.x;
+    const dy = p2.y - p1.y;
+    const lengthSq = dx*dx + dy*dy;
+    for (let i = start + 1; i < end; i++) {
+      let distSq;
+      if (lengthSq === 0) {
+        distSq = (points[i].x - p1.x)**2 + (points[i].y - p1.y)**2;
+      } else {
+        let t = ((points[i].x - p1.x) * dx + (points[i].y - p1.y) * dy) / lengthSq;
+        t = Math.max(0, Math.min(1, t));
+        const projX = p1.x + t * dx;
+        const projY = p1.y + t * dy;
+        distSq = (points[i].x - projX)**2 + (points[i].y - projY)**2;
+      }
+      if (distSq > maxDistSq) {
+        maxDistSq = distSq;
+        index = i;
+      }
+    }
+    if (index !== -1 && maxDistSq > sqTolerance) {
+      keep[index] = true;
+      simplify(start, index);
+      simplify(index, end);
+    }
+  }
+
+  simplify(0, points.length - 1);
+  return points.filter((_, i) => keep[i]);
+}
+
+function removeClosePoints(points, minDist) {
+  if (points.length < 2) return points;
+  const result = [points[0]];
+  for (let i = 1; i < points.length; i++) {
+    const last = result[result.length - 1];
+    if (Math.hypot(points[i].x - last.x, points[i].y - last.y) >= minDist) {
+      result.push(points[i]);
+    }
+  }
+  return result;
+}
+
+function importarDXF(texto) {
+  const entities = parseDXF(texto);
+  if (entities.length === 0) return null;
+  const segments = buildSegments(entities);
+  if (segments.length === 0) return null;
+
+  let contorno = extraerContornoPorGrafo(segments, toleranciaUnion);
+  if (!contorno || contorno.length < 3) {
+    contorno = concatenarSecuencial(segments, toleranciaUnion);
+  }
+  if (!contorno || contorno.length < 3) return null;
+
+  const simplificado = douglasPeucker(contorno, TOLERANCIA_SIMPLIFICA);
+  const final = removeClosePoints(simplificado, MIN_DIST);
+  return final;
+}
+
+function polygonArea(vertices) {
+  let area = 0;
+  const n = vertices.length;
+  for (let i = 0; i < n; i++) {
+    const {x:x1,y:y1}=vertices[i], {x:x2,y:y2}=vertices[(i+1)%n];
+    area += x1*y2 - x2*y1;
+  }
+  return Math.abs(area)/2;
+}
+
+function calcularPerimetro(vertices) {
+  let per = 0;
+  for (let i = 0; i < vertices.length; i++) {
+    const p1 = vertices[i];
+    const p2 = vertices[(i+1) % vertices.length];
+    per += Math.hypot(p2.x - p1.x, p2.y - p1.y);
+  }
+  return per; // en mm
+}
+
+function convexHull(points) {
+  const sorted = points.slice().sort((a,b)=>a.x-b.x||a.y-b.y);
+  const cross = (o,a,b)=>(a.x-o.x)*(b.y-o.y)-(a.y-o.y)*(b.x-o.x);
+  const lower=[];
+  for (const p of sorted) {
+    while (lower.length>=2 && cross(lower[lower.length-2], lower[lower.length-1], p)<=0) lower.pop();
+    lower.push(p);
+  }
+  const upper=[];
+  for (const p of sorted.reverse()) {
+    while (upper.length>=2 && cross(upper[upper.length-2], upper[upper.length-1], p)<=0) upper.pop();
+    upper.push(p);
+  }
+  return lower.concat(upper.slice(1,-1));
+}
+
+function minimumBoundingRectangle(hull) {
+  if (hull.length<3) return {width:0,height:0,area:0,angle:0,cx:0,cy:0};
+  let cx=0,cy=0;
+  hull.forEach(p=>{cx+=p.x;cy+=p.y;});
+  cx/=hull.length; cy/=hull.length;
+  let bestArea=Infinity, bestW, bestH, bestAng=0;
+  let bestCX=0, bestCY=0;
+
+  for (let deg=0; deg<180; deg+=1) {
+    const angle=deg*Math.PI/180;
+    const cos=Math.cos(-angle), sin=Math.sin(-angle);
+    let minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;
+    for (const p of hull) {
+      const dx=p.x-cx, dy=p.y-cy;
+      const rx=dx*cos-dy*sin, ry=dx*sin+dy*cos;
+      if (rx<minX) minX=rx;
+      if (ry<minY) minY=ry;
+      if (rx>maxX) maxX=rx;
+      if (ry>maxY) maxY=ry;
+    }
+    const w=maxX-minX, h=maxY-minY;
+    if (w*h<bestArea) {
+      bestArea=w*h;
+      bestW=w;
+      bestH=h;
+      bestAng=angle;
+      const centerRX = (minX+maxX)/2;
+      const centerRY = (minY+maxY)/2;
+      const c = Math.cos(angle);
+      const s = Math.sin(angle);
+      bestCX = cx + centerRX*c - centerRY*s;
+      bestCY = cy + centerRX*s + centerRY*c;
+    }
+  }
+
+  if (bestH>bestW) {
+    [bestW,bestH]=[bestH,bestW];
+    bestAng += Math.PI/2;
+  }
+  bestAng = bestAng%Math.PI;
+  return {width:bestW, height:bestH, angle:bestAng, area:bestArea, cx:bestCX, cy:bestCY};
+}
+
+function rectCorners(cx, cy, width, height, angle, margin = 0) {
+  const w = width + 2*margin;
+  const h = height + 2*margin;
+  const halfW = w/2;
+  const halfH = h/2;
+  const cornersLocal = [
+    {x: -halfW, y: -halfH},
+    {x: halfW, y: -halfH},
+    {x: halfW, y: halfH},
+    {x: -halfW, y: halfH}
+  ];
+  const cos = Math.cos(angle);
+  const sin = Math.sin(angle);
+  return cornersLocal.map(p => ({
+    x: cx + p.x*cos - p.y*sin,
+    y: cy + p.x*sin + p.y*cos
+  }));
+}
+
+function drawAll(vertices, rectNoMargin, rectWithMargin, dims, showDimensions = true) {
+  const canvas = els.viewer2d;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  if (vertices.length < 2) return;
+
+  const allPoints = [...vertices];
+  if (rectNoMargin) allPoints.push(...rectNoMargin);
+  if (rectWithMargin) allPoints.push(...rectWithMargin);
+
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  allPoints.forEach(p => {
+    if (p.x < minX) minX = p.x;
+    if (p.y < minY) minY = p.y;
+    if (p.x > maxX) maxX = p.x;
+    if (p.y > maxY) maxY = p.y;
+  });
+
+  let marginExtraX = 0, marginExtraY = 0;
+  if (showDimensions && rectWithMargin && dims) {
+    marginExtraX = 60 / (canvas.width / (maxX - minX || 1));
+    marginExtraY = 60 / (canvas.height / (maxY - minY || 1));
+  }
+
+  minX -= marginExtraX;
+  maxX += marginExtraX;
+  minY -= marginExtraY;
+  maxY += marginExtraY;
+
+  const width = maxX - minX;
+  const height = maxY - minY;
+  const scale = Math.min((canvas.width - 20) / width, (canvas.height - 20) / height);
+  const offsetX = (canvas.width - width * scale) / 2 - minX * scale;
+  const offsetY = (canvas.height - height * scale) / 2 - minY * scale;
+
+  function drawPolygon(points, strokeStyle, lineWidth, dash) {
+    if (!points || points.length < 2) return;
+    ctx.strokeStyle = strokeStyle;
+    ctx.lineWidth = lineWidth;
+    ctx.setLineDash(dash);
+    ctx.beginPath();
+    ctx.moveTo(points[0].x * scale + offsetX, points[0].y * scale + offsetY);
+    for (let i = 1; i < points.length; i++) {
+      ctx.lineTo(points[i].x * scale + offsetX, points[i].y * scale + offsetY);
+    }
+    ctx.closePath();
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  ctx.beginPath();
+  ctx.moveTo(vertices[0].x * scale + offsetX, vertices[0].y * scale + offsetY);
+  for (let i = 1; i < vertices.length; i++) {
+    ctx.lineTo(vertices[i].x * scale + offsetX, vertices[i].y * scale + offsetY);
+  }
+  ctx.closePath();
+  ctx.fillStyle = 'rgba(200, 200, 200, 0.4)';
+  ctx.fill();
+
+  drawPolygon(vertices, '#333', 2, []);
+  drawPolygon(rectNoMargin, '#2196F3', 1.5, [5, 3]);
+  drawPolygon(rectWithMargin, '#FF0000', 1.5, [3, 3]);
+
+  if (showDimensions && rectWithMargin && dims) {
+    const corners = rectWithMargin;
+    let minRX = Infinity, minRY = Infinity, maxRX = -Infinity, maxRY = -Infinity;
+    corners.forEach(p => {
+      if (p.x < minRX) minRX = p.x;
+      if (p.y < minRY) minRY = p.y;
+      if (p.x > maxRX) maxRX = p.x;
+      if (p.y > maxRY) maxRY = p.y;
+    });
+    const ancho = maxRX - minRX;
+    const alto = maxRY - minRY;
+
+    // Cota horizontal
+    const yCotaH = maxRY + 15 / scale;
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(minRX * scale + offsetX, yCotaH * scale + offsetY);
+    ctx.lineTo(maxRX * scale + offsetX, yCotaH * scale + offsetY);
+    ctx.stroke();
+    ctx.fillStyle = '#000';
+    ctx.beginPath();
+    ctx.moveTo(minRX * scale + offsetX - 6, yCotaH * scale + offsetY - 4);
+    ctx.lineTo(minRX * scale + offsetX, yCotaH * scale + offsetY);
+    ctx.lineTo(minRX * scale + offsetX - 6, yCotaH * scale + offsetY + 4);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(maxRX * scale + offsetX + 6, yCotaH * scale + offsetY - 4);
+    ctx.lineTo(maxRX * scale + offsetX, yCotaH * scale + offsetY);
+    ctx.lineTo(maxRX * scale + offsetX + 6, yCotaH * scale + offsetY + 4);
+    ctx.fill();
+    ctx.font = '12px Arial';
+    ctx.fillStyle = '#000';
+    ctx.textAlign = 'center';
+    ctx.fillText(`${ancho.toFixed(2)} mm`, (minRX + maxRX) / 2 * scale + offsetX, yCotaH * scale + offsetY - 6);
+
+    // Cota vertical
+    const xCotaV = maxRX + 15 / scale;
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(xCotaV * scale + offsetX, minRY * scale + offsetY);
+    ctx.lineTo(xCotaV * scale + offsetX, maxRY * scale + offsetY);
+    ctx.stroke();
+    ctx.fillStyle = '#000';
+    ctx.beginPath();
+    ctx.moveTo(xCotaV * scale + offsetX - 4, minRY * scale + offsetY + 6);
+    ctx.lineTo(xCotaV * scale + offsetX, minRY * scale + offsetY);
+    ctx.lineTo(xCotaV * scale + offsetX + 4, minRY * scale + offsetY + 6);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(xCotaV * scale + offsetX - 4, maxRY * scale + offsetY - 6);
+    ctx.lineTo(xCotaV * scale + offsetX, maxRY * scale + offsetY);
+    ctx.lineTo(xCotaV * scale + offsetX + 4, maxRY * scale + offsetY - 6);
+    ctx.fill();
+    ctx.font = '12px Arial';
+    ctx.fillStyle = '#000';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(`${alto.toFixed(2)} mm`, xCotaV * scale + offsetX + 6, (minRY + maxRY) / 2 * scale + offsetY);
+    ctx.textBaseline = 'alphabetic';
+  }
+}
+
+function drawMini(canvas, vertices) {
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  if (!vertices || vertices.length < 2) return;
+
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  vertices.forEach(p => {
+    if (p.x < minX) minX = p.x;
+    if (p.y < minY) minY = p.y;
+    if (p.x > maxX) maxX = p.x;
+    if (p.y > maxY) maxY = p.y;
+  });
+  const width = maxX - minX;
+  const height = maxY - minY;
+  const scale = Math.min((canvas.width - 4) / width, (canvas.height - 4) / height);
+  const offsetX = (canvas.width - width * scale) / 2 - minX * scale;
+  const offsetY = (canvas.height - height * scale) / 2 - minY * scale;
+
+  ctx.strokeStyle = '#333';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(vertices[0].x * scale + offsetX, vertices[0].y * scale + offsetY);
+  for (let i = 1; i < vertices.length; i++) {
+    ctx.lineTo(vertices[i].x * scale + offsetX, vertices[i].y * scale + offsetY);
+  }
+  ctx.closePath();
+  ctx.stroke();
+}
+
+function recalcularSubtotalLinea(linea) {
+  const base = (linea.precioPiezaUnit + linea.precioRetalUnit + linea.costeCorteUnit) * linea.cantidad + linea.manejo;
+  return base / DIVISOR;
+}
+
+function actualizarTabla() {
+  els.tablaPresupuestoBody.innerHTML = '';
+  let subtotal = 0;
+  lineasPresupuesto.forEach((linea, i) => {
+    const tr = document.createElement('tr');
+    const tdMini = document.createElement('td');
+    const miniCanvas = document.createElement('canvas');
+    miniCanvas.width = 40;
+    miniCanvas.height = 40;
+    miniCanvas.className = 'mini-canvas';
+    drawMini(miniCanvas, linea.perfil);
+    tdMini.appendChild(miniCanvas);
+    tr.appendChild(tdMini);
+
+    const tdDesc = document.createElement('td');
+    tdDesc.textContent = linea.descripcion;
+    tr.appendChild(tdDesc);
+
+    const tdCant = document.createElement('td');
+    const inputCant = document.createElement('input');
+    inputCant.type = 'number';
+    inputCant.min = 1;
+    inputCant.value = linea.cantidad;
+    inputCant.className = 'edit-cant';
+    inputCant.dataset.idx = i;
+    inputCant.style.width = '60px';
+    tdCant.appendChild(inputCant);
+    tr.appendChild(tdCant);
+
+    const tdUnit = document.createElement('td');
+    tdUnit.textContent = (linea.subtotal / linea.cantidad).toFixed(2);
+    tr.appendChild(tdUnit);
+
+    const tdSubt = document.createElement('td');
+    tdSubt.textContent = linea.subtotal.toFixed(2);
+    tr.appendChild(tdSubt);
+
+    const tdAcc = document.createElement('td');
+    const btnDel = document.createElement('button');
+    btnDel.textContent = 'Eliminar';
+    btnDel.dataset.idx = i;
+    btnDel.className = 'del-line';
+    tdAcc.appendChild(btnDel);
+    tr.appendChild(tdAcc);
+
+    els.tablaPresupuestoBody.appendChild(tr);
+
+    inputCant.addEventListener('change', () => {
+      const c = parseInt(inputCant.value);
+      if (c > 0) {
+        linea.cantidad = c;
+        linea.subtotal = recalcularSubtotalLinea(linea);
+        actualizarTabla();
+      }
+    });
+
+    miniCanvas.addEventListener('click', () => {
+      editandoIndice = i;
+      perfilActual = linea.perfil;
+      cantidadInput.value = linea.cantidad;
+      rectNoMargin = null;
+      rectWithMargin = null;
+      dimsRect = null;
+      drawAll(perfilActual, null, null, null, false);
+      els.resultadoDiv.style.display = 'none';
+      els.seleccionDiv.style.display = 'block';
+      els.agregarPresupuestoBtn.textContent = 'Actualizar línea';
+    });
+
+    subtotal += linea.subtotal;
+  });
+
+  els.subtotalPresupuesto.textContent = subtotal.toFixed(2);
+  const costePortes = parseFloat(els.portesSelect.value);
+  const totalFinal = subtotal + COSTE_PREPARACION + costePortes;
+  els.totalPresupuesto.textContent = totalFinal.toFixed(2);
+
+  document.querySelectorAll('.del-line').forEach(btn => {
+    btn.onclick = () => {
+      lineasPresupuesto.splice(+btn.dataset.idx, 1);
+      if (editandoIndice !== null && editandoIndice === +btn.dataset.idx) {
+        editandoIndice = null;
+        els.agregarPresupuestoBtn.textContent = 'Agregar al presupuesto';
+      }
+      actualizarTabla();
+    };
+  });
+}
+
+function calcularPrecio() {
+  if (!perfilActual) {
+    alert('Primero carga un DXF');
+    return;
+  }
+  const cant = parseInt(els.cantidadInput.value);
+  if (isNaN(cant) || cant < 1) {
+    alert('Cantidad inválida');
+    return;
+  }
+
+  try {
+    const hull = convexHull(perfilActual);
+    if (hull.length < 3) {
+      alert('Casco convexo inválido');
+      return;
+    }
+    const { width, height, angle, area, cx, cy } = minimumBoundingRectangle(hull);
+    if (width < 0.1 || height < 0.1) {
+      alert('Dimensiones del rectángulo muy pequeñas');
+      return;
+    }
+
+    const wM = width + 2 * MARGEN;
+    const hM = height + 2 * MARGEN;
+    const maxDim = Math.max(wM, hM);
+    const minDim = Math.min(wM, hM);
+
+    if (maxDim > BLOQUE_MAX_ANCHO || minDim > BLOQUE_MAX_ALTO) {
+      els.datosCalculo.innerHTML = `<p class="error">No cabe en bloque 1200x1000 mm. Rectángulo con margen: ${wM.toFixed(2)} x ${hM.toFixed(2)} mm.</p>`;
+      els.agregarPresupuestoBtn.style.display = 'none';
+      els.avisoTolerancia.style.display = 'none';
+      rectNoMargin = null;
+      rectWithMargin = null;
+      dimsRect = null;
+      drawAll(perfilActual, null, null, null, false);
+      els.resultadoDiv.style.display = 'block';
+      return;
+    }
+
+    const areaFig = polygonArea(perfilActual);
+    const perimetroMetros = calcularPerimetro(perfilActual) / 1000;
+    const areaRect = wM * hM;
+    const volFig = (areaFig / 1e6) * (LONGITUD_MM / 1000);
+    const volRect = (areaRect / 1e6) * (LONGITUD_MM / 1000);
+    const volDesp = volRect - volFig;
+
+    const precioPiezaUnit = volFig * PRECIO_FIG;
+    const precioRetalUnit = volDesp * PRECIO_DESP;
+    const costeCorteUnit = perimetroMetros * COSTE_CORTE_POR_M;
+
+    const precioBaseLinea = (precioPiezaUnit + precioRetalUnit + costeCorteUnit) * cant + COSTE_MANEJO;
+    const precioTotalLinea = precioBaseLinea / DIVISOR;
+    const precioUnitEfectivo = precioTotalLinea / cant;
+
+    const porcentajeDesperdicio = (volDesp / volRect) * 100;
+    const porcentajeAprovechado = (volFig / volRect) * 100;
+
+    ultimoCalculo = {
+      descripcion: `Perfil (${perfilActual.length} vértices)`,
+      cantidad: cant,
+      precioPiezaUnit,
+      precioRetalUnit,
+      costeCorteUnit,
+      manejo: COSTE_MANEJO,
+      subtotal: precioTotalLinea,
+      perfil: perfilActual.slice()
+    };
+
+    els.datosCalculo.innerHTML = `
+      <h3>Resultado</h3>
+      <p><strong>Longitud considerada:</strong> ${LONGITUD_MM} mm (${LONGITUD_MM/1000} m)</p>
+      <p><strong>Área figura:</strong> ${(areaFig/100).toFixed(2)} cm²</p>
+      <p><strong>Perímetro de corte:</strong> ${perimetroMetros.toFixed(2)} m</p>
+      <p><strong>Rect. mínimo sin margen:</strong> ${width.toFixed(2)} x ${height.toFixed(2)} mm (ángulo ${(angle*180/Math.PI).toFixed(1)}°)</p>
+      <p><strong>Rect. con margen (5 mm):</strong> ${wM.toFixed(2)} x ${hM.toFixed(2)} mm</p>
+      <p><strong>Volumen pieza:</strong> ${volFig.toFixed(6)} m³</p>
+      <p><strong>Volumen retal:</strong> ${volDesp.toFixed(6)} m³</p>
+      <p><strong>Volumen total rectángulo:</strong> ${volRect.toFixed(6)} m³</p>
+      <p><strong>Desperdicio:</strong> ${porcentajeDesperdicio.toFixed(2)}% del total (aprovechado: ${porcentajeAprovechado.toFixed(2)}%)</p>
+      <p><strong>Precio pieza (600 €/m³):</strong> ${precioPiezaUnit.toFixed(2)} €/ud</p>
+      <p><strong>Precio retal (250 €/m³):</strong> ${precioRetalUnit.toFixed(2)} €/ud</p>
+      <p><strong>Corte (4 €/m):</strong> ${costeCorteUnit.toFixed(2)} €/ud</p>
+      <p><strong>Manejo por línea (11 €):</strong> ${COSTE_MANEJO.toFixed(2)} €</p>
+      <p><strong>Precio base línea:</strong> ${precioBaseLinea.toFixed(2)} €</p>
+      <p><strong>Precio línea (dividido por 0.7):</strong> ${precioTotalLinea.toFixed(2)} €</p>
+      <p><strong>Precio unitario efectivo:</strong> ${precioUnitEfectivo.toFixed(2)} €/ud</p>
+      <p><strong>Total línea (${cant} uds):</strong> ${precioTotalLinea.toFixed(2)} €</p>`;
+
+    els.avisoTolerancia.style.display = 'block';
+    els.avisoTolerancia.textContent = 'Tolerancia ±0.5 mm';
+    els.agregarPresupuestoBtn.style.display = 'inline-block';
+
+    rectNoMargin = rectCorners(cx, cy, width, height, angle, 0);
+    rectWithMargin = rectCorners(cx, cy, width, height, angle, MARGEN);
+    dimsRect = { width, height, angle, cx, cy };
+    drawAll(perfilActual, rectNoMargin, rectWithMargin, dimsRect, true);
+
+    els.resultadoDiv.style.display = 'block';
+  } catch (err) {
+    console.error('Error al calcular:', err);
+    alert('Ocurrió un error al calcular. Revisa la consola (F12).');
+  }
+}
+
+// ===== EVENTOS =====
+els.dxfInput.addEventListener('change', async e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const text = await file.text();
+  const puntos = importarDXF(text);
+  if (!puntos) {
+    els.seleccionDiv.style.display = 'none';
+    els.resultadoDiv.style.display = 'none';
+    return;
+  }
+  perfilActual = puntos;
+  editandoIndice = null;
+  els.agregarPresupuestoBtn.textContent = 'Agregar al presupuesto';
+  const area = polygonArea(puntos);
+  els.perfilSelect.innerHTML = `<option>Perfil (${puntos.length} vértices, ${(area/100).toFixed(2)} cm²)</option>`;
+  els.seleccionDiv.style.display = 'block';
+  els.resultadoDiv.style.display = 'none';
+  rectNoMargin = null;
+  rectWithMargin = null;
+  dimsRect = null;
+  drawAll(puntos, null, null, null, false);
+});
+
+els.calcularBtn.addEventListener('click', () => {
+  calcularPrecio();
+});
+
+els.agregarPresupuestoBtn.addEventListener('click', () => {
+  if (!ultimoCalculo) return;
+  if (editandoIndice !== null) {
+    const idx = editandoIndice;
+    const linea = lineasPresupuesto[idx];
+    linea.cantidad = ultimoCalculo.cantidad;
+    linea.precioPiezaUnit = ultimoCalculo.precioPiezaUnit;
+    linea.precioRetalUnit = ultimoCalculo.precioRetalUnit;
+    linea.costeCorteUnit = ultimoCalculo.costeCorteUnit;
+    linea.manejo = ultimoCalculo.manejo;
+    linea.subtotal = recalcularSubtotalLinea(linea);
+    linea.perfil = ultimoCalculo.perfil.slice();
+    editandoIndice = null;
+    els.agregarPresupuestoBtn.textContent = 'Agregar al presupuesto';
+  } else {
+    lineasPresupuesto.push({
+      descripcion: ultimoCalculo.descripcion,
+      cantidad: ultimoCalculo.cantidad,
+      precioPiezaUnit: ultimoCalculo.precioPiezaUnit,
+      precioRetalUnit: ultimoCalculo.precioRetalUnit,
+      costeCorteUnit: ultimoCalculo.costeCorteUnit,
+      manejo: ultimoCalculo.manejo,
+      subtotal: ultimoCalculo.subtotal,
+      perfil: ultimoCalculo.perfil.slice()
+    });
+  }
+  actualizarTabla();
+});
+
+els.limpiarPresupuestoBtn.onclick = () => {
+  if (confirm('¿Limpiar presupuesto?')) {
+    lineasPresupuesto = [];
+    editandoIndice = null;
+    els.agregarPresupuestoBtn.textContent = 'Agregar al presupuesto';
+    actualizarTabla();
+  }
+};
+</script>
+</body>
+</html>
