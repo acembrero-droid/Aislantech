@@ -1473,29 +1473,44 @@ const App = (() => {
         $('confirmOkBtn').onclick = executeRemoveTab;
         $('confirmCancelBtn').onclick = cancelRemoveTab;
 
+        // Zoom con rueda (suavizado)
         $('canvas').onwheel = e => {
-            e.preventDefault(); if (!polygons.length) return;
+            e.preventDefault();
+            if (!polygons.length) return;
             const rect = canvas.getBoundingClientRect();
             const mx = (e.clientX - rect.left) * (canvas.width / rect.width);
             const my = (e.clientY - rect.top) * (canvas.height / rect.height);
             const wBefore = getWorld(mx, my);
-            zoomLevel = Math.max(0.1, Math.min(zoomLevel * (e.deltaY < 0 ? 1.15 : 1 / 1.15), 50));
+            // Factor de zoom ajustado: 1.08 por cada 100 unidades de deltaY
+            const zoomFactor = Math.pow(1.08, -e.deltaY / 100);
+            zoomLevel = Math.max(0.1, Math.min(zoomLevel * zoomFactor, 50));
             const cw = canvas.width, ch = canvas.height, cx = (minX + maxX) / 2, cy = (minY + maxY) / 2;
             offsetX = mx - cw / 2 - (wBefore.x - cx) * baseScale * zoomLevel;
             offsetY = my - ch / 2 + (wBefore.y - cy) * baseScale * zoomLevel;
             draw();
         };
+
         $('canvas').onmousedown = e => {
             if (!polygons.length) return;
             const rect = canvas.getBoundingClientRect();
             const mx = (e.clientX - rect.left) * (canvas.width / rect.width);
             const my = (e.clientY - rect.top) * (canvas.height / rect.height);
             const w = getWorld(mx, my);
-            if (editMode === 'CROP' && !showThermalMap && e.button === 0) { isCropping = true; cropStartX = w.x; cropStartY = w.y; cropRect = { x1: w.x, y1: w.y, x2: w.x, y2: w.y }; return; }
-            isDragging = true; hasDragged = false; dragStartX = mx - offsetX; dragStartY = my - offsetY;
+            if (editMode === 'CROP' && !showThermalMap && e.button === 0) {
+                isCropping = true;
+                cropStartX = w.x;
+                cropStartY = w.y;
+                cropRect = { x1: w.x, y1: w.y, x2: w.x, y2: w.y };
+                return;
+            }
+            isDragging = true;
+            hasDragged = false;
+            dragStartX = mx - offsetX;
+            dragStartY = my - offsetY;
             canvas.classList.add('grabbing');
             canvas._dragStartClient = { x: e.clientX, y: e.clientY };
         };
+
         $('canvas').onmousemove = e => {
             if (!polygons.length) return;
             const rect = canvas.getBoundingClientRect();
@@ -1503,13 +1518,25 @@ const App = (() => {
             const my = (e.clientY - rect.top) * (canvas.height / rect.height);
             if (isDragging) {
                 const ds = canvas._dragStartClient;
-                if (ds && Math.hypot(e.clientX - ds.x, e.clientY - ds.y) > 3) hasDragged = true;
-                if (editMode === 'PAN' || showThermalMap || editMode === 'MATERIAL' || editMode === 'BOUNDARY') { offsetX = mx - dragStartX; offsetY = my - dragStartY; draw(); }
+                // Umbral de arrastre aumentado a 5 píxeles
+                if (ds && Math.hypot(e.clientX - ds.x, e.clientY - ds.y) > 5) {
+                    hasDragged = true;
+                }
+                if (editMode === 'PAN' || showThermalMap || editMode === 'MATERIAL' || editMode === 'BOUNDARY') {
+                    offsetX = mx - dragStartX;
+                    offsetY = my - dragStartY;
+                    draw();
+                }
                 return;
             }
             if (showThermalMap || editMode === 'PAN') return;
             const w = getWorld(mx, my);
-            if (isCropping) { cropRect.x2 = w.x; cropRect.y2 = w.y; draw(); return; }
+            if (isCropping) {
+                cropRect.x2 = w.x;
+                cropRect.y2 = w.y;
+                draw();
+                return;
+            }
             let updated = false;
             if (editMode === 'BOUNDARY') {
                 let minD = Infinity, hE = -1;
@@ -1519,11 +1546,21 @@ const App = (() => {
                     const dist = Math.hypot(w.x - (edge.p1.x + t * dx), w.y - (edge.p1.y + t * dy));
                     if (dist < minD) { minD = dist; hE = i; }
                 });
-                if (minD > 12 / (baseScale * zoomLevel)) hE = -1;
+                // Tolerancia en píxeles (12 px)
+                if (minD * baseScale * zoomLevel > 12) hE = -1;
                 if (hE !== hoveredEdgeIdx) { hoveredEdgeIdx = hE; updated = true; }
             } else if (editMode === 'MATERIAL') {
                 let hP = -1;
-                for (let i = polygons.length - 1; i >= 0; i--) { let inside = false; const pts = polygons[i].pts; for (let k = 0, l = pts.length - 1; k < pts.length; l = k++) if (((pts[k].y > w.y) !== (pts[l].y > w.y)) && (w.x < (pts[l].x - pts[k].x) * (w.y - pts[k].y) / (pts[l].y - pts[k].y) + pts[k].x)) inside = !inside; if (inside) { hP = i; break; } }
+                for (let i = polygons.length - 1; i >= 0; i--) {
+                    let inside = false;
+                    const pts = polygons[i].pts;
+                    for (let k = 0, l = pts.length - 1; k < pts.length; l = k++) {
+                        if (((pts[k].y > w.y) !== (pts[l].y > w.y)) && (w.x < (pts[l].x - pts[k].x) * (w.y - pts[k].y) / (pts[l].y - pts[k].y) + pts[k].x)) {
+                            inside = !inside;
+                        }
+                    }
+                    if (inside) { hP = i; break; }
+                }
                 if (hP !== hoveredPolyIdx) { hoveredPolyIdx = hP; updated = true; }
             }
             if (updated) draw();
@@ -1531,12 +1568,25 @@ const App = (() => {
 
         window.addEventListener('mouseup', e => {
             if (isDragging) {
-                isDragging = false; canvas.classList.remove('grabbing');
+                isDragging = false;
+                canvas.classList.remove('grabbing');
             }
             if (isCropping) {
                 isCropping = false;
-                if (Math.hypot(cropRect.x1 - cropRect.x2, cropRect.y1 - cropRect.y2) < 5 / baseScale / zoomLevel) { cropRect = null; calcBounds = null; setStatus('Área restablecida.'); }
-                else { const m = 5 / baseScale / zoomLevel; calcBounds = { minX: Math.min(cropRect.x1, cropRect.x2) - m, maxX: Math.max(cropRect.x1, cropRect.x2) + m, minY: Math.min(cropRect.y1, cropRect.y2) - m, maxY: Math.max(cropRect.y1, cropRect.y2) + m }; setStatus('Área acotada.'); }
+                if (Math.hypot(cropRect.x1 - cropRect.x2, cropRect.y1 - cropRect.y2) < 5 / baseScale / zoomLevel) {
+                    cropRect = null;
+                    calcBounds = null;
+                    setStatus('Área restablecida.');
+                } else {
+                    const m = 5 / baseScale / zoomLevel;
+                    calcBounds = {
+                        minX: Math.min(cropRect.x1, cropRect.x2) - m,
+                        maxX: Math.max(cropRect.x1, cropRect.x2) + m,
+                        minY: Math.min(cropRect.y1, cropRect.y2) - m,
+                        maxY: Math.max(cropRect.y1, cropRect.y2) + m
+                    };
+                    setStatus('Área acotada.');
+                }
                 draw();
             }
         });
@@ -1545,15 +1595,30 @@ const App = (() => {
             if (!polygons.length) return;
             if (hasDragged) return;
             if (showThermalMap || editMode === 'PAN') return;
-            
             if (editMode === 'BOUNDARY' && hoveredEdgeIdx !== -1) {
                 const activeType = parseInt($('boundSelect').value);
                 if (e.shiftKey) {
                     let queue = [[hoveredEdgeIdx, [hoveredEdgeIdx]]], visited = new Set([hoveredEdgeIdx]);
-                    while (queue.length) { const [curr, path] = queue.shift(); if (boundaryEdges[curr].type && curr !== hoveredEdgeIdx) { path.forEach(id => boundaryEdges[id].type = activeType); break; } for (const n of boundaryAdj[curr]) if (!visited.has(n)) { visited.add(n); queue.push([n, [...path, n]]); } }
-                } else boundaryEdges[hoveredEdgeIdx].type = activeType;
-                draw(); updateLegendUI();
+                    while (queue.length) {
+                        const [curr, path] = queue.shift();
+                        if (boundaryEdges[curr].type && curr !== hoveredEdgeIdx) {
+                            path.forEach(id => boundaryEdges[id].type = activeType);
+                            break;
+                        }
+                        for (const n of boundaryAdj[curr]) {
+                            if (!visited.has(n)) {
+                                visited.add(n);
+                                queue.push([n, [...path, n]]);
+                            }
+                        }
+                    }
+                } else {
+                    boundaryEdges[hoveredEdgeIdx].type = activeType;
+                }
+                draw();
+                updateLegendUI();
 
+                // Auto-calcular b_f visualmente al marcar contornos
                 let tMinX = Infinity, tMaxX = -Infinity, tMinY = Infinity, tMaxY = -Infinity, hasType2 = false;
                 boundaryEdges.forEach(edge => {
                     if (edge.type === 2) {
@@ -1572,19 +1637,41 @@ const App = (() => {
                     }
                 }
             }
-            if (editMode === 'MATERIAL' && hoveredPolyIdx !== -1) { const mat = parseInt($('matSelect').value); if (!isNaN(mat)) { polygons[hoveredPolyIdx].matIdx = mat; selectedPoly = hoveredPolyIdx; draw(); updateLegendUI(); } }
+            if (editMode === 'MATERIAL' && hoveredPolyIdx !== -1) {
+                const mat = parseInt($('matSelect').value);
+                if (!isNaN(mat)) {
+                    polygons[hoveredPolyIdx].matIdx = mat;
+                    selectedPoly = hoveredPolyIdx;
+                    draw();
+                    updateLegendUI();
+                }
+            }
         };
+
         document.querySelectorAll('#tolInput, #LpInput, #tExt, #tInt, #gridRes, #emissInput').forEach(el => el.onchange = () => { if (ws()) saveState(); });
-        updateMaterialUI(); renderTabs(); draw();
+        updateMaterialUI();
+        renderTabs();
+        draw();
     };
 
     return {
-        switchTab: loadState, addTab, duplicateTab, removeTab, renameTab, saveTabName,
-        setBrush: setBrushMaterial, init, setStatus, updateSettings: () => { if (ws()) saveState(); }
+        switchTab: loadState,
+        addTab,
+        duplicateTab,
+        removeTab,
+        renameTab,
+        saveTabName,
+        setBrush: setBrushMaterial,
+        init,
+        setStatus,
+        updateSettings: () => { if (ws()) saveState(); }
     };
 })();
 
-window.addEventListener('DOMContentLoaded', () => { App.init(); window.setStatus = App.setStatus; });
+window.addEventListener('DOMContentLoaded', () => {
+    App.init();
+    window.setStatus = App.setStatus;
+});
 </script>
 </body>
 </html>
