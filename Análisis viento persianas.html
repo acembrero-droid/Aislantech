@@ -97,8 +97,9 @@
         .sort-info { font-size: 0.7rem; color: #666; margin-left: auto; }
         .paste-section { background: #fafafa; border: 1px solid #eee; border-radius: 8px; padding: 16px; margin-bottom: 20px; }
         .paste-section .header-flex { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 8px; }
-
-        /* ===== NUEVO: Solo la celda del eje que excede el límite se tacha ===== */
+        .tipo-badge { display: inline-block; padding: 1px 6px; border-radius: 3px; font-size: 0.65rem; font-weight: 700; letter-spacing: 0.5px; }
+        .tipo-badge.pur { background: #E3F2FD; color: #1565C0; }
+        .tipo-badge.ex { background: #FFF3E0; color: #E65100; }
         td.excede-eje {
             text-decoration: line-through !important;
             text-decoration-color: #c0392b !important;
@@ -107,7 +108,13 @@
             background: #fff5f5 !important;
             font-weight: 700 !important;
         }
-
+        /* ===== GLOSARIO ===== */
+        .glosario-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-top: 16px; }
+        .glosario-item { background: #fafafa; border: 1px solid #eee; border-left: 3px solid var(--color-primary); border-radius: 6px; padding: 12px 14px; }
+        .glosario-item .term { font-family: 'Montserrat', sans-serif; font-weight: 700; color: var(--color-secondary); font-size: 0.9rem; margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }
+        .glosario-item .term i { color: var(--color-primary-dark); font-size: 0.8rem; }
+        .glosario-item .def { font-size: 0.8rem; color: #555; line-height: 1.5; }
+        .glosario-subtitulo { font-family: 'Montserrat', sans-serif; font-weight: 700; color: var(--color-secondary); font-size: 0.85rem; margin-top: 20px; margin-bottom: 4px; padding-bottom: 4px; border-bottom: 1px dashed #ddd; text-transform: uppercase; letter-spacing: 1px; }
         @media (max-width: 768px) {
             .form-grid { grid-template-columns: 1fr; }
             .hero-tool h1 { font-size: 1.8rem; }
@@ -254,6 +261,8 @@
                         <i class="fas fa-layer-group"></i> Sistemas a comparar
                         <button class="btn-mini" onclick="toggleAllSistemas(true)" style="margin-left: 8px;">Todos</button>
                         <button class="btn-mini" onclick="toggleAllSistemas(false)" style="margin-left: 4px;">Ninguno</button>
+                        <button class="btn-mini" onclick="toggleTipoSistemas('PUR')" style="margin-left: 8px;">Solo PUR</button>
+                        <button class="btn-mini" onclick="toggleTipoSistemas('EX')" style="margin-left: 4px;">Solo Extrusión</button>
                     </div>
                     <div class="checkbox-group" id="selectorSistemas"></div>
                 </div>
@@ -306,6 +315,7 @@
                 <label>Ordenar filas de sistemas por:</label>
                 <select id="ordenCampo" onchange="cambiarOrden()">
                     <option value="nombre">Sistema (nombre)</option>
+                    <option value="tipo">Tipo (PUR/EX)</option>
                     <option value="densidad">Densidad (DN / AD)</option>
                     <option value="cobertura">Cobertura (mm)</option>
                     <option value="eje40">Ø40 (mm)</option>
@@ -319,6 +329,159 @@
             </div>
 
             <div id="resultadosHuecos" style="margin-top: 24px;"></div>
+        </div>
+    </div>
+
+    <!-- ========== GLOSARIO / NOTAS EXPLICATIVAS ========== -->
+    <div class="card" id="glosarioCard">
+        <div class="card-header">
+            <div class="step-badge" style="background:#696969; color:white;">i</div>
+            <div class="card-title">📖 Glosario de conceptos y abreviaturas</div>
+        </div>
+        <div class="card-body">
+            <div class="info-note">
+                Referencia rápida de todos los términos técnicos, normativos y abreviaturas utilizados en este informe y en el PDF generado.
+            </div>
+
+            <div class="glosario-subtitulo">Normativa y cálculo</div>
+            <div class="glosario-grid">
+                <div class="glosario-item">
+                    <div class="term"><i class="fas fa-book"></i> UNE-EN 13659</div>
+                    <div class="def">Norma europea de persianas. Define las clases de resistencia al viento <strong>V1 a V6</strong> y los métodos de ensayo.</div>
+                </div>
+                <div class="glosario-item">
+                    <div class="term"><i class="fas fa-book"></i> CTE DB-SE-AE</div>
+                    <div class="def">Código Técnico de la Edificación · Documento Básico Seguridad Estructural - Acciones en la Edificación. Su Anejo D define las zonas eólicas y coeficientes de exposición.</div>
+                </div>
+                <div class="glosario-item">
+                    <div class="term"><i class="fas fa-percent"></i> Cp</div>
+                    <div class="def">Coeficiente de presión neta. Para persianas con distancia a ventana ≤ 0,5 m se adopta <strong>Cp = 0,18</strong> (UNE-EN 13659 + Manual ASEFAVE).</div>
+                </div>
+                <div class="glosario-item">
+                    <div class="term"><i class="fas fa-wind"></i> ce(z)</div>
+                    <div class="def">Coeficiente de exposición. Función de la altura <strong>z</strong> sobre el suelo y del grado de aspereza del entorno (I a V).</div>
+                </div>
+                <div class="glosario-item">
+                    <div class="term"><i class="fas fa-wind"></i> qb</div>
+                    <div class="def">Presión dinámica básica = 0,5 · ρ · vb². Se adopta ρ = 1,25 kg/m³ (densidad del aire).</div>
+                </div>
+                <div class="glosario-item">
+                    <div class="term"><i class="fas fa-wind"></i> qe</div>
+                    <div class="def">Presión neta de cálculo = qb · ce(z) · Cp. Es la presión que debe soportar la persiana.</div>
+                </div>
+                <div class="glosario-item">
+                    <div class="term"><i class="fas fa-wind"></i> vb</div>
+                    <div class="def">Velocidad básica del viento según zona eólica CTE: <strong>26 m/s</strong> (Zona A - interior), <strong>27 m/s</strong> (Zona B - Atlántico), <strong>29 m/s</strong> (Zona C - Mediterráneo/Canarias/Baleares).</div>
+                </div>
+                <div class="glosario-item">
+                    <div class="term"><i class="fas fa-ruler-vertical"></i> z</div>
+                    <div class="def">Altura del edificio sobre el nivel del suelo (m). Determina el coeficiente de exposición ce(z).</div>
+                </div>
+            </div>
+
+            <div class="glosario-subtitulo">Clases de viento UNE-EN 13659</div>
+            <div class="glosario-grid">
+                <div class="glosario-item">
+                    <div class="term"><i class="fas fa-shield-alt"></i> V2</div>
+                    <div class="def">100 Pa ≈ 46 km/h</div>
+                </div>
+                <div class="glosario-item">
+                    <div class="term"><i class="fas fa-shield-alt"></i> V3</div>
+                    <div class="def">150 Pa ≈ 56 km/h</div>
+                </div>
+                <div class="glosario-item">
+                    <div class="term"><i class="fas fa-shield-alt"></i> V4</div>
+                    <div class="def">250 Pa ≈ 78 km/h</div>
+                </div>
+                <div class="glosario-item">
+                    <div class="term"><i class="fas fa-shield-alt"></i> V5</div>
+                    <div class="def">400 Pa ≈ 92 km/h</div>
+                </div>
+                <div class="glosario-item">
+                    <div class="term"><i class="fas fa-shield-alt"></i> V6</div>
+                    <div class="def">600 Pa ≈ 112 km/h</div>
+                </div>
+            </div>
+
+            <div class="glosario-subtitulo">Tipos de lama y densidad</div>
+            <div class="glosario-grid">
+                <div class="glosario-item">
+                    <div class="term"><span class="tipo-badge pur">PUR</span> Aluminio + Poliuretano</div>
+                    <div class="def">Lama de aluminio con relleno de poliuretano inyectado. Mejora el aislamiento térmico y acústico.</div>
+                </div>
+                <div class="glosario-item">
+                    <div class="term"><span class="tipo-badge ex">EX</span> Aluminio de extrusión</div>
+                    <div class="def">Lama de perfil hueco de aluminio extruido, sin relleno de poliuretano. Mayor rigidez estructural.</div>
+                </div>
+                <div class="glosario-item">
+                    <div class="term"><i class="fas fa-weight-hanging"></i> DN — Densidad Normal</div>
+                    <div class="def">Poliuretano con densidad típica de <strong>90 kg/m³</strong> (o 75 kg/m³ según sistema).</div>
+                </div>
+                <div class="glosario-item">
+                    <div class="term"><i class="fas fa-weight-hanging"></i> AD — Alta Densidad</div>
+                    <div class="def">Poliuretano con densidad típica de <strong>180 kg/m³</strong>. Mejora aislamiento y rigidez. En perfiles de extrusión no aplica (ya son aluminio macizo).</div>
+                </div>
+            </div>
+
+            <div class="glosario-subtitulo">Enrollamiento y división en paños</div>
+            <div class="glosario-grid">
+                <div class="glosario-item">
+                    <div class="term"><i class="fas fa-circle-notch"></i> k</div>
+                    <div class="def">Coeficiente empírico del sistema. Depende del perfil de la lama y su cobertura.</div>
+                </div>
+                <div class="glosario-item">
+                    <div class="term"><i class="fas fa-circle-notch"></i> D — Diámetro de enrollamiento</div>
+                    <div class="def">Diámetro del rollo de lamas enrolladas = √(D_eje² + k · H). Es el hueco que ocupan las lamas dentro del cajón.</div>
+                </div>
+                <div class="glosario-item">
+                    <div class="term"><i class="fas fa-ruler-vertical"></i> H</div>
+                    <div class="def">Altura del hueco a cubrir (mm).</div>
+                </div>
+                <div class="glosario-item">
+                    <div class="term"><i class="fas fa-circle"></i> Ø40 / Ø60 / Ø80</div>
+                    <div class="def">Diámetro del eje de enrollamiento en mm.</div>
+                </div>
+                <div class="glosario-item">
+                    <div class="term"><i class="fas fa-ruler-horizontal"></i> Cob.</div>
+                    <div class="def">Cobertura de la lama en mm. Altura efectiva que cubre cada lama una vez montada.</div>
+                </div>
+                <div class="glosario-item">
+                    <div class="term"><i class="fas fa-layer-group"></i> Nº paños</div>
+                    <div class="def">Número de paños en que se divide la persiana. Cada paño no debe superar el <strong>ancho máximo</strong> permitido por la clase de viento.</div>
+                </div>
+                <div class="glosario-item">
+                    <div class="term"><i class="fas fa-ruler-vertical"></i> Alt. rasante</div>
+                    <div class="def">Altura al rasante del hueco = planta × 3 m. Altura estimada del hueco sobre el nivel del suelo.</div>
+                </div>
+                <div class="glosario-item">
+                    <div class="term"><i class="fas fa-ruler-combined"></i> Ancho máx. por paño</div>
+                    <div class="def">Ancho máximo permitido por la clase de viento para ese sistema y altura de hueco.</div>
+                </div>
+                <div class="glosario-item">
+                    <div class="term"><i class="fas fa-ban"></i> Límite de enrollamiento</div>
+                    <div class="def">Diámetro máximo admisible del rollo. Las celdas del eje que lo superan se marcan tachadas en rojo.</div>
+                </div>
+            </div>
+
+            <div class="glosario-subtitulo">Datos históricos y otros</div>
+            <div class="glosario-grid">
+                <div class="glosario-item">
+                    <div class="term"><i class="fas fa-database"></i> ERA5</div>
+                    <div class="def">Reanálisis climático del ECMWF (European Centre for Medium-Range Weather Forecasts). Proporciona series históricas de viento desde 1950 hasta hoy con cobertura global.</div>
+                </div>
+                <div class="glosario-item">
+                    <div class="term"><i class="fas fa-bolt"></i> Racha máxima</div>
+                    <div class="def">Velocidad máxima instantánea del viento registrada en el periodo analizado (1950-2024). Se usa solo a efectos comparativos; el cálculo reglamentario usa la velocidad normativa <strong>vb</strong>.</div>
+                </div>
+                <div class="glosario-item">
+                    <div class="term"><i class="fas fa-wind"></i> Grado de aspereza</div>
+                    <div class="def">Clasificación del entorno según CTE: I (costa), II (campo abierto), III (rural), IV (urbano/industrial), V (centro gran ciudad).</div>
+                </div>
+                <div class="glosario-item">
+                    <div class="term"><i class="fas fa-exclamation-triangle"></i> Colores oscuros</div>
+                    <div class="def">Para persianas de colores oscuros, la anchura máxima recomendada debe reducirse en <strong>0,50 m</strong> por el mayor calentamiento y dilatación.</div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -361,36 +524,100 @@
 
     // ==================== SISTEMAS ====================
     const SISTEMAS_DATA = {
-        "MICRALUM-39": { cobertura: 39, k: 10.0, densidad: "DN",
+        // ---------- LAMAS ALUMINIO + POLIURETANO (PUR) ----------
+        "MICRALUM-39": { tipo: 'PUR', cobertura: 39, k: 10.0, densidad: "DN",
             viento: { 2250: { V2: 2600, V3: 2200, V4: 1850, V5: 1500, V6: 1300 },
                       1450: { V2: 3500, V3: 2900, V4: 2300, V5: 1850, V6: 1550 } } },
-        "MINICUR-43 DN": { cobertura: 43, k: 10.0, densidad: "DN",
+        "MINICUR-43 DN": { tipo: 'PUR', cobertura: 43, k: 10.0, densidad: "DN",
             viento: { 2250: { V2: 3250, V3: 2700, V4: 2200, V5: 1800, V6: 1500 },
                       1450: { V2: 3750, V3: 3100, V4: 2400, V5: 1950, V6: 1600 } } },
-        "MINICUR-43 AD": { cobertura: 43, k: 10.0, densidad: "AD",
+        "MINICUR-43 AD": { tipo: 'PUR', cobertura: 43, k: 10.0, densidad: "AD",
             viento: { 2250: { V2: 3330, V3: 2700, V4: 2220, V5: 1860, V6: 1600 } } },
-        "TERMILUM-45 DN": { cobertura: 45, k: 10.0, densidad: "DN",
+        "TERMILUM-45 DN": { tipo: 'PUR', cobertura: 45, k: 10.0, densidad: "DN",
             viento: { 2250: { V2: 2650, V3: 2200, V4: 1800, V5: 1500, V6: 1250 },
                       1450: { V2: 2750, V3: 2300, V4: 1850, V5: 1500, V6: 1250 } } },
-        "TERMILUM-45 AD": { cobertura: 45, k: 10.0, densidad: "AD",
+        "TERMILUM-45 AD": { tipo: 'PUR', cobertura: 45, k: 10.0, densidad: "AD",
             viento: { 2250: { V2: 2750, V3: 2310, V4: 1850, V5: 1510, V6: 1270 } } },
-        "TERMISAX-45": { cobertura: 45, k: 17.0, densidad: "DN",
+        "TERMISAX-45": { tipo: 'PUR', cobertura: 45, k: 17.0, densidad: "DN",
             viento: { 2250: { V2: 3800, V3: 3100, V4: 2400, V5: 1900, V6: 1550 },
                       1450: { V2: 4600, V3: 3700, V4: 2750, V5: 2100, V6: 1700 } } },
-        "TERMICUR-45 DN": { cobertura: 45, k: 13.0, densidad: "DN",
+        "TERMICUR-45 DN": { tipo: 'PUR', cobertura: 45, k: 13.0, densidad: "DN",
             viento: { 2250: { V2: 3100, V3: 2600, V4: 2050, V5: 1650, V6: 1350 },
                       1450: { V2: 3700, V3: 3000, V4: 2300, V5: 1800, V6: 1450 } } },
-        "TERMICUR-45 AD": { cobertura: 45, k: 13.0, densidad: "AD",
+        "TERMICUR-45 AD": { tipo: 'PUR', cobertura: 45, k: 13.0, densidad: "AD",
             viento: { 2250: { V2: 3270, V3: 2710, V4: 2110, V5: 1670, V6: 1360 } } },
-        "TERMICUR-50 DN": { cobertura: 50, k: 14.0, densidad: "DN",
+        "TERMICUR-50 DN": { tipo: 'PUR', cobertura: 50, k: 14.0, densidad: "DN",
             viento: { 2250: { V2: 3840, V3: 3270, V4: 2670, V5: 2210, V6: 1880 },
                       1450: { V2: 3880, V3: 3320, V4: 2730, V5: 2270, V6: 1950 } } },
-        "TERMICUR-50 AD": { cobertura: 50, k: 14.0, densidad: "AD",
+        "TERMICUR-50 AD": { tipo: 'PUR', cobertura: 50, k: 14.0, densidad: "AD",
             viento: { 2250: { V2: 4070, V3: 3410, V4: 2720, V5: 2210, V6: 1880 } } },
-        "TERMICUR-55": { cobertura: 55, k: 19.0, densidad: "DN",
+        "TERMICUR-55": { tipo: 'PUR', cobertura: 55, k: 19.0, densidad: "DN",
             viento: { 2250: { V2: 5500, V3: 4500, V4: 3500, V5: 2800, V6: 2300 },
-                      1450: { V2: 6000, V3: 4900, V4: 3800, V5: 3000, V6: 2400 } } }
+                      1450: { V2: 6000, V3: 4900, V4: 3800, V5: 3000, V6: 2400 } } },
+
+        // ---------- LAMAS ALUMINIO DE EXTRUSIÓN (EX) ----------
+        "MINISEGUR-40": { tipo: 'EX', cobertura: 40, k: 12.0, densidad: "EX",
+            viento: { 2250: { V2: 5200, V3: 4500, V4: 3800, V5: 3300, V6: 2900 },
+                      1450: { V2: 6000, V3: 5200, V4: 4400, V5: 3800, V6: 3400 } } },
+        "SEGUR EC-60": { tipo: 'EX', cobertura: 60, k: 22.0, densidad: "EX",
+            viento: { 2250: { V2: 6500, V3: 5600, V4: 4800, V5: 4300, V6: 4000 },
+                      1450: { V2: 7500, V3: 6500, V4: 5500, V5: 5000, V6: 4600 } } },
+        "BLOCKALUM-39": { tipo: 'EX', cobertura: 41, k: 12.0, densidad: "EX",
+            viento: { 2250: { V2: 5000, V3: 4300, V4: 3700, V5: 3200, V6: 2900 },
+                      1450: { V2: 5800, V3: 5000, V4: 4300, V5: 3700, V6: 3400 } } },
+        "BLOCKALUM-45": { tipo: 'EX', cobertura: 46, k: 15.0, densidad: "EX",
+            viento: { 2250: { V2: 5400, V3: 4600, V4: 3900, V5: 3300, V6: 2860 },
+                      1450: { V2: 6200, V3: 5300, V4: 4500, V5: 3900, V6: 3300 } } },
+        "BLOCKALUM-60 / VS-150": { tipo: 'EX', cobertura: 73, k: 28.0, densidad: "EX",
+            viento: { 2250: { V2: 7000, V3: 6000, V4: 5200, V5: 4700, V6: 4300 },
+                      1450: { V2: 8000, V3: 6900, V4: 6000, V5: 5400, V6: 5000 } } },
+        "BIOCLIM-45": { tipo: 'EX', cobertura: 43, k: 14.0, densidad: "EX",
+            viento: { 2250: { V2: 5200, V3: 4500, V4: 3800, V5: 3300, V6: 3000 },
+                      1450: { V2: 6000, V3: 5200, V4: 4400, V5: 3800, V6: 3400 } } }
     };
+
+    // ==================== GLOSARIO (para el PDF) ====================
+    const GLOSARIO_PDF = [
+        // Normativa y cálculo
+        { cat: 'NORMATIVA Y CÁLCULO', term: 'UNE-EN 13659', def: 'Norma europea de persianas. Define las clases de resistencia al viento V1 a V6 y los métodos de ensayo.' },
+        { cat: 'NORMATIVA Y CÁLCULO', term: 'CTE DB-SE-AE', def: 'Código Técnico de la Edificación · Documento Básico Seguridad Estructural - Acciones en la Edificación. Su Anejo D define zonas eólicas y coeficientes de exposición.' },
+        { cat: 'NORMATIVA Y CÁLCULO', term: 'Cp', def: 'Coeficiente de presión neta. Para persianas con distancia a ventana ≤ 0,5 m se adopta Cp = 0,18 (UNE-EN 13659 + Manual ASEFAVE).' },
+        { cat: 'NORMATIVA Y CÁLCULO', term: 'ce(z)', def: 'Coeficiente de exposición. Función de la altura z sobre el suelo y del grado de aspereza del entorno (I a V).' },
+        { cat: 'NORMATIVA Y CÁLCULO', term: 'qb', def: 'Presión dinámica básica = 0,5 · ρ · vb². Se adopta ρ = 1,25 kg/m³ (densidad del aire).' },
+        { cat: 'NORMATIVA Y CÁLCULO', term: 'qe', def: 'Presión neta de cálculo = qb · ce(z) · Cp. Es la presión que debe soportar la persiana.' },
+        { cat: 'NORMATIVA Y CÁLCULO', term: 'vb', def: 'Velocidad básica del viento según zona eólica CTE: 26 m/s (Zona A - interior), 27 m/s (Zona B - Atlántico), 29 m/s (Zona C - Mediterráneo/Canarias/Baleares).' },
+        { cat: 'NORMATIVA Y CÁLCULO', term: 'z', def: 'Altura del edificio sobre el nivel del suelo (m). Determina el coeficiente de exposición ce(z).' },
+
+        // Clases de viento
+        { cat: 'CLASES DE VIENTO UNE-EN 13659', term: 'V2', def: '100 Pa ≈ 46 km/h' },
+        { cat: 'CLASES DE VIENTO UNE-EN 13659', term: 'V3', def: '150 Pa ≈ 56 km/h' },
+        { cat: 'CLASES DE VIENTO UNE-EN 13659', term: 'V4', def: '250 Pa ≈ 78 km/h' },
+        { cat: 'CLASES DE VIENTO UNE-EN 13659', term: 'V5', def: '400 Pa ≈ 92 km/h' },
+        { cat: 'CLASES DE VIENTO UNE-EN 13659', term: 'V6', def: '600 Pa ≈ 112 km/h' },
+
+        // Tipos de lama
+        { cat: 'TIPOS DE LAMA Y DENSIDAD', term: 'PUR', def: 'Lama de aluminio con relleno de poliuretano inyectado. Mejora el aislamiento térmico y acústico.' },
+        { cat: 'TIPOS DE LAMA Y DENSIDAD', term: 'EX', def: 'Lama de perfil hueco de aluminio extruido, sin relleno de poliuretano. Mayor rigidez estructural.' },
+        { cat: 'TIPOS DE LAMA Y DENSIDAD', term: 'DN — Densidad Normal', def: 'Poliuretano con densidad típica de 90 kg/m³ (o 75 kg/m³ según sistema).' },
+        { cat: 'TIPOS DE LAMA Y DENSIDAD', term: 'AD — Alta Densidad', def: 'Poliuretano con densidad típica de 180 kg/m³. Mejora aislamiento y rigidez. En perfiles de extrusión no aplica.' },
+
+        // Enrollamiento
+        { cat: 'ENROLLAMIENTO Y PAÑOS', term: 'k', def: 'Coeficiente empírico del sistema. Depende del perfil de la lama y su cobertura.' },
+        { cat: 'ENROLLAMIENTO Y PAÑOS', term: 'D — Diámetro de enrollamiento', def: 'Diámetro del rollo de lamas enrolladas = √(D_eje² + k · H). Es el hueco que ocupan las lamas dentro del cajón.' },
+        { cat: 'ENROLLAMIENTO Y PAÑOS', term: 'H', def: 'Altura del hueco a cubrir (mm).' },
+        { cat: 'ENROLLAMIENTO Y PAÑOS', term: 'Ø40 / Ø60 / Ø80', def: 'Diámetro del eje de enrollamiento en mm.' },
+        { cat: 'ENROLLAMIENTO Y PAÑOS', term: 'Cob.', def: 'Cobertura de la lama en mm. Altura efectiva que cubre cada lama una vez montada.' },
+        { cat: 'ENROLLAMIENTO Y PAÑOS', term: 'Nº paños', def: 'Número de paños en que se divide la persiana. Cada paño no debe superar el ancho máximo permitido por la clase de viento.' },
+        { cat: 'ENROLLAMIENTO Y PAÑOS', term: 'Alt. rasante', def: 'Altura al rasante del hueco = planta × 3 m. Altura estimada del hueco sobre el nivel del suelo.' },
+        { cat: 'ENROLLAMIENTO Y PAÑOS', term: 'Ancho máx. por paño', def: 'Ancho máximo permitido por la clase de viento para ese sistema y altura de hueco.' },
+        { cat: 'ENROLLAMIENTO Y PAÑOS', term: 'Límite de enrollamiento', def: 'Diámetro máximo admisible del rollo. Las celdas del eje que lo superan se marcan tachadas en rojo.' },
+
+        // Datos históricos
+        { cat: 'DATOS HISTÓRICOS Y OTROS', term: 'ERA5', def: 'Reanálisis climático del ECMWF. Proporciona series históricas de viento desde 1950 con cobertura global.' },
+        { cat: 'DATOS HISTÓRICOS Y OTROS', term: 'Racha máxima', def: 'Velocidad máxima instantánea del viento registrada en el periodo analizado (1950-2024). Se usa solo a efectos comparativos.' },
+        { cat: 'DATOS HISTÓRICOS Y OTROS', term: 'Grado de aspereza', def: 'Clasificación del entorno según CTE: I (costa), II (campo abierto), III (rural), IV (urbano/industrial), V (centro gran ciudad).' },
+        { cat: 'DATOS HISTÓRICOS Y OTROS', term: 'Colores oscuros', def: 'Para persianas de colores oscuros, la anchura máxima recomendada debe reducirse en 0,50 m por el mayor calentamiento y dilatación.' }
+    ];
 
     // ==================== ESTADO ====================
     let geoCoords = null;
@@ -442,6 +669,10 @@
     function getClaseBadge(clase) {
         if (!clase) return '<span class="badge-pano ko">Insuficiente</span>';
         return `<span class="badge-pano ok">${clase}</span>`;
+    }
+    function getTipoBadge(tipo) {
+        if (tipo === 'EX') return '<span class="tipo-badge ex">EX</span>';
+        return '<span class="tipo-badge pur">PUR</span>';
     }
 
     // ==================== LÍMITE DE ENROLLAMIENTO ====================
@@ -532,6 +763,7 @@
         return [...arr].sort((a, b) => {
             let va, vb;
             if (c === 'nombre') { va = a.nombre; vb = b.nombre; }
+            else if (c === 'tipo') { va = a.tipo; vb = b.tipo; }
             else if (c === 'densidad') { va = a.densidad; vb = b.densidad; }
             else if (c === 'cobertura') { va = a.cobertura; vb = b.cobertura; }
             else if (c === 'maxWidth') { va = a.maxWidth; vb = b.maxWidth; }
@@ -565,15 +797,26 @@
     function renderSelectores() {
         const contSistemas = document.getElementById('selectorSistemas');
         contSistemas.innerHTML = '';
-        Object.keys(SISTEMAS_DATA).forEach(sis => {
+        const claves = Object.keys(SISTEMAS_DATA).sort((a,b) => {
+            const ta = SISTEMAS_DATA[a].tipo, tb = SISTEMAS_DATA[b].tipo;
+            if (ta !== tb) return ta.localeCompare(tb);
+            return a.localeCompare(b);
+        });
+        claves.forEach(sis => {
+            const s = SISTEMAS_DATA[sis];
             const label = document.createElement('label');
             const checked = sistemasSeleccionados.includes(sis) ? 'checked' : '';
-            label.innerHTML = `<input type="checkbox" value="${sis}" ${checked} onchange="actualizarSeleccion()"><span>${sis}</span>`;
+            label.innerHTML = `<input type="checkbox" value="${sis}" ${checked} onchange="actualizarSeleccion()"><span>${getTipoBadge(s.tipo)} ${sis}</span>`;
             contSistemas.appendChild(label);
         });
     }
     window.toggleAllSistemas = function(activar) {
         sistemasSeleccionados = activar ? Object.keys(SISTEMAS_DATA) : [];
+        renderSelectores();
+        if (document.getElementById('resultadosHuecos').innerHTML !== '') calcularTodos();
+    };
+    window.toggleTipoSistemas = function(tipo) {
+        sistemasSeleccionados = Object.keys(SISTEMAS_DATA).filter(k => SISTEMAS_DATA[k].tipo === tipo);
         renderSelectores();
         if (document.getElementById('resultadosHuecos').innerHTML !== '') calcularTodos();
     };
@@ -655,17 +898,14 @@
                 const numPanos = clase ? Math.ceil(h.ancho / maxWidth) : 0;
                 const diametros = {};
                 ejesSeleccionados.forEach(e => { diametros[e] = calcDiametroEnrollamiento(h.alto, s.k, e); });
-
-                // ⬇️ NUEVO: array de ejes que exceden el límite para esta fila
                 const ejesExcedidos = [];
                 if (limite !== null) {
                     ejesSeleccionados.forEach(e => {
                         if (diametros[e] > limite) ejesExcedidos.push(e);
                     });
                 }
-
                 sistemasResult.push({
-                    nombre: sistema, cobertura: s.cobertura, densidad: s.densidad,
+                    nombre: sistema, tipo: s.tipo, cobertura: s.cobertura, densidad: s.densidad,
                     diametros, maxWidth, numPanos, ejesExcedidos
                 });
                 numPanosTotal += numPanos;
@@ -677,7 +917,6 @@
             });
         });
 
-        // Renderizado HTML
         let html = '';
         if (limite !== null) {
             html += `<div class="info-note" style="margin-bottom:16px; background:#fff5f5; border-left-color:#c0392b; color:#c0392b;">
@@ -685,6 +924,14 @@
                 Solo se tacha la celda del eje concreto que supera este límite.
             </div>`;
         }
+        const numPUR = sistemasSeleccionados.filter(s => SISTEMAS_DATA[s].tipo === 'PUR').length;
+        const numEX = sistemasSeleccionados.filter(s => SISTEMAS_DATA[s].tipo === 'EX').length;
+        html += `<div style="font-size:0.75rem; color:#666; margin-bottom:12px;">
+            Comparando <strong>${sistemasSeleccionados.length}</strong> sistemas · 
+            <span class="tipo-badge pur">PUR</span> ${numPUR} · 
+            <span class="tipo-badge ex">EX</span> ${numEX}
+        </div>`;
+
         resumenHuecos.forEach((h) => {
             html += `
                 <div style="background: #f9f9f9; border-radius: 8px; padding: 16px; margin-bottom: 20px; border-left: 4px solid #EDD00E;">
@@ -708,7 +955,7 @@
                     <table style="width: 100%; font-size: 0.75rem;">
                         <thead>
                             <tr style="background: #696969;">
-                                <th>Sistema</th><th>Dens.</th><th>Cob.<br>(mm)</th>
+                                <th>Tipo</th><th>Sistema</th><th>Dens.</th><th>Cob.<br>(mm)</th>
                                 ${ejesHeader}
                                 <th>Ancho máx.<br>por paño</th><th>Nº paños</th>
                             </tr>
@@ -718,13 +965,13 @@
             h.sistemas.forEach(s => {
                 const ejesTd = ejesSeleccionados.map(e => {
                     const v = Math.round(s.diametros[e]);
-                    // ⬇️ Solo se añade la clase si ESTE eje concreto excede el límite
                     const esExcedido = s.ejesExcedidos && s.ejesExcedidos.includes(e);
                     const cls = esExcedido ? ' class="excede-eje"' : '';
                     return `<td style="text-align:center;"${cls}>${v}</td>`;
                 }).join('');
                 html += `
                     <tr>
+                        <td style="text-align:center;">${getTipoBadge(s.tipo)}</td>
                         <td style="font-weight:600;">${s.nombre}</td>
                         <td style="text-align:center;">${s.densidad}</td>
                         <td style="text-align:center;">${s.cobertura}</td>
@@ -1264,7 +1511,7 @@
                 });
             }
 
-            // Páginas 6+: Enrollamiento (solo se tacha la celda del eje concreto)
+            // Páginas 6+: Enrollamiento
             if (d.huecosResultado && d.huecosResultado.length > 0) {
                 const ejes = d.ejesSeleccionados || [40, 60, 80];
                 doc.addPage();
@@ -1299,13 +1546,13 @@
                     doc.text(`Planta ${h.planta} · Ancho ${h.ancho} mm · Alto ${h.alto} mm · Alt. rasante ${h.alturaRasante.toFixed(1)} m · Presión ${Math.round(h.pa)} Pa · Clase ${h.clase || 'Insuficiente'}`, marginL + 16, cursorY);
                     cursorY += 4;
                     const headEjes = ejes.map(e => `Ø${e} (mm)`);
-                    const headRow = ['Sistema', 'Dens.', 'Cob.', ...headEjes, 'Ancho máx/paño', 'Nº paños'];
+                    const headRow = ['Tipo', 'Sistema', 'Dens.', 'Cob.', ...headEjes, 'Ancho máx/paño', 'Nº paños'];
                     const bodyRows = h.sistemas.map(s => {
                         const ejesVals = ejes.map(e => Math.round(s.diametros[e] || 0).toString());
-                        return [s.nombre, s.densidad, s.cobertura.toString(), ...ejesVals, Math.round(s.maxWidth).toString(), s.numPanos.toString()];
+                        const tipoTxt = s.tipo === 'EX' ? 'EX' : 'PUR';
+                        return [tipoTxt, s.nombre, s.densidad, s.cobertura.toString(), ...ejesVals, Math.round(s.maxWidth).toString(), s.numPanos.toString()];
                     });
 
-                    // ⬇️ Construir mapa { rowIndex: Set(columnIndex) } solo para las celdas de ejes concretos excedidos
                     const celdasATachar = new Map();
                     if (limite) {
                         h.sistemas.forEach((s, rowIdx) => {
@@ -1314,8 +1561,7 @@
                                 s.ejesExcedidos.forEach(eje => {
                                     const ejePos = ejes.indexOf(eje);
                                     if (ejePos >= 0) {
-                                        // columna del eje = 3 + ejePos (0=Sistema, 1=Dens, 2=Cob)
-                                        cols.add(3 + ejePos);
+                                        cols.add(4 + ejePos);
                                     }
                                 });
                                 if (cols.size > 0) celdasATachar.set(rowIdx, cols);
@@ -1325,28 +1571,28 @@
 
                     const numEjes = ejes.length;
                     const anchoTabla = pageW - marginL - marginR;
-                    const anchoSistema = 32, anchoDens = 12, anchoCob = 12, anchoAnchoMax = 22, anchoPanos = 16;
-                    const anchoEje = (anchoTabla - anchoSistema - anchoDens - anchoCob - anchoAnchoMax - anchoPanos) / numEjes;
+                    const anchoTipo = 12, anchoSistema = 30, anchoDens = 11, anchoCob = 11, anchoAnchoMax = 20, anchoPanos = 14;
+                    const anchoEje = (anchoTabla - anchoTipo - anchoSistema - anchoDens - anchoCob - anchoAnchoMax - anchoPanos) / numEjes;
                     const columnStyles = {
-                        0: { cellWidth: anchoSistema },
-                        1: { cellWidth: anchoDens, halign: 'center' },
-                        2: { cellWidth: anchoCob, halign: 'center' }
+                        0: { cellWidth: anchoTipo, halign: 'center', fontStyle: 'bold' },
+                        1: { cellWidth: anchoSistema },
+                        2: { cellWidth: anchoDens, halign: 'center' },
+                        3: { cellWidth: anchoCob, halign: 'center' }
                     };
-                    for (let e = 0; e < numEjes; e++) columnStyles[3 + e] = { cellWidth: anchoEje, halign: 'center' };
-                    columnStyles[3 + numEjes] = { cellWidth: anchoAnchoMax, halign: 'center' };
-                    columnStyles[4 + numEjes] = { cellWidth: anchoPanos, halign: 'center', fontStyle: 'bold' };
+                    for (let e = 0; e < numEjes; e++) columnStyles[4 + e] = { cellWidth: anchoEje, halign: 'center' };
+                    columnStyles[4 + numEjes] = { cellWidth: anchoAnchoMax, halign: 'center' };
+                    columnStyles[5 + numEjes] = { cellWidth: anchoPanos, halign: 'center', fontStyle: 'bold' };
 
                     doc.autoTable({
                         startY: cursorY,
                         head: [headRow],
                         body: bodyRows,
                         theme: 'grid',
-                        styles: { fontSize: 7, cellPadding: 1.2, overflow: 'linebreak' },
-                        headStyles: { fillColor: C_DARK, textColor: [255,255,255], fontStyle: 'bold', fontSize: 7 },
+                        styles: { fontSize: 6.8, cellPadding: 1.1, overflow: 'linebreak' },
+                        headStyles: { fillColor: C_DARK, textColor: [255,255,255], fontStyle: 'bold', fontSize: 6.8 },
                         columnStyles: columnStyles,
                         margin: { left: marginL, right: marginR },
                         pageBreak: 'avoid',
-                        // ⬇️ Solo se colorean las celdas concretas de ejes excedidos
                         didParseCell: function(data) {
                             if (data.section === 'body') {
                                 const cols = celdasATachar.get(data.row.index);
@@ -1357,7 +1603,6 @@
                                 }
                             }
                         },
-                        // ⬇️ Solo se dibuja la línea de tachado en esas celdas concretas
                         didDrawCell: function(data) {
                             if (data.section === 'body') {
                                 const cols = celdasATachar.get(data.row.index);
@@ -1373,6 +1618,50 @@
                     cursorY = doc.lastAutoTable.finalY + 8;
                 }
             }
+
+            // ==================== PÁGINA FINAL: GLOSARIO ====================
+            doc.addPage();
+            doc.setFillColor(...C_DARK); doc.rect(0, 0, pageW, 15, 'F');
+            doc.setTextColor(255,255,255); doc.setFont("helvetica", "bold"); doc.setFontSize(11);
+            doc.text("GLOSARIO DE CONCEPTOS Y ABREVIATURAS", 25, 10);
+
+            // Agrupar por categoría
+            const categorias = {};
+            GLOSARIO_PDF.forEach(g => {
+                if (!categorias[g.cat]) categorias[g.cat] = [];
+                categorias[g.cat].push(g);
+            });
+
+            let gy = 22;
+            const gyMax = bottomContent;
+            Object.keys(categorias).forEach(cat => {
+                // Título de categoría
+                if (gy + 12 > gyMax) { doc.addPage(); doc.setFillColor(...C_DARK); doc.rect(0, 0, pageW, 15, 'F'); doc.setTextColor(255,255,255); doc.setFont("helvetica", "bold"); doc.setFontSize(11); doc.text("GLOSARIO (cont.)", 25, 10); gy = 22; }
+                doc.setFillColor(...C_GOLD);
+                doc.rect(marginL, gy, pageW - marginL - marginR, 6, 'F');
+                doc.setTextColor(...C_DARK);
+                doc.setFont("helvetica", "bold");
+                doc.setFontSize(9);
+                doc.text(cat, marginL + 2, gy + 4.5);
+                gy += 8;
+                // Items
+                const bodyItems = categorias[cat].map(g => [g.term, g.def]);
+                doc.autoTable({
+                    startY: gy,
+                    head: [['Término', 'Definición']],
+                    body: bodyItems,
+                    theme: 'grid',
+                    styles: { fontSize: 7.5, cellPadding: 1.5 },
+                    headStyles: { fillColor: C_DARK, textColor: [255,255,255], fontSize: 8 },
+                    columnStyles: {
+                        0: { cellWidth: 45, fontStyle: 'bold', textColor: C_DARK },
+                        1: { cellWidth: 'auto' }
+                    },
+                    margin: { left: marginL, right: marginR },
+                    pageBreak: 'auto'
+                });
+                gy = doc.lastAutoTable.finalY + 6;
+            });
 
             doc.save(`Informe_Viento_${d.proj.replace(/\s/g,'_')}.pdf`);
         } catch(err) {
