@@ -128,9 +128,7 @@ canvas{display:block;position:absolute;top:0;left:0}
     </div>
     <div class="sec">
       <h3>🔧 Herramientas <span class="mini" id="toolCount">0</span></h3>
-      <div class="tool-list" id="toolList">
-        <div class="empty-hint">Sin herramientas. Añade una.</div>
-      </div>
+      <div class="tool-list" id="toolList"><div class="empty-hint">Sin herramientas. Añade una.</div></div>
       <button class="btn small" id="btnAddTool" style="width:100%;margin-top:6px;">+ Añadir herramienta</button>
     </div>
     <div class="sec">
@@ -187,22 +185,12 @@ canvas{display:block;position:absolute;top:0;left:0}
       </div>
     </div>
 
-    <!-- ★ NUEVA SECCIÓN: configuración de máquina -->
     <div class="sec machine-sec">
       <h3>⚙ Máquina</h3>
-      <div class="row">
-        <label title="Tiempo de espera desde que arranca el mandrino hasta que empieza a moverse">Pausa mandrino</label>
-        <input type="number" id="cfgSpindlePause" value="12" step="0.5" min="0" max="120">
-      </div>
-      <div class="row">
-        <label>Rapid XY (mm/min)</label>
-        <input type="number" id="cfgRapidXY" value="5000" step="100" min="100">
-      </div>
-      <div class="row">
-        <label>Rapid Z (mm/min)</label>
-        <input type="number" id="cfgRapidZ" value="3000" step="100" min="100">
-      </div>
-      <div class="hint">Se emite <code>G4 P&lt;pausa&gt;</code> tras cada arranque de mandrino.</div>
+      <div class="row"><label title="Tiempo entre arranque del mandrino y primer movimiento">Pausa mandrino</label><input type="number" id="cfgSpindlePause" value="12" step="0.5" min="0" max="120"></div>
+      <div class="row"><label>Rapid XY (mm/min)</label><input type="number" id="cfgRapidXY" value="5000" step="100" min="100"></div>
+      <div class="row"><label>Rapid Z (mm/min)</label><input type="number" id="cfgRapidZ" value="3000" step="100" min="100"></div>
+      <div class="hint">Se emite <code>G4 P&lt;pausa&gt;</code> tras cada arranque de mandrino.<br><b>Entre capas</b> solo se retrae a Z retracción, no a Z seguro.</div>
     </div>
 
     <div class="sec">
@@ -219,16 +207,10 @@ canvas{display:block;position:absolute;top:0;left:0}
       <div class="row"><label>Z retrac.</label><input type="number" id="cRetract" value="5" step="0.5"></div>
       <div class="row"><label>Solape</label><input type="number" id="cOverlap" value="0.35" step="0.05"></div>
       <div class="row"><label>Sentido corte</label>
-        <select id="cCutDir">
-          <option value="ccw">↺ Antihorario (CCW)</option>
-          <option value="cw">↻ Horario (CW)</option>
-        </select>
+        <select id="cCutDir"><option value="ccw">↺ Antihorario (CCW)</option><option value="cw">↻ Horario (CW)</option></select>
       </div>
       <div class="row"><label>Giro mandrino</label>
-        <select id="cSpindleDir">
-          <option value="M3">M3 (Horario)</option>
-          <option value="M4">M4 (Antihorario)</option>
-        </select>
+        <select id="cSpindleDir"><option value="M3">M3 (Horario)</option><option value="M4">M4 (Antihorario)</option></select>
       </div>
       <div class="hint">El corte (C/I/E) desplaza todo el contorno <b>incluido el punto de entrada</b> a media herramienta.<br>El <b>punto de inicio</b> es el más cercano a (0,0).</div>
       <button class="btn small" id="btnDupTool" style="width:100%;margin-top:4px;">⧉ Duplicar como nueva</button>
@@ -252,9 +234,6 @@ canvas{display:block;position:absolute;top:0;left:0}
 const STORAGE_KEY = 'cncdxf_project_v2';
 const PROJECT_VERSION = 2;
 
-// ═══════════════════════════════════════════════
-//  PARSER DXF
-// ═══════════════════════════════════════════════
 function parseDXF(text){
   text = text.replace(/^\uFEFF/,'').replace(/\r\n/g,'\n').replace(/\r/g,'\n');
   const lines = text.split('\n');
@@ -268,8 +247,7 @@ function parseDXF(text){
       const code = parseInt(codeStr, 10);
       if (isNaN(code)){ idx++; continue; }
       if (code === 0) return props;
-      props.push({ code, value: lines[idx+1].trim() });
-      idx += 2;
+      props.push({ code, value: lines[idx+1].trim() }); idx += 2;
     }
     return props;
   }
@@ -279,7 +257,7 @@ function parseDXF(text){
       if (codeStr === ''){ idx++; continue; }
       const code = parseInt(codeStr, 10);
       if (isNaN(code)){ idx++; continue; }
-      if (code === 0){ const value = lines[idx+1].trim(); idx += 2; return value; }
+      if (code === 0){ const v = lines[idx+1].trim(); idx += 2; return v; }
       idx += 2;
     }
     return null;
@@ -402,9 +380,6 @@ function normalize(parsed){
   return out;
 }
 
-// ═══════════════════════════════════════════════
-//  ESTADO
-// ═══════════════════════════════════════════════
 const S = {
   entities: [], operations: [],
   tools: [], activeToolId: null,
@@ -418,18 +393,9 @@ const S = {
   offsetX:0, offsetY:0,
   flipArcs:false, flipY:false,
   lastMiddleClick: 0,
-  // Máquina
-  spindlePause: 12,     // segundos
-  rapidXY: 5000,        // mm/min
-  rapidZ: 3000,         // mm/min
-  // Simulación
-  simMoves: [],          // { type, points, z, duration }
-  simMoveTimes: [],      // tiempo acumulado al final de cada move
-  simTotalTime: 0,
-  simT: 0,
-  simPlaying:false,
-  simSpeedMult: 1,
-  simAnimId:null, simLastFrame:0,
+  spindlePause: 12, rapidXY: 5000, rapidZ: 3000,
+  simMoves: [], simMoveTimes: [], simTotalTime: 0, simT: 0,
+  simPlaying:false, simSpeedMult: 1, simAnimId:null, simLastFrame:0,
   saveTimer: null,
   cutContours: {},
 };
@@ -445,17 +411,12 @@ const simSpeedEl = $('simSpeed'), simSpeedVal = $('simSpeedVal');
 const simProgressEl = $('simProgress'), simPctEl = $('simPct'), simOpInfoEl = $('simOpInfo');
 const simTotalLabel = $('simTotalLabel');
 
-// ═══════════════════════════════════════════════
-//  HERRAMIENTAS
-// ═══════════════════════════════════════════════
 function uid(prefix){ return prefix + Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
 function createDefaultTool(num){
-  return {
-    id: uid('tool_'), name: 'Herramienta ' + num, toolNumber: num,
+  return { id: uid('tool_'), name: 'Herramienta ' + num, toolNumber: num,
     diam: 3.175, rpm: 12000, feed: 800, feedZ: 400,
     step: 1.5, depth: 6, safe: 15, retract: 5, overlap: 0.35,
-    cutDir: 'ccw', spindleDir: 'M3',
-  };
+    cutDir: 'ccw', spindleDir: 'M3' };
 }
 function getActiveTool(){ return S.tools.find(t => t.id === S.activeToolId) || null; }
 function getToolById(id){ return S.tools.find(t => t.id === id) || null; }
@@ -518,14 +479,9 @@ function updateToolsList(){
     const spinIcon = (t.spindleDir === 'M4' ? 'M4' : 'M3');
     return `<div class="tool-item ${isActive?'active':''}" data-id="${t.id}">
       <span class="tnum">T${t.toolNumber}</span>
-      <div class="tinfo">
-        <div class="tname">${escapeHtml(t.name)}</div>
-        <div class="tspec">Ø${t.diam}mm · ${t.rpm}rpm · ${dirIcon}${spinIcon} ${uses?'· '+uses+' op':''}</div>
-      </div>
-      <div class="tact">
-        <button class="rename" data-id="${t.id}">✏</button>
-        <button class="del" data-id="${t.id}">🗑</button>
-      </div>
+      <div class="tinfo"><div class="tname">${escapeHtml(t.name)}</div>
+      <div class="tspec">Ø${t.diam}mm · ${t.rpm}rpm · ${dirIcon}${spinIcon} ${uses?'· '+uses+' op':''}</div></div>
+      <div class="tact"><button class="rename" data-id="${t.id}">✏</button><button class="del" data-id="${t.id}">🗑</button></div>
     </div>`;
   }).join('');
   toolListEl.querySelectorAll('.tool-item').forEach(el => {
@@ -536,9 +492,6 @@ function updateToolsList(){
 }
 function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
-// ═══════════════════════════════════════════════
-//  CONTORNOS
-// ═══════════════════════════════════════════════
 function entityToPoints(e){
   const pts = [];
   if (e.type === 'LINE'){ pts.push({x: e.x1, y: e.y1}); pts.push({x: e.x2, y: e.y2}); }
@@ -547,7 +500,6 @@ function entityToPoints(e){
   else if (e.type === 'LWPOLYLINE'){ for (const v of e.vertices) pts.push({x: v.x, y: v.y}); }
   return pts;
 }
-
 function chainEntitiesToContour(entityList, tol){
   tol = tol || 0.15;
   const parts = [], partMeta = [];
@@ -602,13 +554,11 @@ function chainEntitiesToContour(entityList, tol){
   if (isClosed && result.length > 2) result = result.slice(0, -1);
   return { points: result, closed: isClosed };
 }
-
 function signedArea(pts){
   let a = 0; const n = pts.length;
   for (let i = 0; i < n; i++){ const p1 = pts[i], p2 = pts[(i + 1) % n]; a += p1.x * p2.y - p2.x * p1.y; }
   return a / 2;
 }
-
 function offsetPolyline(pts, offset){
   if (pts.length < 3 || Math.abs(offset) < 1e-9) return pts;
   const n = pts.length;
@@ -634,7 +584,6 @@ function offsetPolyline(pts, offset){
   }
   return out;
 }
-
 function rotateContourToStart(pts, ox, oy){
   if (!pts || pts.length < 2) return pts;
   let bestIdx = 0, bestDist = Infinity;
@@ -642,7 +591,6 @@ function rotateContourToStart(pts, ox, oy){
   if (bestIdx === 0) return pts;
   return pts.slice(bestIdx).concat(pts.slice(0, bestIdx));
 }
-
 function resolveCutContour(op, tool){
   const entityList = op.ids.map(i => S.entities[i]).filter(Boolean);
   if (!entityList.length) return null;
@@ -664,7 +612,6 @@ function resolveCutContour(op, tool){
   if (contour.closed && pts.length >= 3) pts = rotateContourToStart(pts, 0, 0);
   return { points: pts, closed: contour.closed };
 }
-
 function rebuildAllContours(){
   S.cutContours = {};
   for (let i = 0; i < S.operations.length; i++){
@@ -676,10 +623,6 @@ function rebuildAllContours(){
     if (c) S.cutContours[i] = c;
   }
 }
-
-// ═══════════════════════════════════════════════
-//  FORMATO DE TIEMPO
-// ═══════════════════════════════════════════════
 function fmtTime(sec){
   if (!isFinite(sec) || sec < 0) sec = 0;
   const total = Math.floor(sec);
@@ -689,24 +632,15 @@ function fmtTime(sec){
   return String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
 }
 
-// ═══════════════════════════════════════════════
-//  PERSISTENCIA
-// ═══════════════════════════════════════════════
 function scheduleSave(){ clearTimeout(S.saveTimer); S.saveTimer = setTimeout(saveToLocalStorage, 500); }
 function serializeProject(){
-  return {
-    version: PROJECT_VERSION, savedAt: new Date().toISOString(),
+  return { version: PROJECT_VERSION, savedAt: new Date().toISOString(),
     dxfText: S.dxfText, dxfFilename: S.dxfFilename,
     entities: S.entities, tools: S.tools, activeToolId: S.activeToolId,
-    operations: S.operations,
-    offsetX: S.offsetX, offsetY: S.offsetY,
+    operations: S.operations, offsetX: S.offsetX, offsetY: S.offsetY,
     layerVis: S.layerVis, flipArcs: S.flipArcs, flipY: S.flipY,
     viewScale: S.scale, viewOffsetX: S.offX, viewOffsetY: S.offY,
-    // ★ NUEVO
-    spindlePause: S.spindlePause,
-    rapidXY: S.rapidXY,
-    rapidZ: S.rapidZ,
-  };
+    spindlePause: S.spindlePause, rapidXY: S.rapidXY, rapidZ: S.rapidZ };
 }
 function saveToLocalStorage(){
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(serializeProject())); flashSaveIndicator('✓ Guardado'); }
@@ -737,13 +671,11 @@ function applyProjectData(data){
   S.layerVis = data.layerVis || {};
   S.flipArcs = !!data.flipArcs; S.flipY = !!data.flipY;
   S.scale = data.viewScale || 2; S.offX = data.viewOffsetX || 0; S.offY = data.viewOffsetY || 0;
-  // ★ NUEVO
   if (typeof data.spindlePause === 'number') S.spindlePause = data.spindlePause;
   if (typeof data.rapidXY === 'number') S.rapidXY = data.rapidXY;
   if (typeof data.rapidZ === 'number') S.rapidZ = data.rapidZ;
   $('cfgSpindlePause').value = S.spindlePause;
-  $('cfgRapidXY').value = S.rapidXY;
-  $('cfgRapidZ').value = S.rapidZ;
+  $('cfgRapidXY').value = S.rapidXY; $('cfgRapidZ').value = S.rapidZ;
   $('offsetX').value = S.offsetX; $('offsetY').value = S.offsetY;
   $('btnFlipArcs').textContent = S.flipArcs ? '↺ Arcos' : '↻ Arcos';
   $('btnFlipY').textContent = S.flipY ? '⇅ Y' : '⇅ Y';
@@ -773,9 +705,6 @@ function importProject(file){
   r.readAsText(file);
 }
 
-// ═══════════════════════════════════════════════
-//  TRANSFORMACIONES
-// ═══════════════════════════════════════════════
 function resizeCanvas(){
   const r = canvasContainer.getBoundingClientRect();
   const dpr = window.devicePixelRatio || 1;
@@ -805,9 +734,6 @@ function applyOff(e, ox, oy){
 function effective(){ return S.entities.map(e => applyOff(e, S.offsetX, S.offsetY)); }
 function effectiveContour(pts){ return pts.map(p => ({ x: p.x + S.offsetX, y: p.y + S.offsetY })); }
 
-// ═══════════════════════════════════════════════
-//  BBOX Y FIT
-// ═══════════════════════════════════════════════
 function bbox(list){
   let mnx=Infinity,mny=Infinity,mxx=-Infinity,mxy=-Infinity;
   if (!list.length) return {mnx:-50,mny:-50,mxx:50,mxy:50,w:100,h:100};
@@ -836,9 +762,6 @@ function fitView(){
 }
 function centerOnOrigin(){ S.offX = 0; S.offY = 0; render(); showToast('Vista centrada en (0,0)','success'); }
 
-// ═══════════════════════════════════════════════
-//  DISTANCIAS
-// ═══════════════════════════════════════════════
 function distSeg(px,py,x1,y1,x2,y2){
   const dx=x2-x1, dy=y2-y1, ls=dx*dx+dy*dy;
   if (!ls) return Math.hypot(px-x1, py-y1);
@@ -880,9 +803,6 @@ function closestCircle(wx, wy, thr){
   return bi;
 }
 
-// ═══════════════════════════════════════════════
-//  OPERACIONES
-// ═══════════════════════════════════════════════
 function addDrill(wx, wy){
   if (!S.tools.length){ showToast('Añade primero una herramienta','warn'); return; }
   const ci = closestCircle(wx, wy, 10);
@@ -938,7 +858,7 @@ function updateOpsList(){
     let offSel = '';
     if (op.type === 'cut'){
       const off = op.offset || 'center';
-      offSel = `<select class="op-tool-select" data-i="${i}" data-k="offset" style="max-width:34px;" title="C=centro, I=interior, E=exterior">
+      offSel = `<select class="op-tool-select" data-i="${i}" data-k="offset" style="max-width:34px;">
         <option value="center" ${off==='center'?'selected':''}>C</option>
         <option value="inside" ${off==='inside'?'selected':''}>I</option>
         <option value="outside" ${off==='outside'?'selected':''}>E</option>
@@ -967,9 +887,6 @@ function updateOpsList(){
   });
 }
 
-// ═══════════════════════════════════════════════
-//  CAPAS
-// ═══════════════════════════════════════════════
 function extractLayers(){
   S.layers.clear();
   for (const e of S.entities) S.layers.add(e.layer);
@@ -999,13 +916,12 @@ function updateLayerList(){
   }));
 }
 
-// ═══════════════════════════════════════════════
-//  SIMULACIÓN — con pausa de mandrino
-// ═══════════════════════════════════════════════
+// ★ SIMULACIÓN: retracción entre capas a Z retracción (no Z seguro)
 function buildSimFromOps(){
   rebuildAllContours();
   const moves = [];
-  let lastX = 0, lastY = 0, lastZ = 100;
+  const maxSafe = Math.max(...S.tools.map(t => t.safe), 10);
+  let lastX = 0, lastY = 0, lastZ = maxSafe;
 
   const addMove = (type, pts, z, feedOverride) => {
     if (!pts || pts.length === 0) return;
@@ -1013,9 +929,7 @@ function buildSimFromOps(){
     let duration = 0;
     if (pts.length >= 2){
       let dist = 0;
-      for (let i = 0; i < pts.length - 1; i++){
-        dist += Math.hypot(pts[i+1].x - pts[i].x, pts[i+1].y - pts[i].y);
-      }
+      for (let i = 0; i < pts.length - 1; i++) dist += Math.hypot(pts[i+1].x - pts[i].x, pts[i+1].y - pts[i].y);
       const feed = feedOverride || (type === 'cut' ? 800 : S.rapidXY);
       duration = dist / (feed / 60);
     } else {
@@ -1028,15 +942,10 @@ function buildSimFromOps(){
     const last = pts[pts.length - 1];
     lastX = last.x; lastY = last.y; lastZ = z;
   };
-
-  // ★ Helper: insertar pausa de mandrino (mantiene la posición)
   const addSpindlePause = () => {
-    if (S.spindlePause > 0){
-      moves.push({ type: 'pause', points: [{x:lastX, y:lastY}], z: lastZ, duration: S.spindlePause });
-    }
+    if (S.spindlePause > 0) moves.push({ type:'pause', points:[{x:lastX, y:lastY}], z: lastZ, duration: S.spindlePause });
   };
 
-  // Agrupar por herramienta (mismo orden que genGCode)
   const toolOrder = [];
   const groups = new Map();
   for (const op of S.operations){
@@ -1051,7 +960,11 @@ function buildSimFromOps(){
     const tool = getToolById(tid);
     if (!tool) continue;
     const entries = groups.get(tid);
-    // ★ Pausa de mandrino al inicio de cada grupo de herramienta
+
+    // ★ Asegurar Z seguro antes de la pausa del mandrino (el mandrino siempre arranca a Z15)
+    if (Math.abs(lastZ - tool.safe) > 0.01){
+      addMove('rapid', [{x:lastX, y:lastY}], tool.safe, S.rapidZ);
+    }
     addSpindlePause();
 
     for (const entry of entries){
@@ -1076,15 +989,26 @@ function buildSimFromOps(){
         const ptsEff = effectiveContour(c.points);
         const f = ptsEff[0];
         const pts = c.closed ? ptsEff.concat([ptsEff[0]]) : ptsEff;
+        // ★ Al inicio de la operación, ir a Z seguro
+        if (Math.abs(lastZ - cfg.safe) > 0.01){
+          addMove('rapid', [{x:lastX, y:lastY}], cfg.safe, S.rapidZ);
+        }
         for (let k=0;k<passes;k++){
           const z = -Math.min((k+1)*step, cfg.depth);
-          addMove('rapid', [{x:lastX, y:lastY}, {x:f.x, y:f.y}], cfg.safe, S.rapidXY);
+          // ★ k=0 → XY a safe. k>0 → XY a retract (ya estamos ahí tras el pase anterior).
+          const moveZ = (k === 0) ? cfg.safe : cfg.retract;
+          addMove('rapid', [{x:lastX, y:lastY}, {x:f.x, y:f.y}], moveZ, S.rapidXY);
           addMove('cut', [{x:f.x, y:f.y}], z, cfg.feedZ);
           addMove('cut', pts, z, cfg.feed);
           const lastPt = pts[pts.length - 1];
           addMove('rapid', [{x:lastPt.x, y:lastPt.y}], cfg.retract, S.rapidZ);
         }
       } else if (op.type === 'pocket'){
+        // ★ Al inicio de la operación, ir a Z seguro (una sola vez)
+        if (Math.abs(lastZ - cfg.safe) > 0.01){
+          addMove('rapid', [{x:lastX, y:lastY}], cfg.safe, S.rapidZ);
+        }
+        let firstMove = true;
         for (const a of op.areas){
           if (a.shape === 'rect'){
             const x1 = Math.min(a.x1,a.x2)+cfg.diam/2, y1 = Math.min(a.y1,a.y2)+cfg.diam/2;
@@ -1093,7 +1017,9 @@ function buildSimFromOps(){
             const stepY = cfg.diam * (1 - cfg.overlap);
             for (let k=0;k<passes;k++){
               const z = -Math.min((k+1)*step, cfg.depth);
-              addMove('rapid', [{x:lastX, y:lastY}, {x:x1, y:y1}], cfg.safe, S.rapidXY);
+              const moveZ = firstMove ? cfg.safe : cfg.retract;
+              addMove('rapid', [{x:lastX, y:lastY}, {x:x1, y:y1}], moveZ, S.rapidXY);
+              firstMove = false;
               addMove('cut', [{x:x1, y:y1}], z, cfg.feedZ);
               const seg = [{x:x1,y:y1}];
               let dir = 1, y = y1;
@@ -1117,7 +1043,9 @@ function buildSimFromOps(){
                 const st = Math.max(24, Math.ceil(2*Math.PI*rr / (stepR*0.5)));
                 const pts = [];
                 for (let s=0;s<=st;s++){ const ang = s/st*Math.PI*2; pts.push({x:a.cx + rr*Math.cos(ang), y:a.cy + rr*Math.sin(ang)}); }
-                addMove('rapid', [{x:lastX, y:lastY}, {x:a.cx+rr, y:a.cy}], cfg.safe, S.rapidXY);
+                const moveZ = firstMove ? cfg.safe : cfg.retract;
+                addMove('rapid', [{x:lastX, y:lastY}, {x:a.cx+rr, y:a.cy}], moveZ, S.rapidXY);
+                firstMove = false;
                 addMove('cut', [{x:a.cx+rr, y:a.cy}], z, cfg.feedZ);
                 addMove('cut', pts, z, cfg.feed);
                 addMove('rapid', [{x:pts[pts.length-1].x, y:pts[pts.length-1].y}], cfg.retract, S.rapidZ);
@@ -1133,11 +1061,8 @@ function buildSimFromOps(){
   const times = [0];
   let total = 0;
   for (const mv of moves){ total += mv.duration; times.push(total); }
-  S.simMoves = moves;
-  S.simMoveTimes = times;
-  S.simTotalTime = total;
-  S.simT = 0;
-  S.simPlaying = false;
+  S.simMoves = moves; S.simMoveTimes = times; S.simTotalTime = total;
+  S.simT = 0; S.simPlaying = false;
   updateSimUI();
 }
 
@@ -1151,10 +1076,8 @@ function updateSimUI(){
   while (mi < S.simMoveTimes.length - 1 && S.simMoveTimes[mi+1] <= S.simT) mi++;
   const mv = S.simMoves[Math.min(mi, S.simMoves.length-1)];
   if (mv){
-    if (mv.type === 'pause'){
-      simOpInfoEl.textContent = '⏸ PAUSA mandrino';
-      simOpInfoEl.style.color = '#ff8800';
-    } else {
+    if (mv.type === 'pause'){ simOpInfoEl.textContent = '⏸ PAUSA mandrino'; simOpInfoEl.style.color = '#ff8800'; }
+    else {
       const isCut = mv.type === 'cut';
       simOpInfoEl.textContent = (isCut ? '✂ CORTE' : '➤ RÁPIDO') + ' Z=' + (mv.z||0).toFixed(2) + 'mm';
       simOpInfoEl.style.color = isCut ? '#00ff88' : '#4da6ff';
@@ -1163,7 +1086,6 @@ function updateSimUI(){
   if (S.simPlaying){ btnPlay.textContent = '⏸ PAUSA'; btnPlay.classList.add('playing'); btnPlay.classList.remove('play'); }
   else { btnPlay.textContent = '▶ PLAY'; btnPlay.classList.remove('playing'); btnPlay.classList.add('play'); }
 }
-
 function simPlay(){
   if (!S.simMoves.length){ showToast('Genera primero','warn'); return; }
   if (S.simT >= S.simTotalTime) S.simT = 0;
@@ -1194,9 +1116,6 @@ function simSeek(pct){ S.simT = (pct / 1000) * S.simTotalTime; updateSimUI(); re
 function simReset(){ if (S.simAnimId) cancelAnimationFrame(S.simAnimId); S.simPlaying=false; S.simT=0; updateSimUI(); render(); }
 function simEnd(){ if (S.simAnimId) cancelAnimationFrame(S.simAnimId); S.simPlaying=false; S.simT = S.simTotalTime; updateSimUI(); render(); }
 
-// ═══════════════════════════════════════════════
-//  RENDER
-// ═══════════════════════════════════════════════
 function render(){
   const r = canvasContainer.getBoundingClientRect();
   ctx.clearRect(0,0,r.width,r.height);
@@ -1313,27 +1232,19 @@ function drawSimulation(r){
     const mvStart = accTime;
     const mvEnd = accTime + mv.duration;
     if (S.simT <= mvStart) break;
-
     const isCurrent = S.simT < mvEnd;
     const progress = isCurrent ? (S.simT - mvStart) / mv.duration : 1;
     const pts = mv.points;
-
     if (mv.type === 'pause'){
-      // En pausa, la herramienta se queda en el punto y muestra un halo naranja
-      if (isCurrent){
-        toolPos = pts[0]; toolZ = mv.z; toolIsCut = false; toolIsPause = true;
-      }
+      if (isCurrent){ toolPos = pts[0]; toolZ = mv.z; toolIsCut = false; toolIsPause = true; }
       accTime = mvEnd;
       if (isCurrent) break;
       continue;
     }
-
     if (!pts || pts.length < 1){ accTime = mvEnd; continue; }
-
     const isCut = mv.type === 'cut';
     const color = isCut ? '#00ff88' : '#4da6ff';
     const lw = isCut ? 3 : 2;
-
     if (pts.length >= 2){
       const segLens = [];
       for (let i = 0; i < pts.length - 1; i++) segLens.push(Math.hypot(pts[i+1].x - pts[i].x, pts[i+1].y - pts[i].y));
@@ -1371,7 +1282,6 @@ function drawSimulation(r){
     accTime = mvEnd;
     if (isCurrent) break;
   }
-
   if (!toolPos && S.simT === 0 && moves.length > 0){
     const firstMv = moves[0];
     if (firstMv.points.length){ toolPos = firstMv.points[0]; toolZ = firstMv.z; toolIsCut = firstMv.type === 'cut'; toolIsPause = firstMv.type === 'pause'; }
@@ -1380,30 +1290,18 @@ function drawSimulation(r){
     const lastMv = moves[moves.length - 1];
     if (lastMv.points.length){ toolPos = lastMv.points[lastMv.points.length - 1]; toolZ = lastMv.z; toolIsCut = lastMv.type === 'cut'; toolIsPause = lastMv.type === 'pause'; }
   }
-
   if (toolPos){
     const s = w2s(toolPos.x, toolPos.y);
     const tool = getToolById(S.activeToolId) || S.tools[0];
     const toolD = (tool ? tool.diam : 3.175) * S.scale;
     const tr = Math.max(8, toolD / 2);
     const haloR = tr + (toolIsCut ? 10 : (toolIsPause ? 14 : 6));
-    let haloColor1, haloColor2, strokeCol;
-    if (toolIsPause){
-      haloColor1 = 'rgba(255,136,0,0.55)';
-      haloColor2 = 'rgba(255,136,0,0.55)';
-      strokeCol = 'rgba(255,136,0,0.8)';
-    } else if (toolIsCut){
-      haloColor1 = 'rgba(0,255,136,0.5)';
-      haloColor2 = 'rgba(0,255,136,0.6)';
-      strokeCol = 'rgba(0,255,136,0.6)';
-    } else {
-      haloColor1 = 'rgba(77,166,255,0.4)';
-      haloColor2 = 'rgba(77,166,255,0.6)';
-      strokeCol = 'rgba(77,166,255,0.6)';
-    }
+    let haloColor1, strokeCol;
+    if (toolIsPause){ haloColor1 = 'rgba(255,136,0,0.55)'; strokeCol = 'rgba(255,136,0,0.8)'; }
+    else if (toolIsCut){ haloColor1 = 'rgba(0,255,136,0.5)'; strokeCol = 'rgba(0,255,136,0.6)'; }
+    else { haloColor1 = 'rgba(77,166,255,0.4)'; strokeCol = 'rgba(77,166,255,0.6)'; }
     const grad = ctx.createRadialGradient(s.x-r.left, s.y-r.top, tr*0.5, s.x-r.left, s.y-r.top, haloR);
-    grad.addColorStop(0, haloColor1);
-    grad.addColorStop(1, 'rgba(0,0,0,0)');
+    grad.addColorStop(0, haloColor1); grad.addColorStop(1, 'rgba(0,0,0,0)');
     ctx.fillStyle = grad;
     ctx.beginPath(); ctx.arc(s.x-r.left, s.y-r.top, haloR, 0, Math.PI*2); ctx.fill();
     ctx.strokeStyle = strokeCol; ctx.lineWidth = 1.5;
@@ -1418,14 +1316,11 @@ function drawSimulation(r){
     ctx.beginPath(); ctx.arc(s.x-r.left, s.y-r.top, tr, 0, Math.PI*2); ctx.stroke();
     ctx.beginPath(); ctx.arc(s.x-r.left, s.y-r.top, 2.5, 0, Math.PI*2);
     ctx.fillStyle = toolIsPause ? '#ff8800' : '#ffdd00'; ctx.fill();
-    // Etiqueta PAUSA
     if (toolIsPause){
       ctx.fillStyle = '#ff8800'; ctx.font = 'bold 11px monospace';
       ctx.fillText('⏸ PAUSA', s.x-r.left + tr + 6, s.y-r.top - 4);
     }
   }
-
-  // HUD
   const hudX = r.left + 12, hudY = r.top + 12, hudW = 250, hudH = 62;
   ctx.fillStyle = 'rgba(0,0,0,0.75)';
   ctx.fillRect(hudX, hudY, hudW, hudH);
@@ -1505,7 +1400,7 @@ function drawEnt(e, color, lw, r){
 }
 
 // ═══════════════════════════════════════════════
-//  G-CODE — con G4 P<pausa>
+//  G-CODE — Mandrino arranca a Z seguro, entre capas solo retrae a Z retracción
 // ═══════════════════════════════════════════════
 function genGCode(){
   if (!S.operations.length){ gcodeEl.textContent = '(Sin operaciones)'; return ''; }
@@ -1540,9 +1435,10 @@ function genGCode(){
     lines.push(`(--- Herramienta T${tool.toolNumber}: ${tool.name} ---)`);
     lines.push(`(Ø${tool.diam}mm · ${tool.rpm}rpm · Avance XY ${tool.feed} · Avance Z ${tool.feedZ})`);
     lines.push(`(Corte ${cutDirName} · Mandrino ${spindleDir} ${dirName})`);
+    // ★ Z seguro antes del cambio de herramienta (el mandrino siempre arranca a Z seguro)
+    lines.push(`G0 Z${tool.safe.toFixed(3)}`);
     lines.push(`T${tool.toolNumber} M6`);
     lines.push(`S${tool.rpm} ${spindleDir}`);
-    // ★ PAUSA CONFIGURABLE antes de empezar a moverse
     lines.push(`G4 P${S.spindlePause}  (pausa estabilización mandrino)`);
     lines.push('');
     toolChangeCount++;
@@ -1568,10 +1464,12 @@ function genGCode(){
         if (!c || c.points.length < 2){ lines.push('(sin contorno resuelto)',''); continue; }
         const pts = effectiveContour(c.points);
         const isClosed = c.closed;
+        const f = pts[0];
+        // ★ Z seguro SOLO al inicio de la operación (no entre capas)
+        lines.push(`G0 Z${tool.safe.toFixed(3)}`);
         for (let k=0;k<passes;k++){
           const z = -Math.min((k+1)*step, tool.depth);
-          const f = pts[0];
-          lines.push(`G0 Z${tool.safe.toFixed(3)}`);
+          // Solo el primer pase va a Z seguro; el resto ya está en Z retracción del pase anterior
           lines.push(`G0 X${f.x.toFixed(3)} Y${f.y.toFixed(3)}`);
           lines.push(`G1 Z${z.toFixed(3)} F${tool.feedZ}`);
           for (let i = 1; i < pts.length; i++){
@@ -1583,9 +1481,12 @@ function genGCode(){
               lines.push(`G1 X${f.x.toFixed(3)} Y${f.y.toFixed(3)} F${tool.feed}`);
             }
           }
+          // ★ Solo se retrae a Z retracción, NO a Z seguro
           lines.push(`G0 Z${tool.retract.toFixed(3)}`);
         }
       } else if (op.type === 'pocket'){
+        // ★ Z seguro SOLO al inicio de la operación (una vez), no entre capas
+        lines.push(`G0 Z${tool.safe.toFixed(3)}`);
         for (const a of op.areas){
           if (a.shape === 'rect'){
             const x1 = Math.min(a.x1,a.x2)+tool.diam/2, y1 = Math.min(a.y1,a.y2)+tool.diam/2;
@@ -1594,7 +1495,6 @@ function genGCode(){
             const stepY = tool.diam * (1 - tool.overlap);
             for (let k=0;k<passes;k++){
               const z = -Math.min((k+1)*step, tool.depth);
-              lines.push(`G0 Z${tool.safe.toFixed(3)}`);
               lines.push(`G0 X${x1.toFixed(3)} Y${y1.toFixed(3)}`);
               lines.push(`G1 Z${z.toFixed(3)} F${tool.feedZ}`);
               let dir = 1, y = y1;
@@ -1615,7 +1515,6 @@ function genGCode(){
               let rr = stepR;
               while (rr <= a.r){
                 const st = Math.max(24, Math.ceil(2*Math.PI*rr / (stepR*0.5)));
-                lines.push(`G0 Z${tool.safe.toFixed(3)}`);
                 lines.push(`G0 X${(a.cx+rr).toFixed(3)} Y${a.cy.toFixed(3)}`);
                 lines.push(`G1 Z${z.toFixed(3)} F${tool.feedZ}`);
                 for (let s=1;s<=st;s++){
@@ -1640,9 +1539,6 @@ function genGCode(){
   return g;
 }
 
-// ═══════════════════════════════════════════════
-//  UI
-// ═══════════════════════════════════════════════
 let toastT;
 function showToast(msg, type=''){
   toastEl.textContent = msg;
@@ -1659,9 +1555,6 @@ function setMode(m){
   render();
 }
 
-// ═══════════════════════════════════════════════
-//  CARGA DE DXF
-// ═══════════════════════════════════════════════
 function onFile(e){
   const file = e.target.files[0]; if (!file) return;
   const reader = new FileReader();
@@ -1692,9 +1585,6 @@ function onFile(e){
   e.target.value = '';
 }
 
-// ═══════════════════════════════════════════════
-//  EVENTOS
-// ═══════════════════════════════════════════════
 $('btnLoad').addEventListener('click', () => $('fileInput').click());
 $('fileInput').addEventListener('change', onFile);
 $('btnSaveProj').addEventListener('click', exportProject);
@@ -1747,19 +1637,9 @@ $('cOverlap').addEventListener('change', () => updateToolField('cOverlap', t => 
 $('cCutDir').addEventListener('change', () => updateToolField('cCutDir', t => { t.cutDir = $('cCutDir').value; }));
 $('cSpindleDir').addEventListener('change', () => updateToolField('cSpindleDir', t => { t.spindleDir = $('cSpindleDir').value; }));
 
-// ★ NUEVO: campos de máquina
-$('cfgSpindlePause').addEventListener('change', () => {
-  S.spindlePause = Math.max(0, parseFloat($('cfgSpindlePause').value) || 0);
-  buildSimFromOps(); render(); scheduleSave();
-});
-$('cfgRapidXY').addEventListener('change', () => {
-  S.rapidXY = Math.max(100, parseFloat($('cfgRapidXY').value) || 5000);
-  buildSimFromOps(); render(); scheduleSave();
-});
-$('cfgRapidZ').addEventListener('change', () => {
-  S.rapidZ = Math.max(100, parseFloat($('cfgRapidZ').value) || 3000);
-  buildSimFromOps(); render(); scheduleSave();
-});
+$('cfgSpindlePause').addEventListener('change', () => { S.spindlePause = Math.max(0, parseFloat($('cfgSpindlePause').value) || 0); buildSimFromOps(); render(); scheduleSave(); });
+$('cfgRapidXY').addEventListener('change', () => { S.rapidXY = Math.max(100, parseFloat($('cfgRapidXY').value) || 5000); buildSimFromOps(); render(); scheduleSave(); });
+$('cfgRapidZ').addEventListener('change', () => { S.rapidZ = Math.max(100, parseFloat($('cfgRapidZ').value) || 3000); buildSimFromOps(); render(); scheduleSave(); });
 
 btnPlay.addEventListener('click', () => { if (S.simPlaying) simPause(); else simPlay(); });
 btnReset.addEventListener('click', simReset);
@@ -1877,12 +1757,8 @@ $('btnCenter').addEventListener('click', () => {
 $('offsetX').addEventListener('change', () => { S.offsetX = parseFloat($('offsetX').value)||0; fitView(); rebuildAllContours(); buildSimFromOps(); render(); scheduleSave(); });
 $('offsetY').addEventListener('change', () => { S.offsetY = parseFloat($('offsetY').value)||0; fitView(); rebuildAllContours(); buildSimFromOps(); render(); scheduleSave(); });
 
-// ═══════════════════════════════════════════════
-//  INIT
-// ═══════════════════════════════════════════════
 function init(){
   resizeCanvas();
-  // Aplicar valores por defecto ANTES de intentar cargar
   $('cfgSpindlePause').value = S.spindlePause;
   $('cfgRapidXY').value = S.rapidXY;
   $('cfgRapidZ').value = S.rapidZ;
@@ -1893,11 +1769,8 @@ function init(){
     loadToolIntoFields(S.tools[0]);
     updateToolsList(); updateOpsList(); extractLayers();
     fitView(); updateSimUI(); render();
-    console.log('🆕 Proyecto nuevo.');
-  } else {
-    console.log('💾 Proyecto restaurado.'); showToast('Proyecto restaurado','success');
-  }
-  console.log('🛠️ CNC DXF → G-Code · pausa mandrino configurable + tiempo HH:MM:SS');
+  } else { showToast('Proyecto restaurado','success'); }
+  console.log('🛠️ CNC DXF → G-Code · entre capas solo retrae a Z retracción, mandrino arranca a Z seguro');
 }
 init();
 })();
