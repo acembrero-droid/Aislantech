@@ -13,8 +13,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 .btn:hover{border-color:var(--accent);color:#fff;background:#2d323b}
 .btn.accent{background:var(--accent);border-color:var(--accent);color:#000;font-weight:600}
 .btn.accent:hover{background:var(--accentH)}
-.btn.danger{border-color:var(--danger);color:var(--danger)}
-.btn.danger:hover{background:var(--danger);color:#fff}
+.btn.danger{border-color:var(--danger);color:var(--danger)}.btn.danger:hover{background:var(--danger);color:#fff}
 .btn.small{padding:4px 9px;font-size:.72rem}
 .file-info{font-size:.72rem;color:var(--text2);margin-left:auto;overflow:hidden;text-overflow:ellipsis;max-width:280px;white-space:nowrap}
 .main{display:flex;flex:1;overflow:hidden}
@@ -33,7 +32,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 .tool-list{max-height:200px;overflow-y:auto;display:flex;flex-direction:column;gap:4px}
 .tool-item{display:flex;align-items:center;gap:6px;padding:6px 8px;background:#22262e;border:1px solid transparent;border-radius:6px;cursor:pointer;font-size:.75rem;transition:all .12s}
 .tool-item:hover{background:#2a2f38;border-color:var(--border)}
-.tool-item.active{border-color:var(--accent);background:#1e2d3d;box-shadow:0 0 8px rgba(77,166,255,.15)}
+.tool-item.active{border-color:var(--accent);background:#1e2d3d}
 .tool-item .tnum{background:var(--accent);color:#000;font-weight:700;font-size:.68rem;padding:2px 6px;border-radius:4px;flex-shrink:0;min-width:26px;text-align:center}
 .tool-item.active .tnum{background:#00d9ff}
 .tool-item .tinfo{flex:1;overflow:hidden}
@@ -65,6 +64,7 @@ canvas{display:block;position:absolute;top:0;left:0}
 .row label{color:var(--text2);white-space:nowrap;min-width:50px}
 .row input,.row select{background:var(--input);border:1px solid var(--border);color:var(--text);padding:4px 7px;border-radius:4px;font-size:.72rem;width:80px;text-align:right;font-family:inherit}
 .row select{text-align:left;width:90px}
+.row input[type="checkbox"]{width:auto;text-align:left;transform:scale(1.2);margin-right:4px;accent-color:var(--accent)}
 .row input:focus,.row select:focus{outline:none;border-color:var(--accent)}
 .gcode{background:#0d0f12;color:#c0d0e0;font-family:Consolas,monospace;font-size:.66rem;border-radius:5px;padding:8px;min-height:120px;max-height:200px;overflow-y:auto;white-space:pre-wrap;border:1px solid var(--border);line-height:1.4}
 .toast{position:fixed;top:16px;right:16px;background:#2d333b;color:#fff;padding:9px 15px;border-radius:6px;font-size:.8rem;z-index:1000;opacity:0;transform:translateY(-20px);transition:all .25s;pointer-events:none;border:1px solid var(--border);max-width:400px}
@@ -93,12 +93,17 @@ canvas{display:block;position:absolute;top:0;left:0}
 .sim-legend span{display:flex;align-items:center;gap:6px}
 .cb{width:14px;height:4px;border-radius:2px;flex-shrink:0}
 .cb.tool{width:12px;height:12px;border-radius:50%;background:transparent;border:2px solid #ffdd00}
-.cb.pause{width:14px;height:4px;background:#ff8800;border-radius:2px;}
+.cb.pause{width:14px;height:4px;background:#ff8800;border-radius:2px}
+.cb.tab{width:14px;height:4px;background:#ff44aa;border-radius:2px}
+.cb.lift{width:14px;height:3px;background:#ffaa44;border-radius:2px}
 .speed-row{display:flex;align-items:center;gap:6px;font-size:.68rem;color:var(--text2);margin-top:4px}
 .speed-row input[type=range]{flex:1;accent-color:var(--accent)}
 .empty-hint{color:var(--text2);font-style:italic;font-size:.72rem;padding:6px 4px}
 .hint{font-size:.6rem;color:var(--text2);font-style:italic;margin-top:2px;line-height:1.3}
 .machine-sec{background:linear-gradient(180deg,#1e242b,#1a1d24);border:1px solid #3a4050}
+.tabs-sec{background:linear-gradient(180deg,#2a1e2b,#1a1d24);border:1px solid #503a50}
+.tabs-sec h3{color:#ff88dd}
+.tabs-sec .info-line{font-size:.62rem;color:var(--text2);padding:4px 6px;background:#1a1d24;border-radius:4px;margin-top:4px;font-family:monospace;line-height:1.5}
 </style>
 </head>
 <body>
@@ -181,16 +186,32 @@ canvas{display:block;position:absolute;top:0;left:0}
         <span><span class="cb" style="background:#00ff88;height:4px;"></span> Corte (G1)</span>
         <span><span class="cb" style="background:#4da6ff;height:3px;background-image:repeating-linear-gradient(90deg,#4da6ff 0,#4da6ff 4px,transparent 4px,transparent 7px);"></span> Rápido (G0)</span>
         <span><span class="cb pause"></span> Pausa mandrino</span>
+        <span><span class="cb tab"></span> Patilla (material sin cortar)</span>
+        <span><span class="cb lift"></span> Tramo de elevación</span>
         <span><span class="cb tool"></span> Herramienta</span>
       </div>
     </div>
 
+    <div class="sec tabs-sec">
+      <h3>🔗 Patillas · última capa</h3>
+      <div class="row">
+        <label>Activar</label>
+        <input type="checkbox" id="tabsEnabled">
+      </div>
+      <div class="row"><label>Cantidad</label><input type="number" id="tabsCount" value="3" step="1" min="1" max="20"></div>
+      <div class="row"><label>Ancho (mm)</label><input type="number" id="tabsWidth" value="1" step="0.1" min="0.1" title="Ancho de material sin cortar, medido en la pieza"></div>
+      <div class="row"><label>Alto Z (mm)</label><input type="number" id="tabsHeight" value="1" step="0.1" min="0.1"></div>
+      <button class="btn small" id="btnShuffleTabs" style="width:100%;margin-top:4px;">🎲 Reubicar patillas</button>
+      <div class="info-line" id="tabsInfo">Selecciona una operación de corte para ver el detalle</div>
+      <div class="hint">El <b>ancho</b> es el que quieres medir en la pieza final (con calibre). La app compensa automáticamente el diámetro de la fresa en el tramo levantado.</div>
+    </div>
+
     <div class="sec machine-sec">
       <h3>⚙ Máquina</h3>
-      <div class="row"><label title="Tiempo entre arranque del mandrino y primer movimiento">Pausa mandrino</label><input type="number" id="cfgSpindlePause" value="12" step="0.5" min="0" max="120"></div>
+      <div class="row"><label>Pausa mandrino</label><input type="number" id="cfgSpindlePause" value="12" step="0.5" min="0" max="120"></div>
       <div class="row"><label>Rapid XY (mm/min)</label><input type="number" id="cfgRapidXY" value="5000" step="100" min="100"></div>
       <div class="row"><label>Rapid Z (mm/min)</label><input type="number" id="cfgRapidZ" value="3000" step="100" min="100"></div>
-      <div class="hint">Se emite <code>G4 P&lt;pausa&gt;</code> tras cada arranque de mandrino.<br><b>Entre capas</b> solo se retrae a Z retracción, no a Z seguro.</div>
+      <div class="hint">Entre capas solo se retrae a Z retracción. El mandrino arranca siempre a Z seguro.</div>
     </div>
 
     <div class="sec">
@@ -212,7 +233,7 @@ canvas{display:block;position:absolute;top:0;left:0}
       <div class="row"><label>Giro mandrino</label>
         <select id="cSpindleDir"><option value="M3">M3 (Horario)</option><option value="M4">M4 (Antihorario)</option></select>
       </div>
-      <div class="hint">El corte (C/I/E) desplaza todo el contorno <b>incluido el punto de entrada</b> a media herramienta.<br>El <b>punto de inicio</b> es el más cercano a (0,0).</div>
+      <div class="hint">El corte (C/I/E) desplaza todo el contorno incluido el punto de entrada a media herramienta.</div>
       <button class="btn small" id="btnDupTool" style="width:100%;margin-top:4px;">⧉ Duplicar como nueva</button>
     </div>
 
@@ -239,43 +260,19 @@ function parseDXF(text){
   const lines = text.split('\n');
   const entities = [], header = {}, blocks = {};
   let idx = 0, section = null, currentBlock = null;
-  function readUntilCode0(){
-    const props = [];
-    while (idx + 1 < lines.length){
-      const codeStr = lines[idx].trim();
-      if (codeStr === ''){ idx++; continue; }
-      const code = parseInt(codeStr, 10);
-      if (isNaN(code)){ idx++; continue; }
-      if (code === 0) return props;
-      props.push({ code, value: lines[idx+1].trim() }); idx += 2;
-    }
-    return props;
-  }
-  function nextCode0(){
-    while (idx + 1 < lines.length){
-      const codeStr = lines[idx].trim();
-      if (codeStr === ''){ idx++; continue; }
-      const code = parseInt(codeStr, 10);
-      if (isNaN(code)){ idx++; continue; }
-      if (code === 0){ const v = lines[idx+1].trim(); idx += 2; return v; }
-      idx += 2;
-    }
-    return null;
-  }
-  function nextNonZero(){
-    while (idx + 1 < lines.length){
-      const codeStr = lines[idx].trim();
-      if (codeStr === ''){ idx++; continue; }
-      const code = parseInt(codeStr, 10);
-      if (isNaN(code)){ idx++; continue; }
-      const value = lines[idx+1].trim(); idx += 2;
-      return { code, value };
-    }
-    return null;
-  }
+  function readUntilCode0(){ const props = [];
+    while (idx + 1 < lines.length){ const cs = lines[idx].trim(); if (cs === ''){ idx++; continue; }
+      const code = parseInt(cs, 10); if (isNaN(code)){ idx++; continue; }
+      if (code === 0) return props; props.push({ code, value: lines[idx+1].trim() }); idx += 2; }
+    return props; }
+  function nextCode0(){ while (idx + 1 < lines.length){ const cs = lines[idx].trim(); if (cs === ''){ idx++; continue; }
+      const code = parseInt(cs, 10); if (isNaN(code)){ idx++; continue; }
+      if (code === 0){ const v = lines[idx+1].trim(); idx += 2; return v; } idx += 2; } return null; }
+  function nextNonZero(){ while (idx + 1 < lines.length){ const cs = lines[idx].trim(); if (cs === ''){ idx++; continue; }
+      const code = parseInt(cs, 10); if (isNaN(code)){ idx++; continue; }
+      const value = lines[idx+1].trim(); idx += 2; return { code, value }; } return null; }
   while (idx < lines.length - 1){
-    const type = nextCode0();
-    if (type === null) break;
+    const type = nextCode0(); if (type === null) break;
     if (type === 'SECTION'){ const p = nextNonZero(); if (p && p.code === 2) section = p.value; continue; }
     if (type === 'ENDSEC'){ section = null; continue; }
     if (type === 'EOF') break;
@@ -289,49 +286,32 @@ function parseDXF(text){
       if (type === 'CIRCLE'){ const e = { type:'CIRCLE', layer:get(8)||'0', cx:parseFloat(get(10)), cy:parseFloat(get(20)), r:parseFloat(get(40)) }; if (isFinite(e.cx)&&isFinite(e.cy)&&isFinite(e.r)&&e.r>0) target.push(e); continue; }
       if (type === 'ARC'){ const e = { type:'ARC', layer:get(8)||'0', cx:parseFloat(get(10)), cy:parseFloat(get(20)), r:parseFloat(get(40)), sa:parseFloat(get(50)), ea:parseFloat(get(51)) }; if ([e.cx,e.cy,e.r,e.sa,e.ea].every(isFinite)&&e.r>0) target.push(e); continue; }
       if (type === 'POINT'){ const e = { type:'POINT', layer:get(8)||'0', x:parseFloat(get(10)), y:parseFloat(get(20)) }; if (isFinite(e.x)&&isFinite(e.y)) target.push(e); continue; }
-      if (type === 'LWPOLYLINE'){
-        const e = { type:'LWPOLYLINE', layer:get(8)||'0', vertices: [], closed: false };
+      if (type === 'LWPOLYLINE'){ const e = { type:'LWPOLYLINE', layer:get(8)||'0', vertices: [], closed: false };
         const flag = parseInt(get(70)||'0', 10); e.closed = (flag & 1) === 1;
-        let curX=null, curY=null, curB=0;
-        for (const p of props){
-          if (p.code === 10){ curX = parseFloat(p.value); curB = 0; }
-          else if (p.code === 20){ curY = parseFloat(p.value); }
-          else if (p.code === 42){ curB = parseFloat(p.value); }
-          if (curX !== null && curY !== null){ e.vertices.push({ x:curX, y:curY, bulge: isFinite(curB) ? curB : 0 }); curX=null; curY=null; curB=0; }
-        }
-        if (e.vertices.length >= 2) target.push(e);
-        continue;
-      }
-      if (type === 'POLYLINE'){
-        const poly = { type:'LWPOLYLINE', layer:get(8)||'0', vertices: [], closed:false };
+        let cx=null, cy=null, cb=0;
+        for (const p of props){ if (p.code === 10){ cx = parseFloat(p.value); cb = 0; }
+          else if (p.code === 20){ cy = parseFloat(p.value); }
+          else if (p.code === 42){ cb = parseFloat(p.value); }
+          if (cx !== null && cy !== null){ e.vertices.push({ x:cx, y:cy, bulge: isFinite(cb) ? cb : 0 }); cx=null; cy=null; cb=0; } }
+        if (e.vertices.length >= 2) target.push(e); continue; }
+      if (type === 'POLYLINE'){ const poly = { type:'LWPOLYLINE', layer:get(8)||'0', vertices: [], closed:false };
         const flag = parseInt(get(70)||'0', 10); poly.closed = (flag & 1) === 1;
-        while (true){
-          const t2 = nextCode0();
-          if (t2 === null) break;
+        while (true){ const t2 = nextCode0(); if (t2 === null) break;
           if (t2 === 'VERTEX'){ const vprops = readUntilCode0(); const vget = c => { const p = vprops.find(x => x.code === c); return p ? p.value : undefined; };
             const vx = parseFloat(vget(10)), vy = parseFloat(vget(20)); const vb = parseFloat(vget(42) || '0');
             if (isFinite(vx)&&isFinite(vy)) poly.vertices.push({ x:vx, y:vy, bulge: isFinite(vb) ? vb : 0 }); continue; }
-          if (t2 === 'SEQEND') break; break;
-        }
-        if (poly.vertices.length >= 2) target.push(poly);
-        continue;
-      }
-      if (type === 'INSERT'){
-        const name = get(2); const ix = parseFloat(get(10)) || 0, iy = parseFloat(get(20)) || 0;
+          if (t2 === 'SEQEND') break; break; }
+        if (poly.vertices.length >= 2) target.push(poly); continue; }
+      if (type === 'INSERT'){ const name = get(2); const ix = parseFloat(get(10)) || 0, iy = parseFloat(get(20)) || 0;
         const blk = blocks[name];
-        if (blk){
-          const dx = ix - blk.baseX, dy = iy - blk.baseY;
-          for (const se of blk.entities){
-            const c = JSON.parse(JSON.stringify(se));
+        if (blk){ const dx = ix - blk.baseX, dy = iy - blk.baseY;
+          for (const se of blk.entities){ const c = JSON.parse(JSON.stringify(se));
             if (c.type === 'LINE'){ c.x1+=dx; c.y1+=dy; c.x2+=dx; c.y2+=dy; }
             else if (c.type === 'CIRCLE' || c.type === 'ARC'){ c.cx+=dx; c.cy+=dy; }
             else if (c.type === 'LWPOLYLINE'){ c.vertices = c.vertices.map(v => ({ x:v.x+dx, y:v.y+dy, bulge:v.bulge })); }
             else if (c.type === 'POINT'){ c.x+=dx; c.y+=dy; }
-            target.push(c);
-          }
-        }
-        continue;
-      }
+            target.push(c); } }
+        continue; }
       continue;
     }
   }
@@ -342,8 +322,8 @@ function parseDXF(text){
 
 function expandBulge(vertices, closed){
   if (!vertices || vertices.length < 2) return [];
-  const out = []; const n = vertices.length; const segCount = closed ? n : n - 1;
-  for (let i = 0; i < segCount; i++){
+  const out = []; const n = vertices.length; const sc = closed ? n : n - 1;
+  for (let i = 0; i < sc; i++){
     const v1 = vertices[i]; const v2 = vertices[(i + 1) % n];
     out.push({ x: v1.x, y: v1.y });
     const b = v1.bulge || 0;
@@ -394,10 +374,12 @@ const S = {
   flipArcs:false, flipY:false,
   lastMiddleClick: 0,
   spindlePause: 12, rapidXY: 5000, rapidZ: 3000,
+  tabs: { enabled: false, count: 3, width: 1.0, height: 1.0, seed: 12345 },
   simMoves: [], simMoveTimes: [], simTotalTime: 0, simT: 0,
   simPlaying:false, simSpeedMult: 1, simAnimId:null, simLastFrame:0,
   saveTimer: null,
   cutContours: {},
+  cutTabs: {}, // { opIndex: [ {sStart, sEnd, toolDiam}, ... ] }
 };
 
 const $ = id => document.getElementById(id);
@@ -409,7 +391,7 @@ const activeToolBadge = $('activeToolBadge'), saveInd = $('saveInd');
 const btnPlay = $('btnPlay'), btnReset = $('btnReset'), btnEnd = $('btnEnd');
 const simSpeedEl = $('simSpeed'), simSpeedVal = $('simSpeedVal');
 const simProgressEl = $('simProgress'), simPctEl = $('simPct'), simOpInfoEl = $('simOpInfo');
-const simTotalLabel = $('simTotalLabel');
+const simTotalLabel = $('simTotalLabel'), tabsInfoEl = $('tabsInfo');
 
 function uid(prefix){ return prefix + Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
 function createDefaultTool(num){
@@ -422,41 +404,26 @@ function getActiveTool(){ return S.tools.find(t => t.id === S.activeToolId) || n
 function getToolById(id){ return S.tools.find(t => t.id === id) || null; }
 function nextToolNumber(){ let max = 0; for (const t of S.tools) if (t.toolNumber > max) max = t.toolNumber; return max + 1; }
 
-function addTool(){
-  const t = createDefaultTool(nextToolNumber());
-  S.tools.push(t); S.activeToolId = t.id;
-  loadToolIntoFields(t); updateToolsList(); updateOpsList(); scheduleSave();
-  showToast('Herramienta añadida','success');
-}
-function duplicateTool(){
-  const src = getActiveTool(); if (!src){ showToast('Sin herramienta activa','warn'); return; }
-  const t = JSON.parse(JSON.stringify(src));
-  t.id = uid('tool_'); t.toolNumber = nextToolNumber();
+function addTool(){ const t = createDefaultTool(nextToolNumber()); S.tools.push(t); S.activeToolId = t.id;
+  loadToolIntoFields(t); updateToolsList(); updateOpsList(); scheduleSave(); showToast('Herramienta añadida','success'); }
+function duplicateTool(){ const src = getActiveTool(); if (!src){ showToast('Sin herramienta activa','warn'); return; }
+  const t = JSON.parse(JSON.stringify(src)); t.id = uid('tool_'); t.toolNumber = nextToolNumber();
   t.name = t.name.replace(/\s*\(copia\)$/,'') + ' (copia)';
-  S.tools.push(t); S.activeToolId = t.id;
-  loadToolIntoFields(t); updateToolsList(); updateOpsList(); scheduleSave();
-  showToast('Herramienta duplicada','success');
-}
+  S.tools.push(t); S.activeToolId = t.id; loadToolIntoFields(t); updateToolsList(); updateOpsList(); scheduleSave();
+  showToast('Herramienta duplicada','success'); }
 function deleteTool(id){
   const usedBy = S.operations.filter(o => o.toolId === id);
-  if (usedBy.length > 0){
-    if (!confirm(`En ${usedBy.length} operación(es). ¿Eliminar también esas operaciones?`)) return;
-    S.operations = S.operations.filter(o => o.toolId !== id);
-  }
+  if (usedBy.length > 0){ if (!confirm(`En ${usedBy.length} operación(es). ¿Eliminar también esas operaciones?`)) return;
+    S.operations = S.operations.filter(o => o.toolId !== id); }
   S.tools = S.tools.filter(t => t.id !== id);
-  if (S.activeToolId === id){
-    S.activeToolId = S.tools.length ? S.tools[0].id : null;
-    if (S.activeToolId) loadToolIntoFields(getActiveTool());
-  }
-  updateToolsList(); updateOpsList(); rebuildAllContours(); buildSimFromOps(); render(); scheduleSave();
-}
-function selectTool(id){ S.activeToolId = id; loadToolIntoFields(getToolById(id)); updateToolsList(); scheduleSave(); }
-function renameTool(id){
-  const t = getToolById(id); if (!t) return;
+  if (S.activeToolId === id){ S.activeToolId = S.tools.length ? S.tools[0].id : null;
+    if (S.activeToolId) loadToolIntoFields(getActiveTool()); }
+  updateToolsList(); updateOpsList(); rebuildAllContours(); buildSimFromOps(); render(); scheduleSave(); }
+function selectTool(id){ S.activeToolId = id; loadToolIntoFields(getToolById(id)); updateToolsList(); scheduleSave(); updateTabsInfo(); }
+function renameTool(id){ const t = getToolById(id); if (!t) return;
   const n = prompt('Nuevo nombre:', t.name); if (n === null) return;
-  const trimmed = n.trim(); if (!trimmed) return;
-  t.name = trimmed; loadToolIntoFields(t); updateToolsList(); scheduleSave();
-}
+  const trimmed = n.trim(); if (!trimmed) return; t.name = trimmed;
+  loadToolIntoFields(t); updateToolsList(); scheduleSave(); }
 function loadToolIntoFields(t){
   if (!t) return;
   $('tName').value = t.name; $('tNum').value = t.toolNumber;
@@ -485,8 +452,7 @@ function updateToolsList(){
     </div>`;
   }).join('');
   toolListEl.querySelectorAll('.tool-item').forEach(el => {
-    el.addEventListener('click', e => { if (e.target.closest('.tact')) return; selectTool(el.dataset.id); });
-  });
+    el.addEventListener('click', e => { if (e.target.closest('.tact')) return; selectTool(el.dataset.id); }); });
   toolListEl.querySelectorAll('.rename').forEach(b => b.addEventListener('click', e => { e.stopPropagation(); renameTool(b.dataset.id); }));
   toolListEl.querySelectorAll('.del').forEach(b => b.addEventListener('click', e => { e.stopPropagation(); deleteTool(b.dataset.id); }));
 }
@@ -504,18 +470,15 @@ function chainEntitiesToContour(entityList, tol){
   tol = tol || 0.15;
   const parts = [], partMeta = [];
   for (const e of entityList){
-    const pts = entityToPoints(e);
-    if (pts.length < 2) continue;
-    parts.push(pts);
-    partMeta.push({ closed: !!(e.type === 'CIRCLE' || (e.type === 'LWPOLYLINE' && e.closed)), type: e.type });
+    const pts = entityToPoints(e); if (pts.length < 2) continue;
+    parts.push(pts); partMeta.push({ closed: !!(e.type === 'CIRCLE' || (e.type === 'LWPOLYLINE' && e.closed)), type: e.type });
   }
   if (parts.length === 0) return { points: [], closed: false };
   if (parts.length === 1){
     let pts = parts[0]; let closed = partMeta[0].closed;
     if (closed && pts.length > 2){
       const f = pts[0], l = pts[pts.length - 1];
-      if (Math.hypot(f.x - l.x, f.y - l.y) < tol * 2) pts = pts.slice(0, -1);
-    }
+      if (Math.hypot(f.x - l.x, f.y - l.y) < tol * 2) pts = pts.slice(0, -1); }
     return { points: pts, closed };
   }
   const used = new Array(parts.length).fill(false);
@@ -524,10 +487,8 @@ function chainEntitiesToContour(entityList, tol){
   used[startIdx] = true;
   let result = parts[startIdx].slice();
   if (partMeta[startIdx].closed){
-    if (result.length > 2){
-      const f = result[0], l = result[result.length - 1];
-      if (Math.hypot(f.x - l.x, f.y - l.y) < tol * 2) result = result.slice(0, -1);
-    }
+    if (result.length > 2){ const f = result[0], l = result[result.length - 1];
+      if (Math.hypot(f.x - l.x, f.y - l.y) < tol * 2) result = result.slice(0, -1); }
     return { points: result, closed: true };
   }
   let safety = 0;
@@ -540,8 +501,7 @@ function chainEntitiesToContour(entityList, tol){
       const dStart = Math.hypot(p[0].x - end.x, p[0].y - end.y);
       const dEnd = Math.hypot(p[p.length-1].x - end.x, p[p.length-1].y - end.y);
       if (dStart < bestDist){ bestDist = dStart; bestIdx = i; bestFlip = false; }
-      if (dEnd < bestDist){ bestDist = dEnd; bestIdx = i; bestFlip = true; }
-    }
+      if (dEnd < bestDist){ bestDist = dEnd; bestIdx = i; bestFlip = true; } }
     if (bestIdx < 0) break;
     used[bestIdx] = true;
     let next = parts[bestIdx].slice();
@@ -561,9 +521,7 @@ function signedArea(pts){
 }
 function offsetPolyline(pts, offset){
   if (pts.length < 3 || Math.abs(offset) < 1e-9) return pts;
-  const n = pts.length;
-  const out = [];
-  const maxMiter = Math.abs(offset) * 4;
+  const n = pts.length; const out = []; const maxMiter = Math.abs(offset) * 4;
   for (let k = 0; k < n; k++){
     const pv = pts[(k - 1 + n) % n], cu = pts[k], nx = pts[(k + 1) % n];
     const v1x = cu.x - pv.x, v1y = cu.y - pv.y;
@@ -591,12 +549,86 @@ function rotateContourToStart(pts, ox, oy){
   if (bestIdx === 0) return pts;
   return pts.slice(bestIdx).concat(pts.slice(0, bestIdx));
 }
+
+// ═══════════════════════════════════════════════
+//  PATILLAS — ancho compensado por diámetro de fresa
+// ═══════════════════════════════════════════════
+// width = ancho de MATERIAL SIN CORTAR (lo que mides en la pieza)
+// toolDiameter = Ø de la fresa; el tramo de elevación sobre la trayectoria es width + toolDiameter
+function computeTabSegments(pts, closed, count, width, seed, toolDiameter){
+  toolDiameter = Math.max(0, toolDiameter || 0);
+  const pathWidth = Math.max(0.1, width + toolDiameter);
+  if (!closed || pts.length < 3) return [];
+  const n = pts.length;
+  let L = 0;
+  for (let i = 0; i < n; i++){
+    const a = pts[i], b = pts[(i+1) % n];
+    L += Math.hypot(b.x - a.x, b.y - a.y);
+  }
+  if (L < pathWidth * count * 2.5) return [];
+  let sv = (seed >>> 0) || 1;
+  const rng = () => { sv = (Math.imul(sv, 1664525) + 1013904223) >>> 0; return sv / 4294967296; };
+  const margin = Math.max(pathWidth, L * 0.03);
+  const usable = L - 2 * margin;
+  if (usable < pathWidth * count * 1.2) return [];
+  const segLen = usable / count;
+  const jitterMax = Math.max(0, segLen * 0.35);
+  const tabs = [];
+  for (let i = 0; i < count; i++){
+    const baseCenter = margin + i * segLen + segLen / 2;
+    const jitter = (rng() * 2 - 1) * jitterMax;
+    let center = baseCenter + jitter;
+    center = Math.max(margin + pathWidth/2, Math.min(L - margin - pathWidth/2, center));
+    tabs.push({ sStart: center - pathWidth / 2, sEnd: center + pathWidth / 2, toolDiam: toolDiameter });
+  }
+  for (let i = 1; i < tabs.length; i++){
+    if (tabs[i].sStart < tabs[i-1].sEnd + 0.05){
+      const shift = tabs[i-1].sEnd + 0.05 - tabs[i].sStart;
+      tabs[i].sStart += shift;
+      tabs[i].sEnd += shift;
+      if (tabs[i].sEnd > L - 0.05){
+        tabs[i].sEnd = L - 0.05;
+        tabs[i].sStart = Math.max(tabs[i-1].sEnd + 0.05, tabs[i].sEnd - pathWidth);
+      }
+    }
+  }
+  return tabs;
+}
+
+function getPointAtArcLength(path, cumLens, s){
+  const L = cumLens[cumLens.length - 1];
+  if (s <= 0) return { x: path[0].x, y: path[0].y };
+  if (s >= L) return { x: path[path.length - 1].x, y: path[path.length - 1].y };
+  for (let i = 0; i < cumLens.length - 1; i++){
+    if (cumLens[i] <= s && s <= cumLens[i+1]){
+      const segLen = cumLens[i+1] - cumLens[i];
+      const t = segLen > 1e-9 ? (s - cumLens[i]) / segLen : 0;
+      return { x: path[i].x + (path[i+1].x - path[i].x) * t, y: path[i].y + (path[i+1].y - path[i].y) * t };
+    }
+  }
+  return { x: path[path.length - 1].x, y: path[path.length - 1].y };
+}
+function pathPointsBetween(path, cumLens, s1, s2){
+  const result = [];
+  result.push(getPointAtArcLength(path, cumLens, s1));
+  for (let i = 1; i < cumLens.length - 1; i++){
+    if (cumLens[i] > s1 + 1e-9 && cumLens[i] < s2 - 1e-9) result.push({ x: path[i].x, y: path[i].y });
+  }
+  result.push(getPointAtArcLength(path, cumLens, s2));
+  return result;
+}
+function buildPath(pts, closed){ return closed ? pts.concat([{ x: pts[0].x, y: pts[0].y }]) : pts.slice(); }
+function computeCumLens(path){
+  const cum = [0];
+  for (let i = 1; i < path.length; i++) cum.push(cum[i-1] + Math.hypot(path[i].x - path[i-1].x, path[i].y - path[i-1].y));
+  return cum;
+}
+
 function resolveCutContour(op, tool){
   const entityList = op.ids.map(i => S.entities[i]).filter(Boolean);
   if (!entityList.length) return null;
   const contour = chainEntitiesToContour(entityList, 0.15);
-  let pts = contour.points;
-  if (pts.length < 2) return null;
+  let pts = contour.points; if (pts.length < 2) return null;
   if (contour.closed && pts.length >= 3){
     const wantCCW = (tool.cutDir !== 'cw');
     const isCCW = signedArea(pts) > 0;
@@ -612,17 +644,50 @@ function resolveCutContour(op, tool){
   if (contour.closed && pts.length >= 3) pts = rotateContourToStart(pts, 0, 0);
   return { points: pts, closed: contour.closed };
 }
+
 function rebuildAllContours(){
   S.cutContours = {};
+  S.cutTabs = {};
   for (let i = 0; i < S.operations.length; i++){
     const op = S.operations[i];
     if (op.type !== 'cut') continue;
     const tool = getToolById(op.toolId) || S.tools[0];
     if (!tool) continue;
     const c = resolveCutContour(op, tool);
-    if (c) S.cutContours[i] = c;
+    if (c){
+      S.cutContours[i] = c;
+      if (S.tabs.enabled && c.closed && c.points.length >= 3){
+        const tabs = computeTabSegments(c.points, true, S.tabs.count, S.tabs.width, S.tabs.seed + i * 137, tool.diam);
+        if (tabs.length) S.cutTabs[i] = tabs;
+      }
+    }
   }
+  updateTabsInfo();
 }
+
+function updateTabsInfo(){
+  const keys = Object.keys(S.cutTabs);
+  if (!S.tabs.enabled){
+    tabsInfoEl.textContent = 'Patillas desactivadas';
+    return;
+  }
+  if (!keys.length){
+    tabsInfoEl.textContent = 'Ninguna operación de corte cerrada con patillas';
+    return;
+  }
+  let total = 0, lines = [];
+  for (const k of keys){
+    const tabs = S.cutTabs[k];
+    const op = S.operations[parseInt(k)];
+    const tool = op ? (getToolById(op.toolId) || S.tools[0]) : null;
+    const D = tool ? tool.diam : 0;
+    const pathW = S.tabs.width + D;
+    lines.push(`Contorno ${parseInt(k)+1}: ${tabs.length}× (tramo ${pathW.toFixed(2)}mm → patilla ${S.tabs.width}mm)`);
+    total += tabs.length;
+  }
+  tabsInfoEl.textContent = lines.join('\n') + `\nTotal: ${total} patillas · Ø fresa compensado`;
+}
+
 function fmtTime(sec){
   if (!isFinite(sec) || sec < 0) sec = 0;
   const total = Math.floor(sec);
@@ -640,26 +705,19 @@ function serializeProject(){
     operations: S.operations, offsetX: S.offsetX, offsetY: S.offsetY,
     layerVis: S.layerVis, flipArcs: S.flipArcs, flipY: S.flipY,
     viewScale: S.scale, viewOffsetX: S.offX, viewOffsetY: S.offY,
-    spindlePause: S.spindlePause, rapidXY: S.rapidXY, rapidZ: S.rapidZ };
+    spindlePause: S.spindlePause, rapidXY: S.rapidXY, rapidZ: S.rapidZ,
+    tabs: S.tabs };
 }
 function saveToLocalStorage(){
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(serializeProject())); flashSaveIndicator('✓ Guardado'); }
-  catch (err){
-    if (err.name === 'QuotaExceededError'){ flashSaveIndicator('⚠ Sin espacio'); showToast('Proyecto grande. Usa "Guardar Proyecto".','warn'); }
-  }
+  catch (err){ if (err.name === 'QuotaExceededError'){ flashSaveIndicator('⚠ Sin espacio'); showToast('Proyecto grande. Usa "Guardar Proyecto".','warn'); } }
 }
-function flashSaveIndicator(txt){
-  saveInd.textContent = txt; saveInd.classList.add('show');
-  clearTimeout(saveInd._t); saveInd._t = setTimeout(() => saveInd.classList.remove('show'), 1200);
-}
+function flashSaveIndicator(txt){ saveInd.textContent = txt; saveInd.classList.add('show');
+  clearTimeout(saveInd._t); saveInd._t = setTimeout(() => saveInd.classList.remove('show'), 1200); }
 function loadFromLocalStorage(){
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return false;
-    const data = JSON.parse(raw);
-    if (!data || data.version !== PROJECT_VERSION) return false;
-    applyProjectData(data); return true;
-  } catch (err){ console.warn(err); return false; }
+  try { const raw = localStorage.getItem(STORAGE_KEY); if (!raw) return false;
+    const data = JSON.parse(raw); if (!data || data.version !== PROJECT_VERSION) return false;
+    applyProjectData(data); return true; } catch (err){ console.warn(err); return false; }
 }
 function applyProjectData(data){
   S.dxfText = data.dxfText || ''; S.dxfFilename = data.dxfFilename || '';
@@ -674,8 +732,13 @@ function applyProjectData(data){
   if (typeof data.spindlePause === 'number') S.spindlePause = data.spindlePause;
   if (typeof data.rapidXY === 'number') S.rapidXY = data.rapidXY;
   if (typeof data.rapidZ === 'number') S.rapidZ = data.rapidZ;
+  if (data.tabs){ S.tabs = { ...S.tabs, ...data.tabs }; }
   $('cfgSpindlePause').value = S.spindlePause;
   $('cfgRapidXY').value = S.rapidXY; $('cfgRapidZ').value = S.rapidZ;
+  $('tabsEnabled').checked = S.tabs.enabled;
+  $('tabsCount').value = S.tabs.count;
+  $('tabsWidth').value = S.tabs.width;
+  $('tabsHeight').value = S.tabs.height;
   $('offsetX').value = S.offsetX; $('offsetY').value = S.offsetY;
   $('btnFlipArcs').textContent = S.flipArcs ? '↺ Arcos' : '↻ Arcos';
   $('btnFlipY').textContent = S.flipY ? '⇅ Y' : '⇅ Y';
@@ -695,8 +758,7 @@ function exportProject(){
 function importProject(file){
   const r = new FileReader();
   r.onload = e => {
-    try {
-      const data = JSON.parse(e.target.result);
+    try { const data = JSON.parse(e.target.result);
       if (!data || typeof data !== 'object' || !('version' in data)) throw new Error('Formato inválido');
       if (data.version !== PROJECT_VERSION && !confirm(`Versión ${data.version} ≠ ${PROJECT_VERSION}. ¿Abrir?`)) return;
       applyProjectData(data); saveToLocalStorage(); showToast('Proyecto importado ✓','success');
@@ -809,8 +871,7 @@ function addDrill(wx, wy){
   let px = wx, py = wy;
   if (ci >= 0){ const c = effective()[ci]; px = c.cx; py = c.cy; }
   for (const op of S.operations){
-    if (op.type === 'drill' && op.points.some(p => Math.hypot(p.x-px, p.y-py) < 0.3)){ showToast('Ya marcado','warn'); return; }
-  }
+    if (op.type === 'drill' && op.points.some(p => Math.hypot(p.x-px, p.y-py) < 0.3)){ showToast('Ya marcado','warn'); return; } }
   let op = S.operations.find(o => o.type === 'drill');
   if (!op){ op = { type:'drill', points:[], toolId: S.activeToolId }; S.operations.push(op); }
   op.points.push({ x:px, y:py });
@@ -833,7 +894,7 @@ function addPocket(area){
   updateOpsList(); buildSimFromOps(); render(); scheduleSave();
 }
 function removeOp(i){ if (i>=0 && i<S.operations.length) S.operations.splice(i,1); updateOpsList(); rebuildAllContours(); buildSimFromOps(); render(); scheduleSave(); }
-function clearOps(){ S.operations = []; S.pocketStart = null; S.simMoves = []; S.simMoveTimes = []; S.simTotalTime = 0; S.simT = 0; S.cutContours = {}; updateOpsList(); updateSimUI(); render(); scheduleSave(); }
+function clearOps(){ S.operations = []; S.pocketStart = null; S.simMoves = []; S.simMoveTimes = []; S.simTotalTime = 0; S.simT = 0; S.cutContours = {}; S.cutTabs = {}; updateOpsList(); updateSimUI(); updateTabsInfo(); render(); scheduleSave(); }
 function undoOp(){
   if (!S.operations.length) return;
   const op = S.operations[S.operations.length-1];
@@ -845,10 +906,7 @@ function undoOp(){
 }
 function updateOpsList(){
   opCountEl.textContent = S.operations.length;
-  if (!S.operations.length){
-    opsEl.innerHTML = '<li class="empty-hint" style="background:transparent;">Sin operaciones</li>';
-    return;
-  }
+  if (!S.operations.length){ opsEl.innerHTML = '<li class="empty-hint" style="background:transparent;">Sin operaciones</li>'; return; }
   const toolOptions = S.tools.map(t => `<option value="${t.id}">T${t.toolNumber}</option>`).join('');
   opsEl.innerHTML = S.operations.map((op,i) => {
     let det = '';
@@ -864,27 +922,21 @@ function updateOpsList(){
         <option value="outside" ${off==='outside'?'selected':''}>E</option>
       </select>`;
     }
-    return `<li>
-      <span><span class="op-type ${op.type}">${op.type.toUpperCase()}</span> ${det}</span>
+    return `<li><span><span class="op-type ${op.type}">${op.type.toUpperCase()}</span> ${det}</span>
       <select class="op-tool-select" data-i="${i}" data-k="toolId">${toolOptions}</select>
       ${offSel}
-      <span class="del-op" data-i="${i}">✕</span>
-    </li>`;
+      <span class="del-op" data-i="${i}">✕</span></li>`;
   }).join('');
   opsEl.querySelectorAll('select[data-k="toolId"]').forEach(sel => {
-    const i = parseInt(sel.dataset.i);
-    if (S.operations[i].toolId) sel.value = S.operations[i].toolId;
-  });
+    const i = parseInt(sel.dataset.i); if (S.operations[i].toolId) sel.value = S.operations[i].toolId; });
   opsEl.querySelectorAll('.del-op').forEach(b => b.addEventListener('click', e => { e.stopPropagation(); removeOp(parseInt(b.dataset.i)); }));
   opsEl.querySelectorAll('.op-tool-select').forEach(s => {
     s.addEventListener('change', () => {
       const i = parseInt(s.dataset.i), k = s.dataset.k;
       if (k === 'toolId') S.operations[i].toolId = s.value;
       else if (k === 'offset') S.operations[i].offset = s.value;
-      rebuildAllContours(); buildSimFromOps(); render(); scheduleSave();
-    });
-    s.addEventListener('click', e => e.stopPropagation());
-  });
+      rebuildAllContours(); buildSimFromOps(); render(); scheduleSave(); });
+    s.addEventListener('click', e => e.stopPropagation()); });
 }
 
 function extractLayers(){
@@ -912,11 +964,59 @@ function updateLayerList(){
     if (!cut){ cut = { type:'cut', ids:[], offset:'center', toolId: S.activeToolId }; S.operations.push(cut); }
     ids.forEach(i => { if (!cut.ids.includes(i)) cut.ids.push(i); });
     updateOpsList(); rebuildAllContours(); buildSimFromOps(); render(); scheduleSave();
-    showToast(`${ids.length} añadidas`,'success');
-  }));
+    showToast(`${ids.length} añadidas`,'success'); }));
 }
 
-// ★ SIMULACIÓN: retracción entre capas a Z retracción (no Z seguro)
+// ═══════════════════════════════════════════════
+//  G-CODE emission helpers
+// ═══════════════════════════════════════════════
+function emitCutNormal(lines, pts, closed, tool){
+  for (let i = 1; i < pts.length; i++){
+    lines.push(`G1 X${pts[i].x.toFixed(3)} Y${pts[i].y.toFixed(3)} F${tool.feed}`);
+  }
+  if (closed){
+    const f = pts[0], lastPt = pts[pts.length - 1];
+    if (Math.hypot(lastPt.x - f.x, lastPt.y - f.y) > 1e-3){
+      lines.push(`G1 X${f.x.toFixed(3)} Y${f.y.toFixed(3)} F${tool.feed}`);
+    }
+  }
+}
+function emitCutWithTabs(lines, pts, closed, tool, fullZ, tabs, tabHeight){
+  const path = buildPath(pts, closed);
+  const cumLens = computeCumLens(path);
+  const L = cumLens[cumLens.length - 1];
+  const tabZ = fullZ + tabHeight;
+  const sortedTabs = tabs.slice().sort((a, b) => a.sStart - b.sStart);
+  let s = 0;
+  for (const tab of sortedTabs){
+    const sStart = Math.max(0, Math.min(L, tab.sStart));
+    const sEnd = Math.max(0, Math.min(L, tab.sEnd));
+    if (sEnd <= sStart + 1e-6) continue;
+    if (sStart > s + 1e-6){
+      const between = pathPointsBetween(path, cumLens, s, sStart);
+      for (let i = 1; i < between.length; i++){
+        lines.push(`G1 X${between[i].x.toFixed(3)} Y${between[i].y.toFixed(3)} F${tool.feed}`);
+      }
+    }
+    lines.push(`G1 Z${tabZ.toFixed(3)} F${tool.feedZ}  (patilla: subir ${tabHeight}mm)`);
+    const tabPts = pathPointsBetween(path, cumLens, sStart, sEnd);
+    for (let i = 1; i < tabPts.length; i++){
+      lines.push(`G1 X${tabPts[i].x.toFixed(3)} Y${tabPts[i].y.toFixed(3)} F${tool.feed}`);
+    }
+    lines.push(`G1 Z${fullZ.toFixed(3)} F${tool.feedZ}  (patilla: bajar)`);
+    s = sEnd;
+  }
+  if (L > s + 1e-6){
+    const rest = pathPointsBetween(path, cumLens, s, L);
+    for (let i = 1; i < rest.length; i++){
+      lines.push(`G1 X${rest[i].x.toFixed(3)} Y${rest[i].y.toFixed(3)} F${tool.feed}`);
+    }
+  }
+}
+
+// ═══════════════════════════════════════════════
+//  SIMULACIÓN
+// ═══════════════════════════════════════════════
 function buildSimFromOps(){
   rebuildAllContours();
   const moves = [];
@@ -930,11 +1030,11 @@ function buildSimFromOps(){
     if (pts.length >= 2){
       let dist = 0;
       for (let i = 0; i < pts.length - 1; i++) dist += Math.hypot(pts[i+1].x - pts[i].x, pts[i+1].y - pts[i].y);
-      const feed = feedOverride || (type === 'cut' ? 800 : S.rapidXY);
+      const feed = feedOverride || (type === 'rapid' ? S.rapidXY : 800);
       duration = dist / (feed / 60);
     } else {
       const dz = Math.abs(z - lastZ);
-      const feed = feedOverride || (type === 'cut' ? 300 : S.rapidZ);
+      const feed = feedOverride || (type === 'rapid' ? S.rapidZ : 300);
       duration = dz / (feed / 60);
     }
     if (duration < 0.03) duration = 0.03;
@@ -944,6 +1044,35 @@ function buildSimFromOps(){
   };
   const addSpindlePause = () => {
     if (S.spindlePause > 0) moves.push({ type:'pause', points:[{x:lastX, y:lastY}], z: lastZ, duration: S.spindlePause });
+  };
+  const emitSimCutWithTabs = (pts, closed, fullZ, feed, tabHeight, tabs) => {
+    const path = buildPath(pts, closed);
+    const cumLens = computeCumLens(path);
+    const L = cumLens[cumLens.length - 1];
+    const tabZ = fullZ + tabHeight;
+    const sortedTabs = tabs.slice().sort((a, b) => a.sStart - b.sStart);
+    let s = 0;
+    for (const tab of sortedTabs){
+      const sStart = Math.max(0, Math.min(L, tab.sStart));
+      const sEnd = Math.max(0, Math.min(L, tab.sEnd));
+      if (sEnd <= sStart + 1e-6) continue;
+      if (sStart > s + 1e-6){
+        const between = pathPointsBetween(path, cumLens, s, sStart);
+        if (between.length >= 2) addMove('cut', between, fullZ, feed);
+        s = sStart;
+      }
+      const sPt = getPointAtArcLength(path, cumLens, sStart);
+      const ePt = getPointAtArcLength(path, cumLens, sEnd);
+      addMove('cut', [sPt], tabZ, 400);
+      const tabPts = pathPointsBetween(path, cumLens, sStart, sEnd);
+      if (tabPts.length >= 2) addMove('tab', tabPts, tabZ, feed);
+      addMove('cut', [ePt], fullZ, 400);
+      s = sEnd;
+    }
+    if (L > s + 1e-6){
+      const rest = pathPointsBetween(path, cumLens, s, L);
+      if (rest.length >= 2) addMove('cut', rest, fullZ, feed);
+    }
   };
 
   const toolOrder = [];
@@ -957,14 +1086,9 @@ function buildSimFromOps(){
   }
 
   for (const tid of toolOrder){
-    const tool = getToolById(tid);
-    if (!tool) continue;
+    const tool = getToolById(tid); if (!tool) continue;
     const entries = groups.get(tid);
-
-    // ★ Asegurar Z seguro antes de la pausa del mandrino (el mandrino siempre arranca a Z15)
-    if (Math.abs(lastZ - tool.safe) > 0.01){
-      addMove('rapid', [{x:lastX, y:lastY}], tool.safe, S.rapidZ);
-    }
+    if (Math.abs(lastZ - tool.safe) > 0.01) addMove('rapid', [{x:lastX, y:lastY}], tool.safe, S.rapidZ);
     addSpindlePause();
 
     for (const entry of entries){
@@ -988,26 +1112,31 @@ function buildSimFromOps(){
         if (!c || c.points.length < 2) continue;
         const ptsEff = effectiveContour(c.points);
         const f = ptsEff[0];
-        const pts = c.closed ? ptsEff.concat([ptsEff[0]]) : ptsEff;
-        // ★ Al inicio de la operación, ir a Z seguro
-        if (Math.abs(lastZ - cfg.safe) > 0.01){
-          addMove('rapid', [{x:lastX, y:lastY}], cfg.safe, S.rapidZ);
+        const isClosed = c.closed;
+        let tabsEff = [];
+        if (S.tabs.enabled && isClosed){
+          const seed = S.tabs.seed + originalIndex * 137;
+          tabsEff = computeTabSegments(ptsEff, true, S.tabs.count, S.tabs.width, seed, cfg.diam);
         }
+        if (Math.abs(lastZ - cfg.safe) > 0.01) addMove('rapid', [{x:lastX, y:lastY}], cfg.safe, S.rapidZ);
         for (let k=0;k<passes;k++){
           const z = -Math.min((k+1)*step, cfg.depth);
-          // ★ k=0 → XY a safe. k>0 → XY a retract (ya estamos ahí tras el pase anterior).
+          const isLastPass = (k === passes - 1);
           const moveZ = (k === 0) ? cfg.safe : cfg.retract;
           addMove('rapid', [{x:lastX, y:lastY}, {x:f.x, y:f.y}], moveZ, S.rapidXY);
           addMove('cut', [{x:f.x, y:f.y}], z, cfg.feedZ);
-          addMove('cut', pts, z, cfg.feed);
-          const lastPt = pts[pts.length - 1];
+          if (S.tabs.enabled && isLastPass && isClosed && tabsEff.length > 0){
+            emitSimCutWithTabs(ptsEff, true, z, cfg.feed, S.tabs.height, tabsEff);
+          } else {
+            const pts = isClosed ? ptsEff.concat([ptsEff[0]]) : ptsEff;
+            addMove('cut', pts, z, cfg.feed);
+          }
+          const lastPt = (S.tabs.enabled && isLastPass && isClosed && tabsEff.length > 0)
+            ? ptsEff[0] : (isClosed ? ptsEff[0] : ptsEff[ptsEff.length - 1]);
           addMove('rapid', [{x:lastPt.x, y:lastPt.y}], cfg.retract, S.rapidZ);
         }
       } else if (op.type === 'pocket'){
-        // ★ Al inicio de la operación, ir a Z seguro (una sola vez)
-        if (Math.abs(lastZ - cfg.safe) > 0.01){
-          addMove('rapid', [{x:lastX, y:lastY}], cfg.safe, S.rapidZ);
-        }
+        if (Math.abs(lastZ - cfg.safe) > 0.01) addMove('rapid', [{x:lastX, y:lastY}], cfg.safe, S.rapidZ);
         let firstMove = true;
         for (const a of op.areas){
           if (a.shape === 'rect'){
@@ -1077,6 +1206,7 @@ function updateSimUI(){
   const mv = S.simMoves[Math.min(mi, S.simMoves.length-1)];
   if (mv){
     if (mv.type === 'pause'){ simOpInfoEl.textContent = '⏸ PAUSA mandrino'; simOpInfoEl.style.color = '#ff8800'; }
+    else if (mv.type === 'tab'){ simOpInfoEl.textContent = '🔗 PATILLA Z=' + (mv.z||0).toFixed(2) + 'mm'; simOpInfoEl.style.color = '#ff44aa'; }
     else {
       const isCut = mv.type === 'cut';
       simOpInfoEl.textContent = (isCut ? '✂ CORTE' : '➤ RÁPIDO') + ' Z=' + (mv.z||0).toFixed(2) + 'mm';
@@ -1092,11 +1222,7 @@ function simPlay(){
   S.simPlaying = true; S.simLastFrame = performance.now();
   updateSimUI(); S.simAnimId = requestAnimationFrame(simTick);
 }
-function simPause(){
-  S.simPlaying = false;
-  if (S.simAnimId){ cancelAnimationFrame(S.simAnimId); S.simAnimId = null; }
-  updateSimUI(); render();
-}
+function simPause(){ S.simPlaying = false; if (S.simAnimId){ cancelAnimationFrame(S.simAnimId); S.simAnimId = null; } updateSimUI(); render(); }
 function simTick(){
   if (!S.simPlaying) return;
   const now = performance.now();
@@ -1174,6 +1300,33 @@ function render(){
         ctx.stroke();
       }
     }
+    // ★ Patillas: dibujar el tramo de elevación Y el material sin cortar
+    if (S.tabs.enabled && S.cutTabs[oiStr]){
+      const tabs = S.cutTabs[oiStr];
+      const op = S.operations[parseInt(oiStr)];
+      const tool = op ? (getToolById(op.toolId) || S.tools[0]) : null;
+      const D = tool ? tool.diam : 0;
+      const R = D / 2;
+      const path = buildPath(ptsEff, true);
+      const cumLens = computeCumLens(path);
+      ctx.lineCap = 'round';
+      for (const tab of tabs){
+        // Tramo de elevación (naranja, más fino): desde sStart hasta sEnd
+        const elevA = getPointAtArcLength(path, cumLens, tab.sStart);
+        const elevB = getPointAtArcLength(path, cumLens, tab.sEnd);
+        const eA = w2s(elevA.x, elevA.y), eB = w2s(elevB.x, elevB.y);
+        ctx.strokeStyle = '#ffaa44'; ctx.lineWidth = 3; ctx.setLineDash([4,3]);
+        ctx.beginPath(); ctx.moveTo(eA.x-r.left, eA.y-r.top); ctx.lineTo(eB.x-r.left, eB.y-r.top); ctx.stroke();
+        ctx.setLineDash([]);
+        // Material sin cortar (rosa grueso): desde sStart+R hasta sEnd-R
+        const matA = getPointAtArcLength(path, cumLens, tab.sStart + R);
+        const matB = getPointAtArcLength(path, cumLens, tab.sEnd - R);
+        const mA = w2s(matA.x, matA.y), mB = w2s(matB.x, matB.y);
+        ctx.strokeStyle = '#ff44aa'; ctx.lineWidth = 7;
+        ctx.beginPath(); ctx.moveTo(mA.x-r.left, mA.y-r.top); ctx.lineTo(mB.x-r.left, mB.y-r.top); ctx.stroke();
+      }
+      ctx.lineCap = 'butt';
+    }
     const sStart = w2s(ptsEff[0].x, ptsEff[0].y);
     ctx.beginPath();
     ctx.arc(sStart.x-r.left, sStart.y-r.top, 7, 0, Math.PI*2);
@@ -1184,23 +1337,17 @@ function render(){
     ctx.fillText(contourIdx, sStart.x-r.left, sStart.y-r.top);
     ctx.textAlign = 'start'; ctx.textBaseline = 'alphabetic';
   }
-  for (const p of drillPts){
-    const s = w2s(p.x, p.y);
+  for (const p of drillPts){ const s = w2s(p.x, p.y);
     ctx.fillStyle = 'rgba(255,107,107,0.3)'; ctx.strokeStyle = '#ff6b6b'; ctx.lineWidth = 1.5;
-    ctx.beginPath(); ctx.arc(s.x-r.left, s.y-r.top, 5, 0, Math.PI*2); ctx.fill(); ctx.stroke();
-  }
+    ctx.beginPath(); ctx.arc(s.x-r.left, s.y-r.top, 5, 0, Math.PI*2); ctx.fill(); ctx.stroke(); }
   for (const a of pockets){
-    if (a.shape === 'circle'){
-      const sc = w2s(a.cx, a.cy);
+    if (a.shape === 'circle'){ const sc = w2s(a.cx, a.cy);
       ctx.strokeStyle = 'rgba(78,201,144,0.4)'; ctx.lineWidth = 1.5; ctx.setLineDash([5,4]);
-      ctx.beginPath(); ctx.arc(sc.x-r.left, sc.y-r.top, a.r*S.scale, 0, Math.PI*2); ctx.stroke();
-      ctx.setLineDash([]);
-    } else if (a.shape === 'rect'){
-      const s1 = w2s(a.x1, a.y1), s2 = w2s(a.x2, a.y2);
+      ctx.beginPath(); ctx.arc(sc.x-r.left, sc.y-r.top, a.r*S.scale, 0, Math.PI*2); ctx.stroke(); ctx.setLineDash([]); }
+    else if (a.shape === 'rect'){ const s1 = w2s(a.x1, a.y1), s2 = w2s(a.x2, a.y2);
       ctx.strokeStyle = 'rgba(78,201,144,0.4)'; ctx.lineWidth = 1.5; ctx.setLineDash([5,4]);
       ctx.strokeRect(Math.min(s1.x,s2.x)-r.left, Math.min(s1.y,s2.y)-r.top, Math.abs(s2.x-s1.x), Math.abs(s2.y-s1.y));
-      ctx.setLineDash([]);
-    }
+      ctx.setLineDash([]); }
   }
   if (S.pocketStart && S.mode === 'pocket'){
     const s1 = w2s(S.pocketStart.x, S.pocketStart.y);
@@ -1225,7 +1372,7 @@ function drawSimulation(r){
   ctx.lineCap = 'round'; ctx.lineJoin = 'round';
   const moves = S.simMoves;
   let accTime = 0;
-  let toolPos = null, toolZ = 0, toolIsCut = false, toolIsPause = false;
+  let toolPos = null, toolZ = 0, toolKind = 'rapid';
 
   for (let mi = 0; mi < moves.length; mi++){
     const mv = moves[mi];
@@ -1236,23 +1383,20 @@ function drawSimulation(r){
     const progress = isCurrent ? (S.simT - mvStart) / mv.duration : 1;
     const pts = mv.points;
     if (mv.type === 'pause'){
-      if (isCurrent){ toolPos = pts[0]; toolZ = mv.z; toolIsCut = false; toolIsPause = true; }
-      accTime = mvEnd;
-      if (isCurrent) break;
-      continue;
+      if (isCurrent){ toolPos = pts[0]; toolZ = mv.z; toolKind = 'pause'; }
+      accTime = mvEnd; if (isCurrent) break; continue;
     }
     if (!pts || pts.length < 1){ accTime = mvEnd; continue; }
-    const isCut = mv.type === 'cut';
-    const color = isCut ? '#00ff88' : '#4da6ff';
-    const lw = isCut ? 3 : 2;
+    let color, lw, dash;
+    if (mv.type === 'cut'){ color = '#00ff88'; lw = 3; dash = []; }
+    else if (mv.type === 'tab'){ color = '#ff44aa'; lw = 5; dash = []; }
+    else { color = '#4da6ff'; lw = 2; dash = [6,4]; }
     if (pts.length >= 2){
       const segLens = [];
       for (let i = 0; i < pts.length - 1; i++) segLens.push(Math.hypot(pts[i+1].x - pts[i].x, pts[i+1].y - pts[i].y));
       const totalLen = segLens.reduce((a,b) => a+b, 0);
       const targetLen = totalLen * progress;
-      ctx.strokeStyle = color;
-      ctx.lineWidth = lw;
-      ctx.setLineDash(isCut ? [] : [6, 4]);
+      ctx.strokeStyle = color; ctx.lineWidth = lw; ctx.setLineDash(dash);
       ctx.globalAlpha = isCurrent ? 1.0 : 0.55;
       ctx.beginPath();
       const s0 = w2s(pts[0].x, pts[0].y);
@@ -1275,55 +1419,53 @@ function drawSimulation(r){
       }
       ctx.stroke();
       ctx.setLineDash([]); ctx.globalAlpha = 1.0;
-      if (isCurrent){ toolPos = lastPt; toolZ = mv.z; toolIsCut = isCut; toolIsPause = false; }
+      if (isCurrent){ toolPos = lastPt; toolZ = mv.z; toolKind = mv.type; }
     } else {
-      if (isCurrent){ toolPos = pts[0]; toolZ = mv.z; toolIsCut = isCut; toolIsPause = false; }
+      if (isCurrent){ toolPos = pts[0]; toolZ = mv.z; toolKind = mv.type; }
     }
     accTime = mvEnd;
     if (isCurrent) break;
   }
   if (!toolPos && S.simT === 0 && moves.length > 0){
-    const firstMv = moves[0];
-    if (firstMv.points.length){ toolPos = firstMv.points[0]; toolZ = firstMv.z; toolIsCut = firstMv.type === 'cut'; toolIsPause = firstMv.type === 'pause'; }
+    const fm = moves[0]; if (fm.points.length){ toolPos = fm.points[0]; toolZ = fm.z; toolKind = fm.type; }
   }
   if (!toolPos && S.simT > 0 && moves.length > 0){
-    const lastMv = moves[moves.length - 1];
-    if (lastMv.points.length){ toolPos = lastMv.points[lastMv.points.length - 1]; toolZ = lastMv.z; toolIsCut = lastMv.type === 'cut'; toolIsPause = lastMv.type === 'pause'; }
+    const lm = moves[moves.length - 1]; if (lm.points.length){ toolPos = lm.points[lm.points.length - 1]; toolZ = lm.z; toolKind = lm.type; }
   }
   if (toolPos){
     const s = w2s(toolPos.x, toolPos.y);
     const tool = getToolById(S.activeToolId) || S.tools[0];
     const toolD = (tool ? tool.diam : 3.175) * S.scale;
     const tr = Math.max(8, toolD / 2);
-    const haloR = tr + (toolIsCut ? 10 : (toolIsPause ? 14 : 6));
-    let haloColor1, strokeCol;
-    if (toolIsPause){ haloColor1 = 'rgba(255,136,0,0.55)'; strokeCol = 'rgba(255,136,0,0.8)'; }
-    else if (toolIsCut){ haloColor1 = 'rgba(0,255,136,0.5)'; strokeCol = 'rgba(0,255,136,0.6)'; }
-    else { haloColor1 = 'rgba(77,166,255,0.4)'; strokeCol = 'rgba(77,166,255,0.6)'; }
+    let haloR = tr + 6, haloCol = 'rgba(77,166,255,0.4)', strokeCol = 'rgba(77,166,255,0.6)', centerCol = '#ffdd00', fillCol = 'rgba(77,166,255,0.2)';
+    if (toolKind === 'cut'){ haloR = tr + 10; haloCol = 'rgba(0,255,136,0.5)'; strokeCol = 'rgba(0,255,136,0.6)'; fillCol = 'rgba(0,255,136,0.25)'; }
+    else if (toolKind === 'tab'){ haloR = tr + 12; haloCol = 'rgba(255,68,170,0.55)'; strokeCol = 'rgba(255,68,170,0.8)'; centerCol = '#ff44aa'; fillCol = 'rgba(255,68,170,0.3)'; }
+    else if (toolKind === 'pause'){ haloR = tr + 14; haloCol = 'rgba(255,136,0,0.55)'; strokeCol = 'rgba(255,136,0,0.8)'; centerCol = '#ff8800'; fillCol = 'rgba(255,136,0,0.25)'; }
     const grad = ctx.createRadialGradient(s.x-r.left, s.y-r.top, tr*0.5, s.x-r.left, s.y-r.top, haloR);
-    grad.addColorStop(0, haloColor1); grad.addColorStop(1, 'rgba(0,0,0,0)');
-    ctx.fillStyle = grad;
-    ctx.beginPath(); ctx.arc(s.x-r.left, s.y-r.top, haloR, 0, Math.PI*2); ctx.fill();
+    grad.addColorStop(0, haloCol); grad.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = grad; ctx.beginPath(); ctx.arc(s.x-r.left, s.y-r.top, haloR, 0, Math.PI*2); ctx.fill();
     ctx.strokeStyle = strokeCol; ctx.lineWidth = 1.5;
     ctx.beginPath();
     ctx.moveTo(s.x-r.left-haloR-4, s.y-r.top); ctx.lineTo(s.x-r.left+haloR+4, s.y-r.top);
     ctx.moveTo(s.x-r.left, s.y-r.top-haloR-4); ctx.lineTo(s.x-r.left, s.y-r.top+haloR+4);
     ctx.stroke();
     ctx.beginPath(); ctx.arc(s.x-r.left, s.y-r.top, tr, 0, Math.PI*2);
-    ctx.fillStyle = toolIsCut ? 'rgba(0,255,136,0.25)' : (toolIsPause ? 'rgba(255,136,0,0.25)' : 'rgba(77,166,255,0.2)');
-    ctx.fill();
-    ctx.strokeStyle = toolIsPause ? '#ff8800' : '#ffdd00'; ctx.lineWidth = 2.5;
+    ctx.fillStyle = fillCol; ctx.fill();
+    ctx.strokeStyle = centerCol; ctx.lineWidth = 2.5;
     ctx.beginPath(); ctx.arc(s.x-r.left, s.y-r.top, tr, 0, Math.PI*2); ctx.stroke();
     ctx.beginPath(); ctx.arc(s.x-r.left, s.y-r.top, 2.5, 0, Math.PI*2);
-    ctx.fillStyle = toolIsPause ? '#ff8800' : '#ffdd00'; ctx.fill();
-    if (toolIsPause){
+    ctx.fillStyle = centerCol; ctx.fill();
+    if (toolKind === 'pause'){
       ctx.fillStyle = '#ff8800'; ctx.font = 'bold 11px monospace';
       ctx.fillText('⏸ PAUSA', s.x-r.left + tr + 6, s.y-r.top - 4);
+    } else if (toolKind === 'tab'){
+      ctx.fillStyle = '#ff44aa'; ctx.font = 'bold 11px monospace';
+      ctx.fillText('🔗 PATILLA', s.x-r.left + tr + 6, s.y-r.top - 4);
     }
   }
+
   const hudX = r.left + 12, hudY = r.top + 12, hudW = 250, hudH = 62;
-  ctx.fillStyle = 'rgba(0,0,0,0.75)';
-  ctx.fillRect(hudX, hudY, hudW, hudH);
+  ctx.fillStyle = 'rgba(0,0,0,0.75)'; ctx.fillRect(hudX, hudY, hudW, hudH);
   ctx.strokeStyle = '#2a3550'; ctx.lineWidth = 1; ctx.strokeRect(hudX, hudY, hudW, hudH);
   const pct = S.simTotalTime > 0 ? S.simT / S.simTotalTime : 0;
   const barX = hudX + 10, barY = hudY + 10, barW = hudW - 20, barH = 8;
@@ -1338,18 +1480,15 @@ function drawSimulation(r){
   while (mi < S.simMoveTimes.length - 1 && S.simMoveTimes[mi+1] <= S.simT) mi++;
   const curMv = S.simMoves[Math.min(mi, S.simMoves.length-1)];
   if (curMv){
-    if (curMv.type === 'pause'){
-      ctx.fillStyle = '#ff8800'; ctx.font = 'bold 11px monospace';
-      ctx.fillText('⏸ PAUSA MAND.', barX + 4, barY + barH + 30);
-      ctx.fillStyle = '#cdd6e0'; ctx.font = '10px monospace';
-      ctx.fillText(`${S.simSpeedMult.toFixed(1)}x`, barX + 120, barY + barH + 30);
-    } else {
-      const isCut = curMv.type === 'cut';
-      ctx.fillStyle = isCut ? '#00ff88' : '#4da6ff'; ctx.font = 'bold 11px monospace';
-      ctx.fillText(isCut ? '✂ CORTE' : '➤ RÁPIDO', barX + 4, barY + barH + 30);
-      ctx.fillStyle = '#cdd6e0'; ctx.font = '10px monospace';
-      ctx.fillText(`Z=${(curMv.z||0).toFixed(2)}mm  ${S.simSpeedMult.toFixed(1)}x`, barX + 80, barY + barH + 30);
-    }
+    let txt, col;
+    if (curMv.type === 'pause'){ txt = '⏸ PAUSA MAND.'; col = '#ff8800'; }
+    else if (curMv.type === 'tab'){ txt = '🔗 PATILLA'; col = '#ff44aa'; }
+    else if (curMv.type === 'cut'){ txt = '✂ CORTE'; col = '#00ff88'; }
+    else { txt = '➤ RÁPIDO'; col = '#4da6ff'; }
+    ctx.fillStyle = col; ctx.font = 'bold 11px monospace';
+    ctx.fillText(txt, barX + 4, barY + barH + 30);
+    ctx.fillStyle = '#cdd6e0'; ctx.font = '10px monospace';
+    ctx.fillText(`Z=${(curMv.z||0).toFixed(2)}mm  ${S.simSpeedMult.toFixed(1)}x`, barX + 100, barY + barH + 30);
   }
 }
 
@@ -1368,46 +1507,34 @@ function drawGrid(r){
 
 function drawEnt(e, color, lw, r){
   ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = lw; ctx.setLineDash([]);
-  if (e.type === 'LINE'){
-    const s1 = w2s(e.x1,e.y1), s2 = w2s(e.x2,e.y2);
-    ctx.beginPath(); ctx.moveTo(s1.x-r.left, s1.y-r.top); ctx.lineTo(s2.x-r.left, s2.y-r.top); ctx.stroke();
-  } else if (e.type === 'CIRCLE'){
-    const c = w2s(e.cx, e.cy);
-    ctx.beginPath(); ctx.arc(c.x-r.left, c.y-r.top, e.r*S.scale, 0, Math.PI*2); ctx.stroke();
-  } else if (e.type === 'ARC'){
-    const sa = e.sa, ea = e.ea; let sweep = ea - sa; if (S.flipArcs) sweep = -sweep;
+  if (e.type === 'LINE'){ const s1 = w2s(e.x1,e.y1), s2 = w2s(e.x2,e.y2);
+    ctx.beginPath(); ctx.moveTo(s1.x-r.left, s1.y-r.top); ctx.lineTo(s2.x-r.left, s2.y-r.top); ctx.stroke(); }
+  else if (e.type === 'CIRCLE'){ const c = w2s(e.cx, e.cy);
+    ctx.beginPath(); ctx.arc(c.x-r.left, c.y-r.top, e.r*S.scale, 0, Math.PI*2); ctx.stroke(); }
+  else if (e.type === 'ARC'){ const sa = e.sa, ea = e.ea; let sweep = ea - sa; if (S.flipArcs) sweep = -sweep;
     const steps = Math.max(20, Math.ceil(Math.abs(sweep) / 0.1));
     ctx.beginPath();
-    for (let i=0; i<=steps; i++){
-      const t = i / steps; const ang = sa + t * sweep;
+    for (let i=0; i<=steps; i++){ const t = i / steps; const ang = sa + t * sweep;
       const wx = e.cx + e.r * Math.cos(ang), wy = e.cy + e.r * Math.sin(ang);
       const s = w2s(wx, wy);
-      if (i === 0) ctx.moveTo(s.x-r.left, s.y-r.top); else ctx.lineTo(s.x-r.left, s.y-r.top);
-    }
-    ctx.stroke();
-  } else if (e.type === 'LWPOLYLINE'){
-    if (e.vertices.length < 2) return;
+      if (i === 0) ctx.moveTo(s.x-r.left, s.y-r.top); else ctx.lineTo(s.x-r.left, s.y-r.top); }
+    ctx.stroke(); }
+  else if (e.type === 'LWPOLYLINE'){ if (e.vertices.length < 2) return;
     ctx.beginPath();
-    const s0 = w2s(e.vertices[0].x, e.vertices[0].y);
-    ctx.moveTo(s0.x-r.left, s0.y-r.top);
+    const s0 = w2s(e.vertices[0].x, e.vertices[0].y); ctx.moveTo(s0.x-r.left, s0.y-r.top);
     for (let i=1;i<e.vertices.length;i++){ const s = w2s(e.vertices[i].x, e.vertices[i].y); ctx.lineTo(s.x-r.left, s.y-r.top); }
-    if (e.closed) ctx.closePath();
-    ctx.stroke();
-  } else if (e.type === 'POINT'){
-    const s = w2s(e.x, e.y);
-    ctx.beginPath(); ctx.arc(s.x-r.left, s.y-r.top, 3, 0, Math.PI*2); ctx.fill();
-  }
+    if (e.closed) ctx.closePath(); ctx.stroke(); }
+  else if (e.type === 'POINT'){ const s = w2s(e.x, e.y);
+    ctx.beginPath(); ctx.arc(s.x-r.left, s.y-r.top, 3, 0, Math.PI*2); ctx.fill(); }
 }
 
 // ═══════════════════════════════════════════════
-//  G-CODE — Mandrino arranca a Z seguro, entre capas solo retrae a Z retracción
+//  G-CODE GENERATION
 // ═══════════════════════════════════════════════
 function genGCode(){
   if (!S.operations.length){ gcodeEl.textContent = '(Sin operaciones)'; return ''; }
   if (!S.tools.length){ gcodeEl.textContent = '(Sin herramientas)'; return ''; }
-
   rebuildAllContours();
-
   const toolOrder = [];
   const groups = new Map();
   for (const op of S.operations){
@@ -1416,17 +1543,14 @@ function genGCode(){
     if (!groups.has(tid)){ groups.set(tid, []); toolOrder.push(tid); }
     groups.get(tid).push({ op, originalIndex: S.operations.indexOf(op) });
   }
-
   const lines = [];
   lines.push('%','O0001 (CNC DXF)','(Generado por CNC DXF → G-Code)','G21 G90 G17');
   const maxSafe = Math.max(...S.tools.map(t => t.safe), 10);
   lines.push('G0 Z' + maxSafe, '');
-
   let toolChangeCount = 0;
 
   for (const tid of toolOrder){
-    const tool = getToolById(tid);
-    if (!tool) continue;
+    const tool = getToolById(tid); if (!tool) continue;
     const entries = groups.get(tid);
     const spindleDir = tool.spindleDir === 'M4' ? 'M4' : 'M3';
     const dirName = spindleDir === 'M4' ? 'antihorario' : 'horario';
@@ -1435,7 +1559,9 @@ function genGCode(){
     lines.push(`(--- Herramienta T${tool.toolNumber}: ${tool.name} ---)`);
     lines.push(`(Ø${tool.diam}mm · ${tool.rpm}rpm · Avance XY ${tool.feed} · Avance Z ${tool.feedZ})`);
     lines.push(`(Corte ${cutDirName} · Mandrino ${spindleDir} ${dirName})`);
-    // ★ Z seguro antes del cambio de herramienta (el mandrino siempre arranca a Z seguro)
+    if (S.tabs.enabled){
+      lines.push(`(Patillas: ${S.tabs.count} uds · ancho REAL ${S.tabs.width}mm (tramo en trayectoria ${(S.tabs.width+tool.diam).toFixed(3)}mm) · alto ${S.tabs.height}mm)`);
+    }
     lines.push(`G0 Z${tool.safe.toFixed(3)}`);
     lines.push(`T${tool.toolNumber} M6`);
     lines.push(`S${tool.rpm} ${spindleDir}`);
@@ -1465,27 +1591,26 @@ function genGCode(){
         const pts = effectiveContour(c.points);
         const isClosed = c.closed;
         const f = pts[0];
-        // ★ Z seguro SOLO al inicio de la operación (no entre capas)
+        let tabsEff = [];
+        if (S.tabs.enabled && isClosed){
+          const seed = S.tabs.seed + originalIndex * 137;
+          tabsEff = computeTabSegments(pts, true, S.tabs.count, S.tabs.width, seed, tool.diam);
+        }
         lines.push(`G0 Z${tool.safe.toFixed(3)}`);
         for (let k=0;k<passes;k++){
           const z = -Math.min((k+1)*step, tool.depth);
-          // Solo el primer pase va a Z seguro; el resto ya está en Z retracción del pase anterior
+          const isLastPass = (k === passes - 1);
           lines.push(`G0 X${f.x.toFixed(3)} Y${f.y.toFixed(3)}`);
           lines.push(`G1 Z${z.toFixed(3)} F${tool.feedZ}`);
-          for (let i = 1; i < pts.length; i++){
-            lines.push(`G1 X${pts[i].x.toFixed(3)} Y${pts[i].y.toFixed(3)} F${tool.feed}`);
+          if (S.tabs.enabled && isLastPass && isClosed && tabsEff.length > 0){
+            lines.push(`(--- pasada con ${tabsEff.length} patilla(s) · patilla final ${S.tabs.width}mm · alto ${S.tabs.height}mm ---)`);
+            emitCutWithTabs(lines, pts, isClosed, tool, z, tabsEff, S.tabs.height);
+          } else {
+            emitCutNormal(lines, pts, isClosed, tool);
           }
-          if (isClosed){
-            const lastPt = pts[pts.length - 1];
-            if (Math.hypot(lastPt.x - f.x, lastPt.y - f.y) > 1e-3){
-              lines.push(`G1 X${f.x.toFixed(3)} Y${f.y.toFixed(3)} F${tool.feed}`);
-            }
-          }
-          // ★ Solo se retrae a Z retracción, NO a Z seguro
           lines.push(`G0 Z${tool.retract.toFixed(3)}`);
         }
       } else if (op.type === 'pocket'){
-        // ★ Z seguro SOLO al inicio de la operación (una vez), no entre capas
         lines.push(`G0 Z${tool.safe.toFixed(3)}`);
         for (const a of op.areas){
           if (a.shape === 'rect'){
@@ -1535,7 +1660,7 @@ function genGCode(){
   lines.push(`G0 Z${maxSafe}`,'M5','M30','%');
   const g = lines.join('\n');
   gcodeEl.textContent = g;
-  showToast(`G-Code ✓ (${toolChangeCount} cambio${toolChangeCount>1?'s':''} · pausa ${S.spindlePause}s)`,'success');
+  showToast(`G-Code ✓ (${toolChangeCount} cambio${toolChangeCount>1?'s':''}${S.tabs.enabled?' · patillas ON':''})`,'success');
   return g;
 }
 
@@ -1566,12 +1691,12 @@ function onFile(e){
       S.dxfText = text; S.dxfFilename = file.name;
       S.entities = norm; S.operations = []; S.layerVis = {};
       S.simMoves = []; S.simMoveTimes = []; S.simTotalTime = 0; S.simT = 0;
-      S.cutContours = {};
+      S.cutContours = {}; S.cutTabs = {};
       S.offsetX = 0; S.offsetY = 0;
       $('offsetX').value = 0; $('offsetY').value = 0;
       if (!S.tools.length){ S.tools.push(createDefaultTool(1)); S.activeToolId = S.tools[0].id; loadToolIntoFields(S.tools[0]); }
       extractLayers(); updateToolsList(); updateOpsList();
-      resizeCanvas(); fitView(); updateSimUI(); render(); scheduleSave();
+      resizeCanvas(); fitView(); updateSimUI(); updateTabsInfo(); render(); scheduleSave();
       const counts = {}; for (const en of norm) counts[en.type] = (counts[en.type]||0)+1;
       diagEl.textContent = `Archivo: ${file.name}\nTotal: ${norm.length}\n` +
         Object.entries(counts).map(([k,v]) => `${k}: ${v}`).join('\n') +
@@ -1598,22 +1723,18 @@ $('btnDl').addEventListener('click', () => {
   const g = gcodeEl.textContent;
   if (!g || g.startsWith('(')){ showToast('Genera primero','warn'); return; }
   const b = new Blob([g], {type:'text/plain'});
-  const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'programa.nc'; a.click();
-});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'programa.nc'; a.click(); });
 $('btnCopy').addEventListener('click', () => {
   const g = gcodeEl.textContent;
-  if (g && !g.startsWith('(')) navigator.clipboard.writeText(g).then(() => showToast('Copiado','success'));
-});
+  if (g && !g.startsWith('(')) navigator.clipboard.writeText(g).then(() => showToast('Copiado','success')); });
 $('btnFlipArcs').addEventListener('click', () => {
   S.flipArcs = !S.flipArcs;
   $('btnFlipArcs').textContent = S.flipArcs ? '↺ Arcos' : '↻ Arcos';
-  render(); scheduleSave();
-});
+  render(); scheduleSave(); });
 $('btnFlipY').addEventListener('click', () => {
   S.flipY = !S.flipY;
   $('btnFlipY').textContent = S.flipY ? '⇅ Y' : '⇅ Y';
-  fitView(); render(); scheduleSave();
-});
+  fitView(); render(); scheduleSave(); });
 modeBtns.addEventListener('click', e => { const b = e.target.closest('.mode-btn'); if (b) setMode(b.dataset.mode); });
 $('btnAddTool').addEventListener('click', addTool);
 $('btnDupTool').addEventListener('click', duplicateTool);
@@ -1641,6 +1762,25 @@ $('cfgSpindlePause').addEventListener('change', () => { S.spindlePause = Math.ma
 $('cfgRapidXY').addEventListener('change', () => { S.rapidXY = Math.max(100, parseFloat($('cfgRapidXY').value) || 5000); buildSimFromOps(); render(); scheduleSave(); });
 $('cfgRapidZ').addEventListener('change', () => { S.rapidZ = Math.max(100, parseFloat($('cfgRapidZ').value) || 3000); buildSimFromOps(); render(); scheduleSave(); });
 
+$('tabsEnabled').addEventListener('change', () => {
+  S.tabs.enabled = $('tabsEnabled').checked;
+  rebuildAllContours(); buildSimFromOps(); render(); scheduleSave();
+  showToast(S.tabs.enabled ? 'Patillas activadas' : 'Patillas desactivadas','success'); });
+$('tabsCount').addEventListener('change', () => {
+  S.tabs.count = Math.max(1, Math.min(20, parseInt($('tabsCount').value) || 3));
+  rebuildAllContours(); buildSimFromOps(); render(); scheduleSave(); });
+$('tabsWidth').addEventListener('change', () => {
+  S.tabs.width = Math.max(0.1, parseFloat($('tabsWidth').value) || 1);
+  rebuildAllContours(); buildSimFromOps(); render(); scheduleSave();
+  showToast(`Ancho de patilla: ${S.tabs.width}mm de material`, 'success'); });
+$('tabsHeight').addEventListener('change', () => {
+  S.tabs.height = Math.max(0.1, parseFloat($('tabsHeight').value) || 1);
+  buildSimFromOps(); render(); scheduleSave(); });
+$('btnShuffleTabs').addEventListener('click', () => {
+  S.tabs.seed = (S.tabs.seed + 7919) >>> 0;
+  rebuildAllContours(); buildSimFromOps(); render(); scheduleSave();
+  showToast('Patillas reubicadas','success'); });
+
 btnPlay.addEventListener('click', () => { if (S.simPlaying) simPause(); else simPlay(); });
 btnReset.addEventListener('click', simReset);
 btnEnd.addEventListener('click', simEnd);
@@ -1664,18 +1804,13 @@ canvasContainer.addEventListener('wheel', e => {
 }, {passive:false});
 
 canvasContainer.addEventListener('mousedown', e => {
-  if (e.button === 1){
-    const now = Date.now();
+  if (e.button === 1){ const now = Date.now();
     if (now - S.lastMiddleClick < 300){ S.lastMiddleClick = 0; centerOnOrigin(); e.preventDefault(); return; }
-    S.lastMiddleClick = now;
-  }
+    S.lastMiddleClick = now; }
   if (e.button === 1 || e.button === 2 || (S.mode === 'view' && e.button === 0)){
-    S.panning = true;
-    S.psx = e.clientX; S.psy = e.clientY;
+    S.panning = true; S.psx = e.clientX; S.psy = e.clientY;
     S.poffx = S.offX; S.poffy = S.offY;
-    canvasContainer.classList.add('panning');
-    e.preventDefault(); return;
-  }
+    canvasContainer.classList.add('panning'); e.preventDefault(); return; }
   if (e.button === 0){
     const w = s2w(e.clientX, e.clientY);
     if (S.mode === 'drill') addDrill(w.x, w.y);
@@ -1688,26 +1823,19 @@ canvasContainer.addEventListener('mousedown', e => {
     }
   }
 });
-
 canvasContainer.addEventListener('mousemove', e => {
   const w = s2w(e.clientX, e.clientY);
   S.mwx = w.x; S.mwy = w.y;
-  if (S.panning){
-    S.offX = S.poffx + (e.clientX - S.psx);
-    S.offY = S.poffy - (e.clientY - S.psy);
-    render(); return;
-  }
+  if (S.panning){ S.offX = S.poffx + (e.clientX - S.psx); S.offY = S.poffy - (e.clientY - S.psy); render(); return; }
   if (S.selecting && S.mode === 'cut'){
     S.selEnd = { x:w.x, y:w.y };
     S.selRect = { x1: Math.min(S.selStart.x, S.selEnd.x), y1: Math.min(S.selStart.y, S.selEnd.y),
                   x2: Math.max(S.selStart.x, S.selEnd.x), y2: Math.max(S.selStart.y, S.selEnd.y) };
-    render(); return;
-  }
+    render(); return; }
   const nh = closestEnt(w.x, w.y, 5);
   if (nh !== S.hover){ S.hover = nh; render(); }
   else coordEl.textContent = `X: ${w.x.toFixed(2)} mm | Y: ${w.y.toFixed(2)} mm`;
 });
-
 window.addEventListener('mouseup', () => {
   if (S.panning){ S.panning = false; canvasContainer.classList.remove('panning'); render(); return; }
   if (S.selecting && S.mode === 'cut'){
@@ -1732,7 +1860,6 @@ window.addEventListener('mouseup', () => {
     S.selRect = null; render();
   }
 });
-
 canvasContainer.addEventListener('contextmenu', e => e.preventDefault());
 window.addEventListener('keydown', e => {
   if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
@@ -1752,8 +1879,7 @@ $('btnCenter').addEventListener('click', () => {
   S.offsetX = -(bb.mnx + bb.w/2); S.offsetY = -(bb.mny + bb.h/2);
   $('offsetX').value = S.offsetX.toFixed(3); $('offsetY').value = S.offsetY.toFixed(3);
   fitView(); rebuildAllContours(); buildSimFromOps(); render(); scheduleSave();
-  showToast('Centrado en (0,0)','success');
-});
+  showToast('Centrado en (0,0)','success'); });
 $('offsetX').addEventListener('change', () => { S.offsetX = parseFloat($('offsetX').value)||0; fitView(); rebuildAllContours(); buildSimFromOps(); render(); scheduleSave(); });
 $('offsetY').addEventListener('change', () => { S.offsetY = parseFloat($('offsetY').value)||0; fitView(); rebuildAllContours(); buildSimFromOps(); render(); scheduleSave(); });
 
@@ -1762,15 +1888,19 @@ function init(){
   $('cfgSpindlePause').value = S.spindlePause;
   $('cfgRapidXY').value = S.rapidXY;
   $('cfgRapidZ').value = S.rapidZ;
+  $('tabsEnabled').checked = S.tabs.enabled;
+  $('tabsCount').value = S.tabs.count;
+  $('tabsWidth').value = S.tabs.width;
+  $('tabsHeight').value = S.tabs.height;
   const restored = loadFromLocalStorage();
   if (!restored){
     S.tools = [createDefaultTool(1)];
     S.activeToolId = S.tools[0].id;
     loadToolIntoFields(S.tools[0]);
     updateToolsList(); updateOpsList(); extractLayers();
-    fitView(); updateSimUI(); render();
+    fitView(); updateSimUI(); updateTabsInfo(); render();
   } else { showToast('Proyecto restaurado','success'); }
-  console.log('🛠️ CNC DXF → G-Code · entre capas solo retrae a Z retracción, mandrino arranca a Z seguro');
+  console.log('🛠️ CNC DXF → G-Code · ancho de patilla compensado con Ø de fresa');
 }
 init();
 })();
