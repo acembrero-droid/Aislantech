@@ -1,0 +1,1906 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>CNC DXF → G-Code · Multi-Herramienta</title>
+<style>
+:root{--bg:#1a1d23;--panel:#21252b;--border:#333842;--text:#cdd6e0;--text2:#8b949e;--accent:#4da6ff;--accentH:#3d8ed9;--danger:#e0556a;--success:#4ec990;--warning:#e5a855;--input:#2a2d35;--canvas:#0d1014}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);height:100vh;display:flex;flex-direction:column;overflow:hidden;user-select:none}
+.header{background:var(--panel);border-bottom:1px solid var(--border);padding:9px 14px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;flex-shrink:0}
+.logo{font-weight:700;font-size:1.02rem;color:#fff}.logo span{color:var(--accent)}
+.btn{padding:7px 12px;border:1px solid var(--border);border-radius:6px;cursor:pointer;font-size:.78rem;background:var(--input);color:var(--text);white-space:nowrap;display:inline-flex;align-items:center;gap:5px;font-family:inherit;transition:all .12s}
+.btn:hover{border-color:var(--accent);color:#fff;background:#2d323b}
+.btn.accent{background:var(--accent);border-color:var(--accent);color:#000;font-weight:600}
+.btn.accent:hover{background:var(--accentH)}
+.btn.danger{border-color:var(--danger);color:var(--danger)}
+.btn.danger:hover{background:var(--danger);color:#fff}
+.btn.small{padding:4px 9px;font-size:.72rem}
+.file-info{font-size:.72rem;color:var(--text2);margin-left:auto;overflow:hidden;text-overflow:ellipsis;max-width:280px;white-space:nowrap}
+.main{display:flex;flex:1;overflow:hidden}
+.panel{width:280px;min-width:240px;background:var(--panel);display:flex;flex-direction:column;overflow-y:auto;flex-shrink:0;padding:9px;gap:8px}
+.panel.left{border-right:1px solid var(--border)}
+.panel.right{border-left:1px solid var(--border);width:310px}
+.sec{background:#1a1d24;border-radius:8px;padding:9px}
+.sec h3{font-size:.68rem;text-transform:uppercase;letter-spacing:.6px;color:var(--text2);margin-bottom:6px;display:flex;justify-content:space-between;align-items:center}
+.sec h3 .mini{font-size:.6rem;padding:1px 5px;background:#2a2d35;border-radius:8px;color:var(--text2);font-weight:400;letter-spacing:0}
+.mode-btns{display:flex;flex-direction:column;gap:3px}
+.mode-btn{padding:7px 10px;border-radius:5px;cursor:pointer;font-size:.78rem;border:1px solid transparent;background:var(--input);color:var(--text);text-align:left;display:flex;align-items:center;gap:7px;font-family:inherit}
+.mode-btn:hover{background:#2d323b}
+.mode-btn.active{border-color:var(--accent);background:#1e2d3d;color:#fff}
+.mode-dot{width:9px;height:9px;border-radius:50%}
+.mode-dot.view{background:#888}.mode-dot.drill{background:#ff6b6b}.mode-dot.cut{background:#ffb347}.mode-dot.pocket{background:#4ec990}
+.tool-list{max-height:200px;overflow-y:auto;display:flex;flex-direction:column;gap:4px}
+.tool-item{display:flex;align-items:center;gap:6px;padding:6px 8px;background:#22262e;border:1px solid transparent;border-radius:6px;cursor:pointer;font-size:.75rem;transition:all .12s}
+.tool-item:hover{background:#2a2f38;border-color:var(--border)}
+.tool-item.active{border-color:var(--accent);background:#1e2d3d;box-shadow:0 0 8px rgba(77,166,255,.15)}
+.tool-item .tnum{background:var(--accent);color:#000;font-weight:700;font-size:.68rem;padding:2px 6px;border-radius:4px;flex-shrink:0;min-width:26px;text-align:center}
+.tool-item.active .tnum{background:#00d9ff}
+.tool-item .tinfo{flex:1;overflow:hidden}
+.tool-item .tname{font-weight:600;font-size:.75rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tool-item .tspec{font-size:.62rem;color:var(--text2);margin-top:1px;font-family:monospace}
+.tool-item .tact{opacity:0;transition:opacity .12s;display:flex;gap:2px}
+.tool-item:hover .tact{opacity:1}
+.tool-item .tact button{background:transparent;border:none;color:var(--text2);cursor:pointer;padding:2px 4px;border-radius:3px;font-size:.75rem}
+.tool-item .tact button:hover{background:#3a3f4a;color:#fff}
+.tool-item .tact button.del:hover{background:#5a2a2a;color:#ffb0b0}
+.ops{list-style:none;max-height:160px;overflow-y:auto;font-size:.72rem}
+.ops li{padding:5px 6px;border-radius:4px;display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;background:#22262e;gap:4px}
+.op-type{font-weight:600;font-size:.6rem;padding:2px 5px;border-radius:6px;flex-shrink:0}
+.op-type.drill{background:#ff6b6b22;color:#ff6b6b}
+.op-type.cut{background:#ffb34722;color:#ffb347}
+.op-type.pocket{background:#4ec99022;color:#4ec990}
+.op-tool-select{background:#1a1d24;border:1px solid var(--border);color:var(--text2);font-size:.62rem;border-radius:3px;padding:1px 3px;font-family:inherit;max-width:60px;cursor:pointer}
+.op-tool-select:hover{border-color:var(--accent)}
+.del-op{cursor:pointer;opacity:.5;padding:2px 5px;flex-shrink:0}
+.del-op:hover{opacity:1;color:var(--danger)}
+.canvas-container{flex:1;position:relative;background:var(--canvas);overflow:hidden;min-width:200px}
+.canvas-container.mode-view{cursor:grab}.canvas-container.mode-view:active{cursor:grabbing}
+canvas{display:block;position:absolute;top:0;left:0}
+.coord,.zoom{position:absolute;bottom:8px;font-size:.68rem;color:var(--text2);background:#000a;padding:3px 9px;border-radius:9px;pointer-events:none}
+.coord{left:10px}.zoom{right:10px}
+.save-indicator{position:absolute;top:10px;right:10px;font-size:.65rem;color:var(--success);background:#000c;padding:3px 8px;border-radius:8px;opacity:0;transition:opacity .3s;pointer-events:none}
+.save-indicator.show{opacity:1}
+.row{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;gap:6px;font-size:.74rem}
+.row label{color:var(--text2);white-space:nowrap;min-width:50px}
+.row input,.row select{background:var(--input);border:1px solid var(--border);color:var(--text);padding:4px 7px;border-radius:4px;font-size:.72rem;width:80px;text-align:right;font-family:inherit}
+.row select{text-align:left;width:90px}
+.row input:focus,.row select:focus{outline:none;border-color:var(--accent)}
+.gcode{background:#0d0f12;color:#c0d0e0;font-family:Consolas,monospace;font-size:.66rem;border-radius:5px;padding:8px;min-height:120px;max-height:200px;overflow-y:auto;white-space:pre-wrap;border:1px solid var(--border);line-height:1.4}
+.toast{position:fixed;top:16px;right:16px;background:#2d333b;color:#fff;padding:9px 15px;border-radius:6px;font-size:.8rem;z-index:1000;opacity:0;transform:translateY(-20px);transition:all .25s;pointer-events:none;border:1px solid var(--border);max-width:400px}
+.toast.show{opacity:1;transform:translateY(0)}
+.toast.warn{border-color:var(--warning);color:#ffd9a8}
+.toast.success{border-color:var(--success);color:#a8f5d5}
+::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-thumb{background:#3a3f4a;border-radius:10px}
+.diag{font-size:.66rem;color:var(--text2);line-height:1.5;max-height:90px;overflow-y:auto;white-space:pre-wrap}
+.layer-list{max-height:100px;overflow-y:auto;font-size:.7rem}
+.layer-item{display:flex;align-items:center;gap:5px;padding:3px 0;border-bottom:1px solid #2a2d35}
+.layer-item label{display:flex;align-items:center;gap:5px;cursor:pointer;flex:1}
+.layer-item input[type=checkbox]{accent-color:var(--accent)}
+.sim-panel{background:linear-gradient(180deg,#1a1d24,#161a20);border:1px solid #2a3550}
+.sim-btn-row{display:flex;gap:5px;margin-bottom:8px}
+.sim-btn{flex:1;padding:9px 8px;border:1px solid var(--border);border-radius:6px;cursor:pointer;font-size:.82rem;background:var(--input);color:var(--text);font-family:inherit;font-weight:600;display:flex;align-items:center;justify-content:center;gap:5px;transition:all .12s}
+.sim-btn:hover{background:#2d323b;border-color:var(--accent)}
+.sim-btn.play{background:#1e4d3a;border-color:#2a6b52;color:#a8f5d5}
+.sim-btn.play:hover{background:#2a6b52;color:#fff}
+.sim-btn.playing{background:#4d1e1e;border-color:#6b2a2a;color:#ffb0b0}
+.sim-slider{width:100%;height:20px;-webkit-appearance:none;background:transparent;cursor:pointer}
+.sim-slider::-webkit-slider-track{height:6px;background:#2a2d35;border-radius:3px;border:1px solid #3a3f4a}
+.sim-slider::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;background:var(--success);border-radius:50%;border:2px solid #0d1014;margin-top:-6px;cursor:grab}
+.sim-info{font-size:.68rem;color:var(--text2);display:flex;justify-content:space-between;margin-bottom:3px}
+.sim-info b{color:var(--text);font-family:monospace;font-size:.72rem}
+.sim-legend{display:flex;flex-direction:column;gap:3px;font-size:.68rem;color:var(--text2);margin-top:6px;padding-top:6px;border-top:1px solid #2a2d35}
+.sim-legend span{display:flex;align-items:center;gap:6px}
+.cb{width:14px;height:4px;border-radius:2px;flex-shrink:0}
+.cb.tool{width:12px;height:12px;border-radius:50%;background:transparent;border:2px solid #ffdd00}
+.cb.pause{width:14px;height:4px;background:#ff8800;border-radius:2px;}
+.speed-row{display:flex;align-items:center;gap:6px;font-size:.68rem;color:var(--text2);margin-top:4px}
+.speed-row input[type=range]{flex:1;accent-color:var(--accent)}
+.empty-hint{color:var(--text2);font-style:italic;font-size:.72rem;padding:6px 4px}
+.hint{font-size:.6rem;color:var(--text2);font-style:italic;margin-top:2px;line-height:1.3}
+.machine-sec{background:linear-gradient(180deg,#1e242b,#1a1d24);border:1px solid #3a4050}
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="logo">CNC<span>DXF</span> → G-Code</div>
+  <button class="btn accent" id="btnLoad">📂 DXF</button>
+  <input type="file" id="fileInput" accept=".dxf" style="display:none">
+  <button class="btn" id="btnSaveProj">💾 Proyecto</button>
+  <input type="file" id="projInput" accept=".json,.cncproj" style="display:none">
+  <button class="btn" id="btnLoadProj">📥 Abrir</button>
+  <button class="btn" id="btnFit">🔍 Ajustar</button>
+  <button class="btn danger" id="btnClear">🗑 Limpiar</button>
+  <button class="btn" id="btnFlipArcs">↻ Arcos</button>
+  <button class="btn" id="btnFlipY">⇅ Y</button>
+  <span class="file-info" id="fileInfo">Sin archivo</span>
+</div>
+<div class="main">
+  <div class="panel left">
+    <div class="sec">
+      <h3>🎯 Modo</h3>
+      <div class="mode-btns" id="modeBtns">
+        <button class="mode-btn active" data-mode="view"><span class="mode-dot view"></span> Navegar</button>
+        <button class="mode-btn" data-mode="drill"><span class="mode-dot drill"></span> Taladros</button>
+        <button class="mode-btn" data-mode="cut"><span class="mode-dot cut"></span> Cortes</button>
+        <button class="mode-btn" data-mode="pocket"><span class="mode-dot pocket"></span> Cajeados</button>
+      </div>
+    </div>
+    <div class="sec">
+      <h3>🔧 Herramientas <span class="mini" id="toolCount">0</span></h3>
+      <div class="tool-list" id="toolList">
+        <div class="empty-hint">Sin herramientas. Añade una.</div>
+      </div>
+      <button class="btn small" id="btnAddTool" style="width:100%;margin-top:6px;">+ Añadir herramienta</button>
+    </div>
+    <div class="sec">
+      <h3>📋 Operaciones <span class="mini" id="opCount">0</span></h3>
+      <ul class="ops" id="opsList"><li class="empty-hint" style="background:transparent;">Sin operaciones</li></ul>
+      <button class="btn small" id="btnUndo" style="width:100%;margin-top:5px;">↩ Deshacer</button>
+    </div>
+    <div class="sec">
+      <h3>🗂 Capas</h3>
+      <div class="layer-list" id="layerList"><div class="empty-hint">Sin capas</div></div>
+    </div>
+    <div class="sec">
+      <h3>📐 Offset</h3>
+      <div class="row"><label>Off X</label><input type="number" id="offsetX" value="0" step="1"></div>
+      <div class="row"><label>Off Y</label><input type="number" id="offsetY" value="0" step="1"></div>
+      <button class="btn small" id="btnCenter" style="width:100%;margin-top:3px;">🎯 Centrar en origen</button>
+    </div>
+    <div class="sec">
+      <h3>🔬 Diagnóstico</h3>
+      <div class="diag" id="diag">Carga un DXF para ver estadísticas</div>
+    </div>
+  </div>
+  <div class="canvas-container mode-view" id="canvasContainer">
+    <canvas id="mainCanvas"></canvas>
+    <div class="coord" id="coord">X: --- Y: ---</div>
+    <div class="zoom" id="zoom">Zoom: 100%</div>
+    <div class="save-indicator" id="saveInd">✓ Guardado</div>
+  </div>
+  <div class="panel right">
+    <div class="sec sim-panel">
+      <h3>🎬 SIMULACIÓN</h3>
+      <div class="sim-btn-row">
+        <button class="sim-btn play" id="btnPlay">▶ PLAY</button>
+        <button class="sim-btn" id="btnReset" style="flex:0 0 auto;">⏮</button>
+        <button class="sim-btn" id="btnEnd" style="flex:0 0 auto;">⏭</button>
+      </div>
+      <div class="sim-info">
+        <span id="simOpInfo">Sin trayectoria</span>
+        <span><b id="simPct">00:00:00</b></span>
+      </div>
+      <input type="range" class="sim-slider" id="simProgress" min="0" max="1000" value="0">
+      <div class="speed-row">
+        <span>🐢</span>
+        <input type="range" id="simSpeed" min="1" max="100" value="10">
+        <span>🐇</span>
+        <span id="simSpeedVal" style="min-width:44px;text-align:right;">1.0x</span>
+      </div>
+      <div class="hint">Velocidad <b>1.0x = tiempo real</b> · <span id="simTotalLabel">Total: 00:00:00</span></div>
+      <div class="sim-legend">
+        <span><span class="cb" style="background:#00ff88;height:4px;"></span> Corte (G1)</span>
+        <span><span class="cb" style="background:#4da6ff;height:3px;background-image:repeating-linear-gradient(90deg,#4da6ff 0,#4da6ff 4px,transparent 4px,transparent 7px);"></span> Rápido (G0)</span>
+        <span><span class="cb pause"></span> Pausa mandrino</span>
+        <span><span class="cb tool"></span> Herramienta</span>
+      </div>
+    </div>
+
+    <!-- ★ NUEVA SECCIÓN: configuración de máquina -->
+    <div class="sec machine-sec">
+      <h3>⚙ Máquina</h3>
+      <div class="row">
+        <label title="Tiempo de espera desde que arranca el mandrino hasta que empieza a moverse">Pausa mandrino</label>
+        <input type="number" id="cfgSpindlePause" value="12" step="0.5" min="0" max="120">
+      </div>
+      <div class="row">
+        <label>Rapid XY (mm/min)</label>
+        <input type="number" id="cfgRapidXY" value="5000" step="100" min="100">
+      </div>
+      <div class="row">
+        <label>Rapid Z (mm/min)</label>
+        <input type="number" id="cfgRapidZ" value="3000" step="100" min="100">
+      </div>
+      <div class="hint">Se emite <code>G4 P&lt;pausa&gt;</code> tras cada arranque de mandrino.</div>
+    </div>
+
+    <div class="sec">
+      <h3>⚙ Herramienta activa <span class="mini" id="activeToolBadge">—</span></h3>
+      <div class="row"><label>Nombre</label><input type="text" id="tName" style="width:130px;text-align:left;font-family:inherit;"></div>
+      <div class="row"><label>Nº T</label><input type="number" id="tNum" value="1" min="1" max="99" step="1"></div>
+      <div class="row"><label>Diámetro</label><input type="number" id="cDiam" value="3.175" step="0.1"></div>
+      <div class="row"><label>RPM</label><input type="number" id="cRpm" value="12000" step="500"></div>
+      <div class="row"><label>Avance XY</label><input type="number" id="cFeed" value="800" step="50"></div>
+      <div class="row"><label>Avance Z</label><input type="number" id="cFeedZ" value="400" step="25"></div>
+      <div class="row"><label>Paso Z</label><input type="number" id="cStep" value="1.5" step="0.1"></div>
+      <div class="row"><label>Prof. total</label><input type="number" id="cDepth" value="6" step="0.5"></div>
+      <div class="row"><label>Z seguro</label><input type="number" id="cSafe" value="15" step="1"></div>
+      <div class="row"><label>Z retrac.</label><input type="number" id="cRetract" value="5" step="0.5"></div>
+      <div class="row"><label>Solape</label><input type="number" id="cOverlap" value="0.35" step="0.05"></div>
+      <div class="row"><label>Sentido corte</label>
+        <select id="cCutDir">
+          <option value="ccw">↺ Antihorario (CCW)</option>
+          <option value="cw">↻ Horario (CW)</option>
+        </select>
+      </div>
+      <div class="row"><label>Giro mandrino</label>
+        <select id="cSpindleDir">
+          <option value="M3">M3 (Horario)</option>
+          <option value="M4">M4 (Antihorario)</option>
+        </select>
+      </div>
+      <div class="hint">El corte (C/I/E) desplaza todo el contorno <b>incluido el punto de entrada</b> a media herramienta.<br>El <b>punto de inicio</b> es el más cercano a (0,0).</div>
+      <button class="btn small" id="btnDupTool" style="width:100%;margin-top:4px;">⧉ Duplicar como nueva</button>
+    </div>
+
+    <div class="sec">
+      <h3>📄 Código G</h3>
+      <button class="btn accent" id="btnGen" style="width:100%;margin-bottom:6px;">⚙ Generar</button>
+      <div class="gcode" id="gcode">(Sin generar)</div>
+      <button class="btn" id="btnDl" style="width:100%;margin-top:6px;">💾 Descargar .nc</button>
+      <button class="btn small" id="btnCopy" style="width:100%;margin-top:4px;">📋 Copiar</button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+'use strict';
+
+const STORAGE_KEY = 'cncdxf_project_v2';
+const PROJECT_VERSION = 2;
+
+// ═══════════════════════════════════════════════
+//  PARSER DXF
+// ═══════════════════════════════════════════════
+function parseDXF(text){
+  text = text.replace(/^\uFEFF/,'').replace(/\r\n/g,'\n').replace(/\r/g,'\n');
+  const lines = text.split('\n');
+  const entities = [], header = {}, blocks = {};
+  let idx = 0, section = null, currentBlock = null;
+  function readUntilCode0(){
+    const props = [];
+    while (idx + 1 < lines.length){
+      const codeStr = lines[idx].trim();
+      if (codeStr === ''){ idx++; continue; }
+      const code = parseInt(codeStr, 10);
+      if (isNaN(code)){ idx++; continue; }
+      if (code === 0) return props;
+      props.push({ code, value: lines[idx+1].trim() });
+      idx += 2;
+    }
+    return props;
+  }
+  function nextCode0(){
+    while (idx + 1 < lines.length){
+      const codeStr = lines[idx].trim();
+      if (codeStr === ''){ idx++; continue; }
+      const code = parseInt(codeStr, 10);
+      if (isNaN(code)){ idx++; continue; }
+      if (code === 0){ const value = lines[idx+1].trim(); idx += 2; return value; }
+      idx += 2;
+    }
+    return null;
+  }
+  function nextNonZero(){
+    while (idx + 1 < lines.length){
+      const codeStr = lines[idx].trim();
+      if (codeStr === ''){ idx++; continue; }
+      const code = parseInt(codeStr, 10);
+      if (isNaN(code)){ idx++; continue; }
+      const value = lines[idx+1].trim(); idx += 2;
+      return { code, value };
+    }
+    return null;
+  }
+  while (idx < lines.length - 1){
+    const type = nextCode0();
+    if (type === null) break;
+    if (type === 'SECTION'){ const p = nextNonZero(); if (p && p.code === 2) section = p.value; continue; }
+    if (type === 'ENDSEC'){ section = null; continue; }
+    if (type === 'EOF') break;
+    if (section === 'BLOCKS' || section === 'ENTITIES'){
+      const props = readUntilCode0();
+      const get = c => { const p = props.find(x => x.code === c); return p ? p.value : undefined; };
+      if (type === 'BLOCK'){ currentBlock = { name: get(2)||'', baseX: parseFloat(get(10))||0, baseY: parseFloat(get(20))||0, entities: [] }; continue; }
+      if (type === 'ENDBLK'){ if (currentBlock){ blocks[currentBlock.name] = currentBlock; currentBlock = null; } continue; }
+      const target = currentBlock ? currentBlock.entities : entities;
+      if (type === 'LINE'){ const e = { type:'LINE', layer:get(8)||'0', x1:parseFloat(get(10)), y1:parseFloat(get(20)), x2:parseFloat(get(11)), y2:parseFloat(get(21)) }; if ([e.x1,e.y1,e.x2,e.y2].every(isFinite)) target.push(e); continue; }
+      if (type === 'CIRCLE'){ const e = { type:'CIRCLE', layer:get(8)||'0', cx:parseFloat(get(10)), cy:parseFloat(get(20)), r:parseFloat(get(40)) }; if (isFinite(e.cx)&&isFinite(e.cy)&&isFinite(e.r)&&e.r>0) target.push(e); continue; }
+      if (type === 'ARC'){ const e = { type:'ARC', layer:get(8)||'0', cx:parseFloat(get(10)), cy:parseFloat(get(20)), r:parseFloat(get(40)), sa:parseFloat(get(50)), ea:parseFloat(get(51)) }; if ([e.cx,e.cy,e.r,e.sa,e.ea].every(isFinite)&&e.r>0) target.push(e); continue; }
+      if (type === 'POINT'){ const e = { type:'POINT', layer:get(8)||'0', x:parseFloat(get(10)), y:parseFloat(get(20)) }; if (isFinite(e.x)&&isFinite(e.y)) target.push(e); continue; }
+      if (type === 'LWPOLYLINE'){
+        const e = { type:'LWPOLYLINE', layer:get(8)||'0', vertices: [], closed: false };
+        const flag = parseInt(get(70)||'0', 10); e.closed = (flag & 1) === 1;
+        let curX=null, curY=null, curB=0;
+        for (const p of props){
+          if (p.code === 10){ curX = parseFloat(p.value); curB = 0; }
+          else if (p.code === 20){ curY = parseFloat(p.value); }
+          else if (p.code === 42){ curB = parseFloat(p.value); }
+          if (curX !== null && curY !== null){ e.vertices.push({ x:curX, y:curY, bulge: isFinite(curB) ? curB : 0 }); curX=null; curY=null; curB=0; }
+        }
+        if (e.vertices.length >= 2) target.push(e);
+        continue;
+      }
+      if (type === 'POLYLINE'){
+        const poly = { type:'LWPOLYLINE', layer:get(8)||'0', vertices: [], closed:false };
+        const flag = parseInt(get(70)||'0', 10); poly.closed = (flag & 1) === 1;
+        while (true){
+          const t2 = nextCode0();
+          if (t2 === null) break;
+          if (t2 === 'VERTEX'){ const vprops = readUntilCode0(); const vget = c => { const p = vprops.find(x => x.code === c); return p ? p.value : undefined; };
+            const vx = parseFloat(vget(10)), vy = parseFloat(vget(20)); const vb = parseFloat(vget(42) || '0');
+            if (isFinite(vx)&&isFinite(vy)) poly.vertices.push({ x:vx, y:vy, bulge: isFinite(vb) ? vb : 0 }); continue; }
+          if (t2 === 'SEQEND') break; break;
+        }
+        if (poly.vertices.length >= 2) target.push(poly);
+        continue;
+      }
+      if (type === 'INSERT'){
+        const name = get(2); const ix = parseFloat(get(10)) || 0, iy = parseFloat(get(20)) || 0;
+        const blk = blocks[name];
+        if (blk){
+          const dx = ix - blk.baseX, dy = iy - blk.baseY;
+          for (const se of blk.entities){
+            const c = JSON.parse(JSON.stringify(se));
+            if (c.type === 'LINE'){ c.x1+=dx; c.y1+=dy; c.x2+=dx; c.y2+=dy; }
+            else if (c.type === 'CIRCLE' || c.type === 'ARC'){ c.cx+=dx; c.cy+=dy; }
+            else if (c.type === 'LWPOLYLINE'){ c.vertices = c.vertices.map(v => ({ x:v.x+dx, y:v.y+dy, bulge:v.bulge })); }
+            else if (c.type === 'POINT'){ c.x+=dx; c.y+=dy; }
+            target.push(c);
+          }
+        }
+        continue;
+      }
+      continue;
+    }
+  }
+  const insUnitsMatch = text.match(/\$INSUNITS\s*\n\s*\d+\s*\n\s*(\S+)/);
+  if (insUnitsMatch) header.$INSUNITS = insUnitsMatch[1];
+  return { entities, header, blocks };
+}
+
+function expandBulge(vertices, closed){
+  if (!vertices || vertices.length < 2) return [];
+  const out = []; const n = vertices.length; const segCount = closed ? n : n - 1;
+  for (let i = 0; i < segCount; i++){
+    const v1 = vertices[i]; const v2 = vertices[(i + 1) % n];
+    out.push({ x: v1.x, y: v1.y });
+    const b = v1.bulge || 0;
+    if (Math.abs(b) < 1e-9) continue;
+    const dx = v2.x - v1.x, dy = v2.y - v1.y;
+    const chord = Math.hypot(dx, dy);
+    if (chord < 1e-9) continue;
+    const theta = 4 * Math.atan(b); const half = theta / 2; const tanHalf = Math.tan(half);
+    const d = Math.abs(tanHalf) > 1e-9 ? (chord / 2) / tanHalf : 0;
+    const R = Math.abs(chord / (2 * Math.sin(half)));
+    const px = -dy / chord, py = dx / chord;
+    const mx = (v1.x + v2.x) / 2, my = (v1.y + v2.y) / 2;
+    const cx = mx + px * d, cy = my + py * d;
+    const sa = Math.atan2(v1.y - cy, v1.x - cx);
+    const steps = Math.max(6, Math.ceil(Math.abs(theta) / 0.15));
+    for (let s = 1; s < steps; s++){ const t = s / steps; const ang = sa + t * theta; out.push({ x: cx + R * Math.cos(ang), y: cy + R * Math.sin(ang) }); }
+  }
+  if (!closed) out.push({ x: vertices[n-1].x, y: vertices[n-1].y });
+  return out;
+}
+
+function normalize(parsed){
+  const out = [];
+  const unitsMap = { '1':25.4, '2':304.8, '4':1, '5':10, '6':1000 };
+  const u = (parsed.header['$INSUNITS']||'').toString().trim();
+  const f = unitsMap[u] || 1;
+  for (const e of parsed.entities){
+    if (e.type === 'LINE'){ out.push({ type:'LINE', layer:e.layer, x1:e.x1*f, y1:e.y1*f, x2:e.x2*f, y2:e.y2*f }); }
+    else if (e.type === 'CIRCLE'){ out.push({ type:'CIRCLE', layer:e.layer, cx:e.cx*f, cy:e.cy*f, r:e.r*f }); }
+    else if (e.type === 'ARC'){ let sa = e.sa * Math.PI / 180; let ea = e.ea * Math.PI / 180; if (ea <= sa) ea += 2 * Math.PI; out.push({ type:'ARC', layer:e.layer, cx:e.cx*f, cy:e.cy*f, r:e.r*f, sa, ea }); }
+    else if (e.type === 'POINT'){ out.push({ type:'POINT', layer:e.layer, x:e.x*f, y:e.y*f }); }
+    else if (e.type === 'LWPOLYLINE'){ const verts = expandBulge(e.vertices, e.closed); if (verts.length >= 2){ out.push({ type:'LWPOLYLINE', layer:e.layer, closed:!!e.closed, vertices: verts.map(v => ({ x:v.x*f, y:v.y*f })) }); } }
+  }
+  return out;
+}
+
+// ═══════════════════════════════════════════════
+//  ESTADO
+// ═══════════════════════════════════════════════
+const S = {
+  entities: [], operations: [],
+  tools: [], activeToolId: null,
+  dxfText: '', dxfFilename: '',
+  mode:'view', scale:2, offX:0, offY:0,
+  panning:false, psx:0, psy:0, poffx:0, poffy:0,
+  mwx:0, mwy:0, hover:-1,
+  pocketStart:null, layerVis:{}, layers:new Set(),
+  selRect:null, selecting:false, selStart:null, selEnd:null,
+  showSim:true,
+  offsetX:0, offsetY:0,
+  flipArcs:false, flipY:false,
+  lastMiddleClick: 0,
+  // Máquina
+  spindlePause: 12,     // segundos
+  rapidXY: 5000,        // mm/min
+  rapidZ: 3000,         // mm/min
+  // Simulación
+  simMoves: [],          // { type, points, z, duration }
+  simMoveTimes: [],      // tiempo acumulado al final de cada move
+  simTotalTime: 0,
+  simT: 0,
+  simPlaying:false,
+  simSpeedMult: 1,
+  simAnimId:null, simLastFrame:0,
+  saveTimer: null,
+  cutContours: {},
+};
+
+const $ = id => document.getElementById(id);
+const canvasContainer = $('canvasContainer'), canvas = $('mainCanvas'), ctx = canvas.getContext('2d');
+const coordEl = $('coord'), zoomEl = $('zoom'), fileEl = $('fileInfo'), opsEl = $('opsList');
+const gcodeEl = $('gcode'), toastEl = $('toast'), modeBtns = $('modeBtns'), layerEl = $('layerList'), diagEl = $('diag');
+const toolListEl = $('toolList'), toolCountEl = $('toolCount'), opCountEl = $('opCount');
+const activeToolBadge = $('activeToolBadge'), saveInd = $('saveInd');
+const btnPlay = $('btnPlay'), btnReset = $('btnReset'), btnEnd = $('btnEnd');
+const simSpeedEl = $('simSpeed'), simSpeedVal = $('simSpeedVal');
+const simProgressEl = $('simProgress'), simPctEl = $('simPct'), simOpInfoEl = $('simOpInfo');
+const simTotalLabel = $('simTotalLabel');
+
+// ═══════════════════════════════════════════════
+//  HERRAMIENTAS
+// ═══════════════════════════════════════════════
+function uid(prefix){ return prefix + Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+function createDefaultTool(num){
+  return {
+    id: uid('tool_'), name: 'Herramienta ' + num, toolNumber: num,
+    diam: 3.175, rpm: 12000, feed: 800, feedZ: 400,
+    step: 1.5, depth: 6, safe: 15, retract: 5, overlap: 0.35,
+    cutDir: 'ccw', spindleDir: 'M3',
+  };
+}
+function getActiveTool(){ return S.tools.find(t => t.id === S.activeToolId) || null; }
+function getToolById(id){ return S.tools.find(t => t.id === id) || null; }
+function nextToolNumber(){ let max = 0; for (const t of S.tools) if (t.toolNumber > max) max = t.toolNumber; return max + 1; }
+
+function addTool(){
+  const t = createDefaultTool(nextToolNumber());
+  S.tools.push(t); S.activeToolId = t.id;
+  loadToolIntoFields(t); updateToolsList(); updateOpsList(); scheduleSave();
+  showToast('Herramienta añadida','success');
+}
+function duplicateTool(){
+  const src = getActiveTool(); if (!src){ showToast('Sin herramienta activa','warn'); return; }
+  const t = JSON.parse(JSON.stringify(src));
+  t.id = uid('tool_'); t.toolNumber = nextToolNumber();
+  t.name = t.name.replace(/\s*\(copia\)$/,'') + ' (copia)';
+  S.tools.push(t); S.activeToolId = t.id;
+  loadToolIntoFields(t); updateToolsList(); updateOpsList(); scheduleSave();
+  showToast('Herramienta duplicada','success');
+}
+function deleteTool(id){
+  const usedBy = S.operations.filter(o => o.toolId === id);
+  if (usedBy.length > 0){
+    if (!confirm(`En ${usedBy.length} operación(es). ¿Eliminar también esas operaciones?`)) return;
+    S.operations = S.operations.filter(o => o.toolId !== id);
+  }
+  S.tools = S.tools.filter(t => t.id !== id);
+  if (S.activeToolId === id){
+    S.activeToolId = S.tools.length ? S.tools[0].id : null;
+    if (S.activeToolId) loadToolIntoFields(getActiveTool());
+  }
+  updateToolsList(); updateOpsList(); rebuildAllContours(); buildSimFromOps(); render(); scheduleSave();
+}
+function selectTool(id){ S.activeToolId = id; loadToolIntoFields(getToolById(id)); updateToolsList(); scheduleSave(); }
+function renameTool(id){
+  const t = getToolById(id); if (!t) return;
+  const n = prompt('Nuevo nombre:', t.name); if (n === null) return;
+  const trimmed = n.trim(); if (!trimmed) return;
+  t.name = trimmed; loadToolIntoFields(t); updateToolsList(); scheduleSave();
+}
+function loadToolIntoFields(t){
+  if (!t) return;
+  $('tName').value = t.name; $('tNum').value = t.toolNumber;
+  $('cDiam').value = t.diam; $('cRpm').value = t.rpm;
+  $('cFeed').value = t.feed; $('cFeedZ').value = t.feedZ;
+  $('cStep').value = t.step; $('cDepth').value = t.depth;
+  $('cSafe').value = t.safe; $('cRetract').value = t.retract;
+  $('cOverlap').value = t.overlap;
+  $('cCutDir').value = t.cutDir || 'ccw';
+  $('cSpindleDir').value = t.spindleDir || 'M3';
+  activeToolBadge.textContent = 'T' + t.toolNumber;
+}
+function updateToolsList(){
+  toolCountEl.textContent = S.tools.length;
+  if (!S.tools.length){ toolListEl.innerHTML = '<div class="empty-hint">Sin herramientas.</div>'; return; }
+  toolListEl.innerHTML = S.tools.map(t => {
+    const isActive = t.id === S.activeToolId;
+    const uses = S.operations.filter(o => o.toolId === t.id).length;
+    const dirIcon = (t.cutDir === 'ccw' ? '↺' : '↻');
+    const spinIcon = (t.spindleDir === 'M4' ? 'M4' : 'M3');
+    return `<div class="tool-item ${isActive?'active':''}" data-id="${t.id}">
+      <span class="tnum">T${t.toolNumber}</span>
+      <div class="tinfo">
+        <div class="tname">${escapeHtml(t.name)}</div>
+        <div class="tspec">Ø${t.diam}mm · ${t.rpm}rpm · ${dirIcon}${spinIcon} ${uses?'· '+uses+' op':''}</div>
+      </div>
+      <div class="tact">
+        <button class="rename" data-id="${t.id}">✏</button>
+        <button class="del" data-id="${t.id}">🗑</button>
+      </div>
+    </div>`;
+  }).join('');
+  toolListEl.querySelectorAll('.tool-item').forEach(el => {
+    el.addEventListener('click', e => { if (e.target.closest('.tact')) return; selectTool(el.dataset.id); });
+  });
+  toolListEl.querySelectorAll('.rename').forEach(b => b.addEventListener('click', e => { e.stopPropagation(); renameTool(b.dataset.id); }));
+  toolListEl.querySelectorAll('.del').forEach(b => b.addEventListener('click', e => { e.stopPropagation(); deleteTool(b.dataset.id); }));
+}
+function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+// ═══════════════════════════════════════════════
+//  CONTORNOS
+// ═══════════════════════════════════════════════
+function entityToPoints(e){
+  const pts = [];
+  if (e.type === 'LINE'){ pts.push({x: e.x1, y: e.y1}); pts.push({x: e.x2, y: e.y2}); }
+  else if (e.type === 'CIRCLE'){ const N = 64; for (let s = 0; s < N; s++){ const a = s / N * Math.PI * 2; pts.push({x: e.cx + e.r * Math.cos(a), y: e.cy + e.r * Math.sin(a)}); } }
+  else if (e.type === 'ARC'){ const steps = Math.max(16, Math.ceil((e.ea - e.sa) / 0.08)); for (let s = 0; s <= steps; s++){ const a = e.sa + (s / steps) * (e.ea - e.sa); pts.push({x: e.cx + e.r * Math.cos(a), y: e.cy + e.r * Math.sin(a)}); } }
+  else if (e.type === 'LWPOLYLINE'){ for (const v of e.vertices) pts.push({x: v.x, y: v.y}); }
+  return pts;
+}
+
+function chainEntitiesToContour(entityList, tol){
+  tol = tol || 0.15;
+  const parts = [], partMeta = [];
+  for (const e of entityList){
+    const pts = entityToPoints(e);
+    if (pts.length < 2) continue;
+    parts.push(pts);
+    partMeta.push({ closed: !!(e.type === 'CIRCLE' || (e.type === 'LWPOLYLINE' && e.closed)), type: e.type });
+  }
+  if (parts.length === 0) return { points: [], closed: false };
+  if (parts.length === 1){
+    let pts = parts[0]; let closed = partMeta[0].closed;
+    if (closed && pts.length > 2){
+      const f = pts[0], l = pts[pts.length - 1];
+      if (Math.hypot(f.x - l.x, f.y - l.y) < tol * 2) pts = pts.slice(0, -1);
+    }
+    return { points: pts, closed };
+  }
+  const used = new Array(parts.length).fill(false);
+  let startIdx = 0;
+  for (let i = 0; i < partMeta.length; i++){ if (!partMeta[i].closed){ startIdx = i; break; } }
+  used[startIdx] = true;
+  let result = parts[startIdx].slice();
+  if (partMeta[startIdx].closed){
+    if (result.length > 2){
+      const f = result[0], l = result[result.length - 1];
+      if (Math.hypot(f.x - l.x, f.y - l.y) < tol * 2) result = result.slice(0, -1);
+    }
+    return { points: result, closed: true };
+  }
+  let safety = 0;
+  while (safety++ < parts.length * 3){
+    const end = result[result.length - 1];
+    let bestIdx = -1, bestFlip = false, bestDist = tol;
+    for (let i = 0; i < parts.length; i++){
+      if (used[i]) continue;
+      const p = parts[i];
+      const dStart = Math.hypot(p[0].x - end.x, p[0].y - end.y);
+      const dEnd = Math.hypot(p[p.length-1].x - end.x, p[p.length-1].y - end.y);
+      if (dStart < bestDist){ bestDist = dStart; bestIdx = i; bestFlip = false; }
+      if (dEnd < bestDist){ bestDist = dEnd; bestIdx = i; bestFlip = true; }
+    }
+    if (bestIdx < 0) break;
+    used[bestIdx] = true;
+    let next = parts[bestIdx].slice();
+    if (bestFlip) next.reverse();
+    if (next.length > 1 && Math.hypot(next[0].x - end.x, next[0].y - end.y) < tol) next = next.slice(1);
+    result.push(...next);
+  }
+  const first = result[0], last = result[result.length - 1];
+  const isClosed = Math.hypot(first.x - last.x, first.y - last.y) < tol * 2;
+  if (isClosed && result.length > 2) result = result.slice(0, -1);
+  return { points: result, closed: isClosed };
+}
+
+function signedArea(pts){
+  let a = 0; const n = pts.length;
+  for (let i = 0; i < n; i++){ const p1 = pts[i], p2 = pts[(i + 1) % n]; a += p1.x * p2.y - p2.x * p1.y; }
+  return a / 2;
+}
+
+function offsetPolyline(pts, offset){
+  if (pts.length < 3 || Math.abs(offset) < 1e-9) return pts;
+  const n = pts.length;
+  const out = [];
+  const maxMiter = Math.abs(offset) * 4;
+  for (let k = 0; k < n; k++){
+    const pv = pts[(k - 1 + n) % n], cu = pts[k], nx = pts[(k + 1) % n];
+    const v1x = cu.x - pv.x, v1y = cu.y - pv.y;
+    const v2x = nx.x - cu.x, v2y = nx.y - cu.y;
+    const l1 = Math.hypot(v1x, v1y), l2 = Math.hypot(v2x, v2y);
+    if (l1 < 1e-9 || l2 < 1e-9){ out.push({ x: cu.x, y: cu.y }); continue; }
+    const n1x = -v1y / l1, n1y = v1x / l1;
+    const n2x = -v2y / l2, n2y = v2x / l2;
+    const dot = n1x * n2x + n1y * n2y;
+    const denom = 1 + dot;
+    let mx, my;
+    if (denom < 1e-4){ mx = (n1x + n2x) / 2; my = (n1y + n2y) / 2; const ml = Math.hypot(mx, my); if (ml < 1e-9){ out.push({ x: cu.x, y: cu.y }); continue; } mx /= ml; my /= ml; }
+    else { mx = (n1x + n2x) / denom; my = (n1y + n2y) / denom; }
+    let dx = mx * offset, dy = my * offset;
+    const len = Math.hypot(dx, dy);
+    if (len > maxMiter){ dx *= maxMiter / len; dy *= maxMiter / len; }
+    out.push({ x: cu.x + dx, y: cu.y + dy });
+  }
+  return out;
+}
+
+function rotateContourToStart(pts, ox, oy){
+  if (!pts || pts.length < 2) return pts;
+  let bestIdx = 0, bestDist = Infinity;
+  for (let i = 0; i < pts.length; i++){ const d = Math.hypot(pts[i].x - ox, pts[i].y - oy); if (d < bestDist){ bestDist = d; bestIdx = i; } }
+  if (bestIdx === 0) return pts;
+  return pts.slice(bestIdx).concat(pts.slice(0, bestIdx));
+}
+
+function resolveCutContour(op, tool){
+  const entityList = op.ids.map(i => S.entities[i]).filter(Boolean);
+  if (!entityList.length) return null;
+  const contour = chainEntitiesToContour(entityList, 0.15);
+  let pts = contour.points;
+  if (pts.length < 2) return null;
+  if (contour.closed && pts.length >= 3){
+    const wantCCW = (tool.cutDir !== 'cw');
+    const isCCW = signedArea(pts) > 0;
+    if (isCCW !== wantCCW) pts = pts.slice().reverse();
+  }
+  const off = op.offset || 'center';
+  if ((off === 'outside' || off === 'inside') && contour.closed && pts.length >= 3){
+    const ccw = signedArea(pts) > 0;
+    const d = tool.diam / 2;
+    const offsetValue = ccw ? ((off === 'inside') ? d : -d) : ((off === 'inside') ? -d : d);
+    pts = offsetPolyline(pts, offsetValue);
+  }
+  if (contour.closed && pts.length >= 3) pts = rotateContourToStart(pts, 0, 0);
+  return { points: pts, closed: contour.closed };
+}
+
+function rebuildAllContours(){
+  S.cutContours = {};
+  for (let i = 0; i < S.operations.length; i++){
+    const op = S.operations[i];
+    if (op.type !== 'cut') continue;
+    const tool = getToolById(op.toolId) || S.tools[0];
+    if (!tool) continue;
+    const c = resolveCutContour(op, tool);
+    if (c) S.cutContours[i] = c;
+  }
+}
+
+// ═══════════════════════════════════════════════
+//  FORMATO DE TIEMPO
+// ═══════════════════════════════════════════════
+function fmtTime(sec){
+  if (!isFinite(sec) || sec < 0) sec = 0;
+  const total = Math.floor(sec);
+  const h = Math.floor(total / 3600);
+  const m = Math.floor((total % 3600) / 60);
+  const s = total % 60;
+  return String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+}
+
+// ═══════════════════════════════════════════════
+//  PERSISTENCIA
+// ═══════════════════════════════════════════════
+function scheduleSave(){ clearTimeout(S.saveTimer); S.saveTimer = setTimeout(saveToLocalStorage, 500); }
+function serializeProject(){
+  return {
+    version: PROJECT_VERSION, savedAt: new Date().toISOString(),
+    dxfText: S.dxfText, dxfFilename: S.dxfFilename,
+    entities: S.entities, tools: S.tools, activeToolId: S.activeToolId,
+    operations: S.operations,
+    offsetX: S.offsetX, offsetY: S.offsetY,
+    layerVis: S.layerVis, flipArcs: S.flipArcs, flipY: S.flipY,
+    viewScale: S.scale, viewOffsetX: S.offX, viewOffsetY: S.offY,
+    // ★ NUEVO
+    spindlePause: S.spindlePause,
+    rapidXY: S.rapidXY,
+    rapidZ: S.rapidZ,
+  };
+}
+function saveToLocalStorage(){
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(serializeProject())); flashSaveIndicator('✓ Guardado'); }
+  catch (err){
+    if (err.name === 'QuotaExceededError'){ flashSaveIndicator('⚠ Sin espacio'); showToast('Proyecto grande. Usa "Guardar Proyecto".','warn'); }
+  }
+}
+function flashSaveIndicator(txt){
+  saveInd.textContent = txt; saveInd.classList.add('show');
+  clearTimeout(saveInd._t); saveInd._t = setTimeout(() => saveInd.classList.remove('show'), 1200);
+}
+function loadFromLocalStorage(){
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return false;
+    const data = JSON.parse(raw);
+    if (!data || data.version !== PROJECT_VERSION) return false;
+    applyProjectData(data); return true;
+  } catch (err){ console.warn(err); return false; }
+}
+function applyProjectData(data){
+  S.dxfText = data.dxfText || ''; S.dxfFilename = data.dxfFilename || '';
+  S.entities = data.entities || [];
+  S.tools = (data.tools || []).map(t => ({ ...createDefaultTool(1), ...t }));
+  S.activeToolId = data.activeToolId || (S.tools[0] ? S.tools[0].id : null);
+  S.operations = data.operations || [];
+  S.offsetX = data.offsetX || 0; S.offsetY = data.offsetY || 0;
+  S.layerVis = data.layerVis || {};
+  S.flipArcs = !!data.flipArcs; S.flipY = !!data.flipY;
+  S.scale = data.viewScale || 2; S.offX = data.viewOffsetX || 0; S.offY = data.viewOffsetY || 0;
+  // ★ NUEVO
+  if (typeof data.spindlePause === 'number') S.spindlePause = data.spindlePause;
+  if (typeof data.rapidXY === 'number') S.rapidXY = data.rapidXY;
+  if (typeof data.rapidZ === 'number') S.rapidZ = data.rapidZ;
+  $('cfgSpindlePause').value = S.spindlePause;
+  $('cfgRapidXY').value = S.rapidXY;
+  $('cfgRapidZ').value = S.rapidZ;
+  $('offsetX').value = S.offsetX; $('offsetY').value = S.offsetY;
+  $('btnFlipArcs').textContent = S.flipArcs ? '↺ Arcos' : '↻ Arcos';
+  $('btnFlipY').textContent = S.flipY ? '⇅ Y' : '⇅ Y';
+  extractLayers(); updateToolsList();
+  if (S.activeToolId) loadToolIntoFields(getActiveTool());
+  updateOpsList(); rebuildAllContours(); buildSimFromOps();
+  resizeCanvas(); fitView(); render();
+  fileEl.textContent = S.dxfFilename ? `📄 ${S.dxfFilename} (${S.entities.length})` : 'Sin archivo';
+}
+function exportProject(){
+  const blob = new Blob([JSON.stringify(serializeProject(), null, 2)], { type:'application/json' });
+  const a = document.createElement('a');
+  const baseName = S.dxfFilename ? S.dxfFilename.replace(/\.dxf$/i,'') : 'proyecto';
+  a.href = URL.createObjectURL(blob); a.download = baseName + '.cncproj.json'; a.click();
+  URL.revokeObjectURL(a.href); showToast('Proyecto exportado','success');
+}
+function importProject(file){
+  const r = new FileReader();
+  r.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (!data || typeof data !== 'object' || !('version' in data)) throw new Error('Formato inválido');
+      if (data.version !== PROJECT_VERSION && !confirm(`Versión ${data.version} ≠ ${PROJECT_VERSION}. ¿Abrir?`)) return;
+      applyProjectData(data); saveToLocalStorage(); showToast('Proyecto importado ✓','success');
+    } catch (err){ showToast('Error: ' + err.message,'warn'); }
+  };
+  r.readAsText(file);
+}
+
+// ═══════════════════════════════════════════════
+//  TRANSFORMACIONES
+// ═══════════════════════════════════════════════
+function resizeCanvas(){
+  const r = canvasContainer.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = r.width * dpr; canvas.height = r.height * dpr;
+  canvas.style.width = r.width + 'px'; canvas.style.height = r.height + 'px';
+  ctx.setTransform(1,0,0,1,0,0); ctx.scale(dpr, dpr);
+}
+function s2w(sx, sy){
+  const r = canvasContainer.getBoundingClientRect();
+  return { x: (sx - r.left - r.width/2 - S.offX) / S.scale,
+           y: -(sy - r.top - r.height/2 + S.offY) / S.scale * (S.flipY ? -1 : 1) };
+}
+function w2s(wx, wy){
+  const r = canvasContainer.getBoundingClientRect();
+  const yy = S.flipY ? wy : -wy;
+  return { x: wx * S.scale + r.width/2 + S.offX + r.left,
+           y: yy * S.scale + r.height/2 - S.offY + r.top };
+}
+function applyOff(e, ox, oy){
+  const c = { ...e };
+  if (e.type === 'LINE'){ c.x1+=ox; c.y1+=oy; c.x2+=ox; c.y2+=oy; }
+  else if (e.type === 'CIRCLE' || e.type === 'ARC'){ c.cx+=ox; c.cy+=oy; }
+  else if (e.type === 'LWPOLYLINE'){ c.vertices = e.vertices.map(v => ({ x:v.x+ox, y:v.y+oy })); }
+  else if (e.type === 'POINT'){ c.x+=ox; c.y+=oy; }
+  return c;
+}
+function effective(){ return S.entities.map(e => applyOff(e, S.offsetX, S.offsetY)); }
+function effectiveContour(pts){ return pts.map(p => ({ x: p.x + S.offsetX, y: p.y + S.offsetY })); }
+
+// ═══════════════════════════════════════════════
+//  BBOX Y FIT
+// ═══════════════════════════════════════════════
+function bbox(list){
+  let mnx=Infinity,mny=Infinity,mxx=-Infinity,mxy=-Infinity;
+  if (!list.length) return {mnx:-50,mny:-50,mxx:50,mxy:50,w:100,h:100};
+  for (const e of list){
+    if (e.type==='LINE'){ mnx=Math.min(mnx,e.x1,e.x2); mxx=Math.max(mxx,e.x1,e.x2); mny=Math.min(mny,e.y1,e.y2); mxy=Math.max(mxy,e.y1,e.y2); }
+    else if (e.type==='CIRCLE'||e.type==='ARC'){ mnx=Math.min(mnx,e.cx-e.r); mxx=Math.max(mxx,e.cx+e.r); mny=Math.min(mny,e.cy-e.r); mxy=Math.max(mxy,e.cy+e.r); }
+    else if (e.type==='LWPOLYLINE'){ for (const v of e.vertices){ mnx=Math.min(mnx,v.x); mxx=Math.max(mxx,v.x); mny=Math.min(mny,v.y); mxy=Math.max(mxy,v.y); } }
+    else if (e.type==='POINT'){ mnx=Math.min(mnx,e.x); mxx=Math.max(mxx,e.x); mny=Math.min(mny,e.y); mxy=Math.max(mxy,e.y); }
+  }
+  return {mnx,mny,mxx,mxy,w:mxx-mnx,h:mxy-mny};
+}
+function fitView(){
+  const list = effective();
+  if (!list.length){ S.scale = 2; S.offX = 0; S.offY = 0; return; }
+  const bb = bbox(list);
+  const r = canvasContainer.getBoundingClientRect();
+  const m = 50;
+  const sx = (r.width - m*2) / (bb.w || 1);
+  const sy = (r.height - m*2) / (bb.h || 1);
+  S.scale = Math.max(0.01, Math.min(Math.min(sx, sy), 100));
+  const cx = bb.mnx + bb.w/2, cy = bb.mny + bb.h/2;
+  S.offX = 0; S.offY = 0;
+  for (let k=0;k<2;k++){ const p = w2s(cx, cy);
+    S.offX += (r.left + r.width/2) - p.x;
+    S.offY -= p.y - (r.top + r.height/2); }
+}
+function centerOnOrigin(){ S.offX = 0; S.offY = 0; render(); showToast('Vista centrada en (0,0)','success'); }
+
+// ═══════════════════════════════════════════════
+//  DISTANCIAS
+// ═══════════════════════════════════════════════
+function distSeg(px,py,x1,y1,x2,y2){
+  const dx=x2-x1, dy=y2-y1, ls=dx*dx+dy*dy;
+  if (!ls) return Math.hypot(px-x1, py-y1);
+  let t = ((px-x1)*dx + (py-y1)*dy) / ls; t = Math.max(0, Math.min(1, t));
+  return Math.hypot(px - (x1+t*dx), py - (y1+t*dy));
+}
+function distEnt(e, px, py){
+  if (e.type === 'LINE') return distSeg(px,py,e.x1,e.y1,e.x2,e.y2);
+  if (e.type === 'CIRCLE') return Math.abs(Math.hypot(px-e.cx, py-e.cy) - e.r);
+  if (e.type === 'ARC'){
+    const dc = Math.hypot(px-e.cx, py-e.cy); const dCirc = Math.abs(dc - e.r);
+    let a = Math.atan2(py-e.cy, px-e.cx); if (a < 0) a += 2*Math.PI;
+    let sa = e.sa, ea = e.ea;
+    while (sa < 0) sa += 2*Math.PI; while (ea < sa) ea += 2*Math.PI; while (a < sa) a += 2*Math.PI;
+    if (a >= sa && a <= ea) return dCirc;
+    const x1 = e.cx + e.r*Math.cos(e.sa), y1 = e.cy + e.r*Math.sin(e.sa);
+    const x2 = e.cx + e.r*Math.cos(e.ea), y2 = e.cy + e.r*Math.sin(e.ea);
+    return Math.min(Math.hypot(px-x1,py-y1), Math.hypot(px-x2,py-y2));
+  }
+  if (e.type === 'LWPOLYLINE'){
+    let d = Infinity;
+    for (let i=0;i<e.vertices.length-1;i++) d = Math.min(d, distSeg(px,py, e.vertices[i].x, e.vertices[i].y, e.vertices[i+1].x, e.vertices[i+1].y));
+    if (e.closed && e.vertices.length >= 2) d = Math.min(d, distSeg(px,py, e.vertices[e.vertices.length-1].x, e.vertices[e.vertices.length-1].y, e.vertices[0].x, e.vertices[0].y));
+    return d;
+  }
+  if (e.type === 'POINT') return Math.hypot(px-e.x, py-e.y);
+  return Infinity;
+}
+function closestEnt(wx, wy, thr){
+  const list = effective(); let bi = -1, bd = Infinity;
+  for (let i=0;i<list.length;i++){ const e = list[i]; if (!S.layerVis[e.layer]) continue;
+    const d = distEnt(e, wx, wy); if (d < bd && d < thr){ bd = d; bi = i; } }
+  return bi;
+}
+function closestCircle(wx, wy, thr){
+  const list = effective(); let bi = -1, bd = Infinity;
+  for (let i=0;i<list.length;i++){ const e = list[i]; if (e.type !== 'CIRCLE') continue;
+    const d = Math.hypot(wx-e.cx, wy-e.cy); if (d < bd && d < thr){ bd = d; bi = i; } }
+  return bi;
+}
+
+// ═══════════════════════════════════════════════
+//  OPERACIONES
+// ═══════════════════════════════════════════════
+function addDrill(wx, wy){
+  if (!S.tools.length){ showToast('Añade primero una herramienta','warn'); return; }
+  const ci = closestCircle(wx, wy, 10);
+  let px = wx, py = wy;
+  if (ci >= 0){ const c = effective()[ci]; px = c.cx; py = c.cy; }
+  for (const op of S.operations){
+    if (op.type === 'drill' && op.points.some(p => Math.hypot(p.x-px, p.y-py) < 0.3)){ showToast('Ya marcado','warn'); return; }
+  }
+  let op = S.operations.find(o => o.type === 'drill');
+  if (!op){ op = { type:'drill', points:[], toolId: S.activeToolId }; S.operations.push(op); }
+  op.points.push({ x:px, y:py });
+  updateOpsList(); rebuildAllContours(); buildSimFromOps(); render(); scheduleSave();
+}
+function addCut(idx){
+  if (idx < 0) return;
+  if (!S.tools.length){ showToast('Añade primero una herramienta','warn'); return; }
+  for (const op of S.operations) if (op.type === 'cut' && op.ids.includes(idx)) return;
+  let op = S.operations.find(o => o.type === 'cut');
+  if (!op){ op = { type:'cut', ids:[], offset:'center', toolId: S.activeToolId }; S.operations.push(op); }
+  op.ids.push(idx);
+  updateOpsList(); rebuildAllContours(); buildSimFromOps(); render(); scheduleSave();
+}
+function addPocket(area){
+  if (!S.tools.length){ showToast('Añade primero una herramienta','warn'); return; }
+  let op = S.operations.find(o => o.type === 'pocket');
+  if (!op){ op = { type:'pocket', areas:[], toolId: S.activeToolId }; S.operations.push(op); }
+  op.areas.push(area);
+  updateOpsList(); buildSimFromOps(); render(); scheduleSave();
+}
+function removeOp(i){ if (i>=0 && i<S.operations.length) S.operations.splice(i,1); updateOpsList(); rebuildAllContours(); buildSimFromOps(); render(); scheduleSave(); }
+function clearOps(){ S.operations = []; S.pocketStart = null; S.simMoves = []; S.simMoveTimes = []; S.simTotalTime = 0; S.simT = 0; S.cutContours = {}; updateOpsList(); updateSimUI(); render(); scheduleSave(); }
+function undoOp(){
+  if (!S.operations.length) return;
+  const op = S.operations[S.operations.length-1];
+  if (op.type==='drill' && op.points.length>1) op.points.pop();
+  else if (op.type==='cut' && op.ids.length>1) op.ids.pop();
+  else if (op.type==='pocket' && op.areas.length>1) op.areas.pop();
+  else S.operations.pop();
+  updateOpsList(); rebuildAllContours(); buildSimFromOps(); render(); scheduleSave();
+}
+function updateOpsList(){
+  opCountEl.textContent = S.operations.length;
+  if (!S.operations.length){
+    opsEl.innerHTML = '<li class="empty-hint" style="background:transparent;">Sin operaciones</li>';
+    return;
+  }
+  const toolOptions = S.tools.map(t => `<option value="${t.id}">T${t.toolNumber}</option>`).join('');
+  opsEl.innerHTML = S.operations.map((op,i) => {
+    let det = '';
+    if (op.type==='drill') det = `${op.points.length} pts`;
+    else if (op.type==='cut') det = `${op.ids.length} ent`;
+    else if (op.type==='pocket') det = `${op.areas.length} áre`;
+    let offSel = '';
+    if (op.type === 'cut'){
+      const off = op.offset || 'center';
+      offSel = `<select class="op-tool-select" data-i="${i}" data-k="offset" style="max-width:34px;" title="C=centro, I=interior, E=exterior">
+        <option value="center" ${off==='center'?'selected':''}>C</option>
+        <option value="inside" ${off==='inside'?'selected':''}>I</option>
+        <option value="outside" ${off==='outside'?'selected':''}>E</option>
+      </select>`;
+    }
+    return `<li>
+      <span><span class="op-type ${op.type}">${op.type.toUpperCase()}</span> ${det}</span>
+      <select class="op-tool-select" data-i="${i}" data-k="toolId">${toolOptions}</select>
+      ${offSel}
+      <span class="del-op" data-i="${i}">✕</span>
+    </li>`;
+  }).join('');
+  opsEl.querySelectorAll('select[data-k="toolId"]').forEach(sel => {
+    const i = parseInt(sel.dataset.i);
+    if (S.operations[i].toolId) sel.value = S.operations[i].toolId;
+  });
+  opsEl.querySelectorAll('.del-op').forEach(b => b.addEventListener('click', e => { e.stopPropagation(); removeOp(parseInt(b.dataset.i)); }));
+  opsEl.querySelectorAll('.op-tool-select').forEach(s => {
+    s.addEventListener('change', () => {
+      const i = parseInt(s.dataset.i), k = s.dataset.k;
+      if (k === 'toolId') S.operations[i].toolId = s.value;
+      else if (k === 'offset') S.operations[i].offset = s.value;
+      rebuildAllContours(); buildSimFromOps(); render(); scheduleSave();
+    });
+    s.addEventListener('click', e => e.stopPropagation());
+  });
+}
+
+// ═══════════════════════════════════════════════
+//  CAPAS
+// ═══════════════════════════════════════════════
+function extractLayers(){
+  S.layers.clear();
+  for (const e of S.entities) S.layers.add(e.layer);
+  S.layers.forEach(l => { if (S.layerVis[l] === undefined) S.layerVis[l] = true; });
+  updateLayerList();
+}
+function updateLayerList(){
+  if (!S.layers.size){ layerEl.innerHTML = '<div class="empty-hint">Sin capas</div>'; return; }
+  layerEl.innerHTML = Array.from(S.layers).map(l => {
+    const v = S.layerVis[l] !== false;
+    return `<div class="layer-item">
+      <label><input type="checkbox" class="lv" data-l="${escapeHtml(l)}" ${v?'checked':''}> <span>${escapeHtml(l)}</span></label>
+      <button class="add-cut-btn" data-l="${escapeHtml(l)}" style="background:transparent;border:1px solid var(--border);color:var(--text2);border-radius:3px;padding:1px 5px;font-size:.55rem;cursor:pointer;">+CORTE</button>
+    </div>`;
+  }).join('');
+  layerEl.querySelectorAll('.lv').forEach(cb => cb.addEventListener('change', () => { S.layerVis[cb.dataset.l] = cb.checked; render(); scheduleSave(); }));
+  layerEl.querySelectorAll('.add-cut-btn').forEach(b => b.addEventListener('click', () => {
+    if (!S.tools.length){ showToast('Añade una herramienta primero','warn'); return; }
+    const layer = b.dataset.l;
+    const ids = S.entities.map((e,i) => e.layer===layer ? i : -1).filter(i => i>=0);
+    if (!ids.length){ showToast('Capa vacía','warn'); return; }
+    let cut = S.operations.find(o => o.type === 'cut');
+    if (!cut){ cut = { type:'cut', ids:[], offset:'center', toolId: S.activeToolId }; S.operations.push(cut); }
+    ids.forEach(i => { if (!cut.ids.includes(i)) cut.ids.push(i); });
+    updateOpsList(); rebuildAllContours(); buildSimFromOps(); render(); scheduleSave();
+    showToast(`${ids.length} añadidas`,'success');
+  }));
+}
+
+// ═══════════════════════════════════════════════
+//  SIMULACIÓN — con pausa de mandrino
+// ═══════════════════════════════════════════════
+function buildSimFromOps(){
+  rebuildAllContours();
+  const moves = [];
+  let lastX = 0, lastY = 0, lastZ = 100;
+
+  const addMove = (type, pts, z, feedOverride) => {
+    if (!pts || pts.length === 0) return;
+    z = z || 0;
+    let duration = 0;
+    if (pts.length >= 2){
+      let dist = 0;
+      for (let i = 0; i < pts.length - 1; i++){
+        dist += Math.hypot(pts[i+1].x - pts[i].x, pts[i+1].y - pts[i].y);
+      }
+      const feed = feedOverride || (type === 'cut' ? 800 : S.rapidXY);
+      duration = dist / (feed / 60);
+    } else {
+      const dz = Math.abs(z - lastZ);
+      const feed = feedOverride || (type === 'cut' ? 300 : S.rapidZ);
+      duration = dz / (feed / 60);
+    }
+    if (duration < 0.03) duration = 0.03;
+    moves.push({ type, points: pts, z, duration });
+    const last = pts[pts.length - 1];
+    lastX = last.x; lastY = last.y; lastZ = z;
+  };
+
+  // ★ Helper: insertar pausa de mandrino (mantiene la posición)
+  const addSpindlePause = () => {
+    if (S.spindlePause > 0){
+      moves.push({ type: 'pause', points: [{x:lastX, y:lastY}], z: lastZ, duration: S.spindlePause });
+    }
+  };
+
+  // Agrupar por herramienta (mismo orden que genGCode)
+  const toolOrder = [];
+  const groups = new Map();
+  for (const op of S.operations){
+    let tid = op.toolId;
+    if (!getToolById(tid)) tid = S.tools[0] && S.tools[0].id;
+    if (!tid) continue;
+    if (!groups.has(tid)){ groups.set(tid, []); toolOrder.push(tid); }
+    groups.get(tid).push({ op, originalIndex: S.operations.indexOf(op) });
+  }
+
+  for (const tid of toolOrder){
+    const tool = getToolById(tid);
+    if (!tool) continue;
+    const entries = groups.get(tid);
+    // ★ Pausa de mandrino al inicio de cada grupo de herramienta
+    addSpindlePause();
+
+    for (const entry of entries){
+      const { op, originalIndex } = entry;
+      const cfg = tool;
+      const passes = Math.max(1, Math.ceil(cfg.depth / cfg.step));
+      const step = cfg.depth / passes;
+
+      if (op.type === 'drill'){
+        for (const p of op.points){
+          addMove('rapid', [{x:lastX, y:lastY}, {x:p.x, y:p.y}], cfg.safe, S.rapidXY);
+          for (let k=0;k<passes;k++){
+            const z = -Math.min((k+1)*step, cfg.depth);
+            addMove('cut', [{x:p.x, y:p.y}], z, cfg.feedZ);
+            addMove('rapid', [{x:p.x, y:p.y}], cfg.retract, S.rapidZ);
+          }
+          addMove('rapid', [{x:p.x, y:p.y}], cfg.safe, S.rapidZ);
+        }
+      } else if (op.type === 'cut'){
+        const c = S.cutContours[originalIndex];
+        if (!c || c.points.length < 2) continue;
+        const ptsEff = effectiveContour(c.points);
+        const f = ptsEff[0];
+        const pts = c.closed ? ptsEff.concat([ptsEff[0]]) : ptsEff;
+        for (let k=0;k<passes;k++){
+          const z = -Math.min((k+1)*step, cfg.depth);
+          addMove('rapid', [{x:lastX, y:lastY}, {x:f.x, y:f.y}], cfg.safe, S.rapidXY);
+          addMove('cut', [{x:f.x, y:f.y}], z, cfg.feedZ);
+          addMove('cut', pts, z, cfg.feed);
+          const lastPt = pts[pts.length - 1];
+          addMove('rapid', [{x:lastPt.x, y:lastPt.y}], cfg.retract, S.rapidZ);
+        }
+      } else if (op.type === 'pocket'){
+        for (const a of op.areas){
+          if (a.shape === 'rect'){
+            const x1 = Math.min(a.x1,a.x2)+cfg.diam/2, y1 = Math.min(a.y1,a.y2)+cfg.diam/2;
+            const x2 = Math.max(a.x1,a.x2)-cfg.diam/2, y2 = Math.max(a.y1,a.y2)-cfg.diam/2;
+            if (x2 <= x1 || y2 <= y1) continue;
+            const stepY = cfg.diam * (1 - cfg.overlap);
+            for (let k=0;k<passes;k++){
+              const z = -Math.min((k+1)*step, cfg.depth);
+              addMove('rapid', [{x:lastX, y:lastY}, {x:x1, y:y1}], cfg.safe, S.rapidXY);
+              addMove('cut', [{x:x1, y:y1}], z, cfg.feedZ);
+              const seg = [{x:x1,y:y1}];
+              let dir = 1, y = y1;
+              while (y <= y2 + 1e-9){
+                const xe = dir > 0 ? x2 : x1;
+                seg.push({x:xe,y:y});
+                y += stepY; if (y > y2) break;
+                const xn = dir > 0 ? x1 : x2;
+                seg.push({x:xn,y:y});
+                dir *= -1;
+              }
+              addMove('cut', seg, z, cfg.feed);
+              addMove('rapid', [{x:seg[seg.length-1].x, y:seg[seg.length-1].y}], cfg.retract, S.rapidZ);
+            }
+          } else if (a.shape === 'circle'){
+            const stepR = cfg.diam * (1 - cfg.overlap);
+            for (let k=0;k<passes;k++){
+              const z = -Math.min((k+1)*step, cfg.depth);
+              let rr = stepR;
+              while (rr <= a.r){
+                const st = Math.max(24, Math.ceil(2*Math.PI*rr / (stepR*0.5)));
+                const pts = [];
+                for (let s=0;s<=st;s++){ const ang = s/st*Math.PI*2; pts.push({x:a.cx + rr*Math.cos(ang), y:a.cy + rr*Math.sin(ang)}); }
+                addMove('rapid', [{x:lastX, y:lastY}, {x:a.cx+rr, y:a.cy}], cfg.safe, S.rapidXY);
+                addMove('cut', [{x:a.cx+rr, y:a.cy}], z, cfg.feedZ);
+                addMove('cut', pts, z, cfg.feed);
+                addMove('rapid', [{x:pts[pts.length-1].x, y:pts[pts.length-1].y}], cfg.retract, S.rapidZ);
+                rr += stepR;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  const times = [0];
+  let total = 0;
+  for (const mv of moves){ total += mv.duration; times.push(total); }
+  S.simMoves = moves;
+  S.simMoveTimes = times;
+  S.simTotalTime = total;
+  S.simT = 0;
+  S.simPlaying = false;
+  updateSimUI();
+}
+
+function updateSimUI(){
+  const pct = S.simTotalTime > 0 ? (S.simT / S.simTotalTime) : 0;
+  simPctEl.textContent = fmtTime(S.simT) + ' / ' + fmtTime(S.simTotalTime);
+  simProgressEl.value = Math.floor(pct * 1000);
+  if (simTotalLabel) simTotalLabel.textContent = 'Total: ' + fmtTime(S.simTotalTime);
+  if (!S.simMoves.length){ simOpInfoEl.textContent = 'Sin trayectoria'; simOpInfoEl.style.color = 'var(--text2)'; return; }
+  let mi = 0;
+  while (mi < S.simMoveTimes.length - 1 && S.simMoveTimes[mi+1] <= S.simT) mi++;
+  const mv = S.simMoves[Math.min(mi, S.simMoves.length-1)];
+  if (mv){
+    if (mv.type === 'pause'){
+      simOpInfoEl.textContent = '⏸ PAUSA mandrino';
+      simOpInfoEl.style.color = '#ff8800';
+    } else {
+      const isCut = mv.type === 'cut';
+      simOpInfoEl.textContent = (isCut ? '✂ CORTE' : '➤ RÁPIDO') + ' Z=' + (mv.z||0).toFixed(2) + 'mm';
+      simOpInfoEl.style.color = isCut ? '#00ff88' : '#4da6ff';
+    }
+  }
+  if (S.simPlaying){ btnPlay.textContent = '⏸ PAUSA'; btnPlay.classList.add('playing'); btnPlay.classList.remove('play'); }
+  else { btnPlay.textContent = '▶ PLAY'; btnPlay.classList.remove('playing'); btnPlay.classList.add('play'); }
+}
+
+function simPlay(){
+  if (!S.simMoves.length){ showToast('Genera primero','warn'); return; }
+  if (S.simT >= S.simTotalTime) S.simT = 0;
+  S.simPlaying = true; S.simLastFrame = performance.now();
+  updateSimUI(); S.simAnimId = requestAnimationFrame(simTick);
+}
+function simPause(){
+  S.simPlaying = false;
+  if (S.simAnimId){ cancelAnimationFrame(S.simAnimId); S.simAnimId = null; }
+  updateSimUI(); render();
+}
+function simTick(){
+  if (!S.simPlaying) return;
+  const now = performance.now();
+  const dt = Math.min(0.1, (now - S.simLastFrame) / 1000);
+  S.simLastFrame = now;
+  S.simT += dt * S.simSpeedMult;
+  if (S.simT >= S.simTotalTime){
+    S.simT = S.simTotalTime; S.simPlaying = false;
+    if (S.simAnimId){ cancelAnimationFrame(S.simAnimId); S.simAnimId = null; }
+    updateSimUI(); render(); showToast('Simulación completada ✓','success');
+    return;
+  }
+  updateSimUI(); render();
+  S.simAnimId = requestAnimationFrame(simTick);
+}
+function simSeek(pct){ S.simT = (pct / 1000) * S.simTotalTime; updateSimUI(); render(); }
+function simReset(){ if (S.simAnimId) cancelAnimationFrame(S.simAnimId); S.simPlaying=false; S.simT=0; updateSimUI(); render(); }
+function simEnd(){ if (S.simAnimId) cancelAnimationFrame(S.simAnimId); S.simPlaying=false; S.simT = S.simTotalTime; updateSimUI(); render(); }
+
+// ═══════════════════════════════════════════════
+//  RENDER
+// ═══════════════════════════════════════════════
+function render(){
+  const r = canvasContainer.getBoundingClientRect();
+  ctx.clearRect(0,0,r.width,r.height);
+  ctx.fillStyle = '#0d1014'; ctx.fillRect(0,0,r.width,r.height);
+  drawGrid(r);
+  const list = effective();
+  const cutSet = new Set();
+  const drillPts = [];
+  const pockets = [];
+  for (const op of S.operations){
+    if (op.type === 'cut') op.ids.forEach(i => cutSet.add(i));
+    if (op.type === 'drill') drillPts.push(...op.points);
+    if (op.type === 'pocket') pockets.push(...op.areas);
+  }
+  for (let i=0;i<list.length;i++){
+    const e = list[i];
+    if (!S.layerVis[e.layer]) continue;
+    let col = '#5a6478', lw = 1;
+    if (cutSet.has(i)){ col = '#8a6a2a'; lw = 2; }
+    else if (i === S.hover){ col = '#4da6ff'; lw = 2; }
+    drawEnt(e, col, lw, r);
+  }
+  let contourIdx = 0;
+  for (const oiStr in S.cutContours){
+    contourIdx++;
+    const c = S.cutContours[oiStr];
+    if (!c) continue;
+    const ptsEff = effectiveContour(c.points);
+    if (ptsEff.length < 2) continue;
+    ctx.strokeStyle = '#ffb347'; ctx.lineWidth = 2; ctx.setLineDash([]);
+    ctx.beginPath();
+    const s0 = w2s(ptsEff[0].x, ptsEff[0].y);
+    ctx.moveTo(s0.x-r.left, s0.y-r.top);
+    for (let i=1;i<ptsEff.length;i++){
+      const s = w2s(ptsEff[i].x, ptsEff[i].y);
+      ctx.lineTo(s.x-r.left, s.y-r.top);
+    }
+    if (c.closed) ctx.closePath();
+    ctx.stroke();
+    if (ptsEff.length >= 2){
+      const step = Math.max(1, Math.floor(ptsEff.length / 8));
+      for (let i = 0; i < ptsEff.length - 1; i += step){
+        const p1 = ptsEff[i], p2 = ptsEff[i+1];
+        const s1 = w2s(p1.x,p1.y), s2 = w2s(p2.x,p2.y);
+        const dx = s2.x-s1.x, dy = s2.y-s1.y;
+        if (Math.hypot(dx,dy) < 8) continue;
+        const ang = Math.atan2(dy,dx);
+        const px = s2.x-r.left, py = s2.y-r.top;
+        const a = 6;
+        ctx.strokeStyle = '#ffdd44'; ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(px, py);
+        ctx.lineTo(px - a*Math.cos(ang-0.4), py - a*Math.sin(ang-0.4));
+        ctx.moveTo(px, py);
+        ctx.lineTo(px - a*Math.cos(ang+0.4), py - a*Math.sin(ang+0.4));
+        ctx.stroke();
+      }
+    }
+    const sStart = w2s(ptsEff[0].x, ptsEff[0].y);
+    ctx.beginPath();
+    ctx.arc(sStart.x-r.left, sStart.y-r.top, 7, 0, Math.PI*2);
+    ctx.fillStyle = '#00ff88'; ctx.fill();
+    ctx.strokeStyle = '#0d1014'; ctx.lineWidth = 2; ctx.stroke();
+    ctx.fillStyle = '#0d1014'; ctx.font = 'bold 10px sans-serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(contourIdx, sStart.x-r.left, sStart.y-r.top);
+    ctx.textAlign = 'start'; ctx.textBaseline = 'alphabetic';
+  }
+  for (const p of drillPts){
+    const s = w2s(p.x, p.y);
+    ctx.fillStyle = 'rgba(255,107,107,0.3)'; ctx.strokeStyle = '#ff6b6b'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.arc(s.x-r.left, s.y-r.top, 5, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+  }
+  for (const a of pockets){
+    if (a.shape === 'circle'){
+      const sc = w2s(a.cx, a.cy);
+      ctx.strokeStyle = 'rgba(78,201,144,0.4)'; ctx.lineWidth = 1.5; ctx.setLineDash([5,4]);
+      ctx.beginPath(); ctx.arc(sc.x-r.left, sc.y-r.top, a.r*S.scale, 0, Math.PI*2); ctx.stroke();
+      ctx.setLineDash([]);
+    } else if (a.shape === 'rect'){
+      const s1 = w2s(a.x1, a.y1), s2 = w2s(a.x2, a.y2);
+      ctx.strokeStyle = 'rgba(78,201,144,0.4)'; ctx.lineWidth = 1.5; ctx.setLineDash([5,4]);
+      ctx.strokeRect(Math.min(s1.x,s2.x)-r.left, Math.min(s1.y,s2.y)-r.top, Math.abs(s2.x-s1.x), Math.abs(s2.y-s1.y));
+      ctx.setLineDash([]);
+    }
+  }
+  if (S.pocketStart && S.mode === 'pocket'){
+    const s1 = w2s(S.pocketStart.x, S.pocketStart.y);
+    const s2 = w2s(S.mwx, S.mwy);
+    ctx.strokeStyle = '#4ec990'; ctx.lineWidth = 1.5; ctx.setLineDash([4,3]);
+    ctx.strokeRect(Math.min(s1.x,s2.x)-r.left, Math.min(s1.y,s2.y)-r.top, Math.abs(s2.x-s1.x), Math.abs(s2.y-s1.y));
+    ctx.setLineDash([]);
+  }
+  if (S.selRect){
+    const s1 = w2s(S.selRect.x1, S.selRect.y1);
+    const s2 = w2s(S.selRect.x2, S.selRect.y2);
+    ctx.strokeStyle = '#ffb347'; ctx.lineWidth = 1.5; ctx.setLineDash([4,3]);
+    ctx.strokeRect(Math.min(s1.x,s2.x)-r.left, Math.min(s1.y,s2.y)-r.top, Math.abs(s2.x-s1.x), Math.abs(s2.y-s1.y));
+    ctx.setLineDash([]);
+  }
+  if (S.showSim && S.simMoves.length) drawSimulation(r);
+  coordEl.textContent = `X: ${S.mwx.toFixed(2)} mm | Y: ${S.mwy.toFixed(2)} mm`;
+  zoomEl.textContent = `Zoom: ${(S.scale*100).toFixed(0)}%`;
+}
+
+function drawSimulation(r){
+  ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  const moves = S.simMoves;
+  let accTime = 0;
+  let toolPos = null, toolZ = 0, toolIsCut = false, toolIsPause = false;
+
+  for (let mi = 0; mi < moves.length; mi++){
+    const mv = moves[mi];
+    const mvStart = accTime;
+    const mvEnd = accTime + mv.duration;
+    if (S.simT <= mvStart) break;
+
+    const isCurrent = S.simT < mvEnd;
+    const progress = isCurrent ? (S.simT - mvStart) / mv.duration : 1;
+    const pts = mv.points;
+
+    if (mv.type === 'pause'){
+      // En pausa, la herramienta se queda en el punto y muestra un halo naranja
+      if (isCurrent){
+        toolPos = pts[0]; toolZ = mv.z; toolIsCut = false; toolIsPause = true;
+      }
+      accTime = mvEnd;
+      if (isCurrent) break;
+      continue;
+    }
+
+    if (!pts || pts.length < 1){ accTime = mvEnd; continue; }
+
+    const isCut = mv.type === 'cut';
+    const color = isCut ? '#00ff88' : '#4da6ff';
+    const lw = isCut ? 3 : 2;
+
+    if (pts.length >= 2){
+      const segLens = [];
+      for (let i = 0; i < pts.length - 1; i++) segLens.push(Math.hypot(pts[i+1].x - pts[i].x, pts[i+1].y - pts[i].y));
+      const totalLen = segLens.reduce((a,b) => a+b, 0);
+      const targetLen = totalLen * progress;
+      ctx.strokeStyle = color;
+      ctx.lineWidth = lw;
+      ctx.setLineDash(isCut ? [] : [6, 4]);
+      ctx.globalAlpha = isCurrent ? 1.0 : 0.55;
+      ctx.beginPath();
+      const s0 = w2s(pts[0].x, pts[0].y);
+      ctx.moveTo(s0.x-r.left, s0.y-r.top);
+      let drawn = 0, lastPt = pts[0];
+      for (let i = 0; i < segLens.length; i++){
+        const segLen = segLens[i];
+        if (drawn + segLen <= targetLen + 1e-9){
+          const s = w2s(pts[i+1].x, pts[i+1].y);
+          ctx.lineTo(s.x-r.left, s.y-r.top);
+          drawn += segLen; lastPt = pts[i+1];
+        } else {
+          const t = segLen > 1e-9 ? (targetLen - drawn) / segLen : 0;
+          const px = pts[i].x + (pts[i+1].x - pts[i].x) * t;
+          const py = pts[i].y + (pts[i+1].y - pts[i].y) * t;
+          const s = w2s(px, py);
+          ctx.lineTo(s.x-r.left, s.y-r.top);
+          lastPt = { x:px, y:py }; break;
+        }
+      }
+      ctx.stroke();
+      ctx.setLineDash([]); ctx.globalAlpha = 1.0;
+      if (isCurrent){ toolPos = lastPt; toolZ = mv.z; toolIsCut = isCut; toolIsPause = false; }
+    } else {
+      if (isCurrent){ toolPos = pts[0]; toolZ = mv.z; toolIsCut = isCut; toolIsPause = false; }
+    }
+    accTime = mvEnd;
+    if (isCurrent) break;
+  }
+
+  if (!toolPos && S.simT === 0 && moves.length > 0){
+    const firstMv = moves[0];
+    if (firstMv.points.length){ toolPos = firstMv.points[0]; toolZ = firstMv.z; toolIsCut = firstMv.type === 'cut'; toolIsPause = firstMv.type === 'pause'; }
+  }
+  if (!toolPos && S.simT > 0 && moves.length > 0){
+    const lastMv = moves[moves.length - 1];
+    if (lastMv.points.length){ toolPos = lastMv.points[lastMv.points.length - 1]; toolZ = lastMv.z; toolIsCut = lastMv.type === 'cut'; toolIsPause = lastMv.type === 'pause'; }
+  }
+
+  if (toolPos){
+    const s = w2s(toolPos.x, toolPos.y);
+    const tool = getToolById(S.activeToolId) || S.tools[0];
+    const toolD = (tool ? tool.diam : 3.175) * S.scale;
+    const tr = Math.max(8, toolD / 2);
+    const haloR = tr + (toolIsCut ? 10 : (toolIsPause ? 14 : 6));
+    let haloColor1, haloColor2, strokeCol;
+    if (toolIsPause){
+      haloColor1 = 'rgba(255,136,0,0.55)';
+      haloColor2 = 'rgba(255,136,0,0.55)';
+      strokeCol = 'rgba(255,136,0,0.8)';
+    } else if (toolIsCut){
+      haloColor1 = 'rgba(0,255,136,0.5)';
+      haloColor2 = 'rgba(0,255,136,0.6)';
+      strokeCol = 'rgba(0,255,136,0.6)';
+    } else {
+      haloColor1 = 'rgba(77,166,255,0.4)';
+      haloColor2 = 'rgba(77,166,255,0.6)';
+      strokeCol = 'rgba(77,166,255,0.6)';
+    }
+    const grad = ctx.createRadialGradient(s.x-r.left, s.y-r.top, tr*0.5, s.x-r.left, s.y-r.top, haloR);
+    grad.addColorStop(0, haloColor1);
+    grad.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = grad;
+    ctx.beginPath(); ctx.arc(s.x-r.left, s.y-r.top, haloR, 0, Math.PI*2); ctx.fill();
+    ctx.strokeStyle = strokeCol; ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(s.x-r.left-haloR-4, s.y-r.top); ctx.lineTo(s.x-r.left+haloR+4, s.y-r.top);
+    ctx.moveTo(s.x-r.left, s.y-r.top-haloR-4); ctx.lineTo(s.x-r.left, s.y-r.top+haloR+4);
+    ctx.stroke();
+    ctx.beginPath(); ctx.arc(s.x-r.left, s.y-r.top, tr, 0, Math.PI*2);
+    ctx.fillStyle = toolIsCut ? 'rgba(0,255,136,0.25)' : (toolIsPause ? 'rgba(255,136,0,0.25)' : 'rgba(77,166,255,0.2)');
+    ctx.fill();
+    ctx.strokeStyle = toolIsPause ? '#ff8800' : '#ffdd00'; ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.arc(s.x-r.left, s.y-r.top, tr, 0, Math.PI*2); ctx.stroke();
+    ctx.beginPath(); ctx.arc(s.x-r.left, s.y-r.top, 2.5, 0, Math.PI*2);
+    ctx.fillStyle = toolIsPause ? '#ff8800' : '#ffdd00'; ctx.fill();
+    // Etiqueta PAUSA
+    if (toolIsPause){
+      ctx.fillStyle = '#ff8800'; ctx.font = 'bold 11px monospace';
+      ctx.fillText('⏸ PAUSA', s.x-r.left + tr + 6, s.y-r.top - 4);
+    }
+  }
+
+  // HUD
+  const hudX = r.left + 12, hudY = r.top + 12, hudW = 250, hudH = 62;
+  ctx.fillStyle = 'rgba(0,0,0,0.75)';
+  ctx.fillRect(hudX, hudY, hudW, hudH);
+  ctx.strokeStyle = '#2a3550'; ctx.lineWidth = 1; ctx.strokeRect(hudX, hudY, hudW, hudH);
+  const pct = S.simTotalTime > 0 ? S.simT / S.simTotalTime : 0;
+  const barX = hudX + 10, barY = hudY + 10, barW = hudW - 20, barH = 8;
+  ctx.fillStyle = '#1a1d24'; ctx.fillRect(barX, barY, barW, barH);
+  ctx.fillStyle = '#00ff88'; ctx.fillRect(barX, barY, barW * pct, barH);
+  ctx.strokeStyle = '#4a5060'; ctx.strokeRect(barX, barY, barW, barH);
+  ctx.fillStyle = '#fff'; ctx.font = 'bold 11px monospace';
+  ctx.fillText(Math.round(pct*100) + '%', barX + 4, barY + barH + 14);
+  ctx.fillStyle = '#8b949e'; ctx.font = '10px monospace';
+  ctx.fillText(`${fmtTime(S.simT)} / ${fmtTime(S.simTotalTime)}`, barX + 40, barY + barH + 14);
+  let mi = 0;
+  while (mi < S.simMoveTimes.length - 1 && S.simMoveTimes[mi+1] <= S.simT) mi++;
+  const curMv = S.simMoves[Math.min(mi, S.simMoves.length-1)];
+  if (curMv){
+    if (curMv.type === 'pause'){
+      ctx.fillStyle = '#ff8800'; ctx.font = 'bold 11px monospace';
+      ctx.fillText('⏸ PAUSA MAND.', barX + 4, barY + barH + 30);
+      ctx.fillStyle = '#cdd6e0'; ctx.font = '10px monospace';
+      ctx.fillText(`${S.simSpeedMult.toFixed(1)}x`, barX + 120, barY + barH + 30);
+    } else {
+      const isCut = curMv.type === 'cut';
+      ctx.fillStyle = isCut ? '#00ff88' : '#4da6ff'; ctx.font = 'bold 11px monospace';
+      ctx.fillText(isCut ? '✂ CORTE' : '➤ RÁPIDO', barX + 4, barY + barH + 30);
+      ctx.fillStyle = '#cdd6e0'; ctx.font = '10px monospace';
+      ctx.fillText(`Z=${(curMv.z||0).toFixed(2)}mm  ${S.simSpeedMult.toFixed(1)}x`, barX + 80, barY + barH + 30);
+    }
+  }
+}
+
+function drawGrid(r){
+  let sp = 10;
+  if (S.scale < 0.3) sp = 50; else if (S.scale < 0.8) sp = 20;
+  else if (S.scale < 2) sp = 10; else if (S.scale < 5) sp = 5; else sp = 1;
+  const tl = s2w(r.left, r.top), br = s2w(r.left+r.width, r.top+r.height);
+  const sx = Math.floor(Math.min(tl.x,br.x)/sp)*sp, ex = Math.ceil(Math.max(tl.x,br.x)/sp)*sp;
+  const sy = Math.floor(Math.min(tl.y,br.y)/sp)*sp, ey = Math.ceil(Math.max(tl.y,br.y)/sp)*sp;
+  ctx.strokeStyle = 'rgba(40,50,65,0.6)'; ctx.lineWidth = 0.5; ctx.beginPath();
+  for (let x=sx; x<=ex; x+=sp){ const p = w2s(x,0); ctx.moveTo(p.x-r.left,0); ctx.lineTo(p.x-r.left,r.height); }
+  for (let y=sy; y<=ey; y+=sp){ const p = w2s(0,y); ctx.moveTo(0,p.y-r.top); ctx.lineTo(r.width,p.y-r.top); }
+  ctx.stroke();
+}
+
+function drawEnt(e, color, lw, r){
+  ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = lw; ctx.setLineDash([]);
+  if (e.type === 'LINE'){
+    const s1 = w2s(e.x1,e.y1), s2 = w2s(e.x2,e.y2);
+    ctx.beginPath(); ctx.moveTo(s1.x-r.left, s1.y-r.top); ctx.lineTo(s2.x-r.left, s2.y-r.top); ctx.stroke();
+  } else if (e.type === 'CIRCLE'){
+    const c = w2s(e.cx, e.cy);
+    ctx.beginPath(); ctx.arc(c.x-r.left, c.y-r.top, e.r*S.scale, 0, Math.PI*2); ctx.stroke();
+  } else if (e.type === 'ARC'){
+    const sa = e.sa, ea = e.ea; let sweep = ea - sa; if (S.flipArcs) sweep = -sweep;
+    const steps = Math.max(20, Math.ceil(Math.abs(sweep) / 0.1));
+    ctx.beginPath();
+    for (let i=0; i<=steps; i++){
+      const t = i / steps; const ang = sa + t * sweep;
+      const wx = e.cx + e.r * Math.cos(ang), wy = e.cy + e.r * Math.sin(ang);
+      const s = w2s(wx, wy);
+      if (i === 0) ctx.moveTo(s.x-r.left, s.y-r.top); else ctx.lineTo(s.x-r.left, s.y-r.top);
+    }
+    ctx.stroke();
+  } else if (e.type === 'LWPOLYLINE'){
+    if (e.vertices.length < 2) return;
+    ctx.beginPath();
+    const s0 = w2s(e.vertices[0].x, e.vertices[0].y);
+    ctx.moveTo(s0.x-r.left, s0.y-r.top);
+    for (let i=1;i<e.vertices.length;i++){ const s = w2s(e.vertices[i].x, e.vertices[i].y); ctx.lineTo(s.x-r.left, s.y-r.top); }
+    if (e.closed) ctx.closePath();
+    ctx.stroke();
+  } else if (e.type === 'POINT'){
+    const s = w2s(e.x, e.y);
+    ctx.beginPath(); ctx.arc(s.x-r.left, s.y-r.top, 3, 0, Math.PI*2); ctx.fill();
+  }
+}
+
+// ═══════════════════════════════════════════════
+//  G-CODE — con G4 P<pausa>
+// ═══════════════════════════════════════════════
+function genGCode(){
+  if (!S.operations.length){ gcodeEl.textContent = '(Sin operaciones)'; return ''; }
+  if (!S.tools.length){ gcodeEl.textContent = '(Sin herramientas)'; return ''; }
+
+  rebuildAllContours();
+
+  const toolOrder = [];
+  const groups = new Map();
+  for (const op of S.operations){
+    let tid = op.toolId;
+    if (!getToolById(tid)) tid = S.tools[0].id;
+    if (!groups.has(tid)){ groups.set(tid, []); toolOrder.push(tid); }
+    groups.get(tid).push({ op, originalIndex: S.operations.indexOf(op) });
+  }
+
+  const lines = [];
+  lines.push('%','O0001 (CNC DXF)','(Generado por CNC DXF → G-Code)','G21 G90 G17');
+  const maxSafe = Math.max(...S.tools.map(t => t.safe), 10);
+  lines.push('G0 Z' + maxSafe, '');
+
+  let toolChangeCount = 0;
+
+  for (const tid of toolOrder){
+    const tool = getToolById(tid);
+    if (!tool) continue;
+    const entries = groups.get(tid);
+    const spindleDir = tool.spindleDir === 'M4' ? 'M4' : 'M3';
+    const dirName = spindleDir === 'M4' ? 'antihorario' : 'horario';
+    const cutDirName = tool.cutDir === 'cw' ? 'horario' : 'antihorario';
+
+    lines.push(`(--- Herramienta T${tool.toolNumber}: ${tool.name} ---)`);
+    lines.push(`(Ø${tool.diam}mm · ${tool.rpm}rpm · Avance XY ${tool.feed} · Avance Z ${tool.feedZ})`);
+    lines.push(`(Corte ${cutDirName} · Mandrino ${spindleDir} ${dirName})`);
+    lines.push(`T${tool.toolNumber} M6`);
+    lines.push(`S${tool.rpm} ${spindleDir}`);
+    // ★ PAUSA CONFIGURABLE antes de empezar a moverse
+    lines.push(`G4 P${S.spindlePause}  (pausa estabilización mandrino)`);
+    lines.push('');
+    toolChangeCount++;
+
+    for (let oi = 0; oi < entries.length; oi++){
+      const { op, originalIndex } = entries[oi];
+      const passes = Math.max(1, Math.ceil(tool.depth / tool.step));
+      const step = tool.depth / passes;
+      lines.push(`(Operación ${oi+1}/${entries.length}: ${op.type.toUpperCase()})`);
+
+      if (op.type === 'drill'){
+        for (const p of op.points){
+          lines.push(`G0 X${p.x.toFixed(3)} Y${p.y.toFixed(3)}`);
+          for (let k=0;k<passes;k++){
+            const z = -Math.min((k+1)*step, tool.depth);
+            lines.push(`G1 Z${z.toFixed(3)} F${tool.feedZ}`);
+            lines.push(`G0 Z${tool.retract.toFixed(3)}`);
+          }
+          lines.push(`G0 Z${tool.safe.toFixed(3)}`);
+        }
+      } else if (op.type === 'cut'){
+        const c = S.cutContours[originalIndex];
+        if (!c || c.points.length < 2){ lines.push('(sin contorno resuelto)',''); continue; }
+        const pts = effectiveContour(c.points);
+        const isClosed = c.closed;
+        for (let k=0;k<passes;k++){
+          const z = -Math.min((k+1)*step, tool.depth);
+          const f = pts[0];
+          lines.push(`G0 Z${tool.safe.toFixed(3)}`);
+          lines.push(`G0 X${f.x.toFixed(3)} Y${f.y.toFixed(3)}`);
+          lines.push(`G1 Z${z.toFixed(3)} F${tool.feedZ}`);
+          for (let i = 1; i < pts.length; i++){
+            lines.push(`G1 X${pts[i].x.toFixed(3)} Y${pts[i].y.toFixed(3)} F${tool.feed}`);
+          }
+          if (isClosed){
+            const lastPt = pts[pts.length - 1];
+            if (Math.hypot(lastPt.x - f.x, lastPt.y - f.y) > 1e-3){
+              lines.push(`G1 X${f.x.toFixed(3)} Y${f.y.toFixed(3)} F${tool.feed}`);
+            }
+          }
+          lines.push(`G0 Z${tool.retract.toFixed(3)}`);
+        }
+      } else if (op.type === 'pocket'){
+        for (const a of op.areas){
+          if (a.shape === 'rect'){
+            const x1 = Math.min(a.x1,a.x2)+tool.diam/2, y1 = Math.min(a.y1,a.y2)+tool.diam/2;
+            const x2 = Math.max(a.x1,a.x2)-tool.diam/2, y2 = Math.max(a.y1,a.y2)-tool.diam/2;
+            if (x2 <= x1 || y2 <= y1) continue;
+            const stepY = tool.diam * (1 - tool.overlap);
+            for (let k=0;k<passes;k++){
+              const z = -Math.min((k+1)*step, tool.depth);
+              lines.push(`G0 Z${tool.safe.toFixed(3)}`);
+              lines.push(`G0 X${x1.toFixed(3)} Y${y1.toFixed(3)}`);
+              lines.push(`G1 Z${z.toFixed(3)} F${tool.feedZ}`);
+              let dir = 1, y = y1;
+              while (y <= y2 + 1e-9){
+                const xe = dir > 0 ? x2 : x1;
+                lines.push(`G1 X${xe.toFixed(3)} Y${y.toFixed(3)} F${tool.feed}`);
+                y += stepY; if (y > y2) break;
+                const xn = dir > 0 ? x1 : x2;
+                lines.push(`G1 X${xn.toFixed(3)} Y${y.toFixed(3)} F${tool.feed}`);
+                dir *= -1;
+              }
+              lines.push(`G0 Z${tool.retract.toFixed(3)}`);
+            }
+          } else if (a.shape === 'circle'){
+            const stepR = tool.diam * (1 - tool.overlap);
+            for (let k=0;k<passes;k++){
+              const z = -Math.min((k+1)*step, tool.depth);
+              let rr = stepR;
+              while (rr <= a.r){
+                const st = Math.max(24, Math.ceil(2*Math.PI*rr / (stepR*0.5)));
+                lines.push(`G0 Z${tool.safe.toFixed(3)}`);
+                lines.push(`G0 X${(a.cx+rr).toFixed(3)} Y${a.cy.toFixed(3)}`);
+                lines.push(`G1 Z${z.toFixed(3)} F${tool.feedZ}`);
+                for (let s=1;s<=st;s++){
+                  const ang = s/st*Math.PI*2;
+                  const px = a.cx + rr*Math.cos(ang), py = a.cy + rr*Math.sin(ang);
+                  lines.push(`G1 X${px.toFixed(3)} Y${py.toFixed(3)} F${tool.feed}`);
+                }
+                lines.push(`G0 Z${tool.retract.toFixed(3)}`);
+                rr += stepR;
+              }
+            }
+          }
+        }
+      }
+      lines.push('');
+    }
+  }
+  lines.push(`G0 Z${maxSafe}`,'M5','M30','%');
+  const g = lines.join('\n');
+  gcodeEl.textContent = g;
+  showToast(`G-Code ✓ (${toolChangeCount} cambio${toolChangeCount>1?'s':''} · pausa ${S.spindlePause}s)`,'success');
+  return g;
+}
+
+// ═══════════════════════════════════════════════
+//  UI
+// ═══════════════════════════════════════════════
+let toastT;
+function showToast(msg, type=''){
+  toastEl.textContent = msg;
+  toastEl.className = 'toast ' + type + ' show';
+  clearTimeout(toastT);
+  toastT = setTimeout(() => toastEl.classList.remove('show'), 2400);
+}
+function setMode(m){
+  S.mode = m; S.pocketStart = null; S.selRect = null; S.selecting = false;
+  modeBtns.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+  const b = modeBtns.querySelector(`[data-mode="${m}"]`);
+  if (b) b.classList.add('active');
+  canvasContainer.classList.toggle('mode-view', m === 'view');
+  render();
+}
+
+// ═══════════════════════════════════════════════
+//  CARGA DE DXF
+// ═══════════════════════════════════════════════
+function onFile(e){
+  const file = e.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const text = ev.target.result;
+      const parsed = parseDXF(text);
+      const norm = normalize(parsed);
+      S.dxfText = text; S.dxfFilename = file.name;
+      S.entities = norm; S.operations = []; S.layerVis = {};
+      S.simMoves = []; S.simMoveTimes = []; S.simTotalTime = 0; S.simT = 0;
+      S.cutContours = {};
+      S.offsetX = 0; S.offsetY = 0;
+      $('offsetX').value = 0; $('offsetY').value = 0;
+      if (!S.tools.length){ S.tools.push(createDefaultTool(1)); S.activeToolId = S.tools[0].id; loadToolIntoFields(S.tools[0]); }
+      extractLayers(); updateToolsList(); updateOpsList();
+      resizeCanvas(); fitView(); updateSimUI(); render(); scheduleSave();
+      const counts = {}; for (const en of norm) counts[en.type] = (counts[en.type]||0)+1;
+      diagEl.textContent = `Archivo: ${file.name}\nTotal: ${norm.length}\n` +
+        Object.entries(counts).map(([k,v]) => `${k}: ${v}`).join('\n') +
+        `\nUnidades: ${parsed.header['$INSUNITS'] || 'no especificado'}`;
+      fileEl.textContent = `📄 ${file.name} (${norm.length})`;
+      if (norm.length === 0) showToast('Sin entidades. Mira F12.','warn');
+      else { const s = Object.entries(counts).map(([k,v]) => `${k}:${v}`).join(' '); showToast(`${norm.length} ent — ${s}`,'success'); }
+    } catch (err){ console.error(err); showToast('Error: '+err.message,'warn'); }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+}
+
+// ═══════════════════════════════════════════════
+//  EVENTOS
+// ═══════════════════════════════════════════════
+$('btnLoad').addEventListener('click', () => $('fileInput').click());
+$('fileInput').addEventListener('change', onFile);
+$('btnSaveProj').addEventListener('click', exportProject);
+$('btnLoadProj').addEventListener('click', () => $('projInput').click());
+$('projInput').addEventListener('change', e => { const f = e.target.files[0]; if (f) importProject(f); e.target.value = ''; });
+$('btnFit').addEventListener('click', () => { fitView(); render(); scheduleSave(); });
+$('btnClear').addEventListener('click', clearOps);
+$('btnUndo').addEventListener('click', undoOp);
+$('btnGen').addEventListener('click', genGCode);
+$('btnDl').addEventListener('click', () => {
+  const g = gcodeEl.textContent;
+  if (!g || g.startsWith('(')){ showToast('Genera primero','warn'); return; }
+  const b = new Blob([g], {type:'text/plain'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'programa.nc'; a.click();
+});
+$('btnCopy').addEventListener('click', () => {
+  const g = gcodeEl.textContent;
+  if (g && !g.startsWith('(')) navigator.clipboard.writeText(g).then(() => showToast('Copiado','success'));
+});
+$('btnFlipArcs').addEventListener('click', () => {
+  S.flipArcs = !S.flipArcs;
+  $('btnFlipArcs').textContent = S.flipArcs ? '↺ Arcos' : '↻ Arcos';
+  render(); scheduleSave();
+});
+$('btnFlipY').addEventListener('click', () => {
+  S.flipY = !S.flipY;
+  $('btnFlipY').textContent = S.flipY ? '⇅ Y' : '⇅ Y';
+  fitView(); render(); scheduleSave();
+});
+modeBtns.addEventListener('click', e => { const b = e.target.closest('.mode-btn'); if (b) setMode(b.dataset.mode); });
+$('btnAddTool').addEventListener('click', addTool);
+$('btnDupTool').addEventListener('click', duplicateTool);
+
+function updateToolField(id, transform){
+  const t = getActiveTool(); if (!t) return;
+  transform(t); loadToolIntoFields(t); updateToolsList();
+  rebuildAllContours(); buildSimFromOps(); render(); scheduleSave();
+}
+$('tName').addEventListener('change', () => updateToolField('tName', t => { t.name = $('tName').value.trim() || t.name; }));
+$('tNum').addEventListener('change', () => updateToolField('tNum', t => { t.toolNumber = Math.max(1, parseInt($('tNum').value) || 1); }));
+$('cDiam').addEventListener('change', () => updateToolField('cDiam', t => { t.diam = parseFloat($('cDiam').value) || 3.175; }));
+$('cRpm').addEventListener('change', () => updateToolField('cRpm', t => { t.rpm = parseInt($('cRpm').value) || 12000; }));
+$('cFeed').addEventListener('change', () => updateToolField('cFeed', t => { t.feed = parseFloat($('cFeed').value) || 800; }));
+$('cFeedZ').addEventListener('change', () => updateToolField('cFeedZ', t => { t.feedZ = parseFloat($('cFeedZ').value) || 400; }));
+$('cStep').addEventListener('change', () => updateToolField('cStep', t => { t.step = parseFloat($('cStep').value) || 1.5; }));
+$('cDepth').addEventListener('change', () => updateToolField('cDepth', t => { t.depth = parseFloat($('cDepth').value) || 6; }));
+$('cSafe').addEventListener('change', () => updateToolField('cSafe', t => { t.safe = parseFloat($('cSafe').value) || 15; }));
+$('cRetract').addEventListener('change', () => updateToolField('cRetract', t => { t.retract = parseFloat($('cRetract').value) || 5; }));
+$('cOverlap').addEventListener('change', () => updateToolField('cOverlap', t => { t.overlap = parseFloat($('cOverlap').value) || 0.35; }));
+$('cCutDir').addEventListener('change', () => updateToolField('cCutDir', t => { t.cutDir = $('cCutDir').value; }));
+$('cSpindleDir').addEventListener('change', () => updateToolField('cSpindleDir', t => { t.spindleDir = $('cSpindleDir').value; }));
+
+// ★ NUEVO: campos de máquina
+$('cfgSpindlePause').addEventListener('change', () => {
+  S.spindlePause = Math.max(0, parseFloat($('cfgSpindlePause').value) || 0);
+  buildSimFromOps(); render(); scheduleSave();
+});
+$('cfgRapidXY').addEventListener('change', () => {
+  S.rapidXY = Math.max(100, parseFloat($('cfgRapidXY').value) || 5000);
+  buildSimFromOps(); render(); scheduleSave();
+});
+$('cfgRapidZ').addEventListener('change', () => {
+  S.rapidZ = Math.max(100, parseFloat($('cfgRapidZ').value) || 3000);
+  buildSimFromOps(); render(); scheduleSave();
+});
+
+btnPlay.addEventListener('click', () => { if (S.simPlaying) simPause(); else simPlay(); });
+btnReset.addEventListener('click', simReset);
+btnEnd.addEventListener('click', simEnd);
+simProgressEl.addEventListener('input', () => { if (S.simPlaying) simPause(); simSeek(parseInt(simProgressEl.value)); });
+simSpeedEl.addEventListener('input', () => {
+  const raw = parseInt(simSpeedEl.value) || 10;
+  S.simSpeedMult = raw / 10;
+  simSpeedVal.textContent = S.simSpeedMult.toFixed(1) + 'x';
+});
+S.simSpeedMult = parseInt(simSpeedEl.value) / 10;
+simSpeedVal.textContent = S.simSpeedMult.toFixed(1) + 'x';
+
+canvasContainer.addEventListener('wheel', e => {
+  e.preventDefault();
+  const wb = s2w(e.clientX, e.clientY);
+  const factor = e.deltaY < 0 ? 1.015 : 0.985;
+  S.scale *= factor; S.scale = Math.max(0.005, Math.min(500, S.scale));
+  const wa = s2w(e.clientX, e.clientY);
+  S.offX += (wa.x - wb.x) * S.scale; S.offY += -(wa.y - wb.y) * S.scale;
+  render();
+}, {passive:false});
+
+canvasContainer.addEventListener('mousedown', e => {
+  if (e.button === 1){
+    const now = Date.now();
+    if (now - S.lastMiddleClick < 300){ S.lastMiddleClick = 0; centerOnOrigin(); e.preventDefault(); return; }
+    S.lastMiddleClick = now;
+  }
+  if (e.button === 1 || e.button === 2 || (S.mode === 'view' && e.button === 0)){
+    S.panning = true;
+    S.psx = e.clientX; S.psy = e.clientY;
+    S.poffx = S.offX; S.poffy = S.offY;
+    canvasContainer.classList.add('panning');
+    e.preventDefault(); return;
+  }
+  if (e.button === 0){
+    const w = s2w(e.clientX, e.clientY);
+    if (S.mode === 'drill') addDrill(w.x, w.y);
+    else if (S.mode === 'cut'){ S.selecting = true; S.selStart = { x:w.x, y:w.y }; S.selEnd = { x:w.x, y:w.y }; S.selRect = null; e.preventDefault(); }
+    else if (S.mode === 'pocket'){
+      const ci = closestCircle(w.x, w.y, 8);
+      if (ci >= 0 && !S.pocketStart){ const c = effective()[ci]; addPocket({ shape:'circle', cx:c.cx, cy:c.cy, r:c.r }); }
+      else if (!S.pocketStart){ S.pocketStart = { x:w.x, y:w.y }; }
+      else { addPocket({ shape:'rect', x1:S.pocketStart.x, y1:S.pocketStart.y, x2:w.x, y2:w.y }); S.pocketStart = null; }
+    }
+  }
+});
+
+canvasContainer.addEventListener('mousemove', e => {
+  const w = s2w(e.clientX, e.clientY);
+  S.mwx = w.x; S.mwy = w.y;
+  if (S.panning){
+    S.offX = S.poffx + (e.clientX - S.psx);
+    S.offY = S.poffy - (e.clientY - S.psy);
+    render(); return;
+  }
+  if (S.selecting && S.mode === 'cut'){
+    S.selEnd = { x:w.x, y:w.y };
+    S.selRect = { x1: Math.min(S.selStart.x, S.selEnd.x), y1: Math.min(S.selStart.y, S.selEnd.y),
+                  x2: Math.max(S.selStart.x, S.selEnd.x), y2: Math.max(S.selStart.y, S.selEnd.y) };
+    render(); return;
+  }
+  const nh = closestEnt(w.x, w.y, 5);
+  if (nh !== S.hover){ S.hover = nh; render(); }
+  else coordEl.textContent = `X: ${w.x.toFixed(2)} mm | Y: ${w.y.toFixed(2)} mm`;
+});
+
+window.addEventListener('mouseup', () => {
+  if (S.panning){ S.panning = false; canvasContainer.classList.remove('panning'); render(); return; }
+  if (S.selecting && S.mode === 'cut'){
+    S.selecting = false;
+    const d = Math.hypot(S.selStart.x - S.selEnd.x, S.selStart.y - S.selEnd.y);
+    if (d < 0.5){ const i = closestEnt(S.selStart.x, S.selStart.y, 6); if (i >= 0) addCut(i); }
+    else if (S.selRect){
+      const list = effective(); const r = S.selRect;
+      const ptIn = (x,y) => x>=r.x1 && x<=r.x2 && y>=r.y1 && y<=r.y2;
+      let count = 0;
+      for (let i=0;i<list.length;i++){
+        const en = list[i]; if (!S.layerVis[en.layer]) continue;
+        let inside = false;
+        if (en.type === 'LINE') inside = ptIn(en.x1,en.y1) || ptIn(en.x2,en.y2);
+        else if (en.type === 'CIRCLE' || en.type === 'ARC') inside = ptIn(en.cx,en.cy);
+        else if (en.type === 'LWPOLYLINE') inside = en.vertices.some(v => ptIn(v.x,v.y));
+        else if (en.type === 'POINT') inside = ptIn(en.x,en.y);
+        if (inside){ addCut(i); count++; }
+      }
+      showToast(`${count} seleccionadas`,'success');
+    }
+    S.selRect = null; render();
+  }
+});
+
+canvasContainer.addEventListener('contextmenu', e => e.preventDefault());
+window.addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+  if (e.key === 'Escape'){ setMode('view'); S.pocketStart = null; }
+  if (e.key === 'f' || e.key === 'F'){ fitView(); render(); }
+  if (e.key === 'g' || e.key === 'G') genGCode();
+  if (e.key === 'h' || e.key === 'H') centerOnOrigin();
+  if (e.key === ' '){ e.preventDefault(); if (S.simPlaying) simPause(); else simPlay(); }
+  if (e.ctrlKey && e.key === 'z'){ e.preventDefault(); undoOp(); }
+});
+window.addEventListener('resize', () => { resizeCanvas(); render(); });
+
+$('btnCenter').addEventListener('click', () => {
+  const list = effective();
+  if (!list.length){ showToast('Sin entidades','warn'); return; }
+  const bb = bbox(list);
+  S.offsetX = -(bb.mnx + bb.w/2); S.offsetY = -(bb.mny + bb.h/2);
+  $('offsetX').value = S.offsetX.toFixed(3); $('offsetY').value = S.offsetY.toFixed(3);
+  fitView(); rebuildAllContours(); buildSimFromOps(); render(); scheduleSave();
+  showToast('Centrado en (0,0)','success');
+});
+$('offsetX').addEventListener('change', () => { S.offsetX = parseFloat($('offsetX').value)||0; fitView(); rebuildAllContours(); buildSimFromOps(); render(); scheduleSave(); });
+$('offsetY').addEventListener('change', () => { S.offsetY = parseFloat($('offsetY').value)||0; fitView(); rebuildAllContours(); buildSimFromOps(); render(); scheduleSave(); });
+
+// ═══════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════
+function init(){
+  resizeCanvas();
+  // Aplicar valores por defecto ANTES de intentar cargar
+  $('cfgSpindlePause').value = S.spindlePause;
+  $('cfgRapidXY').value = S.rapidXY;
+  $('cfgRapidZ').value = S.rapidZ;
+  const restored = loadFromLocalStorage();
+  if (!restored){
+    S.tools = [createDefaultTool(1)];
+    S.activeToolId = S.tools[0].id;
+    loadToolIntoFields(S.tools[0]);
+    updateToolsList(); updateOpsList(); extractLayers();
+    fitView(); updateSimUI(); render();
+    console.log('🆕 Proyecto nuevo.');
+  } else {
+    console.log('💾 Proyecto restaurado.'); showToast('Proyecto restaurado','success');
+  }
+  console.log('🛠️ CNC DXF → G-Code · pausa mandrino configurable + tiempo HH:MM:SS');
+}
+init();
+})();
+</script>
+</body>
+</html>
