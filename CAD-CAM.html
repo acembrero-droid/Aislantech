@@ -255,6 +255,9 @@ canvas{display:block;position:absolute;top:0;left:0}
 const STORAGE_KEY = 'cncdxf_project_v2';
 const PROJECT_VERSION = 2;
 
+// =================================================================
+// PARSER DXF
+// =================================================================
 function parseDXF(text){
   text = text.replace(/^\uFEFF/,'').replace(/\r\n/g,'\n').replace(/\r/g,'\n');
   const lines = text.split('\n');
@@ -379,7 +382,7 @@ const S = {
   simPlaying:false, simSpeedMult: 1, simAnimId:null, simLastFrame:0,
   saveTimer: null,
   cutContours: {},
-  cutTabs: {}, // { opIndex: [ {sStart, sEnd, toolDiam}, ... ] }
+  cutTabs: {},
 };
 
 const $ = id => document.getElementById(id);
@@ -413,7 +416,7 @@ function duplicateTool(){ const src = getActiveTool(); if (!src){ showToast('Sin
   showToast('Herramienta duplicada','success'); }
 function deleteTool(id){
   const usedBy = S.operations.filter(o => o.toolId === id);
-  if (usedBy.length > 0){ if (!confirm(`En ${usedBy.length} operación(es). ¿Eliminar también esas operaciones?`)) return;
+  if (usedBy.length > 0){ if (!confirm(`En ${usedBy.length} operacion(es). Eliminar tambien esas operaciones?`)) return;
     S.operations = S.operations.filter(o => o.toolId !== id); }
   S.tools = S.tools.filter(t => t.id !== id);
   if (S.activeToolId === id){ S.activeToolId = S.tools.length ? S.tools[0].id : null;
@@ -447,7 +450,7 @@ function updateToolsList(){
     return `<div class="tool-item ${isActive?'active':''}" data-id="${t.id}">
       <span class="tnum">T${t.toolNumber}</span>
       <div class="tinfo"><div class="tname">${escapeHtml(t.name)}</div>
-      <div class="tspec">Ø${t.diam}mm · ${t.rpm}rpm · ${dirIcon}${spinIcon} ${uses?'· '+uses+' op':''}</div></div>
+      <div class="tspec">D${t.diam}mm - ${t.rpm}rpm - ${dirIcon}${spinIcon} ${uses?'- '+uses+' op':''}</div></div>
       <div class="tact"><button class="rename" data-id="${t.id}">✏</button><button class="del" data-id="${t.id}">🗑</button></div>
     </div>`;
   }).join('');
@@ -550,11 +553,9 @@ function rotateContourToStart(pts, ox, oy){
   return pts.slice(bestIdx).concat(pts.slice(0, bestIdx));
 }
 
-// ═══════════════════════════════════════════════
-//  PATILLAS — ancho compensado por diámetro de fresa
-// ═══════════════════════════════════════════════
-// width = ancho de MATERIAL SIN CORTAR (lo que mides en la pieza)
-// toolDiameter = Ø de la fresa; el tramo de elevación sobre la trayectoria es width + toolDiameter
+// =================================================================
+// PATILLAS - ancho compensado por diametro de fresa
+// =================================================================
 function computeTabSegments(pts, closed, count, width, seed, toolDiameter){
   toolDiameter = Math.max(0, toolDiameter || 0);
   const pathWidth = Math.max(0.1, width + toolDiameter);
@@ -672,7 +673,7 @@ function updateTabsInfo(){
     return;
   }
   if (!keys.length){
-    tabsInfoEl.textContent = 'Ninguna operación de corte cerrada con patillas';
+    tabsInfoEl.textContent = 'Ninguna operacion de corte cerrada con patillas';
     return;
   }
   let total = 0, lines = [];
@@ -682,10 +683,10 @@ function updateTabsInfo(){
     const tool = op ? (getToolById(op.toolId) || S.tools[0]) : null;
     const D = tool ? tool.diam : 0;
     const pathW = S.tabs.width + D;
-    lines.push(`Contorno ${parseInt(k)+1}: ${tabs.length}× (tramo ${pathW.toFixed(2)}mm → patilla ${S.tabs.width}mm)`);
+    lines.push(`Contorno ${parseInt(k)+1}: ${tabs.length}x - tramo ${pathW.toFixed(2)}mm - patilla ${S.tabs.width}mm`);
     total += tabs.length;
   }
-  tabsInfoEl.textContent = lines.join('\n') + `\nTotal: ${total} patillas · Ø fresa compensado`;
+  tabsInfoEl.textContent = lines.join('\n') + `\nTotal: ${total} patillas - D fresa compensado`;
 }
 
 function fmtTime(sec){
@@ -709,8 +710,8 @@ function serializeProject(){
     tabs: S.tabs };
 }
 function saveToLocalStorage(){
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(serializeProject())); flashSaveIndicator('✓ Guardado'); }
-  catch (err){ if (err.name === 'QuotaExceededError'){ flashSaveIndicator('⚠ Sin espacio'); showToast('Proyecto grande. Usa "Guardar Proyecto".','warn'); } }
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(serializeProject())); flashSaveIndicator('OK'); }
+  catch (err){ if (err.name === 'QuotaExceededError'){ flashSaveIndicator('Sin espacio'); showToast('Proyecto grande. Usa Guardar Proyecto.','warn'); } }
 }
 function flashSaveIndicator(txt){ saveInd.textContent = txt; saveInd.classList.add('show');
   clearTimeout(saveInd._t); saveInd._t = setTimeout(() => saveInd.classList.remove('show'), 1200); }
@@ -740,13 +741,13 @@ function applyProjectData(data){
   $('tabsWidth').value = S.tabs.width;
   $('tabsHeight').value = S.tabs.height;
   $('offsetX').value = S.offsetX; $('offsetY').value = S.offsetY;
-  $('btnFlipArcs').textContent = S.flipArcs ? '↺ Arcos' : '↻ Arcos';
-  $('btnFlipY').textContent = S.flipY ? '⇅ Y' : '⇅ Y';
+  $('btnFlipArcs').textContent = S.flipArcs ? 'Arcos INV' : 'Arcos';
+  $('btnFlipY').textContent = S.flipY ? 'Y INV' : 'Y';
   extractLayers(); updateToolsList();
   if (S.activeToolId) loadToolIntoFields(getActiveTool());
   updateOpsList(); rebuildAllContours(); buildSimFromOps();
   resizeCanvas(); fitView(); render();
-  fileEl.textContent = S.dxfFilename ? `📄 ${S.dxfFilename} (${S.entities.length})` : 'Sin archivo';
+  fileEl.textContent = S.dxfFilename ? `${S.dxfFilename} (${S.entities.length})` : 'Sin archivo';
 }
 function exportProject(){
   const blob = new Blob([JSON.stringify(serializeProject(), null, 2)], { type:'application/json' });
@@ -759,9 +760,9 @@ function importProject(file){
   const r = new FileReader();
   r.onload = e => {
     try { const data = JSON.parse(e.target.result);
-      if (!data || typeof data !== 'object' || !('version' in data)) throw new Error('Formato inválido');
-      if (data.version !== PROJECT_VERSION && !confirm(`Versión ${data.version} ≠ ${PROJECT_VERSION}. ¿Abrir?`)) return;
-      applyProjectData(data); saveToLocalStorage(); showToast('Proyecto importado ✓','success');
+      if (!data || typeof data !== 'object' || !('version' in data)) throw new Error('Formato invalido');
+      if (data.version !== PROJECT_VERSION && !confirm(`Version ${data.version} distinta de ${PROJECT_VERSION}. Abrir igual?`)) return;
+      applyProjectData(data); saveToLocalStorage(); showToast('Proyecto importado','success');
     } catch (err){ showToast('Error: ' + err.message,'warn'); }
   };
   r.readAsText(file);
@@ -866,7 +867,7 @@ function closestCircle(wx, wy, thr){
 }
 
 function addDrill(wx, wy){
-  if (!S.tools.length){ showToast('Añade primero una herramienta','warn'); return; }
+  if (!S.tools.length){ showToast('Anade primero una herramienta','warn'); return; }
   const ci = closestCircle(wx, wy, 10);
   let px = wx, py = wy;
   if (ci >= 0){ const c = effective()[ci]; px = c.cx; py = c.cy; }
@@ -879,7 +880,7 @@ function addDrill(wx, wy){
 }
 function addCut(idx){
   if (idx < 0) return;
-  if (!S.tools.length){ showToast('Añade primero una herramienta','warn'); return; }
+  if (!S.tools.length){ showToast('Anade primero una herramienta','warn'); return; }
   for (const op of S.operations) if (op.type === 'cut' && op.ids.includes(idx)) return;
   let op = S.operations.find(o => o.type === 'cut');
   if (!op){ op = { type:'cut', ids:[], offset:'center', toolId: S.activeToolId }; S.operations.push(op); }
@@ -887,7 +888,7 @@ function addCut(idx){
   updateOpsList(); rebuildAllContours(); buildSimFromOps(); render(); scheduleSave();
 }
 function addPocket(area){
-  if (!S.tools.length){ showToast('Añade primero una herramienta','warn'); return; }
+  if (!S.tools.length){ showToast('Anade primero una herramienta','warn'); return; }
   let op = S.operations.find(o => o.type === 'pocket');
   if (!op){ op = { type:'pocket', areas:[], toolId: S.activeToolId }; S.operations.push(op); }
   op.areas.push(area);
@@ -912,7 +913,7 @@ function updateOpsList(){
     let det = '';
     if (op.type==='drill') det = `${op.points.length} pts`;
     else if (op.type==='cut') det = `${op.ids.length} ent`;
-    else if (op.type==='pocket') det = `${op.areas.length} áre`;
+    else if (op.type==='pocket') det = `${op.areas.length} areas`;
     let offSel = '';
     if (op.type === 'cut'){
       const off = op.offset || 'center';
@@ -925,7 +926,7 @@ function updateOpsList(){
     return `<li><span><span class="op-type ${op.type}">${op.type.toUpperCase()}</span> ${det}</span>
       <select class="op-tool-select" data-i="${i}" data-k="toolId">${toolOptions}</select>
       ${offSel}
-      <span class="del-op" data-i="${i}">✕</span></li>`;
+      <span class="del-op" data-i="${i}">x</span></li>`;
   }).join('');
   opsEl.querySelectorAll('select[data-k="toolId"]').forEach(sel => {
     const i = parseInt(sel.dataset.i); if (S.operations[i].toolId) sel.value = S.operations[i].toolId; });
@@ -956,20 +957,20 @@ function updateLayerList(){
   }).join('');
   layerEl.querySelectorAll('.lv').forEach(cb => cb.addEventListener('change', () => { S.layerVis[cb.dataset.l] = cb.checked; render(); scheduleSave(); }));
   layerEl.querySelectorAll('.add-cut-btn').forEach(b => b.addEventListener('click', () => {
-    if (!S.tools.length){ showToast('Añade una herramienta primero','warn'); return; }
+    if (!S.tools.length){ showToast('Anade una herramienta primero','warn'); return; }
     const layer = b.dataset.l;
     const ids = S.entities.map((e,i) => e.layer===layer ? i : -1).filter(i => i>=0);
-    if (!ids.length){ showToast('Capa vacía','warn'); return; }
+    if (!ids.length){ showToast('Capa vacia','warn'); return; }
     let cut = S.operations.find(o => o.type === 'cut');
     if (!cut){ cut = { type:'cut', ids:[], offset:'center', toolId: S.activeToolId }; S.operations.push(cut); }
     ids.forEach(i => { if (!cut.ids.includes(i)) cut.ids.push(i); });
     updateOpsList(); rebuildAllContours(); buildSimFromOps(); render(); scheduleSave();
-    showToast(`${ids.length} añadidas`,'success'); }));
+    showToast(`${ids.length} anadidas`,'success'); }));
 }
 
-// ═══════════════════════════════════════════════
-//  G-CODE emission helpers
-// ═══════════════════════════════════════════════
+// =================================================================
+// G-CODE emission helpers - SIN parentesis anidados, SIN no-ASCII
+// =================================================================
 function emitCutNormal(lines, pts, closed, tool){
   for (let i = 1; i < pts.length; i++){
     lines.push(`G1 X${pts[i].x.toFixed(3)} Y${pts[i].y.toFixed(3)} F${tool.feed}`);
@@ -998,12 +999,12 @@ function emitCutWithTabs(lines, pts, closed, tool, fullZ, tabs, tabHeight){
         lines.push(`G1 X${between[i].x.toFixed(3)} Y${between[i].y.toFixed(3)} F${tool.feed}`);
       }
     }
-    lines.push(`G1 Z${tabZ.toFixed(3)} F${tool.feedZ}  (patilla: subir ${tabHeight}mm)`);
+    lines.push(`G1 Z${tabZ.toFixed(3)} F${tool.feedZ}  (patilla subir ${tabHeight}mm)`);
     const tabPts = pathPointsBetween(path, cumLens, sStart, sEnd);
     for (let i = 1; i < tabPts.length; i++){
       lines.push(`G1 X${tabPts[i].x.toFixed(3)} Y${tabPts[i].y.toFixed(3)} F${tool.feed}`);
     }
-    lines.push(`G1 Z${fullZ.toFixed(3)} F${tool.feedZ}  (patilla: bajar)`);
+    lines.push(`G1 Z${fullZ.toFixed(3)} F${tool.feedZ}  (patilla bajar)`);
     s = sEnd;
   }
   if (L > s + 1e-6){
@@ -1014,9 +1015,9 @@ function emitCutWithTabs(lines, pts, closed, tool, fullZ, tabs, tabHeight){
   }
 }
 
-// ═══════════════════════════════════════════════
-//  SIMULACIÓN
-// ═══════════════════════════════════════════════
+// =================================================================
+// SIMULACION
+// =================================================================
 function buildSimFromOps(){
   rebuildAllContours();
   const moves = [];
@@ -1205,16 +1206,16 @@ function updateSimUI(){
   while (mi < S.simMoveTimes.length - 1 && S.simMoveTimes[mi+1] <= S.simT) mi++;
   const mv = S.simMoves[Math.min(mi, S.simMoves.length-1)];
   if (mv){
-    if (mv.type === 'pause'){ simOpInfoEl.textContent = '⏸ PAUSA mandrino'; simOpInfoEl.style.color = '#ff8800'; }
-    else if (mv.type === 'tab'){ simOpInfoEl.textContent = '🔗 PATILLA Z=' + (mv.z||0).toFixed(2) + 'mm'; simOpInfoEl.style.color = '#ff44aa'; }
+    if (mv.type === 'pause'){ simOpInfoEl.textContent = 'PAUSA mandrino'; simOpInfoEl.style.color = '#ff8800'; }
+    else if (mv.type === 'tab'){ simOpInfoEl.textContent = 'PATILLA Z=' + (mv.z||0).toFixed(2) + 'mm'; simOpInfoEl.style.color = '#ff44aa'; }
     else {
       const isCut = mv.type === 'cut';
-      simOpInfoEl.textContent = (isCut ? '✂ CORTE' : '➤ RÁPIDO') + ' Z=' + (mv.z||0).toFixed(2) + 'mm';
+      simOpInfoEl.textContent = (isCut ? 'CORTE' : 'RAPIDO') + ' Z=' + (mv.z||0).toFixed(2) + 'mm';
       simOpInfoEl.style.color = isCut ? '#00ff88' : '#4da6ff';
     }
   }
-  if (S.simPlaying){ btnPlay.textContent = '⏸ PAUSA'; btnPlay.classList.add('playing'); btnPlay.classList.remove('play'); }
-  else { btnPlay.textContent = '▶ PLAY'; btnPlay.classList.remove('playing'); btnPlay.classList.add('play'); }
+  if (S.simPlaying){ btnPlay.textContent = 'PAUSA'; btnPlay.classList.add('playing'); btnPlay.classList.remove('play'); }
+  else { btnPlay.textContent = 'PLAY'; btnPlay.classList.remove('playing'); btnPlay.classList.add('play'); }
 }
 function simPlay(){
   if (!S.simMoves.length){ showToast('Genera primero','warn'); return; }
@@ -1232,7 +1233,7 @@ function simTick(){
   if (S.simT >= S.simTotalTime){
     S.simT = S.simTotalTime; S.simPlaying = false;
     if (S.simAnimId){ cancelAnimationFrame(S.simAnimId); S.simAnimId = null; }
-    updateSimUI(); render(); showToast('Simulación completada ✓','success');
+    updateSimUI(); render(); showToast('Simulacion completada','success');
     return;
   }
   updateSimUI(); render();
@@ -1300,7 +1301,6 @@ function render(){
         ctx.stroke();
       }
     }
-    // ★ Patillas: dibujar el tramo de elevación Y el material sin cortar
     if (S.tabs.enabled && S.cutTabs[oiStr]){
       const tabs = S.cutTabs[oiStr];
       const op = S.operations[parseInt(oiStr)];
@@ -1311,14 +1311,12 @@ function render(){
       const cumLens = computeCumLens(path);
       ctx.lineCap = 'round';
       for (const tab of tabs){
-        // Tramo de elevación (naranja, más fino): desde sStart hasta sEnd
         const elevA = getPointAtArcLength(path, cumLens, tab.sStart);
         const elevB = getPointAtArcLength(path, cumLens, tab.sEnd);
         const eA = w2s(elevA.x, elevA.y), eB = w2s(elevB.x, elevB.y);
         ctx.strokeStyle = '#ffaa44'; ctx.lineWidth = 3; ctx.setLineDash([4,3]);
         ctx.beginPath(); ctx.moveTo(eA.x-r.left, eA.y-r.top); ctx.lineTo(eB.x-r.left, eB.y-r.top); ctx.stroke();
         ctx.setLineDash([]);
-        // Material sin cortar (rosa grueso): desde sStart+R hasta sEnd-R
         const matA = getPointAtArcLength(path, cumLens, tab.sStart + R);
         const matB = getPointAtArcLength(path, cumLens, tab.sEnd - R);
         const mA = w2s(matA.x, matA.y), mB = w2s(matB.x, matB.y);
@@ -1457,10 +1455,10 @@ function drawSimulation(r){
     ctx.fillStyle = centerCol; ctx.fill();
     if (toolKind === 'pause'){
       ctx.fillStyle = '#ff8800'; ctx.font = 'bold 11px monospace';
-      ctx.fillText('⏸ PAUSA', s.x-r.left + tr + 6, s.y-r.top - 4);
+      ctx.fillText('PAUSA', s.x-r.left + tr + 6, s.y-r.top - 4);
     } else if (toolKind === 'tab'){
       ctx.fillStyle = '#ff44aa'; ctx.font = 'bold 11px monospace';
-      ctx.fillText('🔗 PATILLA', s.x-r.left + tr + 6, s.y-r.top - 4);
+      ctx.fillText('PATILLA', s.x-r.left + tr + 6, s.y-r.top - 4);
     }
   }
 
@@ -1481,10 +1479,10 @@ function drawSimulation(r){
   const curMv = S.simMoves[Math.min(mi, S.simMoves.length-1)];
   if (curMv){
     let txt, col;
-    if (curMv.type === 'pause'){ txt = '⏸ PAUSA MAND.'; col = '#ff8800'; }
-    else if (curMv.type === 'tab'){ txt = '🔗 PATILLA'; col = '#ff44aa'; }
-    else if (curMv.type === 'cut'){ txt = '✂ CORTE'; col = '#00ff88'; }
-    else { txt = '➤ RÁPIDO'; col = '#4da6ff'; }
+    if (curMv.type === 'pause'){ txt = 'PAUSA MAND.'; col = '#ff8800'; }
+    else if (curMv.type === 'tab'){ txt = 'PATILLA'; col = '#ff44aa'; }
+    else if (curMv.type === 'cut'){ txt = 'CORTE'; col = '#00ff88'; }
+    else { txt = 'RAPIDO'; col = '#4da6ff'; }
     ctx.fillStyle = col; ctx.font = 'bold 11px monospace';
     ctx.fillText(txt, barX + 4, barY + barH + 30);
     ctx.fillStyle = '#cdd6e0'; ctx.font = '10px monospace';
@@ -1528,9 +1526,9 @@ function drawEnt(e, color, lw, r){
     ctx.beginPath(); ctx.arc(s.x-r.left, s.y-r.top, 3, 0, Math.PI*2); ctx.fill(); }
 }
 
-// ═══════════════════════════════════════════════
-//  G-CODE GENERATION
-// ═══════════════════════════════════════════════
+// =================================================================
+// G-CODE GENERATION - Comentarios limpios sin anidacion ni no-ASCII
+// =================================================================
 function genGCode(){
   if (!S.operations.length){ gcodeEl.textContent = '(Sin operaciones)'; return ''; }
   if (!S.tools.length){ gcodeEl.textContent = '(Sin herramientas)'; return ''; }
@@ -1544,9 +1542,13 @@ function genGCode(){
     groups.get(tid).push({ op, originalIndex: S.operations.indexOf(op) });
   }
   const lines = [];
-  lines.push('%','O0001 (CNC DXF)','(Generado por CNC DXF → G-Code)','G21 G90 G17');
+  lines.push('%');
+  lines.push('O0001 (CNC DXF)');
+  lines.push('(Generado por CNC DXF a G-Code)');
+  lines.push('G21 G90 G17');
   const maxSafe = Math.max(...S.tools.map(t => t.safe), 10);
-  lines.push('G0 Z' + maxSafe, '');
+  lines.push('G0 Z' + maxSafe);
+  lines.push('');
   let toolChangeCount = 0;
 
   for (const tid of toolOrder){
@@ -1557,15 +1559,15 @@ function genGCode(){
     const cutDirName = tool.cutDir === 'cw' ? 'horario' : 'antihorario';
 
     lines.push(`(--- Herramienta T${tool.toolNumber}: ${tool.name} ---)`);
-    lines.push(`(Ø${tool.diam}mm · ${tool.rpm}rpm · Avance XY ${tool.feed} · Avance Z ${tool.feedZ})`);
-    lines.push(`(Corte ${cutDirName} · Mandrino ${spindleDir} ${dirName})`);
+    lines.push(`(Diam ${tool.diam}mm - ${tool.rpm}rpm - Avance XY ${tool.feed} - Avance Z ${tool.feedZ})`);
+    lines.push(`(Corte ${cutDirName} - Mandrino ${spindleDir} ${dirName})`);
     if (S.tabs.enabled){
-      lines.push(`(Patillas: ${S.tabs.count} uds · ancho REAL ${S.tabs.width}mm (tramo en trayectoria ${(S.tabs.width+tool.diam).toFixed(3)}mm) · alto ${S.tabs.height}mm)`);
+      lines.push(`(Patillas: ${S.tabs.count} uds - ancho REAL ${S.tabs.width}mm - tramo trayectoria ${(S.tabs.width+tool.diam).toFixed(3)}mm - alto ${S.tabs.height}mm)`);
     }
     lines.push(`G0 Z${tool.safe.toFixed(3)}`);
     lines.push(`T${tool.toolNumber} M6`);
     lines.push(`S${tool.rpm} ${spindleDir}`);
-    lines.push(`G4 P${S.spindlePause}  (pausa estabilización mandrino)`);
+    lines.push(`G4 P${S.spindlePause}  (pausa estabilizacion mandrino)`);
     lines.push('');
     toolChangeCount++;
 
@@ -1573,7 +1575,7 @@ function genGCode(){
       const { op, originalIndex } = entries[oi];
       const passes = Math.max(1, Math.ceil(tool.depth / tool.step));
       const step = tool.depth / passes;
-      lines.push(`(Operación ${oi+1}/${entries.length}: ${op.type.toUpperCase()})`);
+      lines.push(`(Operacion ${oi+1}/${entries.length}: ${op.type.toUpperCase()})`);
 
       if (op.type === 'drill'){
         for (const p of op.points){
@@ -1587,7 +1589,7 @@ function genGCode(){
         }
       } else if (op.type === 'cut'){
         const c = S.cutContours[originalIndex];
-        if (!c || c.points.length < 2){ lines.push('(sin contorno resuelto)',''); continue; }
+        if (!c || c.points.length < 2){ lines.push('(sin contorno resuelto)'); lines.push(''); continue; }
         const pts = effectiveContour(c.points);
         const isClosed = c.closed;
         const f = pts[0];
@@ -1603,7 +1605,7 @@ function genGCode(){
           lines.push(`G0 X${f.x.toFixed(3)} Y${f.y.toFixed(3)}`);
           lines.push(`G1 Z${z.toFixed(3)} F${tool.feedZ}`);
           if (S.tabs.enabled && isLastPass && isClosed && tabsEff.length > 0){
-            lines.push(`(--- pasada con ${tabsEff.length} patilla(s) · patilla final ${S.tabs.width}mm · alto ${S.tabs.height}mm ---)`);
+            lines.push(`(--- pasada con ${tabsEff.length} patillas - patilla final ${S.tabs.width}mm - alto ${S.tabs.height}mm ---)`);
             emitCutWithTabs(lines, pts, isClosed, tool, z, tabsEff, S.tabs.height);
           } else {
             emitCutNormal(lines, pts, isClosed, tool);
@@ -1657,10 +1659,13 @@ function genGCode(){
       lines.push('');
     }
   }
-  lines.push(`G0 Z${maxSafe}`,'M5','M30','%');
+  lines.push(`G0 Z${maxSafe}`);
+  lines.push('M5');
+  lines.push('M30');
+  lines.push('%');
   const g = lines.join('\n');
   gcodeEl.textContent = g;
-  showToast(`G-Code ✓ (${toolChangeCount} cambio${toolChangeCount>1?'s':''}${S.tabs.enabled?' · patillas ON':''})`,'success');
+  showToast(`G-Code generado - ${toolChangeCount} cambio(s)${S.tabs.enabled?' - patillas ON':''}`,'success');
   return g;
 }
 
@@ -1701,9 +1706,9 @@ function onFile(e){
       diagEl.textContent = `Archivo: ${file.name}\nTotal: ${norm.length}\n` +
         Object.entries(counts).map(([k,v]) => `${k}: ${v}`).join('\n') +
         `\nUnidades: ${parsed.header['$INSUNITS'] || 'no especificado'}`;
-      fileEl.textContent = `📄 ${file.name} (${norm.length})`;
+      fileEl.textContent = `${file.name} (${norm.length})`;
       if (norm.length === 0) showToast('Sin entidades. Mira F12.','warn');
-      else { const s = Object.entries(counts).map(([k,v]) => `${k}:${v}`).join(' '); showToast(`${norm.length} ent — ${s}`,'success'); }
+      else { const s = Object.entries(counts).map(([k,v]) => `${k}:${v}`).join(' '); showToast(`${norm.length} ent - ${s}`,'success'); }
     } catch (err){ console.error(err); showToast('Error: '+err.message,'warn'); }
   };
   reader.readAsText(file);
@@ -1729,11 +1734,11 @@ $('btnCopy').addEventListener('click', () => {
   if (g && !g.startsWith('(')) navigator.clipboard.writeText(g).then(() => showToast('Copiado','success')); });
 $('btnFlipArcs').addEventListener('click', () => {
   S.flipArcs = !S.flipArcs;
-  $('btnFlipArcs').textContent = S.flipArcs ? '↺ Arcos' : '↻ Arcos';
+  $('btnFlipArcs').textContent = S.flipArcs ? 'Arcos INV' : 'Arcos';
   render(); scheduleSave(); });
 $('btnFlipY').addEventListener('click', () => {
   S.flipY = !S.flipY;
-  $('btnFlipY').textContent = S.flipY ? '⇅ Y' : '⇅ Y';
+  $('btnFlipY').textContent = S.flipY ? 'Y INV' : 'Y';
   fitView(); render(); scheduleSave(); });
 modeBtns.addEventListener('click', e => { const b = e.target.closest('.mode-btn'); if (b) setMode(b.dataset.mode); });
 $('btnAddTool').addEventListener('click', addTool);
@@ -1879,7 +1884,7 @@ $('btnCenter').addEventListener('click', () => {
   S.offsetX = -(bb.mnx + bb.w/2); S.offsetY = -(bb.mny + bb.h/2);
   $('offsetX').value = S.offsetX.toFixed(3); $('offsetY').value = S.offsetY.toFixed(3);
   fitView(); rebuildAllContours(); buildSimFromOps(); render(); scheduleSave();
-  showToast('Centrado en (0,0)','success'); });
+  showToast('Centrado en 0,0','success'); });
 $('offsetX').addEventListener('change', () => { S.offsetX = parseFloat($('offsetX').value)||0; fitView(); rebuildAllContours(); buildSimFromOps(); render(); scheduleSave(); });
 $('offsetY').addEventListener('change', () => { S.offsetY = parseFloat($('offsetY').value)||0; fitView(); rebuildAllContours(); buildSimFromOps(); render(); scheduleSave(); });
 
@@ -1900,7 +1905,7 @@ function init(){
     updateToolsList(); updateOpsList(); extractLayers();
     fitView(); updateSimUI(); updateTabsInfo(); render();
   } else { showToast('Proyecto restaurado','success'); }
-  console.log('🛠️ CNC DXF → G-Code · ancho de patilla compensado con Ø de fresa');
+  console.log('CNC DXF a G-Code - comentarios limpios para DDCS V4.1');
 }
 init();
 })();
