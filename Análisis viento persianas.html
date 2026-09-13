@@ -108,7 +108,6 @@
             background: #fff5f5 !important;
             font-weight: 700 !important;
         }
-        /* ===== GLOSARIO ===== */
         .glosario-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-top: 16px; }
         .glosario-item { background: #fafafa; border: 1px solid #eee; border-left: 3px solid var(--color-primary); border-radius: 6px; padding: 12px 14px; }
         .glosario-item .term { font-family: 'Montserrat', sans-serif; font-weight: 700; color: var(--color-secondary); font-size: 0.9rem; margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }
@@ -235,7 +234,6 @@
         <div class="card-header"><div class="step-badge">6</div><div class="card-title">📐 Cálculo por hueco: enrollamiento y división en paños</div></div>
         <div class="card-body">
             
-            <!-- IMPORTAR DESDE EXCEL -->
             <div class="paste-section">
                 <div class="header-flex">
                     <div class="grupo-titulo"><i class="fas fa-file-excel"></i> Importar desde Excel / Google Sheets</div>
@@ -254,14 +252,13 @@
                 </div>
             </div>
 
-            <!-- SELECTORES -->
             <div class="selector-grid" style="margin-bottom: 20px; padding: 16px; background: #fafafa; border-radius: 8px; border: 1px solid #eee;">
                 <div>
                     <div class="grupo-titulo">
                         <i class="fas fa-layer-group"></i> Sistemas a comparar
                         <button class="btn-mini" onclick="toggleAllSistemas(true)" style="margin-left: 8px;">Todos</button>
                         <button class="btn-mini" onclick="toggleAllSistemas(false)" style="margin-left: 4px;">Ninguno</button>
-                        <button class="btn-mini" onclick="toggleTipoSistemas('PUR')" style="margin-left: 8px;">Solo PUR</button>
+                        <button class="btn-mini" onclick="toggleTipoSistemas('PUR')" style="margin-left: 8px;">Solo Conformadas</button>
                         <button class="btn-mini" onclick="toggleTipoSistemas('EX')" style="margin-left: 4px;">Solo Extrusión</button>
                     </div>
                     <div class="checkbox-group" id="selectorSistemas"></div>
@@ -309,13 +306,12 @@
                 </button>
             </div>
 
-            <!-- BARRA DE ORDENACIÓN -->
             <div class="sort-bar" id="sortBar" style="display:none;">
                 <i class="fas fa-sort"></i>
                 <label>Ordenar filas de sistemas por:</label>
                 <select id="ordenCampo" onchange="cambiarOrden()">
                     <option value="nombre">Sistema (nombre)</option>
-                    <option value="tipo">Tipo (PUR/EX)</option>
+                    <option value="tipo">Tipo (CONF/EXTR)</option>
                     <option value="densidad">Densidad (DN / AD)</option>
                     <option value="cobertura">Cobertura (mm)</option>
                     <option value="eje40">Ø40 (mm)</option>
@@ -332,7 +328,7 @@
         </div>
     </div>
 
-    <!-- ========== GLOSARIO / NOTAS EXPLICATIVAS ========== -->
+    <!-- ========== GLOSARIO ========== -->
     <div class="card" id="glosarioCard">
         <div class="card-header">
             <div class="step-badge" style="background:#696969; color:white;">i</div>
@@ -341,6 +337,22 @@
         <div class="card-body">
             <div class="info-note">
                 Referencia rápida de todos los términos técnicos, normativos y abreviaturas utilizados en este informe y en el PDF generado.
+            </div>
+
+            <div class="glosario-subtitulo">Nomenclatura de sistemas</div>
+            <div class="glosario-grid">
+                <div class="glosario-item">
+                    <div class="term"><i class="fas fa-tag"></i> CONF-XX-Y</div>
+                    <div class="def"><strong>Lama conformada</strong> de aluminio con relleno de poliuretano. <strong>XX</strong> = altura de lama en mm · <strong>Y</strong> = código de familia. Ej: <em>CONF-45-C</em>.</div>
+                </div>
+                <div class="glosario-item">
+                    <div class="term"><i class="fas fa-tag"></i> EXTR-XX-Y</div>
+                    <div class="def"><strong>Lama de extrusión</strong> de aluminio macizo (perfil hueco). <strong>XX</strong> = altura de lama en mm · <strong>Y</strong> = código de familia. Ej: <em>EXTR-60-B</em>.</div>
+                </div>
+                <div class="glosario-item">
+                    <div class="term"><i class="fas fa-tag"></i> -DN / -AD</div>
+                    <div class="def">Sufijo de densidad del poliuretano: <strong>DN</strong> = Densidad Normal (~90 kg/m³) · <strong>AD</strong> = Alta Densidad (~180 kg/m³). Solo aplica a lamas conformadas.</div>
+                </div>
             </div>
 
             <div class="glosario-subtitulo">Normativa y cálculo</div>
@@ -381,36 +393,21 @@
 
             <div class="glosario-subtitulo">Clases de viento UNE-EN 13659</div>
             <div class="glosario-grid">
-                <div class="glosario-item">
-                    <div class="term"><i class="fas fa-shield-alt"></i> V2</div>
-                    <div class="def">100 Pa ≈ 46 km/h</div>
-                </div>
-                <div class="glosario-item">
-                    <div class="term"><i class="fas fa-shield-alt"></i> V3</div>
-                    <div class="def">150 Pa ≈ 56 km/h</div>
-                </div>
-                <div class="glosario-item">
-                    <div class="term"><i class="fas fa-shield-alt"></i> V4</div>
-                    <div class="def">250 Pa ≈ 78 km/h</div>
-                </div>
-                <div class="glosario-item">
-                    <div class="term"><i class="fas fa-shield-alt"></i> V5</div>
-                    <div class="def">400 Pa ≈ 92 km/h</div>
-                </div>
-                <div class="glosario-item">
-                    <div class="term"><i class="fas fa-shield-alt"></i> V6</div>
-                    <div class="def">600 Pa ≈ 112 km/h</div>
-                </div>
+                <div class="glosario-item"><div class="term"><i class="fas fa-shield-alt"></i> V2</div><div class="def">100 Pa ≈ 46 km/h</div></div>
+                <div class="glosario-item"><div class="term"><i class="fas fa-shield-alt"></i> V3</div><div class="def">150 Pa ≈ 56 km/h</div></div>
+                <div class="glosario-item"><div class="term"><i class="fas fa-shield-alt"></i> V4</div><div class="def">250 Pa ≈ 78 km/h</div></div>
+                <div class="glosario-item"><div class="term"><i class="fas fa-shield-alt"></i> V5</div><div class="def">400 Pa ≈ 92 km/h</div></div>
+                <div class="glosario-item"><div class="term"><i class="fas fa-shield-alt"></i> V6</div><div class="def">600 Pa ≈ 112 km/h</div></div>
             </div>
 
             <div class="glosario-subtitulo">Tipos de lama y densidad</div>
             <div class="glosario-grid">
                 <div class="glosario-item">
-                    <div class="term"><span class="tipo-badge pur">PUR</span> Aluminio + Poliuretano</div>
+                    <div class="term"><span class="tipo-badge pur">CONF</span> Lama conformada</div>
                     <div class="def">Lama de aluminio con relleno de poliuretano inyectado. Mejora el aislamiento térmico y acústico.</div>
                 </div>
                 <div class="glosario-item">
-                    <div class="term"><span class="tipo-badge ex">EX</span> Aluminio de extrusión</div>
+                    <div class="term"><span class="tipo-badge ex">EXTR</span> Lama de extrusión</div>
                     <div class="def">Lama de perfil hueco de aluminio extruido, sin relleno de poliuretano. Mayor rigidez estructural.</div>
                 </div>
                 <div class="glosario-item">
@@ -419,68 +416,29 @@
                 </div>
                 <div class="glosario-item">
                     <div class="term"><i class="fas fa-weight-hanging"></i> AD — Alta Densidad</div>
-                    <div class="def">Poliuretano con densidad típica de <strong>180 kg/m³</strong>. Mejora aislamiento y rigidez. En perfiles de extrusión no aplica (ya son aluminio macizo).</div>
+                    <div class="def">Poliuretano con densidad típica de <strong>180 kg/m³</strong>. Mejora aislamiento y rigidez. En perfiles de extrusión no aplica.</div>
                 </div>
             </div>
 
             <div class="glosario-subtitulo">Enrollamiento y división en paños</div>
             <div class="glosario-grid">
-                <div class="glosario-item">
-                    <div class="term"><i class="fas fa-circle-notch"></i> k</div>
-                    <div class="def">Coeficiente empírico del sistema. Depende del perfil de la lama y su cobertura.</div>
-                </div>
-                <div class="glosario-item">
-                    <div class="term"><i class="fas fa-circle-notch"></i> D — Diámetro de enrollamiento</div>
-                    <div class="def">Diámetro del rollo de lamas enrolladas = √(D_eje² + k · H). Es el hueco que ocupan las lamas dentro del cajón.</div>
-                </div>
-                <div class="glosario-item">
-                    <div class="term"><i class="fas fa-ruler-vertical"></i> H</div>
-                    <div class="def">Altura del hueco a cubrir (mm).</div>
-                </div>
-                <div class="glosario-item">
-                    <div class="term"><i class="fas fa-circle"></i> Ø40 / Ø60 / Ø80</div>
-                    <div class="def">Diámetro del eje de enrollamiento en mm.</div>
-                </div>
-                <div class="glosario-item">
-                    <div class="term"><i class="fas fa-ruler-horizontal"></i> Cob.</div>
-                    <div class="def">Cobertura de la lama en mm. Altura efectiva que cubre cada lama una vez montada.</div>
-                </div>
-                <div class="glosario-item">
-                    <div class="term"><i class="fas fa-layer-group"></i> Nº paños</div>
-                    <div class="def">Número de paños en que se divide la persiana. Cada paño no debe superar el <strong>ancho máximo</strong> permitido por la clase de viento.</div>
-                </div>
-                <div class="glosario-item">
-                    <div class="term"><i class="fas fa-ruler-vertical"></i> Alt. rasante</div>
-                    <div class="def">Altura al rasante del hueco = planta × 3 m. Altura estimada del hueco sobre el nivel del suelo.</div>
-                </div>
-                <div class="glosario-item">
-                    <div class="term"><i class="fas fa-ruler-combined"></i> Ancho máx. por paño</div>
-                    <div class="def">Ancho máximo permitido por la clase de viento para ese sistema y altura de hueco.</div>
-                </div>
-                <div class="glosario-item">
-                    <div class="term"><i class="fas fa-ban"></i> Límite de enrollamiento</div>
-                    <div class="def">Diámetro máximo admisible del rollo. Las celdas del eje que lo superan se marcan tachadas en rojo.</div>
-                </div>
+                <div class="glosario-item"><div class="term"><i class="fas fa-circle-notch"></i> k</div><div class="def">Coeficiente empírico del sistema. Depende del perfil de la lama y su cobertura.</div></div>
+                <div class="glosario-item"><div class="term"><i class="fas fa-circle-notch"></i> D — Diámetro de enrollamiento</div><div class="def">Diámetro del rollo de lamas enrolladas = √(D_eje² + k · H). Es el hueco que ocupan las lamas dentro del cajón.</div></div>
+                <div class="glosario-item"><div class="term"><i class="fas fa-ruler-vertical"></i> H</div><div class="def">Altura del hueco a cubrir (mm).</div></div>
+                <div class="glosario-item"><div class="term"><i class="fas fa-circle"></i> Ø40 / Ø60 / Ø80</div><div class="def">Diámetro del eje de enrollamiento en mm.</div></div>
+                <div class="glosario-item"><div class="term"><i class="fas fa-ruler-horizontal"></i> Cob.</div><div class="def">Cobertura de la lama en mm. Altura efectiva que cubre cada lama una vez montada.</div></div>
+                <div class="glosario-item"><div class="term"><i class="fas fa-layer-group"></i> Nº paños</div><div class="def">Número de paños en que se divide la persiana. Cada paño no debe superar el <strong>ancho máximo</strong> permitido por la clase de viento.</div></div>
+                <div class="glosario-item"><div class="term"><i class="fas fa-ruler-vertical"></i> Alt. rasante</div><div class="def">Altura al rasante del hueco = planta × 3 m. Altura estimada del hueco sobre el nivel del suelo.</div></div>
+                <div class="glosario-item"><div class="term"><i class="fas fa-ruler-combined"></i> Ancho máx. por paño</div><div class="def">Ancho máximo permitido por la clase de viento para ese sistema y altura de hueco.</div></div>
+                <div class="glosario-item"><div class="term"><i class="fas fa-ban"></i> Límite de enrollamiento</div><div class="def">Diámetro máximo admisible del rollo. Las celdas del eje que lo superan se marcan tachadas en rojo.</div></div>
             </div>
 
             <div class="glosario-subtitulo">Datos históricos y otros</div>
             <div class="glosario-grid">
-                <div class="glosario-item">
-                    <div class="term"><i class="fas fa-database"></i> ERA5</div>
-                    <div class="def">Reanálisis climático del ECMWF (European Centre for Medium-Range Weather Forecasts). Proporciona series históricas de viento desde 1950 hasta hoy con cobertura global.</div>
-                </div>
-                <div class="glosario-item">
-                    <div class="term"><i class="fas fa-bolt"></i> Racha máxima</div>
-                    <div class="def">Velocidad máxima instantánea del viento registrada en el periodo analizado (1950-2024). Se usa solo a efectos comparativos; el cálculo reglamentario usa la velocidad normativa <strong>vb</strong>.</div>
-                </div>
-                <div class="glosario-item">
-                    <div class="term"><i class="fas fa-wind"></i> Grado de aspereza</div>
-                    <div class="def">Clasificación del entorno según CTE: I (costa), II (campo abierto), III (rural), IV (urbano/industrial), V (centro gran ciudad).</div>
-                </div>
-                <div class="glosario-item">
-                    <div class="term"><i class="fas fa-exclamation-triangle"></i> Colores oscuros</div>
-                    <div class="def">Para persianas de colores oscuros, la anchura máxima recomendada debe reducirse en <strong>0,50 m</strong> por el mayor calentamiento y dilatación.</div>
-                </div>
+                <div class="glosario-item"><div class="term"><i class="fas fa-database"></i> ERA5</div><div class="def">Reanálisis climático del ECMWF (European Centre for Medium-Range Weather Forecasts). Proporciona series históricas de viento desde 1950 hasta hoy con cobertura global.</div></div>
+                <div class="glosario-item"><div class="term"><i class="fas fa-bolt"></i> Racha máxima</div><div class="def">Velocidad máxima instantánea del viento registrada en el periodo analizado (1950-2024). Se usa solo a efectos comparativos; el cálculo reglamentario usa la velocidad normativa <strong>vb</strong>.</div></div>
+                <div class="glosario-item"><div class="term"><i class="fas fa-wind"></i> Grado de aspereza</div><div class="def">Clasificación del entorno según CTE: I (costa), II (campo abierto), III (rural), IV (urbano/industrial), V (centro gran ciudad).</div></div>
+                <div class="glosario-item"><div class="term"><i class="fas fa-exclamation-triangle"></i> Colores oscuros</div><div class="def">Para persianas de colores oscuros, la anchura máxima recomendada debe reducirse en <strong>0,50 m</strong> por el mayor calentamiento y dilatación.</div></div>
             </div>
         </div>
     </div>
@@ -523,62 +481,69 @@
     const ALTURA_PLANTA = 3;
 
     // ==================== SISTEMAS ====================
+    // Nomenclatura genérica:
+    //   CONF-XX-Y  → Lama CONFormada (aluminio + poliuretano). XX = altura en mm · Y = familia
+    //   EXTR-XX-Y  → Lama de EXTRusión (aluminio macizo hueco). XX = altura en mm · Y = familia
+    //   -DN / -AD  → Densidad Normal / Alta Densidad (solo conformadas)
     const SISTEMAS_DATA = {
-        // ---------- LAMAS ALUMINIO + POLIURETANO (PUR) ----------
-        "MICRALUM-39": { tipo: 'PUR', cobertura: 39, k: 10.0, densidad: "DN",
+        // ---------- LAMAS CONFORMADAS (aluminio + poliuretano) ----------
+        "CONF-39-A": { tipo: 'PUR', cobertura: 39, k: 10.0, densidad: "DN",
             viento: { 2250: { V2: 2600, V3: 2200, V4: 1850, V5: 1500, V6: 1300 },
                       1450: { V2: 3500, V3: 2900, V4: 2300, V5: 1850, V6: 1550 } } },
-        "MINICUR-43 DN": { tipo: 'PUR', cobertura: 43, k: 10.0, densidad: "DN",
+        "CONF-43-B-DN": { tipo: 'PUR', cobertura: 43, k: 10.0, densidad: "DN",
             viento: { 2250: { V2: 3250, V3: 2700, V4: 2200, V5: 1800, V6: 1500 },
                       1450: { V2: 3750, V3: 3100, V4: 2400, V5: 1950, V6: 1600 } } },
-        "MINICUR-43 AD": { tipo: 'PUR', cobertura: 43, k: 10.0, densidad: "AD",
+        "CONF-43-B-AD": { tipo: 'PUR', cobertura: 43, k: 10.0, densidad: "AD",
             viento: { 2250: { V2: 3330, V3: 2700, V4: 2220, V5: 1860, V6: 1600 } } },
-        "TERMILUM-45 DN": { tipo: 'PUR', cobertura: 45, k: 10.0, densidad: "DN",
+        "CONF-45-C-DN": { tipo: 'PUR', cobertura: 45, k: 10.0, densidad: "DN",
             viento: { 2250: { V2: 2650, V3: 2200, V4: 1800, V5: 1500, V6: 1250 },
                       1450: { V2: 2750, V3: 2300, V4: 1850, V5: 1500, V6: 1250 } } },
-        "TERMILUM-45 AD": { tipo: 'PUR', cobertura: 45, k: 10.0, densidad: "AD",
+        "CONF-45-C-AD": { tipo: 'PUR', cobertura: 45, k: 10.0, densidad: "AD",
             viento: { 2250: { V2: 2750, V3: 2310, V4: 1850, V5: 1510, V6: 1270 } } },
-        "TERMISAX-45": { tipo: 'PUR', cobertura: 45, k: 17.0, densidad: "DN",
+        "CONF-45-D": { tipo: 'PUR', cobertura: 45, k: 17.0, densidad: "DN",
             viento: { 2250: { V2: 3800, V3: 3100, V4: 2400, V5: 1900, V6: 1550 },
                       1450: { V2: 4600, V3: 3700, V4: 2750, V5: 2100, V6: 1700 } } },
-        "TERMICUR-45 DN": { tipo: 'PUR', cobertura: 45, k: 13.0, densidad: "DN",
+        "CONF-45-E-DN": { tipo: 'PUR', cobertura: 45, k: 13.0, densidad: "DN",
             viento: { 2250: { V2: 3100, V3: 2600, V4: 2050, V5: 1650, V6: 1350 },
                       1450: { V2: 3700, V3: 3000, V4: 2300, V5: 1800, V6: 1450 } } },
-        "TERMICUR-45 AD": { tipo: 'PUR', cobertura: 45, k: 13.0, densidad: "AD",
+        "CONF-45-E-AD": { tipo: 'PUR', cobertura: 45, k: 13.0, densidad: "AD",
             viento: { 2250: { V2: 3270, V3: 2710, V4: 2110, V5: 1670, V6: 1360 } } },
-        "TERMICUR-50 DN": { tipo: 'PUR', cobertura: 50, k: 14.0, densidad: "DN",
+        "CONF-50-F-DN": { tipo: 'PUR', cobertura: 50, k: 14.0, densidad: "DN",
             viento: { 2250: { V2: 3840, V3: 3270, V4: 2670, V5: 2210, V6: 1880 },
                       1450: { V2: 3880, V3: 3320, V4: 2730, V5: 2270, V6: 1950 } } },
-        "TERMICUR-50 AD": { tipo: 'PUR', cobertura: 50, k: 14.0, densidad: "AD",
+        "CONF-50-F-AD": { tipo: 'PUR', cobertura: 50, k: 14.0, densidad: "AD",
             viento: { 2250: { V2: 4070, V3: 3410, V4: 2720, V5: 2210, V6: 1880 } } },
-        "TERMICUR-55": { tipo: 'PUR', cobertura: 55, k: 19.0, densidad: "DN",
+        "CONF-55-G": { tipo: 'PUR', cobertura: 55, k: 19.0, densidad: "DN",
             viento: { 2250: { V2: 5500, V3: 4500, V4: 3500, V5: 2800, V6: 2300 },
                       1450: { V2: 6000, V3: 4900, V4: 3800, V5: 3000, V6: 2400 } } },
 
-        // ---------- LAMAS ALUMINIO DE EXTRUSIÓN (EX) ----------
-        "MINISEGUR-40": { tipo: 'EX', cobertura: 40, k: 12.0, densidad: "EX",
+        // ---------- LAMAS DE EXTRUSIÓN (aluminio macizo hueco) ----------
+        "EXTR-40-A": { tipo: 'EX', cobertura: 40, k: 12.0, densidad: "EX",
             viento: { 2250: { V2: 5200, V3: 4500, V4: 3800, V5: 3300, V6: 2900 },
                       1450: { V2: 6000, V3: 5200, V4: 4400, V5: 3800, V6: 3400 } } },
-        "SEGUR EC-60": { tipo: 'EX', cobertura: 60, k: 22.0, densidad: "EX",
+        "EXTR-60-B": { tipo: 'EX', cobertura: 60, k: 22.0, densidad: "EX",
             viento: { 2250: { V2: 6500, V3: 5600, V4: 4800, V5: 4300, V6: 4000 },
                       1450: { V2: 7500, V3: 6500, V4: 5500, V5: 5000, V6: 4600 } } },
-        "BLOCKALUM-39": { tipo: 'EX', cobertura: 41, k: 12.0, densidad: "EX",
+        "EXTR-39-C": { tipo: 'EX', cobertura: 41, k: 12.0, densidad: "EX",
             viento: { 2250: { V2: 5000, V3: 4300, V4: 3700, V5: 3200, V6: 2900 },
                       1450: { V2: 5800, V3: 5000, V4: 4300, V5: 3700, V6: 3400 } } },
-        "BLOCKALUM-45": { tipo: 'EX', cobertura: 46, k: 15.0, densidad: "EX",
+        "EXTR-45-D": { tipo: 'EX', cobertura: 46, k: 15.0, densidad: "EX",
             viento: { 2250: { V2: 5400, V3: 4600, V4: 3900, V5: 3300, V6: 2860 },
                       1450: { V2: 6200, V3: 5300, V4: 4500, V5: 3900, V6: 3300 } } },
-        "BLOCKALUM-60 / VS-150": { tipo: 'EX', cobertura: 73, k: 28.0, densidad: "EX",
+        "EXTR-73-E": { tipo: 'EX', cobertura: 73, k: 28.0, densidad: "EX",
             viento: { 2250: { V2: 7000, V3: 6000, V4: 5200, V5: 4700, V6: 4300 },
                       1450: { V2: 8000, V3: 6900, V4: 6000, V5: 5400, V6: 5000 } } },
-        "BIOCLIM-45": { tipo: 'EX', cobertura: 43, k: 14.0, densidad: "EX",
+        "EXTR-43-F": { tipo: 'EX', cobertura: 43, k: 14.0, densidad: "EX",
             viento: { 2250: { V2: 5200, V3: 4500, V4: 3800, V5: 3300, V6: 3000 },
                       1450: { V2: 6000, V3: 5200, V4: 4400, V5: 3800, V6: 3400 } } }
     };
 
     // ==================== GLOSARIO (para el PDF) ====================
     const GLOSARIO_PDF = [
-        // Normativa y cálculo
+        { cat: 'NOMENCLATURA DE SISTEMAS', term: 'CONF-XX-Y', def: 'Lama conformada (aluminio + poliuretano). XX = altura de lama en mm · Y = código de familia. Ej: CONF-45-C.' },
+        { cat: 'NOMENCLATURA DE SISTEMAS', term: 'EXTR-XX-Y', def: 'Lama de extrusión (aluminio macizo hueco). XX = altura de lama en mm · Y = código de familia. Ej: EXTR-60-B.' },
+        { cat: 'NOMENCLATURA DE SISTEMAS', term: '-DN / -AD', def: 'Sufijo de densidad del poliuretano. DN = Densidad Normal (~90 kg/m³). AD = Alta Densidad (~180 kg/m³). Solo aplica a lamas conformadas.' },
+
         { cat: 'NORMATIVA Y CÁLCULO', term: 'UNE-EN 13659', def: 'Norma europea de persianas. Define las clases de resistencia al viento V1 a V6 y los métodos de ensayo.' },
         { cat: 'NORMATIVA Y CÁLCULO', term: 'CTE DB-SE-AE', def: 'Código Técnico de la Edificación · Documento Básico Seguridad Estructural - Acciones en la Edificación. Su Anejo D define zonas eólicas y coeficientes de exposición.' },
         { cat: 'NORMATIVA Y CÁLCULO', term: 'Cp', def: 'Coeficiente de presión neta. Para persianas con distancia a ventana ≤ 0,5 m se adopta Cp = 0,18 (UNE-EN 13659 + Manual ASEFAVE).' },
@@ -588,20 +553,17 @@
         { cat: 'NORMATIVA Y CÁLCULO', term: 'vb', def: 'Velocidad básica del viento según zona eólica CTE: 26 m/s (Zona A - interior), 27 m/s (Zona B - Atlántico), 29 m/s (Zona C - Mediterráneo/Canarias/Baleares).' },
         { cat: 'NORMATIVA Y CÁLCULO', term: 'z', def: 'Altura del edificio sobre el nivel del suelo (m). Determina el coeficiente de exposición ce(z).' },
 
-        // Clases de viento
         { cat: 'CLASES DE VIENTO UNE-EN 13659', term: 'V2', def: '100 Pa ≈ 46 km/h' },
         { cat: 'CLASES DE VIENTO UNE-EN 13659', term: 'V3', def: '150 Pa ≈ 56 km/h' },
         { cat: 'CLASES DE VIENTO UNE-EN 13659', term: 'V4', def: '250 Pa ≈ 78 km/h' },
         { cat: 'CLASES DE VIENTO UNE-EN 13659', term: 'V5', def: '400 Pa ≈ 92 km/h' },
         { cat: 'CLASES DE VIENTO UNE-EN 13659', term: 'V6', def: '600 Pa ≈ 112 km/h' },
 
-        // Tipos de lama
-        { cat: 'TIPOS DE LAMA Y DENSIDAD', term: 'PUR', def: 'Lama de aluminio con relleno de poliuretano inyectado. Mejora el aislamiento térmico y acústico.' },
-        { cat: 'TIPOS DE LAMA Y DENSIDAD', term: 'EX', def: 'Lama de perfil hueco de aluminio extruido, sin relleno de poliuretano. Mayor rigidez estructural.' },
+        { cat: 'TIPOS DE LAMA Y DENSIDAD', term: 'CONF — Conformada', def: 'Lama de aluminio con relleno de poliuretano inyectado. Mejora el aislamiento térmico y acústico.' },
+        { cat: 'TIPOS DE LAMA Y DENSIDAD', term: 'EXTR — Extrusión', def: 'Lama de perfil hueco de aluminio extruido, sin relleno de poliuretano. Mayor rigidez estructural.' },
         { cat: 'TIPOS DE LAMA Y DENSIDAD', term: 'DN — Densidad Normal', def: 'Poliuretano con densidad típica de 90 kg/m³ (o 75 kg/m³ según sistema).' },
         { cat: 'TIPOS DE LAMA Y DENSIDAD', term: 'AD — Alta Densidad', def: 'Poliuretano con densidad típica de 180 kg/m³. Mejora aislamiento y rigidez. En perfiles de extrusión no aplica.' },
 
-        // Enrollamiento
         { cat: 'ENROLLAMIENTO Y PAÑOS', term: 'k', def: 'Coeficiente empírico del sistema. Depende del perfil de la lama y su cobertura.' },
         { cat: 'ENROLLAMIENTO Y PAÑOS', term: 'D — Diámetro de enrollamiento', def: 'Diámetro del rollo de lamas enrolladas = √(D_eje² + k · H). Es el hueco que ocupan las lamas dentro del cajón.' },
         { cat: 'ENROLLAMIENTO Y PAÑOS', term: 'H', def: 'Altura del hueco a cubrir (mm).' },
@@ -612,7 +574,6 @@
         { cat: 'ENROLLAMIENTO Y PAÑOS', term: 'Ancho máx. por paño', def: 'Ancho máximo permitido por la clase de viento para ese sistema y altura de hueco.' },
         { cat: 'ENROLLAMIENTO Y PAÑOS', term: 'Límite de enrollamiento', def: 'Diámetro máximo admisible del rollo. Las celdas del eje que lo superan se marcan tachadas en rojo.' },
 
-        // Datos históricos
         { cat: 'DATOS HISTÓRICOS Y OTROS', term: 'ERA5', def: 'Reanálisis climático del ECMWF. Proporciona series históricas de viento desde 1950 con cobertura global.' },
         { cat: 'DATOS HISTÓRICOS Y OTROS', term: 'Racha máxima', def: 'Velocidad máxima instantánea del viento registrada en el periodo analizado (1950-2024). Se usa solo a efectos comparativos.' },
         { cat: 'DATOS HISTÓRICOS Y OTROS', term: 'Grado de aspereza', def: 'Clasificación del entorno según CTE: I (costa), II (campo abierto), III (rural), IV (urbano/industrial), V (centro gran ciudad).' },
@@ -671,8 +632,8 @@
         return `<span class="badge-pano ok">${clase}</span>`;
     }
     function getTipoBadge(tipo) {
-        if (tipo === 'EX') return '<span class="tipo-badge ex">EX</span>';
-        return '<span class="tipo-badge pur">PUR</span>';
+        if (tipo === 'EX') return '<span class="tipo-badge ex">EXTR</span>';
+        return '<span class="tipo-badge pur">CONF</span>';
     }
 
     // ==================== LÍMITE DE ENROLLAMIENTO ====================
@@ -928,8 +889,8 @@
         const numEX = sistemasSeleccionados.filter(s => SISTEMAS_DATA[s].tipo === 'EX').length;
         html += `<div style="font-size:0.75rem; color:#666; margin-bottom:12px;">
             Comparando <strong>${sistemasSeleccionados.length}</strong> sistemas · 
-            <span class="tipo-badge pur">PUR</span> ${numPUR} · 
-            <span class="tipo-badge ex">EX</span> ${numEX}
+            <span class="tipo-badge pur">CONF</span> ${numPUR} · 
+            <span class="tipo-badge ex">EXTR</span> ${numEX}
         </div>`;
 
         resumenHuecos.forEach((h) => {
@@ -1460,6 +1421,13 @@
                 ["Presión Dinámica (qb)", `${velocidadAPresion(d.vb_normativa).toFixed(4)} kN/m2`],
                 ["Presión Neta (qe)", `${d.qe_norm.toFixed(3)} kN/m2 (${Math.round(d.pa_norm)} Pa)`]
             ], theme: 'grid', styles: { fontSize: 8.5 }, columnStyles: {0: {cellWidth: 60, fontStyle:'bold'}}, margin: {left:20, right:20} });
+            y = doc.lastAutoTable.finalY + 12;
+            doc.text("3. NOMENCLATURA DE SISTEMAS", 20, y);
+            doc.autoTable({ startY: y+5, body: [
+                ["CONF-XX-Y", "Lama conformada (aluminio + poliuretano). XX = altura en mm · Y = familia"],
+                ["EXTR-XX-Y", "Lama de extrusión (aluminio macizo hueco). XX = altura en mm · Y = familia"],
+                ["-DN / -AD", "Densidad Normal / Alta Densidad (solo conformadas)"]
+            ], theme: 'grid', styles: { fontSize: 8 }, columnStyles: {0: {cellWidth: 40, fontStyle:'bold'}}, margin: {left:20, right:20} });
 
             // Página 3: Rosa
             doc.addPage();
@@ -1549,7 +1517,7 @@
                     const headRow = ['Tipo', 'Sistema', 'Dens.', 'Cob.', ...headEjes, 'Ancho máx/paño', 'Nº paños'];
                     const bodyRows = h.sistemas.map(s => {
                         const ejesVals = ejes.map(e => Math.round(s.diametros[e] || 0).toString());
-                        const tipoTxt = s.tipo === 'EX' ? 'EX' : 'PUR';
+                        const tipoTxt = s.tipo === 'EX' ? 'EXTR' : 'CONF';
                         return [tipoTxt, s.nombre, s.densidad, s.cobertura.toString(), ...ejesVals, Math.round(s.maxWidth).toString(), s.numPanos.toString()];
                     });
 
@@ -1571,7 +1539,7 @@
 
                     const numEjes = ejes.length;
                     const anchoTabla = pageW - marginL - marginR;
-                    const anchoTipo = 12, anchoSistema = 30, anchoDens = 11, anchoCob = 11, anchoAnchoMax = 20, anchoPanos = 14;
+                    const anchoTipo = 14, anchoSistema = 30, anchoDens = 11, anchoCob = 11, anchoAnchoMax = 20, anchoPanos = 14;
                     const anchoEje = (anchoTabla - anchoTipo - anchoSistema - anchoDens - anchoCob - anchoAnchoMax - anchoPanos) / numEjes;
                     const columnStyles = {
                         0: { cellWidth: anchoTipo, halign: 'center', fontStyle: 'bold' },
@@ -1608,9 +1576,9 @@
                                 const cols = celdasATachar.get(data.row.index);
                                 if (cols && cols.has(data.column.index)) {
                                     const { x, y, width, height } = data.cell;
-                                    data.doc.setDrawColor(192, 57, 43);
-                                    data.doc.setLineWidth(0.4);
-                                    data.doc.line(x + 1.5, y + height / 2, x + width - 1.5, y + height / 2);
+                                    doc.setDrawColor(192, 57, 43);
+                                    doc.setLineWidth(0.4);
+                                    doc.line(x + 1.5, y + height / 2, x + width - 1.5, y + height / 2);
                                 }
                             }
                         }
@@ -1625,7 +1593,6 @@
             doc.setTextColor(255,255,255); doc.setFont("helvetica", "bold"); doc.setFontSize(11);
             doc.text("GLOSARIO DE CONCEPTOS Y ABREVIATURAS", 25, 10);
 
-            // Agrupar por categoría
             const categorias = {};
             GLOSARIO_PDF.forEach(g => {
                 if (!categorias[g.cat]) categorias[g.cat] = [];
@@ -1635,7 +1602,6 @@
             let gy = 22;
             const gyMax = bottomContent;
             Object.keys(categorias).forEach(cat => {
-                // Título de categoría
                 if (gy + 12 > gyMax) { doc.addPage(); doc.setFillColor(...C_DARK); doc.rect(0, 0, pageW, 15, 'F'); doc.setTextColor(255,255,255); doc.setFont("helvetica", "bold"); doc.setFontSize(11); doc.text("GLOSARIO (cont.)", 25, 10); gy = 22; }
                 doc.setFillColor(...C_GOLD);
                 doc.rect(marginL, gy, pageW - marginL - marginR, 6, 'F');
@@ -1644,7 +1610,6 @@
                 doc.setFontSize(9);
                 doc.text(cat, marginL + 2, gy + 4.5);
                 gy += 8;
-                // Items
                 const bodyItems = categorias[cat].map(g => [g.term, g.def]);
                 doc.autoTable({
                     startY: gy,
