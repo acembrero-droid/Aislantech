@@ -433,7 +433,6 @@
 </footer>
 
 <script>
-    // ==================== CONSTANTES ====================
     const CTE_PARAMS = {
         "I": { k: 0.156, L: 0.003, Z: 1.0 },
         "II": { k: 0.17,  L: 0.01,  Z: 1.0 },
@@ -496,45 +495,98 @@
     };
 
     const GLOSARIO_PDF = [
-        { cat: 'NOMENCLATURA DE SISTEMAS', term: 'CONF-XX-Y', def: 'Lama conformada (aluminio + poliuretano). XX = altura de lama en mm · Y = código de familia. Ej: CONF-45-C.' },
-        { cat: 'NOMENCLATURA DE SISTEMAS', term: 'EXTR-XX-Y', def: 'Lama de extrusión (aluminio macizo hueco). XX = altura de lama en mm · Y = código de familia. Ej: EXTR-60-B.' },
-        { cat: 'NOMENCLATURA DE SISTEMAS', term: '-DN / -AD', def: 'Sufijo de densidad del poliuretano. DN = Densidad Normal (~90 kg/m³). AD = Alta Densidad (~180 kg/m³). Solo aplica a lamas conformadas.' },
+        { cat: 'NOMENCLATURA DE SISTEMAS', term: 'CONF-XX-Y', def: 'Lama conformada (aluminio + poliuretano). XX = altura de lama en mm, Y = código de familia. Ej: CONF-45-C.' },
+        { cat: 'NOMENCLATURA DE SISTEMAS', term: 'EXTR-XX-Y', def: 'Lama de extrusión (aluminio macizo hueco). XX = altura de lama en mm, Y = código de familia. Ej: EXTR-60-B.' },
+        { cat: 'NOMENCLATURA DE SISTEMAS', term: '-DN / -AD', def: 'Sufijo de densidad del poliuretano. DN = Densidad Normal (unos 90 kg/m3). AD = Alta Densidad (unos 180 kg/m3). Solo aplica a lamas conformadas.' },
 
         { cat: 'NORMATIVA Y CÁLCULO', term: 'UNE-EN 13659', def: 'Norma europea de persianas. Define las clases de resistencia al viento V1 a V6 y los métodos de ensayo.' },
-        { cat: 'NORMATIVA Y CÁLCULO', term: 'CTE DB-SE-AE', def: 'Código Técnico de la Edificación · Documento Básico Seguridad Estructural - Acciones en la Edificación. Su Anejo D define zonas eólicas y coeficientes de exposición.' },
-        { cat: 'NORMATIVA Y CÁLCULO', term: 'Cp', def: 'Coeficiente de presión neta. Para persianas con distancia a ventana ≤ 0,5 m se adopta Cp = 0,18 (UNE-EN 13659 + Manual ASEFAVE).' },
+        { cat: 'NORMATIVA Y CÁLCULO', term: 'CTE DB-SE-AE', def: 'Código Técnico de la Edificación, Documento Básico Seguridad Estructural - Acciones en la Edificación. Su Anejo D define zonas eólicas y coeficientes de exposición.' },
+        { cat: 'NORMATIVA Y CÁLCULO', term: 'Cp', def: 'Coeficiente de presión neta. Para persianas con distancia a ventana menor o igual a 0,5 m se adopta Cp = 0,18 (UNE-EN 13659 + Manual ASEFAVE).' },
         { cat: 'NORMATIVA Y CÁLCULO', term: 'ce(z)', def: 'Coeficiente de exposición. Función de la altura z sobre el suelo y del grado de aspereza del entorno (I a V).' },
-        { cat: 'NORMATIVA Y CÁLCULO', term: 'qb', def: 'Presión dinámica básica = 0,5 · ρ · vb². Se adopta ρ = 1,25 kg/m³ (densidad del aire).' },
-        { cat: 'NORMATIVA Y CÁLCULO', term: 'qe', def: 'Presión neta de cálculo = qb · ce(z) · Cp. Es la presión que debe soportar la persiana.' },
+        { cat: 'NORMATIVA Y CÁLCULO', term: 'qb', def: 'Presión dinámica básica = 0,5 x densidad del aire x vb al cuadrado. Se adopta densidad = 1,25 kg/m3.' },
+        { cat: 'NORMATIVA Y CÁLCULO', term: 'qe', def: 'Presión neta de cálculo = qb x ce(z) x Cp. Es la presión que debe soportar la persiana.' },
         { cat: 'NORMATIVA Y CÁLCULO', term: 'vb', def: 'Velocidad básica del viento según zona eólica CTE: 26 m/s (Zona A - interior), 27 m/s (Zona B - Atlántico), 29 m/s (Zona C - Mediterráneo/Canarias/Baleares).' },
         { cat: 'NORMATIVA Y CÁLCULO', term: 'z', def: 'Altura del edificio sobre el nivel del suelo (m). Determina el coeficiente de exposición ce(z).' },
 
-        { cat: 'CLASES DE VIENTO UNE-EN 13659', term: 'V2', def: '100 Pa ≈ 46 km/h' },
-        { cat: 'CLASES DE VIENTO UNE-EN 13659', term: 'V3', def: '150 Pa ≈ 56 km/h' },
-        { cat: 'CLASES DE VIENTO UNE-EN 13659', term: 'V4', def: '250 Pa ≈ 78 km/h' },
-        { cat: 'CLASES DE VIENTO UNE-EN 13659', term: 'V5', def: '400 Pa ≈ 92 km/h' },
-        { cat: 'CLASES DE VIENTO UNE-EN 13659', term: 'V6', def: '600 Pa ≈ 112 km/h' },
+        { cat: 'CLASES DE VIENTO UNE-EN 13659', term: 'V2', def: '100 Pa, aproximadamente 46 km/h' },
+        { cat: 'CLASES DE VIENTO UNE-EN 13659', term: 'V3', def: '150 Pa, aproximadamente 56 km/h' },
+        { cat: 'CLASES DE VIENTO UNE-EN 13659', term: 'V4', def: '250 Pa, aproximadamente 78 km/h' },
+        { cat: 'CLASES DE VIENTO UNE-EN 13659', term: 'V5', def: '400 Pa, aproximadamente 92 km/h' },
+        { cat: 'CLASES DE VIENTO UNE-EN 13659', term: 'V6', def: '600 Pa, aproximadamente 112 km/h' },
 
-        { cat: 'TIPOS DE LAMA Y DENSIDAD', term: 'CONF — Conformada', def: 'Lama de aluminio con relleno de poliuretano inyectado. Mejora el aislamiento térmico y acústico.' },
-        { cat: 'TIPOS DE LAMA Y DENSIDAD', term: 'EXTR — Extrusión', def: 'Lama de perfil hueco de aluminio extruido, sin relleno de poliuretano. Mayor rigidez estructural.' },
-        { cat: 'TIPOS DE LAMA Y DENSIDAD', term: 'DN — Densidad Normal', def: 'Poliuretano con densidad típica de 90 kg/m³ (o 75 kg/m³ según sistema).' },
-        { cat: 'TIPOS DE LAMA Y DENSIDAD', term: 'AD — Alta Densidad', def: 'Poliuretano con densidad típica de 180 kg/m³. Mejora aislamiento y rigidez. En perfiles de extrusión no aplica.' },
+        { cat: 'TIPOS DE LAMA Y DENSIDAD', term: 'CONF - Conformada', def: 'Lama de aluminio con relleno de poliuretano inyectado. Mejora el aislamiento térmico y acústico.' },
+        { cat: 'TIPOS DE LAMA Y DENSIDAD', term: 'EXTR - Extrusión', def: 'Lama de perfil hueco de aluminio extruido, sin relleno de poliuretano. Mayor rigidez estructural.' },
+        { cat: 'TIPOS DE LAMA Y DENSIDAD', term: 'DN - Densidad Normal', def: 'Poliuretano con densidad típica de 90 kg/m3 (o 75 kg/m3 según sistema).' },
+        { cat: 'TIPOS DE LAMA Y DENSIDAD', term: 'AD - Alta Densidad', def: 'Poliuretano con densidad típica de 180 kg/m3. Mejora aislamiento y rigidez. En perfiles de extrusión no aplica.' },
 
-        { cat: 'ENROLLAMIENTO Y PAÑOS', term: 'k', def: 'Coeficiente empírico del sistema. Depende del perfil de la lama y su cobertura.' },
-        { cat: 'ENROLLAMIENTO Y PAÑOS', term: 'D — Diámetro enrollamiento', def: 'Diámetro del rollo de lamas enrolladas = √(D_eje² + k · H). Es el hueco que ocupan las lamas dentro del cajón.' },
+        { cat: 'ENROLLAMIENTO Y PAÑOS', term: 'k', def: 'Coeficiente empírico del sistema. Depende del perfil de la lama y de su cobertura.' },
+        { cat: 'ENROLLAMIENTO Y PAÑOS', term: 'D - Diámetro enroll.', def: 'Diámetro del rollo de lamas enrolladas. Se calcula como raíz cuadrada de (D_eje al cuadrado + k x H). Es el hueco que ocupan las lamas dentro del cajón.' },
         { cat: 'ENROLLAMIENTO Y PAÑOS', term: 'H', def: 'Altura del hueco a cubrir (mm).' },
-        { cat: 'ENROLLAMIENTO Y PAÑOS', term: 'Ø40 / Ø60 / Ø80', def: 'Diámetro del eje de enrollamiento en mm.' },
+        { cat: 'ENROLLAMIENTO Y PAÑOS', term: 'D40 / D60 / D80', def: 'Diámetro del eje de enrollamiento en mm.' },
         { cat: 'ENROLLAMIENTO Y PAÑOS', term: 'Cob.', def: 'Cobertura de la lama en mm. Altura efectiva que cubre cada lama una vez montada.' },
         { cat: 'ENROLLAMIENTO Y PAÑOS', term: 'Nº paños', def: 'Número de paños en que se divide la persiana. Cada paño no debe superar el ancho máximo permitido por la clase de viento.' },
-        { cat: 'ENROLLAMIENTO Y PAÑOS', term: 'Alt. rasante', def: 'Altura al rasante del hueco = planta × 3 m. Altura estimada del hueco sobre el nivel del suelo.' },
+        { cat: 'ENROLLAMIENTO Y PAÑOS', term: 'Alt. rasante', def: 'Altura al rasante del hueco = planta x 3 m. Altura estimada del hueco sobre el nivel del suelo.' },
         { cat: 'ENROLLAMIENTO Y PAÑOS', term: 'Ancho máx/paño', def: 'Ancho máximo permitido por la clase de viento para ese sistema y altura de hueco.' },
-        { cat: 'ENROLLAMIENTO Y PAÑOS', term: 'Límite enrollamiento', def: 'Diámetro máximo admisible del rollo. Las celdas del eje que lo superan se marcan tachadas en rojo.' },
+        { cat: 'ENROLLAMIENTO Y PAÑOS', term: 'Límite enroll.', def: 'Diámetro máximo admisible del rollo. Las celdas del eje que lo superan se marcan tachadas en rojo.' },
 
         { cat: 'DATOS HISTÓRICOS Y OTROS', term: 'ERA5', def: 'Reanálisis climático del ECMWF. Proporciona series históricas de viento desde 1950 con cobertura global.' },
         { cat: 'DATOS HISTÓRICOS Y OTROS', term: 'Racha máxima', def: 'Velocidad máxima instantánea del viento registrada en el periodo analizado (1950-2024). Se usa solo a efectos comparativos.' },
-        { cat: 'DATOS HISTÓRICOS Y OTROS', term: 'Grado de aspereza', def: 'Clasificación del entorno según CTE: I (costa), II (campo abierto), III (rural), IV (urbano/industrial), V (centro gran ciudad).' },
+        { cat: 'DATOS HISTÓRICOS Y OTROS', term: 'Grado aspereza', def: 'Clasificación del entorno según CTE: I (costa), II (campo abierto), III (rural), IV (urbano/industrial), V (centro gran ciudad).' },
         { cat: 'DATOS HISTÓRICOS Y OTROS', term: 'Colores oscuros', def: 'Para persianas de colores oscuros, la anchura máxima recomendada debe reducirse en 0,50 m.' }
     ];
+
+    // ==================== HELPERS PDF ====================
+    // Pre-envuelve el texto en líneas que quepan en el ancho dado (en mm).
+    // IMPORTANTE: fontSize está en PUNTOS (pt). 1 pt = 0,3528 mm.
+    // El ancho medio de un carácter Helvetica es ~0,5 x fontSize (en pt).
+    function wrapManualPDF(texto, anchoMM, fontSize) {
+        // Ancho medio de carácter en mm = (fontSize pt * 0.5) * (25.4 / 72) mm/pt
+        const anchoCarMM = fontSize * 0.5 * 25.4 / 72;
+        // Reservamos 3mm para padding + borde
+        const maxChars = Math.max(8, Math.floor((anchoMM - 3) / anchoCarMM));
+
+        let t = String(texto)
+            .replace(/\s+/g, ' ')
+            .trim();
+
+        // Insertar espacios alrededor de operadores y símbolos problemáticos
+        t = t
+            .replace(/√/g, ' raiz ')
+            .replace(/²/g, '2 ')
+            .replace(/·/g, ' x ')
+            .replace(/≤/g, ' <= ')
+            .replace(/≥/g, ' >= ')
+            .replace(/≈/g, ' aprox ')
+            .replace(/=/g, ' = ')
+            .replace(/\+/g, ' + ')
+            .replace(/\(/g, ' ( ')
+            .replace(/\)/g, ' ) ')
+            .replace(/\//g, ' / ');
+
+        t = t.replace(/\s+/g, ' ').trim();
+
+        const palabras = t.split(' ');
+        const lineas = [];
+        let actual = '';
+
+        for (let p of palabras) {
+            // Si la palabra es más larga que el ancho máximo, partirla
+            while (p.length > maxChars) {
+                if (actual) { lineas.push(actual); actual = ''; }
+                lineas.push(p.substring(0, maxChars));
+                p = p.substring(maxChars);
+            }
+            const candidato = actual ? actual + ' ' + p : p;
+            if (candidato.length > maxChars) {
+                if (actual) lineas.push(actual);
+                actual = p;
+            } else {
+                actual = candidato;
+            }
+        }
+        if (actual) lineas.push(actual);
+        return lineas;
+    }
 
     let geoCoords = null;
     let lastData = null;
@@ -1333,7 +1385,7 @@
                 ["Grado de Aspereza", d.aspereza_text],
                 ["Altura de referencia", `${d.z} m`],
                 ["Enrollamiento límite", limite ? `${limite} mm` : "Sin límite"]
-            ], theme: 'striped', styles: { fontSize: 8.5, overflow: 'linebreak' }, columnStyles: {0: {cellWidth: 60, fontStyle:'bold'}, 1: {cellWidth: 110}}, margin: {left:20, right:20} });
+            ], theme: 'striped', styles: { fontSize: 8.5, overflow: 'linebreak', valign: 'top' }, columnStyles: {0: {cellWidth: 60, fontStyle:'bold'}, 1: {cellWidth: 110}}, margin: {left:20, right:20} });
             y = doc.lastAutoTable.finalY + 12;
             doc.text("2. COEFICIENTES Y CÁLCULO NORMATIVO", 20, y);
             doc.autoTable({ startY: y+5, body: [
@@ -1341,14 +1393,14 @@
                 ["Coef. Presión (Cp)", d.cp_persiana.toFixed(2)],
                 ["Presión Dinámica (qb)", `${velocidadAPresion(d.vb_normativa).toFixed(4)} kN/m2`],
                 ["Presión Neta (qe)", `${d.qe_norm.toFixed(3)} kN/m2 (${Math.round(d.pa_norm)} Pa)`]
-            ], theme: 'grid', styles: { fontSize: 8.5, overflow: 'linebreak' }, columnStyles: {0: {cellWidth: 60, fontStyle:'bold'}, 1: {cellWidth: 110}}, margin: {left:20, right:20} });
+            ], theme: 'grid', styles: { fontSize: 8.5, overflow: 'linebreak', valign: 'top' }, columnStyles: {0: {cellWidth: 60, fontStyle:'bold'}, 1: {cellWidth: 110}}, margin: {left:20, right:20} });
             y = doc.lastAutoTable.finalY + 12;
             doc.text("3. NOMENCLATURA DE SISTEMAS", 20, y);
             doc.autoTable({ startY: y+5, body: [
-                ["CONF-XX-Y", "Lama conformada (aluminio + poliuretano). XX = altura en mm · Y = familia"],
-                ["EXTR-XX-Y", "Lama de extrusión (aluminio macizo hueco). XX = altura en mm · Y = familia"],
+                ["CONF-XX-Y", "Lama conformada (aluminio + poliuretano). XX = altura en mm, Y = familia"],
+                ["EXTR-XX-Y", "Lama de extrusión (aluminio macizo hueco). XX = altura en mm, Y = familia"],
                 ["-DN / -AD", "Densidad Normal / Alta Densidad (solo conformadas)"]
-            ], theme: 'grid', styles: { fontSize: 8, overflow: 'linebreak' }, columnStyles: {0: {cellWidth: 40, fontStyle:'bold'}, 1: {cellWidth: 130}}, margin: {left:20, right:20} });
+            ], theme: 'grid', styles: { fontSize: 8, overflow: 'linebreak', valign: 'top' }, columnStyles: {0: {cellWidth: 40, fontStyle:'bold'}, 1: {cellWidth: 130}}, margin: {left:20, right:20} });
 
             // Página 3: Rosa
             doc.addPage();
@@ -1518,21 +1570,20 @@
                 categorias[g.cat].push(g);
             });
 
-            // Anchos de columna explícitos para evitar desbordes
-            const anchoTermino = 50;   // mm
-            const anchoDefinicion = 120; // mm (50 + 120 = 170 = contentW)
-            
+            // Anchos: Término 35mm · Definición 130mm · Total 165mm (5mm holgura)
+            const anchoTermino = 35;
+            const anchoDefinicion = 130;
+            const fontSizeGlos = 8;
+
             let gy = 22;
             Object.keys(categorias).forEach(cat => {
-                // Salto de página si no hay espacio para cabecera + 2 filas mínimo (~22mm)
-                if (gy + 22 > bottomContent) {
+                if (gy + 25 > bottomContent) {
                     doc.addPage();
                     doc.setFillColor(...C_DARK); doc.rect(0, 0, pageW, 15, 'F');
                     doc.setTextColor(255,255,255); doc.setFont("helvetica", "bold"); doc.setFontSize(11);
                     doc.text("GLOSARIO (cont.)", 25, 10);
                     gy = 22;
                 }
-                // Cabecera de categoría
                 doc.setFillColor(...C_GOLD);
                 doc.rect(marginL, gy, contentW, 6, 'F');
                 doc.setTextColor(...C_DARK);
@@ -1548,8 +1599,8 @@
                     body: bodyItems,
                     theme: 'grid',
                     styles: {
-                        fontSize: 7.5,
-                        cellPadding: 1.8,
+                        fontSize: fontSizeGlos,
+                        cellPadding: 1.6,
                         overflow: 'linebreak',
                         valign: 'top',
                         textColor: [60, 60, 60]
@@ -1557,7 +1608,7 @@
                     headStyles: {
                         fillColor: C_DARK,
                         textColor: [255,255,255],
-                        fontSize: 8,
+                        fontSize: 8.5,
                         overflow: 'linebreak',
                         valign: 'middle',
                         halign: 'left'
@@ -1569,7 +1620,14 @@
                     margin: { left: marginL, right: marginR },
                     pageBreak: 'auto',
                     rowPageBreak: 'avoid',
-                    showHead: 'everyPage'
+                    showHead: 'everyPage',
+                    didParseCell: function(data) {
+                        if (data.section === 'body') {
+                            const anchoCol = data.column.index === 0 ? anchoTermino : anchoDefinicion;
+                            const textoActual = Array.isArray(data.cell.text) ? data.cell.text.join(' ') : String(data.cell.text || '');
+                            data.cell.text = wrapManualPDF(textoActual, anchoCol, fontSizeGlos);
+                        }
+                    }
                 });
                 gy = doc.lastAutoTable.finalY + 6;
             });
