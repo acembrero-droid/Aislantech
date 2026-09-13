@@ -408,7 +408,7 @@ function getToolById(id){ return S.tools.find(t => t.id === id) || null; }
 function nextToolNumber(){ let max = 0; for (const t of S.tools) if (t.toolNumber > max) max = t.toolNumber; return max + 1; }
 
 function addTool(){ const t = createDefaultTool(nextToolNumber()); S.tools.push(t); S.activeToolId = t.id;
-  loadToolIntoFields(t); updateToolsList(); updateOpsList(); scheduleSave(); showToast('Herramienta añadida','success'); }
+  loadToolIntoFields(t); updateToolsList(); updateOpsList(); scheduleSave(); showToast('Herramienta anadida','success'); }
 function duplicateTool(){ const src = getActiveTool(); if (!src){ showToast('Sin herramienta activa','warn'); return; }
   const t = JSON.parse(JSON.stringify(src)); t.id = uid('tool_'); t.toolNumber = nextToolNumber();
   t.name = t.name.replace(/\s*\(copia\)$/,'') + ' (copia)';
@@ -554,7 +554,7 @@ function rotateContourToStart(pts, ox, oy){
 }
 
 // =================================================================
-// PATILLAS - ancho compensado por diametro de fresa
+// PATILLAS
 // =================================================================
 function computeTabSegments(pts, closed, count, width, seed, toolDiameter){
   toolDiameter = Math.max(0, toolDiameter || 0);
@@ -969,7 +969,7 @@ function updateLayerList(){
 }
 
 // =================================================================
-// G-CODE emission helpers - SIN parentesis anidados, SIN no-ASCII
+// G-CODE helpers
 // =================================================================
 function emitCutNormal(lines, pts, closed, tool){
   for (let i = 1; i < pts.length; i++){
@@ -1123,6 +1123,7 @@ function buildSimFromOps(){
         for (let k=0;k<passes;k++){
           const z = -Math.min((k+1)*step, cfg.depth);
           const isLastPass = (k === passes - 1);
+          // Solo el primer pase empieza desde Z seguro; los siguientes desde Z retraccion
           const moveZ = (k === 0) ? cfg.safe : cfg.retract;
           addMove('rapid', [{x:lastX, y:lastY}, {x:f.x, y:f.y}], moveZ, S.rapidXY);
           addMove('cut', [{x:f.x, y:f.y}], z, cfg.feedZ);
@@ -1527,12 +1528,17 @@ function drawEnt(e, color, lw, r){
 }
 
 // =================================================================
-// G-CODE GENERATION - Comentarios limpios sin anidacion ni no-ASCII
+// GENERADOR DE G-CODE
+// CAMBIOS CLAVE:
+//  1. Arranque en X0 Y0 tras G0 Z<safe> inicial
+//  2. G4 solo se emite si pausa > 0
+//  3. Entre capas solo se baja a Z retraccion, NUNCA a Z seguro
 // =================================================================
 function genGCode(){
   if (!S.operations.length){ gcodeEl.textContent = '(Sin operaciones)'; return ''; }
   if (!S.tools.length){ gcodeEl.textContent = '(Sin herramientas)'; return ''; }
   rebuildAllContours();
+
   const toolOrder = [];
   const groups = new Map();
   for (const op of S.operations){
@@ -1541,14 +1547,18 @@ function genGCode(){
     if (!groups.has(tid)){ groups.set(tid, []); toolOrder.push(tid); }
     groups.get(tid).push({ op, originalIndex: S.operations.indexOf(op) });
   }
+
   const lines = [];
   lines.push('%');
   lines.push('O0001 (CNC DXF)');
   lines.push('(Generado por CNC DXF a G-Code)');
   lines.push('G21 G90 G17');
+
   const maxSafe = Math.max(...S.tools.map(t => t.safe), 10);
-  lines.push('G0 Z' + maxSafe);
+  lines.push(`G0 Z${maxSafe.toFixed(3)}`);   // Subir a Z seguro para evitar choques al desplazar
+  lines.push('G0 X0 Y0');                     // <-- NUEVO: ir a origen 0,0
   lines.push('');
+
   let toolChangeCount = 0;
 
   for (const tid of toolOrder){
@@ -1564,10 +1574,12 @@ function genGCode(){
     if (S.tabs.enabled){
       lines.push(`(Patillas: ${S.tabs.count} uds - ancho REAL ${S.tabs.width}mm - tramo trayectoria ${(S.tabs.width+tool.diam).toFixed(3)}mm - alto ${S.tabs.height}mm)`);
     }
-    lines.push(`G0 Z${tool.safe.toFixed(3)}`);
+    lines.push(`G0 Z${tool.safe.toFixed(3)}`);       // Asegurar Z seguro antes de cambio de herramienta
     lines.push(`T${tool.toolNumber} M6`);
     lines.push(`S${tool.rpm} ${spindleDir}`);
-    lines.push(`G4 P${S.spindlePause}  (pausa estabilizacion mandrino)`);
+    if (S.spindlePause > 0){                          // <-- G4 solo si pausa > 0
+      lines.push(`G4 P${S.spindlePause}  (pausa estabilizacion mandrino)`);
+    }
     lines.push('');
     toolChangeCount++;
 
@@ -1583,6 +1595,7 @@ function genGCode(){
           for (let k=0;k<passes;k++){
             const z = -Math.min((k+1)*step, tool.depth);
             lines.push(`G1 Z${z.toFixed(3)} F${tool.feedZ}`);
+            // Entre capas de taladrado, retraer solo a Z retraccion
             lines.push(`G0 Z${tool.retract.toFixed(3)}`);
           }
           lines.push(`G0 Z${tool.safe.toFixed(3)}`);
@@ -1598,10 +1611,13 @@ function genGCode(){
           const seed = S.tabs.seed + originalIndex * 137;
           tabsEff = computeTabSegments(pts, true, S.tabs.count, S.tabs.width, seed, tool.diam);
         }
+        // Subir a Z seguro SOLO UNA VEZ al inicio de la operacion de corte
         lines.push(`G0 Z${tool.safe.toFixed(3)}`);
         for (let k=0;k<passes;k++){
           const z = -Math.min((k+1)*step, tool.depth);
           const isLastPass = (k === passes - 1);
+          // El primer pase arranca desde Z seguro (ya estamos ahi);
+          // los siguientes continuan desde Z retraccion (donde acabo la pasada anterior)
           lines.push(`G0 X${f.x.toFixed(3)} Y${f.y.toFixed(3)}`);
           lines.push(`G1 Z${z.toFixed(3)} F${tool.feedZ}`);
           if (S.tabs.enabled && isLastPass && isClosed && tabsEff.length > 0){
@@ -1610,9 +1626,11 @@ function genGCode(){
           } else {
             emitCutNormal(lines, pts, isClosed, tool);
           }
+          // Retraer SOLO a Z retraccion entre capas, NO a Z seguro
           lines.push(`G0 Z${tool.retract.toFixed(3)}`);
         }
       } else if (op.type === 'pocket'){
+        // Subir a Z seguro SOLO UNA VEZ al inicio del cajeado
         lines.push(`G0 Z${tool.safe.toFixed(3)}`);
         for (const a of op.areas){
           if (a.shape === 'rect'){
@@ -1633,6 +1651,7 @@ function genGCode(){
                 lines.push(`G1 X${xn.toFixed(3)} Y${y.toFixed(3)} F${tool.feed}`);
                 dir *= -1;
               }
+              // Retraer solo a Z retraccion entre capas
               lines.push(`G0 Z${tool.retract.toFixed(3)}`);
             }
           } else if (a.shape === 'circle'){
@@ -1659,7 +1678,7 @@ function genGCode(){
       lines.push('');
     }
   }
-  lines.push(`G0 Z${maxSafe}`);
+  lines.push(`G0 Z${maxSafe.toFixed(3)}`);
   lines.push('M5');
   lines.push('M30');
   lines.push('%');
@@ -1905,7 +1924,7 @@ function init(){
     updateToolsList(); updateOpsList(); extractLayers();
     fitView(); updateSimUI(); updateTabsInfo(); render();
   } else { showToast('Proyecto restaurado','success'); }
-  console.log('CNC DXF a G-Code - comentarios limpios para DDCS V4.1');
+  console.log('CNC DXF a G-Code - arranque en 0,0 - pausa respetada - sin subir a Z15 entre capas');
 }
 init();
 })();
