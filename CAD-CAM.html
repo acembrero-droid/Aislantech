@@ -30,7 +30,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 .mode-dot{width:9px;height:9px;border-radius:50%}
 .mode-dot.view{background:#888}.mode-dot.drill{background:#ff6b6b}.mode-dot.cut{background:#ffb347}.mode-dot.pocket{background:#4ec990}
 .tool-list{max-height:200px;overflow-y:auto;display:flex;flex-direction:column;gap:4px}
-.tool-item{display:flex;align-items:center;gap:6px;padding:6px 8px;background:#22262e;border:1px solid transparent;border-radius:6px;cursor:pointer;font-size:.75rem;transition:all .12s}
+.tool-item{display:flex;align-items:center;gap:6px;padding:6px 8px;background:#22262e;border:1px solid transparent;border-radius:6px;cursor:pointer;font-size:.75rem}
 .tool-item:hover{background:#2a2f38;border-color:var(--border)}
 .tool-item.active{border-color:var(--accent);background:#1e2d3d}
 .tool-item .tnum{background:var(--accent);color:#000;font-weight:700;font-size:.68rem;padding:2px 6px;border-radius:4px;flex-shrink:0;min-width:26px;text-align:center}
@@ -50,7 +50,6 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 .op-type.cut{background:#ffb34722;color:#ffb347}
 .op-type.pocket{background:#4ec99022;color:#4ec990}
 .op-tool-select{background:#1a1d24;border:1px solid var(--border);color:var(--text2);font-size:.62rem;border-radius:3px;padding:1px 3px;font-family:inherit;max-width:60px;cursor:pointer}
-.op-tool-select:hover{border-color:var(--accent)}
 .del-op{cursor:pointer;opacity:.5;padding:2px 5px;flex-shrink:0}
 .del-op:hover{opacity:1;color:var(--danger)}
 .canvas-container{flex:1;position:relative;background:var(--canvas);overflow:hidden;min-width:200px}
@@ -64,8 +63,7 @@ canvas{display:block;position:absolute;top:0;left:0}
 .row label{color:var(--text2);white-space:nowrap;min-width:50px}
 .row input,.row select{background:var(--input);border:1px solid var(--border);color:var(--text);padding:4px 7px;border-radius:4px;font-size:.72rem;width:80px;text-align:right;font-family:inherit}
 .row select{text-align:left;width:90px}
-.row input[type="checkbox"]{width:auto;text-align:left;transform:scale(1.2);margin-right:4px;accent-color:var(--accent)}
-.row input:focus,.row select:focus{outline:none;border-color:var(--accent)}
+.row input[type="checkbox"]{width:auto;transform:scale(1.2);accent-color:var(--accent)}
 .gcode{background:#0d0f12;color:#c0d0e0;font-family:Consolas,monospace;font-size:.66rem;border-radius:5px;padding:8px;min-height:120px;max-height:200px;overflow-y:auto;white-space:pre-wrap;border:1px solid var(--border);line-height:1.4}
 .toast{position:fixed;top:16px;right:16px;background:#2d333b;color:#fff;padding:9px 15px;border-radius:6px;font-size:.8rem;z-index:1000;opacity:0;transform:translateY(-20px);transition:all .25s;pointer-events:none;border:1px solid var(--border);max-width:400px}
 .toast.show{opacity:1;transform:translateY(0)}
@@ -79,10 +77,8 @@ canvas{display:block;position:absolute;top:0;left:0}
 .layer-item input[type=checkbox]{accent-color:var(--accent)}
 .sim-panel{background:linear-gradient(180deg,#1a1d24,#161a20);border:1px solid #2a3550}
 .sim-btn-row{display:flex;gap:5px;margin-bottom:8px}
-.sim-btn{flex:1;padding:9px 8px;border:1px solid var(--border);border-radius:6px;cursor:pointer;font-size:.82rem;background:var(--input);color:var(--text);font-family:inherit;font-weight:600;display:flex;align-items:center;justify-content:center;gap:5px;transition:all .12s}
-.sim-btn:hover{background:#2d323b;border-color:var(--accent)}
+.sim-btn{flex:1;padding:9px 8px;border:1px solid var(--border);border-radius:6px;cursor:pointer;font-size:.82rem;background:var(--input);color:var(--text);font-family:inherit;font-weight:600;display:flex;align-items:center;justify-content:center;gap:5px}
 .sim-btn.play{background:#1e4d3a;border-color:#2a6b52;color:#a8f5d5}
-.sim-btn.play:hover{background:#2a6b52;color:#fff}
 .sim-btn.playing{background:#4d1e1e;border-color:#6b2a2a;color:#ffb0b0}
 .sim-slider{width:100%;height:20px;-webkit-appearance:none;background:transparent;cursor:pointer}
 .sim-slider::-webkit-slider-track{height:6px;background:#2a2d35;border-radius:3px;border:1px solid #3a3f4a}
@@ -95,7 +91,6 @@ canvas{display:block;position:absolute;top:0;left:0}
 .cb.tool{width:12px;height:12px;border-radius:50%;background:transparent;border:2px solid #ffdd00}
 .cb.pause{width:14px;height:4px;background:#ff8800;border-radius:2px}
 .cb.tab{width:14px;height:4px;background:#ff44aa;border-radius:2px}
-.cb.lift{width:14px;height:3px;background:#ffaa44;border-radius:2px}
 .speed-row{display:flex;align-items:center;gap:6px;font-size:.68rem;color:var(--text2);margin-top:4px}
 .speed-row input[type=range]{flex:1;accent-color:var(--accent)}
 .empty-hint{color:var(--text2);font-style:italic;font-size:.72rem;padding:6px 4px}
@@ -133,7 +128,7 @@ canvas{display:block;position:absolute;top:0;left:0}
     </div>
     <div class="sec">
       <h3>🔧 Herramientas <span class="mini" id="toolCount">0</span></h3>
-      <div class="tool-list" id="toolList"><div class="empty-hint">Sin herramientas. Añade una.</div></div>
+      <div class="tool-list" id="toolList"><div class="empty-hint">Sin herramientas.</div></div>
       <button class="btn small" id="btnAddTool" style="width:100%;margin-top:6px;">+ Añadir herramienta</button>
     </div>
     <div class="sec">
@@ -170,40 +165,28 @@ canvas{display:block;position:absolute;top:0;left:0}
         <button class="sim-btn" id="btnReset" style="flex:0 0 auto;">⏮</button>
         <button class="sim-btn" id="btnEnd" style="flex:0 0 auto;">⏭</button>
       </div>
-      <div class="sim-info">
-        <span id="simOpInfo">Sin trayectoria</span>
-        <span><b id="simPct">00:00:00</b></span>
-      </div>
+      <div class="sim-info"><span id="simOpInfo">Sin trayectoria</span><span><b id="simPct">00:00:00</b></span></div>
       <input type="range" class="sim-slider" id="simProgress" min="0" max="1000" value="0">
-      <div class="speed-row">
-        <span>🐢</span>
-        <input type="range" id="simSpeed" min="1" max="100" value="10">
-        <span>🐇</span>
-        <span id="simSpeedVal" style="min-width:44px;text-align:right;">1.0x</span>
-      </div>
+      <div class="speed-row"><span>🐢</span><input type="range" id="simSpeed" min="1" max="100" value="10"><span>🐇</span><span id="simSpeedVal" style="min-width:44px;text-align:right;">1.0x</span></div>
       <div class="hint">Velocidad <b>1.0x = tiempo real</b> · <span id="simTotalLabel">Total: 00:00:00</span></div>
       <div class="sim-legend">
-        <span><span class="cb" style="background:#00ff88;height:4px;"></span> Corte (G1)</span>
+        <span><span class="cb" style="background:#00ff88;height:4px;"></span> Corte (G1/G2/G3)</span>
         <span><span class="cb" style="background:#4da6ff;height:3px;background-image:repeating-linear-gradient(90deg,#4da6ff 0,#4da6ff 4px,transparent 4px,transparent 7px);"></span> Rápido (G0)</span>
         <span><span class="cb pause"></span> Pausa mandrino</span>
-        <span><span class="cb tab"></span> Patilla (material sin cortar)</span>
-        <span><span class="cb lift"></span> Tramo de elevación</span>
+        <span><span class="cb tab"></span> Patilla</span>
         <span><span class="cb tool"></span> Herramienta</span>
       </div>
     </div>
 
     <div class="sec tabs-sec">
       <h3>🔗 Patillas · última capa</h3>
-      <div class="row">
-        <label>Activar</label>
-        <input type="checkbox" id="tabsEnabled">
-      </div>
+      <div class="row"><label>Activar</label><input type="checkbox" id="tabsEnabled"></div>
       <div class="row"><label>Cantidad</label><input type="number" id="tabsCount" value="3" step="1" min="1" max="20"></div>
-      <div class="row"><label>Ancho (mm)</label><input type="number" id="tabsWidth" value="1" step="0.1" min="0.1" title="Ancho de material sin cortar, medido en la pieza"></div>
+      <div class="row"><label>Ancho (mm)</label><input type="number" id="tabsWidth" value="1" step="0.1" min="0.1"></div>
       <div class="row"><label>Alto Z (mm)</label><input type="number" id="tabsHeight" value="1" step="0.1" min="0.1"></div>
       <button class="btn small" id="btnShuffleTabs" style="width:100%;margin-top:4px;">🎲 Reubicar patillas</button>
       <div class="info-line" id="tabsInfo">Selecciona una operación de corte para ver el detalle</div>
-      <div class="hint">El <b>ancho</b> es el que quieres medir en la pieza final (con calibre). La app compensa automáticamente el diámetro de la fresa en el tramo levantado.</div>
+      <div class="hint">El <b>ancho</b> es el que quieres medir en la pieza final.</div>
     </div>
 
     <div class="sec machine-sec">
@@ -211,7 +194,7 @@ canvas{display:block;position:absolute;top:0;left:0}
       <div class="row"><label>Pausa mandrino (s)</label><input type="number" id="cfgSpindlePause" value="12" step="0.5" min="0" max="120"></div>
       <div class="row"><label>Rapid XY (mm/min)</label><input type="number" id="cfgRapidXY" value="5000" step="100" min="100"></div>
       <div class="row"><label>Rapid Z (mm/min)</label><input type="number" id="cfgRapidZ" value="3000" step="100" min="100"></div>
-      <div class="hint">La pausa se emite como <code>G4 P</code> en milisegundos (12s → P12000). Entre capas solo se retrae a Z retracción.</div>
+      <div class="hint">G4 P en milisegundos. Sin subir Z entre pasadas (contornos cerrados).</div>
     </div>
 
     <div class="sec">
@@ -233,7 +216,6 @@ canvas{display:block;position:absolute;top:0;left:0}
       <div class="row"><label>Giro mandrino</label>
         <select id="cSpindleDir"><option value="M3">M3 (Horario)</option><option value="M4">M4 (Antihorario)</option></select>
       </div>
-      <div class="hint">El corte (C/I/E) desplaza todo el contorno incluido el punto de entrada a media herramienta. Arcos compensados por radio real.</div>
       <button class="btn small" id="btnDupTool" style="width:100%;margin-top:4px;">⧉ Duplicar como nueva</button>
     </div>
 
@@ -255,9 +237,7 @@ canvas{display:block;position:absolute;top:0;left:0}
 const STORAGE_KEY = 'cncdxf_project_v2';
 const PROJECT_VERSION = 2;
 
-// =================================================================
-// PARSER DXF
-// =================================================================
+// ================= PARSER DXF =================
 function parseDXF(text){
   text = text.replace(/^\uFEFF/,'').replace(/\r\n/g,'\n').replace(/\r/g,'\n');
   const lines = text.split('\n');
@@ -364,25 +344,20 @@ function normalize(parsed){
 }
 
 const S = {
-  entities: [], operations: [],
-  tools: [], activeToolId: null,
+  entities: [], operations: [], tools: [], activeToolId: null,
   dxfText: '', dxfFilename: '',
   mode:'view', scale:2, offX:0, offY:0,
   panning:false, psx:0, psy:0, poffx:0, poffy:0,
   mwx:0, mwy:0, hover:-1,
   pocketStart:null, layerVis:{}, layers:new Set(),
   selRect:null, selecting:false, selStart:null, selEnd:null,
-  showSim:true,
-  offsetX:0, offsetY:0,
-  flipArcs:false, flipY:false,
-  lastMiddleClick: 0,
+  showSim:true, offsetX:0, offsetY:0,
+  flipArcs:false, flipY:false, lastMiddleClick: 0,
   spindlePause: 12, rapidXY: 5000, rapidZ: 3000,
   tabs: { enabled: false, count: 3, width: 1.0, height: 1.0, seed: 12345 },
   simMoves: [], simMoveTimes: [], simTotalTime: 0, simT: 0,
   simPlaying:false, simSpeedMult: 1, simAnimId:null, simLastFrame:0,
-  saveTimer: null,
-  cutContours: {},
-  cutTabs: {},
+  saveTimer: null, cutContours: {}, cutTabs: {},
 };
 
 const $ = id => document.getElementById(id);
@@ -416,7 +391,7 @@ function duplicateTool(){ const src = getActiveTool(); if (!src){ showToast('Sin
   showToast('Herramienta duplicada','success'); }
 function deleteTool(id){
   const usedBy = S.operations.filter(o => o.toolId === id);
-  if (usedBy.length > 0){ if (!confirm(`En ${usedBy.length} operacion(es). Eliminar tambien esas operaciones?`)) return;
+  if (usedBy.length > 0){ if (!confirm(`En ${usedBy.length} operacion(es). Eliminar?`)) return;
     S.operations = S.operations.filter(o => o.toolId !== id); }
   S.tools = S.tools.filter(t => t.id !== id);
   if (S.activeToolId === id){ S.activeToolId = S.tools.length ? S.tools[0].id : null;
@@ -461,20 +436,10 @@ function updateToolsList(){
 }
 function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
-// =================================================================
-// GEOMETRIA BASE
-// =================================================================
-function signedArea(pts){
-  let a = 0; const n = pts.length;
+// ================= GEOMETRIA BASE =================
+function signedArea(pts){ let a = 0; const n = pts.length;
   for (let i = 0; i < n; i++){ const p1 = pts[i], p2 = pts[(i + 1) % n]; a += p1.x * p2.y - p2.x * p1.y; }
   return a / 2;
-}
-function rotateContourToStart(pts, ox, oy){
-  if (!pts || pts.length < 2) return pts;
-  let bestIdx = 0, bestDist = Infinity;
-  for (let i = 0; i < pts.length; i++){ const d = Math.hypot(pts[i].x - ox, pts[i].y - oy); if (d < bestDist){ bestDist = d; bestIdx = i; } }
-  if (bestIdx === 0) return pts;
-  return pts.slice(bestIdx).concat(pts.slice(0, bestIdx));
 }
 function buildPath(pts, closed){ return closed ? pts.concat([{ x: pts[0].x, y: pts[0].y }]) : pts.slice(); }
 function computeCumLens(path){
@@ -505,27 +470,21 @@ function pathPointsBetween(path, cumLens, s1, s2){
   return result;
 }
 
-// =================================================================
-// OFFSET CORRECTO DE CONTORNOS CON ARCOS (por primitivas)
-// =================================================================
+// ================= OFFSET POR PRIMITIVAS =================
 function entityToPrimitives(e){
   const prims = [];
-  if (e.type === 'LINE'){
-    prims.push({ type:'line', x1:e.x1, y1:e.y1, x2:e.x2, y2:e.y2 });
-  } else if (e.type === 'CIRCLE'){
-    prims.push({ type:'arc', cx:e.cx, cy:e.cy, r:e.r, sa:0, ea:2*Math.PI, ccw:true, closed:true });
-  } else if (e.type === 'ARC'){
-    prims.push({ type:'arc', cx:e.cx, cy:e.cy, r:e.r, sa:e.sa, ea:e.ea, ccw:true, closed:false });
-  } else if (e.type === 'LWPOLYLINE'){
+  if (e.type === 'LINE'){ prims.push({ type:'line', x1:e.x1, y1:e.y1, x2:e.x2, y2:e.y2 }); }
+  else if (e.type === 'CIRCLE'){ prims.push({ type:'arc', cx:e.cx, cy:e.cy, r:e.r, sa:0, ea:2*Math.PI, ccw:true, closed:true }); }
+  else if (e.type === 'ARC'){ prims.push({ type:'arc', cx:e.cx, cy:e.cy, r:e.r, sa:e.sa, ea:e.ea, ccw:true, closed:false }); }
+  else if (e.type === 'LWPOLYLINE'){
     const verts = e.vertices;
     const n = verts.length;
     const segCount = e.closed ? n : n - 1;
     for (let i = 0; i < segCount; i++){
       const v1 = verts[i], v2 = verts[(i+1) % n];
       const b = v1.bulge || 0;
-      if (Math.abs(b) < 1e-9){
-        prims.push({ type:'line', x1:v1.x, y1:v1.y, x2:v2.x, y2:v2.y });
-      } else {
+      if (Math.abs(b) < 1e-9){ prims.push({ type:'line', x1:v1.x, y1:v1.y, x2:v2.x, y2:v2.y }); }
+      else {
         const dx = v2.x - v1.x, dy = v2.y - v1.y;
         const chord = Math.hypot(dx, dy);
         if (chord < 1e-9) continue;
@@ -547,7 +506,6 @@ function entityToPrimitives(e){
   }
   return prims;
 }
-
 function getPrimStart(p){
   if (p.type === 'line') return { x: p.x1, y: p.y1 };
   return { x: p.cx + p.r * Math.cos(p.sa), y: p.cy + p.r * Math.sin(p.sa) };
@@ -561,7 +519,64 @@ function flipPrimitive(p){
   return { ...p, sa:p.ea, ea:p.sa, ccw: !p.ccw };
 }
 function reversePrimitives(prims){ return prims.slice().reverse().map(flipPrimitive); }
-
+function primLength(p){
+  if (p.type === 'line') return Math.hypot(p.x2 - p.x1, p.y2 - p.y1);
+  let sweep = p.ea - p.sa;
+  if (p.ccw && sweep < 0) sweep += 2*Math.PI;
+  if (!p.ccw && sweep > 0) sweep -= 2*Math.PI;
+  return Math.abs(sweep) * p.r;
+}
+function splitPrimitiveAt(p, sLocal){
+  if (sLocal <= 1e-9) return [null, p];
+  const lenP = primLength(p);
+  if (sLocal >= lenP - 1e-9) return [p, null];
+  if (p.type === 'line'){
+    const t = sLocal / lenP;
+    const mx = p.x1 + t * (p.x2 - p.x1);
+    const my = p.y1 + t * (p.y2 - p.y1);
+    return [
+      { type:'line', x1:p.x1, y1:p.y1, x2:mx, y2:my },
+      { type:'line', x1:mx, y1:my, x2:p.x2, y2:p.y2 }
+    ];
+  } else {
+    let sweep = p.ea - p.sa;
+    if (p.ccw && sweep < 0) sweep += 2*Math.PI;
+    if (!p.ccw && sweep > 0) sweep -= 2*Math.PI;
+    const t = sLocal / lenP;
+    const midAngle = p.sa + t * sweep;
+    return [
+      { type:'arc', cx:p.cx, cy:p.cy, r:p.r, sa:p.sa, ea:midAngle, ccw:p.ccw, closed:false },
+      { type:'arc', cx:p.cx, cy:p.cy, r:p.r, sa:midAngle, ea:p.ea, ccw:p.ccw, closed:false }
+    ];
+  }
+}
+function rotatePrimitivesToStart(prims, ox, oy){
+  if (!prims.length) return prims;
+  const pts = primitivesToPoints(prims, true);
+  let bestIdx = 0, bestDist = Infinity;
+  for (let i = 0; i < pts.length; i++){
+    const d = Math.hypot(pts[i].x - ox, pts[i].y - oy);
+    if (d < bestDist){ bestDist = d; bestIdx = i; }
+  }
+  if (bestIdx === 0) return prims;
+  const cumLens = [0];
+  for (let i = 1; i < pts.length; i++) cumLens.push(cumLens[i-1] + Math.hypot(pts[i].x - pts[i-1].x, pts[i].y - pts[i-1].y));
+  const sTarget = cumLens[bestIdx];
+  let acc = 0, splitIdx = -1, splitLocalS = 0;
+  for (let i = 0; i < prims.length; i++){
+    const lenP = primLength(prims[i]);
+    if (acc + lenP >= sTarget - 1e-9){ splitIdx = i; splitLocalS = sTarget - acc; break; }
+    acc += lenP;
+  }
+  if (splitIdx < 0 || splitLocalS < 1e-9) return prims;
+  const [a, b] = splitPrimitiveAt(prims[splitIdx], splitLocalS);
+  const newPrims = [];
+  if (b) newPrims.push(b);
+  for (let i = splitIdx + 1; i < prims.length; i++) newPrims.push(prims[i]);
+  for (let i = 0; i < splitIdx; i++) newPrims.push(prims[i]);
+  if (a) newPrims.push(a);
+  return newPrims;
+}
 function offsetLinePrim(l, d, side){
   const dx = l.x2 - l.x1, dy = l.y2 - l.y1;
   const len = Math.hypot(dx, dy);
@@ -575,7 +590,6 @@ function offsetArcPrim(a, d, side){
   if (newR < 0.001) newR = 0.001;
   return { ...a, r: newR };
 }
-
 function intersectLineLine(l1, l2){
   const d1x = l1.x2-l1.x1, d1y = l1.y2-l1.y1;
   const d2x = l2.x2-l2.x1, d2y = l2.y2-l2.y1;
@@ -587,20 +601,15 @@ function intersectLineLine(l1, l2){
 function intersectLineArc(line, arc, nearPt){
   const dx = line.x2 - line.x1, dy = line.y2 - line.y1;
   const fx = line.x1 - arc.cx, fy = line.y1 - arc.cy;
-  const a = dx*dx + dy*dy;
-  const b = 2 * (fx*dx + fy*dy);
-  const c = fx*fx + fy*fy - arc.r*arc.r;
+  const a = dx*dx + dy*dy, b = 2 * (fx*dx + fy*dy), c = fx*fx + fy*fy - arc.r*arc.r;
   const disc = b*b - 4*a*c;
   if (disc < 0 || a < 1e-12) return null;
   const sq = Math.sqrt(disc);
-  const t1 = (-b - sq) / (2*a);
-  const t2 = (-b + sq) / (2*a);
+  const t1 = (-b - sq) / (2*a), t2 = (-b + sq) / (2*a);
   const p1 = { x: line.x1 + t1*dx, y: line.y1 + t1*dy };
   const p2 = { x: line.x1 + t2*dx, y: line.y1 + t2*dy };
   if (!nearPt) return p1;
-  const d1 = Math.hypot(p1.x - nearPt.x, p1.y - nearPt.y);
-  const d2 = Math.hypot(p2.x - nearPt.x, p2.y - nearPt.y);
-  return d1 < d2 ? p1 : p2;
+  return Math.hypot(p1.x - nearPt.x, p1.y - nearPt.y) < Math.hypot(p2.x - nearPt.x, p2.y - nearPt.y) ? p1 : p2;
 }
 function intersectArcArc(a1, a2, nearPt){
   const dx = a2.cx - a1.cx, dy = a2.cy - a1.cy;
@@ -610,38 +619,26 @@ function intersectArcArc(a1, a2, nearPt){
   const h2 = a1.r*a1.r - a*a;
   if (h2 < 0) return null;
   const h = Math.sqrt(h2);
-  const mx = a1.cx + a * dx / d;
-  const my = a1.cy + a * dy / d;
+  const mx = a1.cx + a * dx / d, my = a1.cy + a * dy / d;
   const px = -dy / d, py = dx / d;
-  const i1 = { x: mx + h*px, y: my + h*py };
-  const i2 = { x: mx - h*px, y: my - h*py };
+  const i1 = { x: mx + h*px, y: my + h*py }, i2 = { x: mx - h*px, y: my - h*py };
   if (!nearPt) return i1;
-  const d1 = Math.hypot(i1.x - nearPt.x, i1.y - nearPt.y);
-  const d2 = Math.hypot(i2.x - nearPt.x, i2.y - nearPt.y);
-  return d1 < d2 ? i1 : i2;
+  return Math.hypot(i1.x - nearPt.x, i1.y - nearPt.y) < Math.hypot(i2.x - nearPt.x, i2.y - nearPt.y) ? i1 : i2;
 }
-
 function offsetContourPrimitives(prims, d, side){
-  if (Math.abs(d) < 1e-9 || side === 0){ return prims.map(p => ({ ...p })); }
-  const offset = prims.map(p => {
-    if (p.type === 'line') return offsetLinePrim(p, d, side);
-    return offsetArcPrim(p, d, side);
-  });
+  if (Math.abs(d) < 1e-9 || side === 0) return prims.map(p => ({ ...p }));
+  const offset = prims.map(p => p.type === 'line' ? offsetLinePrim(p, d, side) : offsetArcPrim(p, d, side));
   const n = offset.length;
   if (n < 2) return offset;
   for (let i = 0; i < n; i++){
-    const cur = offset[i];
-    const next = offset[(i+1) % n];
+    const cur = offset[i], next = offset[(i+1) % n];
     const origJoint = getPrimEnd(prims[i]);
     let jointPt = null;
     if (cur.type === 'line' && next.type === 'line') jointPt = intersectLineLine(cur, next);
     else if (cur.type === 'line' && next.type === 'arc') jointPt = intersectLineArc(cur, next, origJoint);
     else if (cur.type === 'arc' && next.type === 'line') jointPt = intersectLineArc(next, cur, origJoint);
     else jointPt = intersectArcArc(cur, next, origJoint);
-    if (!jointPt){
-      const e1 = getPrimEnd(cur), s2 = getPrimStart(next);
-      jointPt = { x:(e1.x+s2.x)/2, y:(e1.y+s2.y)/2 };
-    }
+    if (!jointPt){ const e1 = getPrimEnd(cur), s2 = getPrimStart(next); jointPt = { x:(e1.x+s2.x)/2, y:(e1.y+s2.y)/2 }; }
     if (cur.type === 'line'){ cur.x2 = jointPt.x; cur.y2 = jointPt.y; }
     else {
       cur.ea = Math.atan2(jointPt.y - cur.cy, jointPt.x - cur.cx);
@@ -657,17 +654,13 @@ function offsetContourPrimitives(prims, d, side){
   }
   return offset;
 }
-
 function primitivesToPoints(prims, closed){
   const pts = [];
   for (let i = 0; i < prims.length; i++){
     const p = prims[i];
     if (p.type === 'line'){
       if (pts.length === 0) pts.push({ x:p.x1, y:p.y1 });
-      else {
-        const last = pts[pts.length-1];
-        if (Math.hypot(last.x - p.x1, last.y - p.y1) > 1e-6) pts.push({ x:p.x1, y:p.y1 });
-      }
+      else { const last = pts[pts.length-1]; if (Math.hypot(last.x - p.x1, last.y - p.y1) > 1e-6) pts.push({ x:p.x1, y:p.y1 }); }
       pts.push({ x:p.x2, y:p.y2 });
     } else {
       let sweep = p.ea - p.sa;
@@ -676,10 +669,7 @@ function primitivesToPoints(prims, closed){
       const steps = Math.max(8, Math.ceil(Math.abs(sweep) * p.r / 0.3));
       const startPt = { x: p.cx + p.r*Math.cos(p.sa), y: p.cy + p.r*Math.sin(p.sa) };
       let startIdx = 0;
-      if (pts.length > 0){
-        const last = pts[pts.length-1];
-        if (Math.hypot(last.x - startPt.x, last.y - startPt.y) < 1e-6) startIdx = 1;
-      }
+      if (pts.length > 0){ const last = pts[pts.length-1]; if (Math.hypot(last.x - startPt.x, last.y - startPt.y) < 1e-6) startIdx = 1; }
       for (let s = startIdx; s <= steps; s++){
         const t = s / steps;
         const ang = p.sa + t * sweep;
@@ -689,15 +679,12 @@ function primitivesToPoints(prims, closed){
   }
   return pts;
 }
-
 function chainPrimitivesToContour(prims, tol){
   if (!prims.length) return { prims: [], closed: false };
   if (prims.length === 1) return { prims: [prims[0]], closed: !!prims[0].closed };
   const used = new Array(prims.length).fill(false);
   let startIdx = 0;
-  for (let i = 0; i < prims.length; i++){
-    if (!prims[i].closed){ startIdx = i; break; }
-  }
+  for (let i = 0; i < prims.length; i++){ if (!prims[i].closed){ startIdx = i; break; } }
   used[startIdx] = true;
   const result = [prims[startIdx]];
   if (prims[startIdx].closed) return { prims: result, closed: true };
@@ -708,8 +695,7 @@ function chainPrimitivesToContour(prims, tol){
     for (let i = 0; i < prims.length; i++){
       if (used[i]) continue;
       const p = prims[i];
-      const sPt = getPrimStart(p);
-      const ePt = getPrimEnd(p);
+      const sPt = getPrimStart(p), ePt = getPrimEnd(p);
       const dS = Math.hypot(sPt.x - endPt.x, sPt.y - endPt.y);
       const dE = Math.hypot(ePt.x - endPt.x, ePt.y - endPt.y);
       if (dS < bestDist){ bestDist = dS; bestIdx = i; bestFlip = false; }
@@ -726,58 +712,37 @@ function chainPrimitivesToContour(prims, tol){
   const isClosed = Math.hypot(fs.x - le.x, fs.y - le.y) < tol * 2;
   return { prims: result, closed: isClosed };
 }
+function isContourCCW(prims){ return signedArea(primitivesToPoints(prims, true)) > 0; }
 
-function isContourCCW(prims){
-  const pts = primitivesToPoints(prims, true);
-  return signedArea(pts) > 0;
-}
-
-// =================================================================
-// RESOLUCION DEL CONTORNO DE CORTE (con offset por primitivas)
-// =================================================================
+// ================= RESOLUCION DEL CONTORNO =================
 function resolveCutContour(op, tool){
   const entityList = op.ids.map(i => S.entities[i]).filter(Boolean);
   if (!entityList.length) return null;
-
-  // 1) Convertir entidades a primitivas geometricas (lineas y arcos reales)
   const primsRaw = [];
-  for (const e of entityList){
-    const ps = entityToPrimitives(e);
-    for (const p of ps) primsRaw.push(p);
-  }
+  for (const e of entityList){ const ps = entityToPrimitives(e); for (const p of ps) primsRaw.push(p); }
   if (!primsRaw.length) return null;
-
-  // 2) Encadenar en un contorno continuo
   const chainRes = chainPrimitivesToContour(primsRaw, 0.15);
   let prims = chainRes.prims;
   const closed = chainRes.closed;
   if (!prims.length) return null;
-
-  // 3) Orientar segun cutDir
   if (closed){
     const wantCCW = (tool.cutDir !== 'cw');
     const isCCW = isContourCCW(prims);
     if (isCCW !== wantCCW) prims = reversePrimitives(prims);
   }
-
-  // 4) Aplicar offset trabajando con primitivas (arcos mantienen su geometria)
   const off = op.offset || 'center';
   if ((off === 'inside' || off === 'outside') && closed){
     const ccw = isContourCCW(prims);
     let side;
-    if (off === 'inside') side = ccw ? +1 : -1;
-    else side = ccw ? -1 : +1;
+    if (off === 'inside') side = ccw ? +1 : -1; else side = ccw ? -1 : +1;
     prims = offsetContourPrimitives(prims, tool.diam / 2, side);
   }
-
-  // 5) Convertir a puntos para render/G-code/simulacion
-  let pts = primitivesToPoints(prims, closed);
+  // Rotar para que el punto de inicio sea el mas cercano a (0,0)
+  if (closed) prims = rotatePrimitivesToStart(prims, 0, 0);
+  // Convertir a puntos para simulacion/render
+  const pts = primitivesToPoints(prims, closed);
   if (pts.length < 2) return null;
-
-  // 6) Punto de inicio mas cercano a (0,0)
-  if (closed && pts.length >= 3) pts = rotateContourToStart(pts, 0, 0);
-
-  return { points: pts, closed };
+  return { points: pts, primitives: prims, closed };
 }
 
 function rebuildAllContours(){
@@ -800,19 +765,14 @@ function rebuildAllContours(){
   updateTabsInfo();
 }
 
-// =================================================================
-// PATILLAS
-// =================================================================
+// ================= PATILLAS =================
 function computeTabSegments(pts, closed, count, width, seed, toolDiameter){
   toolDiameter = Math.max(0, toolDiameter || 0);
   const pathWidth = Math.max(0.1, width + toolDiameter);
   if (!closed || pts.length < 3) return [];
   const n = pts.length;
   let L = 0;
-  for (let i = 0; i < n; i++){
-    const a = pts[i], b = pts[(i+1) % n];
-    L += Math.hypot(b.x - a.x, b.y - a.y);
-  }
+  for (let i = 0; i < n; i++){ const a = pts[i], b = pts[(i+1) % n]; L += Math.hypot(b.x - a.x, b.y - a.y); }
   if (L < pathWidth * count * 2.5) return [];
   let sv = (seed >>> 0) || 1;
   const rng = () => { sv = (Math.imul(sv, 1664525) + 1013904223) >>> 0; return sv / 4294967296; };
@@ -832,46 +792,35 @@ function computeTabSegments(pts, closed, count, width, seed, toolDiameter){
   for (let i = 1; i < tabs.length; i++){
     if (tabs[i].sStart < tabs[i-1].sEnd + 0.05){
       const shift = tabs[i-1].sEnd + 0.05 - tabs[i].sStart;
-      tabs[i].sStart += shift;
-      tabs[i].sEnd += shift;
-      if (tabs[i].sEnd > L - 0.05){
-        tabs[i].sEnd = L - 0.05;
-        tabs[i].sStart = Math.max(tabs[i-1].sEnd + 0.05, tabs[i].sEnd - pathWidth);
-      }
+      tabs[i].sStart += shift; tabs[i].sEnd += shift;
+      if (tabs[i].sEnd > L - 0.05){ tabs[i].sEnd = L - 0.05; tabs[i].sStart = Math.max(tabs[i-1].sEnd + 0.05, tabs[i].sEnd - pathWidth); }
     }
   }
   return tabs;
 }
-
 function updateTabsInfo(){
   const keys = Object.keys(S.cutTabs);
   if (!S.tabs.enabled){ tabsInfoEl.textContent = 'Patillas desactivadas'; return; }
-  if (!keys.length){ tabsInfoEl.textContent = 'Ninguna operacion de corte cerrada con patillas'; return; }
+  if (!keys.length){ tabsInfoEl.textContent = 'Ninguna operacion con patillas'; return; }
   let total = 0, lines = [];
   for (const k of keys){
     const tabs = S.cutTabs[k];
     const op = S.operations[parseInt(k)];
     const tool = op ? (getToolById(op.toolId) || S.tools[0]) : null;
     const D = tool ? tool.diam : 0;
-    const pathW = S.tabs.width + D;
-    lines.push(`Contorno ${parseInt(k)+1}: ${tabs.length}x - tramo ${pathW.toFixed(2)}mm - patilla ${S.tabs.width}mm`);
+    lines.push(`Contorno ${parseInt(k)+1}: ${tabs.length}x - patilla ${S.tabs.width}mm`);
     total += tabs.length;
   }
-  tabsInfoEl.textContent = lines.join('\n') + `\nTotal: ${total} patillas - D fresa compensado`;
+  tabsInfoEl.textContent = lines.join('\n') + `\nTotal: ${total}`;
 }
-
 function fmtTime(sec){
   if (!isFinite(sec) || sec < 0) sec = 0;
   const total = Math.floor(sec);
-  const h = Math.floor(total / 3600);
-  const m = Math.floor((total % 3600) / 60);
-  const s = total % 60;
+  const h = Math.floor(total / 3600), m = Math.floor((total % 3600) / 60), s = total % 60;
   return String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
 }
 
-// =================================================================
-// PERSISTENCIA
-// =================================================================
+// ================= PERSISTENCIA =================
 function scheduleSave(){ clearTimeout(S.saveTimer); S.saveTimer = setTimeout(saveToLocalStorage, 500); }
 function serializeProject(){
   return { version: PROJECT_VERSION, savedAt: new Date().toISOString(),
@@ -880,12 +829,11 @@ function serializeProject(){
     operations: S.operations, offsetX: S.offsetX, offsetY: S.offsetY,
     layerVis: S.layerVis, flipArcs: S.flipArcs, flipY: S.flipY,
     viewScale: S.scale, viewOffsetX: S.offX, viewOffsetY: S.offY,
-    spindlePause: S.spindlePause, rapidXY: S.rapidXY, rapidZ: S.rapidZ,
-    tabs: S.tabs };
+    spindlePause: S.spindlePause, rapidXY: S.rapidXY, rapidZ: S.rapidZ, tabs: S.tabs };
 }
 function saveToLocalStorage(){
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(serializeProject())); flashSaveIndicator('OK'); }
-  catch (err){ if (err.name === 'QuotaExceededError'){ flashSaveIndicator('Sin espacio'); showToast('Proyecto grande. Usa Guardar Proyecto.','warn'); } }
+  catch (err){ if (err.name === 'QuotaExceededError'){ flashSaveIndicator('Sin espacio'); } }
 }
 function flashSaveIndicator(txt){ saveInd.textContent = txt; saveInd.classList.add('show');
   clearTimeout(saveInd._t); saveInd._t = setTimeout(() => saveInd.classList.remove('show'), 1200); }
@@ -908,12 +856,9 @@ function applyProjectData(data){
   if (typeof data.rapidXY === 'number') S.rapidXY = data.rapidXY;
   if (typeof data.rapidZ === 'number') S.rapidZ = data.rapidZ;
   if (data.tabs){ S.tabs = { ...S.tabs, ...data.tabs }; }
-  $('cfgSpindlePause').value = S.spindlePause;
-  $('cfgRapidXY').value = S.rapidXY; $('cfgRapidZ').value = S.rapidZ;
-  $('tabsEnabled').checked = S.tabs.enabled;
-  $('tabsCount').value = S.tabs.count;
-  $('tabsWidth').value = S.tabs.width;
-  $('tabsHeight').value = S.tabs.height;
+  $('cfgSpindlePause').value = S.spindlePause; $('cfgRapidXY').value = S.rapidXY; $('cfgRapidZ').value = S.rapidZ;
+  $('tabsEnabled').checked = S.tabs.enabled; $('tabsCount').value = S.tabs.count;
+  $('tabsWidth').value = S.tabs.width; $('tabsHeight').value = S.tabs.height;
   $('offsetX').value = S.offsetX; $('offsetY').value = S.offsetY;
   $('btnFlipArcs').textContent = S.flipArcs ? 'Arcos INV' : 'Arcos';
   $('btnFlipY').textContent = S.flipY ? 'Y INV' : 'Y';
@@ -935,16 +880,14 @@ function importProject(file){
   r.onload = e => {
     try { const data = JSON.parse(e.target.result);
       if (!data || typeof data !== 'object' || !('version' in data)) throw new Error('Formato invalido');
-      if (data.version !== PROJECT_VERSION && !confirm(`Version ${data.version} distinta de ${PROJECT_VERSION}. Abrir igual?`)) return;
+      if (data.version !== PROJECT_VERSION && !confirm(`Version distinta. Abrir igual?`)) return;
       applyProjectData(data); saveToLocalStorage(); showToast('Proyecto importado','success');
     } catch (err){ showToast('Error: ' + err.message,'warn'); }
   };
   r.readAsText(file);
 }
 
-// =================================================================
-// TRANSFORMACIONES Y RENDER
-// =================================================================
+// ================= TRANSFORMACIONES =================
 function resizeCanvas(){
   const r = canvasContainer.getBoundingClientRect();
   const dpr = window.devicePixelRatio || 1;
@@ -996,11 +939,9 @@ function fitView(){
   S.scale = Math.max(0.01, Math.min(Math.min(sx, sy), 100));
   const cx = bb.mnx + bb.w/2, cy = bb.mny + bb.h/2;
   S.offX = 0; S.offY = 0;
-  for (let k=0;k<2;k++){ const p = w2s(cx, cy);
-    S.offX += (r.left + r.width/2) - p.x;
-    S.offY -= p.y - (r.top + r.height/2); }
+  for (let k=0;k<2;k++){ const p = w2s(cx, cy); S.offX += (r.left + r.width/2) - p.x; S.offY -= p.y - (r.top + r.height/2); }
 }
-function centerOnOrigin(){ S.offX = 0; S.offY = 0; render(); showToast('Vista centrada en (0,0)','success'); }
+function centerOnOrigin(){ S.offX = 0; S.offY = 0; render(); showToast('Vista centrada','success'); }
 
 function distSeg(px,py,x1,y1,x2,y2){
   const dx=x2-x1, dy=y2-y1, ls=dx*dx+dy*dy;
@@ -1012,14 +953,12 @@ function distEnt(e, px, py){
   if (e.type === 'LINE') return distSeg(px,py,e.x1,e.y1,e.x2,e.y2);
   if (e.type === 'CIRCLE') return Math.abs(Math.hypot(px-e.cx, py-e.cy) - e.r);
   if (e.type === 'ARC'){
-    const dc = Math.hypot(px-e.cx, py-e.cy); const dCirc = Math.abs(dc - e.r);
+    const dc = Math.hypot(px-e.cx, py-e.cy), dCirc = Math.abs(dc - e.r);
     let a = Math.atan2(py-e.cy, px-e.cx); if (a < 0) a += 2*Math.PI;
     let sa = e.sa, ea = e.ea;
     while (sa < 0) sa += 2*Math.PI; while (ea < sa) ea += 2*Math.PI; while (a < sa) a += 2*Math.PI;
     if (a >= sa && a <= ea) return dCirc;
-    const x1 = e.cx + e.r*Math.cos(e.sa), y1 = e.cy + e.r*Math.sin(e.sa);
-    const x2 = e.cx + e.r*Math.cos(e.ea), y2 = e.cy + e.r*Math.sin(e.ea);
-    return Math.min(Math.hypot(px-x1,py-y1), Math.hypot(px-x2,py-y2));
+    return Math.min(Math.hypot(px-(e.cx+e.r*Math.cos(e.sa)),py-(e.cy+e.r*Math.sin(e.sa))), Math.hypot(px-(e.cx+e.r*Math.cos(e.ea)),py-(e.cy+e.r*Math.sin(e.ea))));
   }
   if (e.type === 'LWPOLYLINE'){
     let d = Infinity;
@@ -1043,9 +982,7 @@ function closestCircle(wx, wy, thr){
   return bi;
 }
 
-// =================================================================
-// OPERACIONES
-// =================================================================
+// ================= OPERACIONES =================
 function addDrill(wx, wy){
   if (!S.tools.length){ showToast('Anade primero una herramienta','warn'); return; }
   const ci = closestCircle(wx, wy, 10);
@@ -1095,8 +1032,7 @@ function updateOpsList(){
     else if (op.type==='cut') det = `${op.ids.length} ent`;
     else if (op.type==='pocket') det = `${op.areas.length} areas`;
     let offSel = '';
-    if (op.type === 'cut'){
-      const off = op.offset || 'center';
+    if (op.type === 'cut'){ const off = op.offset || 'center';
       offSel = `<select class="op-tool-select" data-i="${i}" data-k="offset" style="max-width:34px;">
         <option value="center" ${off==='center'?'selected':''}>C</option>
         <option value="inside" ${off==='inside'?'selected':''}>I</option>
@@ -1108,8 +1044,7 @@ function updateOpsList(){
       ${offSel}
       <span class="del-op" data-i="${i}">x</span></li>`;
   }).join('');
-  opsEl.querySelectorAll('select[data-k="toolId"]').forEach(sel => {
-    const i = parseInt(sel.dataset.i); if (S.operations[i].toolId) sel.value = S.operations[i].toolId; });
+  opsEl.querySelectorAll('select[data-k="toolId"]').forEach(sel => { const i = parseInt(sel.dataset.i); if (S.operations[i].toolId) sel.value = S.operations[i].toolId; });
   opsEl.querySelectorAll('.del-op').forEach(b => b.addEventListener('click', e => { e.stopPropagation(); removeOp(parseInt(b.dataset.i)); }));
   opsEl.querySelectorAll('.op-tool-select').forEach(s => {
     s.addEventListener('change', () => {
@@ -1120,9 +1055,7 @@ function updateOpsList(){
     s.addEventListener('click', e => e.stopPropagation()); });
 }
 
-// =================================================================
-// CAPAS
-// =================================================================
+// ================= CAPAS =================
 function extractLayers(){
   S.layers.clear();
   for (const e of S.entities) S.layers.add(e.layer);
@@ -1151,20 +1084,45 @@ function updateLayerList(){
     showToast(`${ids.length} anadidas`,'success'); }));
 }
 
-// =================================================================
-// G-CODE helpers
-// =================================================================
-function emitCutNormal(lines, pts, closed, tool){
-  for (let i = 1; i < pts.length; i++){
-    lines.push(`G1 X${pts[i].x.toFixed(3)} Y${pts[i].y.toFixed(3)} F${tool.feed}`);
-  }
-  if (closed){
-    const f = pts[0], lastPt = pts[pts.length - 1];
-    if (Math.hypot(lastPt.x - f.x, lastPt.y - f.y) > 1e-3){
-      lines.push(`G1 X${f.x.toFixed(3)} Y${f.y.toFixed(3)} F${tool.feed}`);
+// ================= G-CODE: emision con arcos =================
+// Emite el contorno como G1 para lineas y G2/G3 para arcos.
+// prims = primitivas del contorno (ya offset), offX/offY = offset global
+function emitPrimitivesGCode(lines, prims, tool, offX, offY, feed){
+  let curX = 0, curY = 0;
+  const startPt = getPrimStart(prims[0]);
+  curX = startPt.x + offX;
+  curY = startPt.y + offY;
+  for (let i = 0; i < prims.length; i++){
+    const p = prims[i];
+    if (p.type === 'line'){
+      const ex = p.x2 + offX, ey = p.y2 + offY;
+      lines.push(`G1 X${ex.toFixed(3)} Y${ey.toFixed(3)} F${feed}`);
+      curX = ex; curY = ey;
+    } else {
+      const cx = p.cx + offX, cy = p.cy + offY;
+      const gcode = p.ccw ? 'G3' : 'G2';
+      if (p.closed){
+        // Circulo completo: partir en 2 semicirculos
+        const dir = p.ccw ? 1 : -1;
+        const midAng = p.sa + dir * Math.PI;
+        const mx = cx + p.r * Math.cos(midAng), my = cy + p.r * Math.sin(midAng);
+        const ex = cx + p.r * Math.cos(p.sa), ey = cy + p.r * Math.sin(p.sa);
+        let I = cx - curX, J = cy - curY;
+        lines.push(`${gcode} X${mx.toFixed(3)} Y${my.toFixed(3)} I${I.toFixed(3)} J${J.toFixed(3)} F${feed}`);
+        I = cx - mx; J = cy - my;
+        lines.push(`${gcode} X${ex.toFixed(3)} Y${ey.toFixed(3)} I${I.toFixed(3)} J${J.toFixed(3)} F${feed}`);
+        curX = ex; curY = ey;
+      } else {
+        const ex = cx + p.r * Math.cos(p.ea), ey = cy + p.r * Math.sin(p.ea);
+        const I = cx - curX, J = cy - curY;
+        lines.push(`${gcode} X${ex.toFixed(3)} Y${ey.toFixed(3)} I${I.toFixed(3)} J${J.toFixed(3)} F${feed}`);
+        curX = ex; curY = ey;
+      }
     }
   }
 }
+
+// Emite con patillas (usa puntos interpolados, G1)
 function emitCutWithTabs(lines, pts, closed, tool, fullZ, tabs, tabHeight){
   const path = buildPath(pts, closed);
   const cumLens = computeCumLens(path);
@@ -1178,29 +1136,21 @@ function emitCutWithTabs(lines, pts, closed, tool, fullZ, tabs, tabHeight){
     if (sEnd <= sStart + 1e-6) continue;
     if (sStart > s + 1e-6){
       const between = pathPointsBetween(path, cumLens, s, sStart);
-      for (let i = 1; i < between.length; i++){
-        lines.push(`G1 X${between[i].x.toFixed(3)} Y${between[i].y.toFixed(3)} F${tool.feed}`);
-      }
+      for (let i = 1; i < between.length; i++) lines.push(`G1 X${between[i].x.toFixed(3)} Y${between[i].y.toFixed(3)} F${tool.feed}`);
     }
-    lines.push(`G1 Z${tabZ.toFixed(3)} F${tool.feedZ}  (patilla subir ${tabHeight}mm)`);
+    lines.push(`G1 Z${tabZ.toFixed(3)} F${tool.feedZ}  (patilla subir)`);
     const tabPts = pathPointsBetween(path, cumLens, sStart, sEnd);
-    for (let i = 1; i < tabPts.length; i++){
-      lines.push(`G1 X${tabPts[i].x.toFixed(3)} Y${tabPts[i].y.toFixed(3)} F${tool.feed}`);
-    }
+    for (let i = 1; i < tabPts.length; i++) lines.push(`G1 X${tabPts[i].x.toFixed(3)} Y${tabPts[i].y.toFixed(3)} F${tool.feed}`);
     lines.push(`G1 Z${fullZ.toFixed(3)} F${tool.feedZ}  (patilla bajar)`);
     s = sEnd;
   }
   if (L > s + 1e-6){
     const rest = pathPointsBetween(path, cumLens, s, L);
-    for (let i = 1; i < rest.length; i++){
-      lines.push(`G1 X${rest[i].x.toFixed(3)} Y${rest[i].y.toFixed(3)} F${tool.feed}`);
-    }
+    for (let i = 1; i < rest.length; i++) lines.push(`G1 X${rest[i].x.toFixed(3)} Y${rest[i].y.toFixed(3)} F${tool.feed}`);
   }
 }
 
-// =================================================================
-// SIMULACION
-// =================================================================
+// ================= SIMULACION =================
 function buildSimFromOps(){
   rebuildAllContours();
   const moves = [];
@@ -1226,9 +1176,7 @@ function buildSimFromOps(){
     const last = pts[pts.length - 1];
     lastX = last.x; lastY = last.y; lastZ = z;
   };
-  const addSpindlePause = () => {
-    if (S.spindlePause > 0) moves.push({ type:'pause', points:[{x:lastX, y:lastY}], z: lastZ, duration: S.spindlePause });
-  };
+  const addSpindlePause = () => { if (S.spindlePause > 0) moves.push({ type:'pause', points:[{x:lastX, y:lastY}], z: lastZ, duration: S.spindlePause }); };
   const emitSimCutWithTabs = (pts, closed, fullZ, feed, tabHeight, tabs) => {
     const path = buildPath(pts, closed);
     const cumLens = computeCumLens(path);
@@ -1240,11 +1188,7 @@ function buildSimFromOps(){
       const sStart = Math.max(0, Math.min(L, tab.sStart));
       const sEnd = Math.max(0, Math.min(L, tab.sEnd));
       if (sEnd <= sStart + 1e-6) continue;
-      if (sStart > s + 1e-6){
-        const between = pathPointsBetween(path, cumLens, s, sStart);
-        if (between.length >= 2) addMove('cut', between, fullZ, feed);
-        s = sStart;
-      }
+      if (sStart > s + 1e-6){ const between = pathPointsBetween(path, cumLens, s, sStart); if (between.length >= 2) addMove('cut', between, fullZ, feed); s = sStart; }
       const sPt = getPointAtArcLength(path, cumLens, sStart);
       const ePt = getPointAtArcLength(path, cumLens, sEnd);
       addMove('cut', [sPt], tabZ, 400);
@@ -1253,10 +1197,7 @@ function buildSimFromOps(){
       addMove('cut', [ePt], fullZ, 400);
       s = sEnd;
     }
-    if (L > s + 1e-6){
-      const rest = pathPointsBetween(path, cumLens, s, L);
-      if (rest.length >= 2) addMove('cut', rest, fullZ, feed);
-    }
+    if (L > s + 1e-6){ const rest = pathPointsBetween(path, cumLens, s, L); if (rest.length >= 2) addMove('cut', rest, fullZ, feed); }
   };
 
   const toolOrder = [];
@@ -1303,11 +1244,12 @@ function buildSimFromOps(){
           tabsEff = computeTabSegments(ptsEff, true, S.tabs.count, S.tabs.width, seed, cfg.diam);
         }
         if (Math.abs(lastZ - cfg.safe) > 0.01) addMove('rapid', [{x:lastX, y:lastY}], cfg.safe, S.rapidZ);
+        // Ir al punto de inicio
+        addMove('rapid', [{x:lastX, y:lastY}, {x:f.x, y:f.y}], cfg.safe, S.rapidXY);
         for (let k=0;k<passes;k++){
           const z = -Math.min((k+1)*step, cfg.depth);
           const isLastPass = (k === passes - 1);
-          const moveZ = (k === 0) ? cfg.safe : cfg.retract;
-          addMove('rapid', [{x:lastX, y:lastY}, {x:f.x, y:f.y}], moveZ, S.rapidXY);
+          // Plunge (sin G0 entre medias, ya estamos en f)
           addMove('cut', [{x:f.x, y:f.y}], z, cfg.feedZ);
           if (S.tabs.enabled && isLastPass && isClosed && tabsEff.length > 0){
             emitSimCutWithTabs(ptsEff, true, z, cfg.feed, S.tabs.height, tabsEff);
@@ -1315,10 +1257,10 @@ function buildSimFromOps(){
             const pts = isClosed ? ptsEff.concat([ptsEff[0]]) : ptsEff;
             addMove('cut', pts, z, cfg.feed);
           }
-          const lastPt = (S.tabs.enabled && isLastPass && isClosed && tabsEff.length > 0)
-            ? ptsEff[0] : (isClosed ? ptsEff[0] : ptsEff[ptsEff.length - 1]);
-          addMove('rapid', [{x:lastPt.x, y:lastPt.y}], cfg.retract, S.rapidZ);
+          // No lift entre pasadas
         }
+        const lastPt = isClosed ? ptsEff[0] : ptsEff[ptsEff.length - 1];
+        addMove('rapid', [{x:lastPt.x, y:lastPt.y}], cfg.retract, S.rapidZ);
       } else if (op.type === 'pocket'){
         if (Math.abs(lastZ - cfg.safe) > 0.01) addMove('rapid', [{x:lastX, y:lastY}], cfg.safe, S.rapidZ);
         let firstMove = true;
@@ -1391,21 +1333,17 @@ function updateSimUI(){
   if (mv){
     if (mv.type === 'pause'){ simOpInfoEl.textContent = 'PAUSA mandrino'; simOpInfoEl.style.color = '#ff8800'; }
     else if (mv.type === 'tab'){ simOpInfoEl.textContent = 'PATILLA Z=' + (mv.z||0).toFixed(2) + 'mm'; simOpInfoEl.style.color = '#ff44aa'; }
-    else {
-      const isCut = mv.type === 'cut';
+    else { const isCut = mv.type === 'cut';
       simOpInfoEl.textContent = (isCut ? 'CORTE' : 'RAPIDO') + ' Z=' + (mv.z||0).toFixed(2) + 'mm';
-      simOpInfoEl.style.color = isCut ? '#00ff88' : '#4da6ff';
-    }
+      simOpInfoEl.style.color = isCut ? '#00ff88' : '#4da6ff'; }
   }
   if (S.simPlaying){ btnPlay.textContent = 'PAUSA'; btnPlay.classList.add('playing'); btnPlay.classList.remove('play'); }
   else { btnPlay.textContent = 'PLAY'; btnPlay.classList.remove('playing'); btnPlay.classList.add('play'); }
 }
-function simPlay(){
-  if (!S.simMoves.length){ showToast('Genera primero','warn'); return; }
+function simPlay(){ if (!S.simMoves.length){ showToast('Genera primero','warn'); return; }
   if (S.simT >= S.simTotalTime) S.simT = 0;
   S.simPlaying = true; S.simLastFrame = performance.now();
-  updateSimUI(); S.simAnimId = requestAnimationFrame(simTick);
-}
+  updateSimUI(); S.simAnimId = requestAnimationFrame(simTick); }
 function simPause(){ S.simPlaying = false; if (S.simAnimId){ cancelAnimationFrame(S.simAnimId); S.simAnimId = null; } updateSimUI(); render(); }
 function simTick(){
   if (!S.simPlaying) return;
@@ -1426,9 +1364,7 @@ function simSeek(pct){ S.simT = (pct / 1000) * S.simTotalTime; updateSimUI(); re
 function simReset(){ if (S.simAnimId) cancelAnimationFrame(S.simAnimId); S.simPlaying=false; S.simT=0; updateSimUI(); render(); }
 function simEnd(){ if (S.simAnimId) cancelAnimationFrame(S.simAnimId); S.simPlaying=false; S.simT = S.simTotalTime; updateSimUI(); render(); }
 
-// =================================================================
-// RENDER
-// =================================================================
+// ================= RENDER =================
 function render(){
   const r = canvasContainer.getBoundingClientRect();
   ctx.clearRect(0,0,r.width,r.height);
@@ -1462,10 +1398,7 @@ function render(){
     ctx.beginPath();
     const s0 = w2s(ptsEff[0].x, ptsEff[0].y);
     ctx.moveTo(s0.x-r.left, s0.y-r.top);
-    for (let i=1;i<ptsEff.length;i++){
-      const s = w2s(ptsEff[i].x, ptsEff[i].y);
-      ctx.lineTo(s.x-r.left, s.y-r.top);
-    }
+    for (let i=1;i<ptsEff.length;i++){ const s = w2s(ptsEff[i].x, ptsEff[i].y); ctx.lineTo(s.x-r.left, s.y-r.top); }
     if (c.closed) ctx.closePath();
     ctx.stroke();
     if (ptsEff.length >= 2){
@@ -1534,15 +1467,13 @@ function render(){
       ctx.setLineDash([]); }
   }
   if (S.pocketStart && S.mode === 'pocket'){
-    const s1 = w2s(S.pocketStart.x, S.pocketStart.y);
-    const s2 = w2s(S.mwx, S.mwy);
+    const s1 = w2s(S.pocketStart.x, S.pocketStart.y), s2 = w2s(S.mwx, S.mwy);
     ctx.strokeStyle = '#4ec990'; ctx.lineWidth = 1.5; ctx.setLineDash([4,3]);
     ctx.strokeRect(Math.min(s1.x,s2.x)-r.left, Math.min(s1.y,s2.y)-r.top, Math.abs(s2.x-s1.x), Math.abs(s2.y-s1.y));
     ctx.setLineDash([]);
   }
   if (S.selRect){
-    const s1 = w2s(S.selRect.x1, S.selRect.y1);
-    const s2 = w2s(S.selRect.x2, S.selRect.y2);
+    const s1 = w2s(S.selRect.x1, S.selRect.y1), s2 = w2s(S.selRect.x2, S.selRect.y2);
     ctx.strokeStyle = '#ffb347'; ctx.lineWidth = 1.5; ctx.setLineDash([4,3]);
     ctx.strokeRect(Math.min(s1.x,s2.x)-r.left, Math.min(s1.y,s2.y)-r.top, Math.abs(s2.x-s1.x), Math.abs(s2.y-s1.y));
     ctx.setLineDash([]);
@@ -1557,19 +1488,14 @@ function drawSimulation(r){
   const moves = S.simMoves;
   let accTime = 0;
   let toolPos = null, toolZ = 0, toolKind = 'rapid';
-
   for (let mi = 0; mi < moves.length; mi++){
     const mv = moves[mi];
-    const mvStart = accTime;
-    const mvEnd = accTime + mv.duration;
+    const mvStart = accTime, mvEnd = accTime + mv.duration;
     if (S.simT <= mvStart) break;
     const isCurrent = S.simT < mvEnd;
     const progress = isCurrent ? (S.simT - mvStart) / mv.duration : 1;
     const pts = mv.points;
-    if (mv.type === 'pause'){
-      if (isCurrent){ toolPos = pts[0]; toolZ = mv.z; toolKind = 'pause'; }
-      accTime = mvEnd; if (isCurrent) break; continue;
-    }
+    if (mv.type === 'pause'){ if (isCurrent){ toolPos = pts[0]; toolZ = mv.z; toolKind = 'pause'; } accTime = mvEnd; if (isCurrent) break; continue; }
     if (!pts || pts.length < 1){ accTime = mvEnd; continue; }
     let color, lw, dash;
     if (mv.type === 'cut'){ color = '#00ff88'; lw = 3; dash = []; }
@@ -1644,7 +1570,6 @@ function drawSimulation(r){
     else if (toolKind === 'tab'){ ctx.fillStyle = '#ff44aa'; ctx.font = 'bold 11px monospace';
       ctx.fillText('PATILLA', s.x-r.left + tr + 6, s.y-r.top - 4); }
   }
-
   const hudX = r.left + 12, hudY = r.top + 12, hudW = 250, hudH = 62;
   ctx.fillStyle = 'rgba(0,0,0,0.75)'; ctx.fillRect(hudX, hudY, hudW, hudH);
   ctx.strokeStyle = '#2a3550'; ctx.lineWidth = 1; ctx.strokeRect(hudX, hudY, hudW, hudH);
@@ -1672,7 +1597,6 @@ function drawSimulation(r){
     ctx.fillText(`Z=${(curMv.z||0).toFixed(2)}mm  ${S.simSpeedMult.toFixed(1)}x`, barX + 100, barY + barH + 30);
   }
 }
-
 function drawGrid(r){
   let sp = 10;
   if (S.scale < 0.3) sp = 50; else if (S.scale < 0.8) sp = 20;
@@ -1685,7 +1609,6 @@ function drawGrid(r){
   for (let y=sy; y<=ey; y+=sp){ const p = w2s(0,y); ctx.moveTo(0,p.y-r.top); ctx.lineTo(r.width,p.y-r.top); }
   ctx.stroke();
 }
-
 function drawEnt(e, color, lw, r){
   ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = lw; ctx.setLineDash([]);
   if (e.type === 'LINE'){ const s1 = w2s(e.x1,e.y1), s2 = w2s(e.x2,e.y2);
@@ -1709,14 +1632,11 @@ function drawEnt(e, color, lw, r){
     ctx.beginPath(); ctx.arc(s.x-r.left, s.y-r.top, 3, 0, Math.PI*2); ctx.fill(); }
 }
 
-// =================================================================
-// GENERADOR DE G-CODE
-// =================================================================
+// ================= GENERADOR DE G-CODE =================
 function genGCode(){
   if (!S.operations.length){ gcodeEl.textContent = '(Sin operaciones)'; return ''; }
   if (!S.tools.length){ gcodeEl.textContent = '(Sin herramientas)'; return ''; }
   rebuildAllContours();
-
   const toolOrder = [];
   const groups = new Map();
   for (const op of S.operations){
@@ -1725,20 +1645,17 @@ function genGCode(){
     if (!groups.has(tid)){ groups.set(tid, []); toolOrder.push(tid); }
     groups.get(tid).push({ op, originalIndex: S.operations.indexOf(op) });
   }
-
   const lines = [];
   lines.push('%');
   lines.push('O0001 (CNC DXF)');
   lines.push('(Generado por CNC DXF a G-Code)');
   lines.push('G21 G90 G17');
-
   const maxSafe = Math.max(...S.tools.map(t => t.safe), 10);
   lines.push(`G0 Z${maxSafe.toFixed(3)}`);
   lines.push('G0 X0 Y0');
   lines.push('');
 
   let toolChangeCount = 0;
-
   for (const tid of toolOrder){
     const tool = getToolById(tid); if (!tool) continue;
     const entries = groups.get(tid);
@@ -1749,16 +1666,12 @@ function genGCode(){
     lines.push(`(--- Herramienta T${tool.toolNumber}: ${tool.name} ---)`);
     lines.push(`(Diam ${tool.diam}mm - ${tool.rpm}rpm - Avance XY ${tool.feed} - Avance Z ${tool.feedZ})`);
     lines.push(`(Corte ${cutDirName} - Mandrino ${spindleDir} ${dirName})`);
-    if (S.tabs.enabled){
-      lines.push(`(Patillas: ${S.tabs.count} uds - ancho REAL ${S.tabs.width}mm - tramo trayectoria ${(S.tabs.width+tool.diam).toFixed(3)}mm - alto ${S.tabs.height}mm)`);
-    }
+    if (S.tabs.enabled){ lines.push(`(Patillas: ${S.tabs.count} uds - ancho REAL ${S.tabs.width}mm - alto ${S.tabs.height}mm)`); }
     lines.push(`G0 Z${tool.safe.toFixed(3)}`);
     lines.push(`T${tool.toolNumber} M6`);
     lines.push(`S${tool.rpm} ${spindleDir}`);
-    if (S.spindlePause > 0){
-      const pauseMs = Math.round(S.spindlePause * 1000);
-      lines.push(`G4 P${pauseMs}  (pausa estabilizacion mandrino ${S.spindlePause}s)`);
-    }
+    if (S.spindlePause > 0){ const pauseMs = Math.round(S.spindlePause * 1000);
+      lines.push(`G4 P${pauseMs}  (pausa estabilizacion mandrino ${S.spindlePause}s)`); }
     lines.push('');
     toolChangeCount++;
 
@@ -1769,19 +1682,29 @@ function genGCode(){
       lines.push(`(Operacion ${oi+1}/${entries.length}: ${op.type.toUpperCase()})`);
 
       if (op.type === 'drill'){
-        for (const p of op.points){
-          lines.push(`G0 X${p.x.toFixed(3)} Y${p.y.toFixed(3)}`);
-          for (let k=0;k<passes;k++){
-            const z = -Math.min((k+1)*step, tool.depth);
-            lines.push(`G1 Z${z.toFixed(3)} F${tool.feedZ}`);
-            lines.push(`G0 Z${tool.retract.toFixed(3)}`);
-          }
-          lines.push(`G0 Z${tool.safe.toFixed(3)}`);
+        // === CICLO DE TALADRADO ===
+        if (op.points.length === 0){ lines.push(''); continue; }
+        const usePeck = passes > 1;
+        lines.push(`G0 Z${tool.safe.toFixed(3)}`);
+        lines.push(`G0 X${op.points[0].x.toFixed(3)} Y${op.points[0].y.toFixed(3)}`);
+        lines.push(`G0 Z${tool.retract.toFixed(3)}`);
+        if (usePeck){
+          // G83: taladrado con picoteo
+          lines.push(`G83 X${op.points[0].x.toFixed(3)} Y${op.points[0].y.toFixed(3)} Z-${tool.depth.toFixed(3)} R${tool.retract.toFixed(3)} Q${step.toFixed(3)} F${tool.feedZ}`);
+        } else {
+          // G81: taladrado simple
+          lines.push(`G81 X${op.points[0].x.toFixed(3)} Y${op.points[0].y.toFixed(3)} Z-${tool.depth.toFixed(3)} R${tool.retract.toFixed(3)} F${tool.feedZ}`);
         }
+        for (let pi = 1; pi < op.points.length; pi++){
+          lines.push(`X${op.points[pi].x.toFixed(3)} Y${op.points[pi].y.toFixed(3)}`);
+        }
+        lines.push('G80');
+        lines.push(`G0 Z${tool.safe.toFixed(3)}`);
       } else if (op.type === 'cut'){
         const c = S.cutContours[originalIndex];
-        if (!c || c.points.length < 2){ lines.push('(sin contorno resuelto)'); lines.push(''); continue; }
+        if (!c || c.points.length < 2){ lines.push('(sin contorno)'); lines.push(''); continue; }
         const pts = effectiveContour(c.points);
+        const prims = c.primitives;
         const isClosed = c.closed;
         const f = pts[0];
         let tabsEff = [];
@@ -1790,19 +1713,26 @@ function genGCode(){
           tabsEff = computeTabSegments(pts, true, S.tabs.count, S.tabs.width, seed, tool.diam);
         }
         lines.push(`G0 Z${tool.safe.toFixed(3)}`);
+        lines.push(`G0 X${f.x.toFixed(3)} Y${f.y.toFixed(3)}`);
+        // Multiples pasadas SIN subir Z entre ellas (contornos cerrados)
         for (let k=0;k<passes;k++){
           const z = -Math.min((k+1)*step, tool.depth);
           const isLastPass = (k === passes - 1);
-          lines.push(`G0 X${f.x.toFixed(3)} Y${f.y.toFixed(3)}`);
           lines.push(`G1 Z${z.toFixed(3)} F${tool.feedZ}`);
           if (S.tabs.enabled && isLastPass && isClosed && tabsEff.length > 0){
             lines.push(`(--- pasada con ${tabsEff.length} patillas - patilla final ${S.tabs.width}mm - alto ${S.tabs.height}mm ---)`);
             emitCutWithTabs(lines, pts, isClosed, tool, z, tabsEff, S.tabs.height);
+          } else if (prims && prims.length > 0){
+            // Emision con arcos reales
+            emitPrimitivesGCode(lines, prims, tool, S.offsetX, S.offsetY, tool.feed);
           } else {
-            emitCutNormal(lines, pts, isClosed, tool);
+            // Fallback: puntos interpolados
+            for (let i = 1; i < pts.length; i++) lines.push(`G1 X${pts[i].x.toFixed(3)} Y${pts[i].y.toFixed(3)} F${tool.feed}`);
+            if (isClosed){ const lastPt = pts[pts.length - 1]; if (Math.hypot(lastPt.x - f.x, lastPt.y - f.y) > 1e-3) lines.push(`G1 X${f.x.toFixed(3)} Y${f.y.toFixed(3)} F${tool.feed}`); }
           }
-          lines.push(`G0 Z${tool.retract.toFixed(3)}`);
         }
+        // Retraer solo al final
+        lines.push(`G0 Z${tool.retract.toFixed(3)}`);
       } else if (op.type === 'pocket'){
         lines.push(`G0 Z${tool.safe.toFixed(3)}`);
         for (const a of op.areas){
@@ -1811,9 +1741,9 @@ function genGCode(){
             const x2 = Math.max(a.x1,a.x2)-tool.diam/2, y2 = Math.max(a.y1,a.y2)-tool.diam/2;
             if (x2 <= x1 || y2 <= y1) continue;
             const stepY = tool.diam * (1 - tool.overlap);
+            lines.push(`G0 X${x1.toFixed(3)} Y${y1.toFixed(3)}`);
             for (let k=0;k<passes;k++){
               const z = -Math.min((k+1)*step, tool.depth);
-              lines.push(`G0 X${x1.toFixed(3)} Y${y1.toFixed(3)}`);
               lines.push(`G1 Z${z.toFixed(3)} F${tool.feedZ}`);
               let dir = 1, y = y1;
               while (y <= y2 + 1e-9){
@@ -1824,26 +1754,28 @@ function genGCode(){
                 lines.push(`G1 X${xn.toFixed(3)} Y${y.toFixed(3)} F${tool.feed}`);
                 dir *= -1;
               }
-              lines.push(`G0 Z${tool.retract.toFixed(3)}`);
+              if (k < passes - 1){ lines.push(`G0 X${x1.toFixed(3)} Y${y1.toFixed(3)}`); }
             }
+            lines.push(`G0 Z${tool.retract.toFixed(3)}`);
           } else if (a.shape === 'circle'){
             const stepR = tool.diam * (1 - tool.overlap);
             for (let k=0;k<passes;k++){
               const z = -Math.min((k+1)*step, tool.depth);
               let rr = stepR;
+              lines.push(`G0 X${(a.cx+stepR).toFixed(3)} Y${a.cy.toFixed(3)}`);
               while (rr <= a.r){
                 const st = Math.max(24, Math.ceil(2*Math.PI*rr / (stepR*0.5)));
-                lines.push(`G0 X${(a.cx+rr).toFixed(3)} Y${a.cy.toFixed(3)}`);
                 lines.push(`G1 Z${z.toFixed(3)} F${tool.feedZ}`);
                 for (let s=1;s<=st;s++){
                   const ang = s/st*Math.PI*2;
                   const px = a.cx + rr*Math.cos(ang), py = a.cy + rr*Math.sin(ang);
                   lines.push(`G1 X${px.toFixed(3)} Y${py.toFixed(3)} F${tool.feed}`);
                 }
-                lines.push(`G0 Z${tool.retract.toFixed(3)}`);
                 rr += stepR;
+                if (rr <= a.r) lines.push(`G0 X${(a.cx+rr).toFixed(3)} Y${a.cy.toFixed(3)}`);
               }
             }
+            lines.push(`G0 Z${tool.retract.toFixed(3)}`);
           }
         }
       }
@@ -1856,13 +1788,11 @@ function genGCode(){
   lines.push('%');
   const g = lines.join('\n');
   gcodeEl.textContent = g;
-  showToast(`G-Code generado - ${toolChangeCount} cambio(s)${S.tabs.enabled?' - patillas ON':''}`,'success');
+  showToast(`G-Code ✓ ${toolChangeCount} cambio(s)`,'success');
   return g;
 }
 
-// =================================================================
-// UI
-// =================================================================
+// ================= UI =================
 let toastT;
 function showToast(msg, type=''){
   toastEl.textContent = msg;
@@ -1901,8 +1831,8 @@ function onFile(e){
         Object.entries(counts).map(([k,v]) => `${k}: ${v}`).join('\n') +
         `\nUnidades: ${parsed.header['$INSUNITS'] || 'no especificado'}`;
       fileEl.textContent = `${file.name} (${norm.length})`;
-      if (norm.length === 0) showToast('Sin entidades. Mira F12.','warn');
-      else { const s = Object.entries(counts).map(([k,v]) => `${k}:${v}`).join(' '); showToast(`${norm.length} ent - ${s}`,'success'); }
+      if (norm.length === 0) showToast('Sin entidades','warn');
+      else { showToast(`${norm.length} ent - ${Object.keys(counts).join(', ')}`,'success'); }
     } catch (err){ console.error(err); showToast('Error: '+err.message,'warn'); }
   };
   reader.readAsText(file);
@@ -1926,14 +1856,10 @@ $('btnDl').addEventListener('click', () => {
 $('btnCopy').addEventListener('click', () => {
   const g = gcodeEl.textContent;
   if (g && !g.startsWith('(')) navigator.clipboard.writeText(g).then(() => showToast('Copiado','success')); });
-$('btnFlipArcs').addEventListener('click', () => {
-  S.flipArcs = !S.flipArcs;
-  $('btnFlipArcs').textContent = S.flipArcs ? 'Arcos INV' : 'Arcos';
-  render(); scheduleSave(); });
-$('btnFlipY').addEventListener('click', () => {
-  S.flipY = !S.flipY;
-  $('btnFlipY').textContent = S.flipY ? 'Y INV' : 'Y';
-  fitView(); render(); scheduleSave(); });
+$('btnFlipArcs').addEventListener('click', () => { S.flipArcs = !S.flipArcs;
+  $('btnFlipArcs').textContent = S.flipArcs ? 'Arcos INV' : 'Arcos'; render(); scheduleSave(); });
+$('btnFlipY').addEventListener('click', () => { S.flipY = !S.flipY;
+  $('btnFlipY').textContent = S.flipY ? 'Y INV' : 'Y'; fitView(); render(); scheduleSave(); });
 modeBtns.addEventListener('click', e => { const b = e.target.closest('.mode-btn'); if (b) setMode(b.dataset.mode); });
 $('btnAddTool').addEventListener('click', addTool);
 $('btnDupTool').addEventListener('click', duplicateTool);
@@ -1961,34 +1887,24 @@ $('cfgSpindlePause').addEventListener('change', () => { S.spindlePause = Math.ma
 $('cfgRapidXY').addEventListener('change', () => { S.rapidXY = Math.max(100, parseFloat($('cfgRapidXY').value) || 5000); buildSimFromOps(); render(); scheduleSave(); });
 $('cfgRapidZ').addEventListener('change', () => { S.rapidZ = Math.max(100, parseFloat($('cfgRapidZ').value) || 3000); buildSimFromOps(); render(); scheduleSave(); });
 
-$('tabsEnabled').addEventListener('change', () => {
-  S.tabs.enabled = $('tabsEnabled').checked;
+$('tabsEnabled').addEventListener('change', () => { S.tabs.enabled = $('tabsEnabled').checked;
   rebuildAllContours(); buildSimFromOps(); render(); scheduleSave();
-  showToast(S.tabs.enabled ? 'Patillas activadas' : 'Patillas desactivadas','success'); });
-$('tabsCount').addEventListener('change', () => {
-  S.tabs.count = Math.max(1, Math.min(20, parseInt($('tabsCount').value) || 3));
+  showToast(S.tabs.enabled ? 'Patillas ON' : 'Patillas OFF','success'); });
+$('tabsCount').addEventListener('change', () => { S.tabs.count = Math.max(1, Math.min(20, parseInt($('tabsCount').value) || 3));
   rebuildAllContours(); buildSimFromOps(); render(); scheduleSave(); });
-$('tabsWidth').addEventListener('change', () => {
-  S.tabs.width = Math.max(0.1, parseFloat($('tabsWidth').value) || 1);
-  rebuildAllContours(); buildSimFromOps(); render(); scheduleSave();
-  showToast(`Ancho de patilla: ${S.tabs.width}mm de material`, 'success'); });
-$('tabsHeight').addEventListener('change', () => {
-  S.tabs.height = Math.max(0.1, parseFloat($('tabsHeight').value) || 1);
+$('tabsWidth').addEventListener('change', () => { S.tabs.width = Math.max(0.1, parseFloat($('tabsWidth').value) || 1);
+  rebuildAllContours(); buildSimFromOps(); render(); scheduleSave(); });
+$('tabsHeight').addEventListener('change', () => { S.tabs.height = Math.max(0.1, parseFloat($('tabsHeight').value) || 1);
   buildSimFromOps(); render(); scheduleSave(); });
-$('btnShuffleTabs').addEventListener('click', () => {
-  S.tabs.seed = (S.tabs.seed + 7919) >>> 0;
-  rebuildAllContours(); buildSimFromOps(); render(); scheduleSave();
-  showToast('Patillas reubicadas','success'); });
+$('btnShuffleTabs').addEventListener('click', () => { S.tabs.seed = (S.tabs.seed + 7919) >>> 0;
+  rebuildAllContours(); buildSimFromOps(); render(); scheduleSave(); showToast('Patillas reubicadas','success'); });
 
 btnPlay.addEventListener('click', () => { if (S.simPlaying) simPause(); else simPlay(); });
 btnReset.addEventListener('click', simReset);
 btnEnd.addEventListener('click', simEnd);
 simProgressEl.addEventListener('input', () => { if (S.simPlaying) simPause(); simSeek(parseInt(simProgressEl.value)); });
-simSpeedEl.addEventListener('input', () => {
-  const raw = parseInt(simSpeedEl.value) || 10;
-  S.simSpeedMult = raw / 10;
-  simSpeedVal.textContent = S.simSpeedMult.toFixed(1) + 'x';
-});
+simSpeedEl.addEventListener('input', () => { const raw = parseInt(simSpeedEl.value) || 10;
+  S.simSpeedMult = raw / 10; simSpeedVal.textContent = S.simSpeedMult.toFixed(1) + 'x'; });
 S.simSpeedMult = parseInt(simSpeedEl.value) / 10;
 simSpeedVal.textContent = S.simSpeedMult.toFixed(1) + 'x';
 
@@ -2078,7 +1994,7 @@ $('btnCenter').addEventListener('click', () => {
   S.offsetX = -(bb.mnx + bb.w/2); S.offsetY = -(bb.mny + bb.h/2);
   $('offsetX').value = S.offsetX.toFixed(3); $('offsetY').value = S.offsetY.toFixed(3);
   fitView(); rebuildAllContours(); buildSimFromOps(); render(); scheduleSave();
-  showToast('Centrado en 0,0','success'); });
+  showToast('Centrado','success'); });
 $('offsetX').addEventListener('change', () => { S.offsetX = parseFloat($('offsetX').value)||0; fitView(); rebuildAllContours(); buildSimFromOps(); render(); scheduleSave(); });
 $('offsetY').addEventListener('change', () => { S.offsetY = parseFloat($('offsetY').value)||0; fitView(); rebuildAllContours(); buildSimFromOps(); render(); scheduleSave(); });
 
@@ -2099,7 +2015,7 @@ function init(){
     updateToolsList(); updateOpsList(); extractLayers();
     fitView(); updateSimUI(); updateTabsInfo(); render();
   } else { showToast('Proyecto restaurado','success'); }
-  console.log('CNC DXF a G-Code - offset por primitivas (arcos compensados por radio)');
+  console.log('CNC DXF a G-Code - G2/G3 + G81/G83 + sin subir Z entre pasadas');
 }
 init();
 })();
