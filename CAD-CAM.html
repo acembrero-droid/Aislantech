@@ -63,8 +63,7 @@ canvas{display:block;position:absolute;top:0;left:0}
 .row input,.row select{background:var(--input);border:1px solid var(--border);color:var(--text);padding:4px 7px;border-radius:4px;font-size:.72rem;width:80px;text-align:right;font-family:inherit}
 .row select{text-align:left;width:90px}
 .row input[type="checkbox"]{width:auto;transform:scale(1.2);accent-color:var(--accent)}
-/* G-code con lineas individuales */
-.gcode{background:#0d0f12;color:#c0d0e0;font-family:Consolas,monospace;font-size:.66rem;border-radius:5px;padding:6px 4px;min-height:150px;max-height:280px;overflow-y:auto;border:1px solid var(--border);line-height:1.4;position:relative}
+.gcode{background:#0d0f12;color:#c0d0e0;font-family:Consolas,monospace;font-size:.66rem;border-radius:5px;padding:6px 4px;min-height:150px;max-height:280px;overflow-y:auto;border:1px solid var(--border);line-height:1.35;position:relative}
 .gline{padding:1px 6px;white-space:pre;cursor:pointer;border-left:2px solid transparent;transition:background .1s}
 .gline:hover{background:#1e242b}
 .gline.active{background:#153326;color:#00ff88;border-left-color:#00ff88}
@@ -123,8 +122,7 @@ canvas{display:block;position:absolute;top:0;left:0}
 </div>
 <div class="main">
   <div class="panel left">
-    <div class="sec">
-      <h3>🎯 Modo</h3>
+    <div class="sec"><h3>🎯 Modo</h3>
       <div class="mode-btns" id="modeBtns">
         <button class="mode-btn active" data-mode="view"><span class="mode-dot view"></span> Navegar</button>
         <button class="mode-btn" data-mode="drill"><span class="mode-dot drill"></span> Taladros</button>
@@ -132,30 +130,23 @@ canvas{display:block;position:absolute;top:0;left:0}
         <button class="mode-btn" data-mode="pocket"><span class="mode-dot pocket"></span> Cajeados</button>
       </div>
     </div>
-    <div class="sec">
-      <h3>🔧 Herramientas <span class="mini" id="toolCount">0</span></h3>
+    <div class="sec"><h3>🔧 Herramientas <span class="mini" id="toolCount">0</span></h3>
       <div class="tool-list" id="toolList"><div class="empty-hint">Sin herramientas.</div></div>
       <button class="btn small" id="btnAddTool" style="width:100%;margin-top:6px;">+ Añadir herramienta</button>
     </div>
-    <div class="sec">
-      <h3>📋 Operaciones <span class="mini" id="opCount">0</span></h3>
+    <div class="sec"><h3>📋 Operaciones <span class="mini" id="opCount">0</span></h3>
       <ul class="ops" id="opsList"><li class="empty-hint" style="background:transparent;">Sin operaciones</li></ul>
       <button class="btn small" id="btnUndo" style="width:100%;margin-top:5px;">↩ Deshacer</button>
     </div>
-    <div class="sec">
-      <h3>🗂 Capas</h3>
+    <div class="sec"><h3>🗂 Capas</h3>
       <div class="layer-list" id="layerList"><div class="empty-hint">Sin capas</div></div>
     </div>
-    <div class="sec">
-      <h3>📐 Offset</h3>
+    <div class="sec"><h3>📐 Offset</h3>
       <div class="row"><label>Off X</label><input type="number" id="offsetX" value="0" step="1"></div>
       <div class="row"><label>Off Y</label><input type="number" id="offsetY" value="0" step="1"></div>
       <button class="btn small" id="btnCenter" style="width:100%;margin-top:3px;">🎯 Centrar en origen</button>
     </div>
-    <div class="sec">
-      <h3>🔬 Diagnóstico</h3>
-      <div class="diag" id="diag">Carga un DXF para ver estadísticas</div>
-    </div>
+    <div class="sec"><h3>🔬 Diagnóstico</h3><div class="diag" id="diag">Carga un DXF para ver estadísticas</div></div>
   </div>
   <div class="canvas-container mode-view" id="canvasContainer">
     <canvas id="mainCanvas"></canvas>
@@ -184,7 +175,6 @@ canvas{display:block;position:absolute;top:0;left:0}
         <span><span class="cb tool"></span> Herramienta</span>
       </div>
     </div>
-
     <div class="sec tabs-sec">
       <h3>🔗 Patillas · última capa</h3>
       <div class="row"><label>Activar</label><input type="checkbox" id="tabsEnabled"></div>
@@ -194,14 +184,12 @@ canvas{display:block;position:absolute;top:0;left:0}
       <button class="btn small" id="btnShuffleTabs" style="width:100%;margin-top:4px;">🎲 Reubicar patillas</button>
       <div class="info-line" id="tabsInfo">Selecciona una operación de corte para ver el detalle</div>
     </div>
-
     <div class="sec machine-sec">
       <h3>⚙ Máquina</h3>
       <div class="row"><label>Pausa mandrino (s)</label><input type="number" id="cfgSpindlePause" value="12" step="0.5" min="0" max="120"></div>
       <div class="row"><label>Rapid XY (mm/min)</label><input type="number" id="cfgRapidXY" value="5000" step="100" min="100"></div>
       <div class="row"><label>Rapid Z (mm/min)</label><input type="number" id="cfgRapidZ" value="3000" step="100" min="100"></div>
     </div>
-
     <div class="sec">
       <h3>⚙ Herramienta activa <span class="mini" id="activeToolBadge">—</span></h3>
       <div class="row"><label>Nombre</label><input type="text" id="tName" style="width:130px;text-align:left;font-family:inherit;"></div>
@@ -223,10 +211,9 @@ canvas{display:block;position:absolute;top:0;left:0}
       </div>
       <button class="btn small" id="btnDupTool" style="width:100%;margin-top:4px;">⧉ Duplicar como nueva</button>
     </div>
-
     <div class="sec">
       <h3>📄 Código G</h3>
-      <button class="btn accent" id="btnGen" style="width:100%;margin-bottom:6px;">⚙ Generar</button>
+      <button class="btn accent" id="btnGen" style="width:100%;margin-bottom:6px;">⚙ Generar / Actualizar</button>
       <div class="gcode" id="gcode"><div class="empty-hint">(Sin generar)</div></div>
       <button class="btn" id="btnDl" style="width:100%;margin-top:6px;">💾 Descargar .nc</button>
       <button class="btn small" id="btnCopy" style="width:100%;margin-top:4px;">📋 Copiar</button>
@@ -362,12 +349,14 @@ const S = {
   simMoves: [], simMoveTimes: [], simTotalTime: 0, simT: 0,
   simPlaying:false, simSpeedMult: 1, simAnimId:null, simLastFrame:0,
   saveTimer: null, cutContours: {}, cutTabs: {},
-  // NUEVAS estructuras para sincronizar G-code con sim
-  gcodeLines: [],           // array de strings
-  gcodeBlock: [],           // gcodeBlock[i] = block id (agrupación lógica: una pasada de una operación)
-  activeGlineIdx: -1,       // línea de G-code que se está ejecutando
-  selectedGlineIdx: -1,     // línea de G-code seleccionada con clic
-  blockPoints: {},          // block id -> array de puntos XY (para resaltar en canvas)
+  // Sincronización G-code ↔ simulación
+  gcodeLines: [],          // lineas de G-code
+  gcodeBlock: [],          // block id por linea (-1 = no trackeado)
+  blockPoints: {},         // block -> [{x,y}] para resaltar el segmento
+  blockZ: {},              // block -> z (para info)
+  activeGlineIdx: -1,      // linea activa en la sim
+  selectedGlineIdx: -1,    // linea seleccionada por el usuario
+  _lastActiveBlock: -999,
 };
 
 const $ = id => document.getElementById(id);
@@ -406,7 +395,7 @@ function deleteTool(id){
   S.tools = S.tools.filter(t => t.id !== id);
   if (S.activeToolId === id){ S.activeToolId = S.tools.length ? S.tools[0].id : null;
     if (S.activeToolId) loadToolIntoFields(getActiveTool()); }
-  updateToolsList(); updateOpsList(); rebuildAllContours(); buildSimFromOps(); render(); scheduleSave(); }
+  updateToolsList(); updateOpsList(); rebuildAllContours(); buildProgram(); render(); scheduleSave(); }
 function selectTool(id){ S.activeToolId = id; loadToolIntoFields(getToolById(id)); updateToolsList(); scheduleSave(); updateTabsInfo(); }
 function renameTool(id){ const t = getToolById(id); if (!t) return;
   const n = prompt('Nuevo nombre:', t.name); if (n === null) return;
@@ -446,7 +435,7 @@ function updateToolsList(){
 }
 function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
-// ================= GEOMETRIA BASE =================
+// ================= GEOMETRIA =================
 function signedArea(pts){ let a = 0; const n = pts.length;
   for (let i = 0; i < n; i++){ const p1 = pts[i], p2 = pts[(i + 1) % n]; a += p1.x * p2.y - p2.x * p1.y; }
   return a / 2;
@@ -479,8 +468,6 @@ function pathPointsBetween(path, cumLens, s1, s2){
   result.push(getPointAtArcLength(path, cumLens, s2));
   return result;
 }
-
-// ================= OFFSET POR PRIMITIVAS =================
 function entityToPrimitives(e){
   const prims = [];
   if (e.type === 'LINE'){ prims.push({ type:'line', x1:e.x1, y1:e.y1, x2:e.x2, y2:e.y2 }); }
@@ -516,18 +503,9 @@ function entityToPrimitives(e){
   }
   return prims;
 }
-function getPrimStart(p){
-  if (p.type === 'line') return { x: p.x1, y: p.y1 };
-  return { x: p.cx + p.r * Math.cos(p.sa), y: p.cy + p.r * Math.sin(p.sa) };
-}
-function getPrimEnd(p){
-  if (p.type === 'line') return { x: p.x2, y: p.y2 };
-  return { x: p.cx + p.r * Math.cos(p.ea), y: p.cy + p.r * Math.sin(p.ea) };
-}
-function flipPrimitive(p){
-  if (p.type === 'line') return { type:'line', x1:p.x2, y1:p.y2, x2:p.x1, y2:p.y1 };
-  return { ...p, sa:p.ea, ea:p.sa, ccw: !p.ccw };
-}
+function getPrimStart(p){ if (p.type === 'line') return { x: p.x1, y: p.y1 }; return { x: p.cx + p.r * Math.cos(p.sa), y: p.cy + p.r * Math.sin(p.sa) }; }
+function getPrimEnd(p){ if (p.type === 'line') return { x: p.x2, y: p.y2 }; return { x: p.cx + p.r * Math.cos(p.ea), y: p.cy + p.r * Math.sin(p.ea) }; }
+function flipPrimitive(p){ if (p.type === 'line') return { type:'line', x1:p.x2, y1:p.y2, x2:p.x1, y2:p.y1 }; return { ...p, sa:p.ea, ea:p.sa, ccw: !p.ccw }; }
 function reversePrimitives(prims){ return prims.slice().reverse().map(flipPrimitive); }
 function primLength(p){
   if (p.type === 'line') return Math.hypot(p.x2 - p.x1, p.y2 - p.y1);
@@ -543,21 +521,40 @@ function splitPrimitiveAt(p, sLocal){
   if (p.type === 'line'){
     const t = sLocal / lenP;
     const mx = p.x1 + t * (p.x2 - p.x1), my = p.y1 + t * (p.y2 - p.y1);
-    return [
-      { type:'line', x1:p.x1, y1:p.y1, x2:mx, y2:my },
-      { type:'line', x1:mx, y1:my, x2:p.x2, y2:p.y2 }
-    ];
+    return [ { type:'line', x1:p.x1, y1:p.y1, x2:mx, y2:my }, { type:'line', x1:mx, y1:my, x2:p.x2, y2:p.y2 } ];
   } else {
     let sweep = p.ea - p.sa;
     if (p.ccw && sweep < 0) sweep += 2*Math.PI;
     if (!p.ccw && sweep > 0) sweep -= 2*Math.PI;
     const t = sLocal / lenP;
     const midAngle = p.sa + t * sweep;
-    return [
-      { type:'arc', cx:p.cx, cy:p.cy, r:p.r, sa:p.sa, ea:midAngle, ccw:p.ccw, closed:false },
-      { type:'arc', cx:p.cx, cy:p.cy, r:p.r, sa:midAngle, ea:p.ea, ccw:p.ccw, closed:false }
-    ];
+    return [ { type:'arc', cx:p.cx, cy:p.cy, r:p.r, sa:p.sa, ea:midAngle, ccw:p.ccw, closed:false }, { type:'arc', cx:p.cx, cy:p.cy, r:p.r, sa:midAngle, ea:p.ea, ccw:p.ccw, closed:false } ];
   }
+}
+function primitivesToPoints(prims, closed){
+  const pts = [];
+  for (let i = 0; i < prims.length; i++){
+    const p = prims[i];
+    if (p.type === 'line'){
+      if (pts.length === 0) pts.push({ x:p.x1, y:p.y1 });
+      else { const last = pts[pts.length-1]; if (Math.hypot(last.x - p.x1, last.y - p.y1) > 1e-6) pts.push({ x:p.x1, y:p.y1 }); }
+      pts.push({ x:p.x2, y:p.y2 });
+    } else {
+      let sweep = p.ea - p.sa;
+      if (p.ccw && sweep < 0) sweep += 2*Math.PI;
+      if (!p.ccw && sweep > 0) sweep -= 2*Math.PI;
+      const steps = Math.max(8, Math.ceil(Math.abs(sweep) * p.r / 0.3));
+      const startPt = { x: p.cx + p.r*Math.cos(p.sa), y: p.cy + p.r*Math.sin(p.sa) };
+      let startIdx = 0;
+      if (pts.length > 0){ const last = pts[pts.length-1]; if (Math.hypot(last.x - startPt.x, last.y - startPt.y) < 1e-6) startIdx = 1; }
+      for (let s = startIdx; s <= steps; s++){
+        const t = s / steps;
+        const ang = p.sa + t * sweep;
+        pts.push({ x: p.cx + p.r*Math.cos(ang), y: p.cy + p.r*Math.sin(ang) });
+      }
+    }
+  }
+  return pts;
 }
 function rotatePrimitivesToStart(prims, ox, oy){
   if (!prims.length) return prims;
@@ -660,31 +657,6 @@ function offsetContourPrimitives(prims, d, side){
   }
   return offset;
 }
-function primitivesToPoints(prims, closed){
-  const pts = [];
-  for (let i = 0; i < prims.length; i++){
-    const p = prims[i];
-    if (p.type === 'line'){
-      if (pts.length === 0) pts.push({ x:p.x1, y:p.y1 });
-      else { const last = pts[pts.length-1]; if (Math.hypot(last.x - p.x1, last.y - p.y1) > 1e-6) pts.push({ x:p.x1, y:p.y1 }); }
-      pts.push({ x:p.x2, y:p.y2 });
-    } else {
-      let sweep = p.ea - p.sa;
-      if (p.ccw && sweep < 0) sweep += 2*Math.PI;
-      if (!p.ccw && sweep > 0) sweep -= 2*Math.PI;
-      const steps = Math.max(8, Math.ceil(Math.abs(sweep) * p.r / 0.3));
-      const startPt = { x: p.cx + p.r*Math.cos(p.sa), y: p.cy + p.r*Math.sin(p.sa) };
-      let startIdx = 0;
-      if (pts.length > 0){ const last = pts[pts.length-1]; if (Math.hypot(last.x - startPt.x, last.y - startPt.y) < 1e-6) startIdx = 1; }
-      for (let s = startIdx; s <= steps; s++){
-        const t = s / steps;
-        const ang = p.sa + t * sweep;
-        pts.push({ x: p.cx + p.r*Math.cos(ang), y: p.cy + p.r*Math.sin(ang) });
-      }
-    }
-  }
-  return pts;
-}
 function chainPrimitivesToContour(prims, tol){
   if (!prims.length) return { prims: [], closed: false };
   if (prims.length === 1) return { prims: [prims[0]], closed: !!prims[0].closed };
@@ -719,7 +691,6 @@ function chainPrimitivesToContour(prims, tol){
   return { prims: result, closed: isClosed };
 }
 function isContourCCW(prims){ return signedArea(primitivesToPoints(prims, true)) > 0; }
-
 function resolveCutContour(op, tool){
   const entityList = op.ids.map(i => S.entities[i]).filter(Boolean);
   if (!entityList.length) return null;
@@ -862,7 +833,7 @@ function applyProjectData(data){
   $('btnFlipY').textContent = S.flipY ? 'Y INV' : 'Y';
   extractLayers(); updateToolsList();
   if (S.activeToolId) loadToolIntoFields(getActiveTool());
-  updateOpsList(); rebuildAllContours(); buildSimFromOps();
+  updateOpsList(); rebuildAllContours(); buildProgram();
   resizeCanvas(); fitView(); render();
   fileEl.textContent = S.dxfFilename ? `${S.dxfFilename} (${S.entities.length})` : 'Sin archivo';
 }
@@ -913,7 +884,6 @@ function applyOff(e, ox, oy){
 }
 function effective(){ return S.entities.map(e => applyOff(e, S.offsetX, S.offsetY)); }
 function effectiveContour(pts){ return pts.map(p => ({ x: p.x + S.offsetX, y: p.y + S.offsetY })); }
-
 function bbox(list){
   let mnx=Infinity,mny=Infinity,mxx=-Infinity,mxy=-Infinity;
   if (!list.length) return {mnx:-50,mny:-50,mxx:50,mxy:50,w:100,h:100};
@@ -939,7 +909,6 @@ function fitView(){
   for (let k=0;k<2;k++){ const p = w2s(cx, cy); S.offX += (r.left + r.width/2) - p.x; S.offY -= p.y - (r.top + r.height/2); }
 }
 function centerOnOrigin(){ S.offX = 0; S.offY = 0; render(); showToast('Vista centrada','success'); }
-
 function distSeg(px,py,x1,y1,x2,y2){
   const dx=x2-x1, dy=y2-y1, ls=dx*dx+dy*dy;
   if (!ls) return Math.hypot(px-x1, py-y1);
@@ -990,7 +959,7 @@ function addDrill(wx, wy){
   let op = S.operations.find(o => o.type === 'drill');
   if (!op){ op = { type:'drill', points:[], toolId: S.activeToolId }; S.operations.push(op); }
   op.points.push({ x:px, y:py });
-  updateOpsList(); rebuildAllContours(); buildSimFromOps(); render(); scheduleSave();
+  updateOpsList(); rebuildAllContours(); buildProgram(); render(); scheduleSave();
 }
 function addCut(idx){
   if (idx < 0) return;
@@ -999,21 +968,25 @@ function addCut(idx){
   let op = S.operations.find(o => o.type === 'cut');
   if (!op){ op = { type:'cut', ids:[], offset:'center', toolId: S.activeToolId }; S.operations.push(op); }
   op.ids.push(idx);
-  updateOpsList(); rebuildAllContours(); buildSimFromOps(); render(); scheduleSave();
+  updateOpsList(); rebuildAllContours(); buildProgram(); render(); scheduleSave();
 }
 function addPocket(area){
   if (!S.tools.length){ showToast('Anade primero una herramienta','warn'); return; }
   let op = S.operations.find(o => o.type === 'pocket');
   if (!op){ op = { type:'pocket', areas:[], toolId: S.activeToolId }; S.operations.push(op); }
   op.areas.push(area);
-  updateOpsList(); buildSimFromOps(); render(); scheduleSave();
+  updateOpsList(); buildProgram(); render(); scheduleSave();
 }
-function removeOp(i){ if (i>=0 && i<S.operations.length) S.operations.splice(i,1); updateOpsList(); rebuildAllContours(); buildSimFromOps(); render(); scheduleSave(); }
-function clearOps(){ S.operations = []; S.pocketStart = null; S.simMoves = []; S.simMoveTimes = []; S.simTotalTime = 0; S.simT = 0;
-  S.cutContours = {}; S.cutTabs = {}; S.gcodeLines = []; S.gcodeBlock = []; S.blockPoints = {};
+function removeOp(i){ if (i>=0 && i<S.operations.length) S.operations.splice(i,1); updateOpsList(); rebuildAllContours(); buildProgram(); render(); scheduleSave(); }
+function clearOps(){
+  S.operations = []; S.pocketStart = null;
+  S.simMoves = []; S.simMoveTimes = []; S.simTotalTime = 0; S.simT = 0;
+  S.cutContours = {}; S.cutTabs = {};
+  S.gcodeLines = []; S.gcodeBlock = []; S.blockPoints = {}; S.blockZ = {};
   S.activeGlineIdx = -1; S.selectedGlineIdx = -1;
-  renderGcodeDisplay();
-  updateOpsList(); updateSimUI(); updateTabsInfo(); render(); scheduleSave(); }
+  S._lastActiveBlock = -999;
+  renderGcodeDisplay(); updateOpsList(); updateSimUI(); updateTabsInfo(); render(); scheduleSave();
+}
 function undoOp(){
   if (!S.operations.length) return;
   const op = S.operations[S.operations.length-1];
@@ -1021,7 +994,7 @@ function undoOp(){
   else if (op.type==='cut' && op.ids.length>1) op.ids.pop();
   else if (op.type==='pocket' && op.areas.length>1) op.areas.pop();
   else S.operations.pop();
-  updateOpsList(); rebuildAllContours(); buildSimFromOps(); render(); scheduleSave();
+  updateOpsList(); rebuildAllContours(); buildProgram(); render(); scheduleSave();
 }
 function updateOpsList(){
   opCountEl.textContent = S.operations.length;
@@ -1052,7 +1025,7 @@ function updateOpsList(){
       const i = parseInt(s.dataset.i), k = s.dataset.k;
       if (k === 'toolId') S.operations[i].toolId = s.value;
       else if (k === 'offset') S.operations[i].offset = s.value;
-      rebuildAllContours(); buildSimFromOps(); render(); scheduleSave(); });
+      rebuildAllContours(); buildProgram(); render(); scheduleSave(); });
     s.addEventListener('click', e => e.stopPropagation()); });
 }
 
@@ -1081,21 +1054,41 @@ function updateLayerList(){
     let cut = S.operations.find(o => o.type === 'cut');
     if (!cut){ cut = { type:'cut', ids:[], offset:'center', toolId: S.activeToolId }; S.operations.push(cut); }
     ids.forEach(i => { if (!cut.ids.includes(i)) cut.ids.push(i); });
-    updateOpsList(); rebuildAllContours(); buildSimFromOps(); render(); scheduleSave();
+    updateOpsList(); rebuildAllContours(); buildProgram(); render(); scheduleSave();
     showToast(`${ids.length} anadidas`,'success'); }));
 }
 
-// ================= SIMULACION + BLOCK MAPPING =================
-function buildSimFromOps(){
+// =================================================================
+//  PROGRAMA UNIFICADO: G-code + Simulación comparten bloque
+// =================================================================
+function buildProgram(){
+  // Reset
+  S.gcodeLines = []; S.gcodeBlock = []; S.blockPoints = {}; S.blockZ = {};
+  S.simMoves = []; S.simMoveTimes = []; S.simTotalTime = 0; S.simT = 0;
+  S.activeGlineIdx = -1; S.selectedGlineIdx = -1;
+  S._lastActiveBlock = -999;
+
+  if (!S.operations.length || !S.tools.length){
+    renderGcodeDisplay(); updateSimUI(); return;
+  }
+
   rebuildAllContours();
-  const moves = [];
   const maxSafe = Math.max(...S.tools.map(t => t.safe), 10);
   let lastX = 0, lastY = 0, lastZ = maxSafe;
-  let blockCounter = 0;
-  S.blockPoints = {};
+  let blockId = 0;
 
-  const addMove = (type, pts, z, feedOverride) => {
-    if (!pts || pts.length === 0) return;
+  const lines = S.gcodeLines;
+  const lineBlocks = S.gcodeBlock;
+  const moves = [];
+  const blockPoints = S.blockPoints;
+  const blockZ = S.blockZ;
+
+  const emit = (txt, block) => {
+    lines.push(txt);
+    lineBlocks.push(block === undefined ? -1 : block);
+  };
+  const addMove = (type, pts, z, feedOverride, block) => {
+    if (!pts || !pts.length) return;
     z = z || 0;
     let duration = 0;
     if (pts.length >= 2){
@@ -1109,164 +1102,417 @@ function buildSimFromOps(){
       duration = dz / (feed / 60);
     }
     if (duration < 0.03) duration = 0.03;
-    moves.push({ type, points: pts, z, duration, block: blockCounter });
-    // Guardar puntos del bloque para resaltar
-    if (!S.blockPoints[blockCounter]) S.blockPoints[blockCounter] = [];
-    for (const p of pts) S.blockPoints[blockCounter].push({ x: p.x, y: p.y });
+    moves.push({ type, points: pts, z, duration, block });
+    if (!blockPoints[block]) blockPoints[block] = [];
+    for (const p of pts) blockPoints[block].push({ x: p.x, y: p.y });
+    if (blockZ[block] === undefined) blockZ[block] = z;
     const last = pts[pts.length - 1];
     lastX = last.x; lastY = last.y; lastZ = z;
   };
-  const addSpindlePause = () => { if (S.spindlePause > 0) moves.push({ type:'pause', points:[{x:lastX, y:lastY}], z: lastZ, duration: S.spindlePause, block: blockCounter }); };
-  const emitSimCutWithTabs = (pts, closed, fullZ, feed, tabHeight, tabs) => {
-    const path = buildPath(pts, closed);
-    const cumLens = computeCumLens(path);
-    const L = cumLens[cumLens.length - 1];
-    const tabZ = fullZ + tabHeight;
-    const sortedTabs = tabs.slice().sort((a, b) => a.sStart - b.sStart);
-    let s = 0;
-    for (const tab of sortedTabs){
-      const sStart = Math.max(0, Math.min(L, tab.sStart));
-      const sEnd = Math.max(0, Math.min(L, tab.sEnd));
-      if (sEnd <= sStart + 1e-6) continue;
-      if (sStart > s + 1e-6){ const between = pathPointsBetween(path, cumLens, s, sStart); if (between.length >= 2) addMove('cut', between, fullZ, feed); s = sStart; }
-      const sPt = getPointAtArcLength(path, cumLens, sStart);
-      const ePt = getPointAtArcLength(path, cumLens, sEnd);
-      addMove('cut', [sPt], tabZ, 400);
-      const tabPts = pathPointsBetween(path, cumLens, sStart, sEnd);
-      if (tabPts.length >= 2) addMove('tab', tabPts, tabZ, feed);
-      addMove('cut', [ePt], fullZ, 400);
-      s = sEnd;
-    }
-    if (L > s + 1e-6){ const rest = pathPointsBetween(path, cumLens, s, L); if (rest.length >= 2) addMove('cut', rest, fullZ, feed); }
+  const addSpindlePause = (block) => {
+    if (S.spindlePause > 0) moves.push({ type:'pause', points:[{x:lastX, y:lastY}], z: lastZ, duration: S.spindlePause, block });
   };
 
+  // Cabecera
+  emit('%', -1);
+  emit('O0001 (CNC DXF)', -1);
+  emit('(Generado por CNC DXF a G-Code)', -1);
+  emit('G21 G90 G17', -1);
+  emit(`G0 Z${maxSafe.toFixed(3)}`, -1);
+  emit('G0 X0 Y0', -1);
+  emit('', -1);
+  addMove('rapid', [{x:lastX, y:lastY}, {x:0, y:0}], maxSafe, S.rapidXY, -1);
+
+  // Agrupar por herramienta
   const toolOrder = [];
   const groups = new Map();
   for (const op of S.operations){
     let tid = op.toolId;
-    if (!getToolById(tid)) tid = S.tools[0] && S.tools[0].id;
-    if (!tid) continue;
+    if (!getToolById(tid)) tid = S.tools[0].id;
     if (!groups.has(tid)){ groups.set(tid, []); toolOrder.push(tid); }
     groups.get(tid).push({ op, originalIndex: S.operations.indexOf(op) });
   }
 
+  let toolChangeCount = 0;
   for (const tid of toolOrder){
     const tool = getToolById(tid); if (!tool) continue;
     const entries = groups.get(tid);
-    if (Math.abs(lastZ - tool.safe) > 0.01) addMove('rapid', [{x:lastX, y:lastY}], tool.safe, S.rapidZ);
-    addSpindlePause();
+    const spindleDir = tool.spindleDir === 'M4' ? 'M4' : 'M3';
+    const dirName = spindleDir === 'M4' ? 'antihorario' : 'horario';
+    const cutDirName = tool.cutDir === 'cw' ? 'horario' : 'antihorario';
 
-    for (const entry of entries){
-      const { op, originalIndex } = entry;
-      const cfg = tool;
-      const passes = Math.max(1, Math.ceil(cfg.depth / cfg.step));
-      const step = cfg.depth / passes;
+    emit(`(--- Herramienta T${tool.toolNumber}: ${tool.name} ---)`, -1);
+    emit(`(Diam ${tool.diam}mm - ${tool.rpm}rpm - Avance XY ${tool.feed} - Avance Z ${tool.feedZ})`, -1);
+    emit(`(Corte ${cutDirName} - Mandrino ${spindleDir} ${dirName})`, -1);
+    if (S.tabs.enabled){ emit(`(Patillas: ${S.tabs.count} uds - ancho REAL ${S.tabs.width}mm - alto ${S.tabs.height}mm)`, -1); }
+    // Asegurar Z safe antes del cambio
+    if (Math.abs(lastZ - tool.safe) > 0.01){
+      emit(`G0 Z${tool.safe.toFixed(3)}`, -1);
+      addMove('rapid', [{x:lastX, y:lastY}], tool.safe, S.rapidZ, -1);
+    }
+    emit(`T${tool.toolNumber} M6`, -1);
+    emit(`S${tool.rpm} ${spindleDir}`, -1);
+    if (S.spindlePause > 0){
+      const pauseMs = Math.round(S.spindlePause * 1000);
+      emit(`G4 P${pauseMs}  (pausa estabilizacion mandrino ${S.spindlePause}s)`, -1);
+      addSpindlePause(-1);
+    }
+    emit('', -1);
+    toolChangeCount++;
+
+    for (let oi = 0; oi < entries.length; oi++){
+      const { op, originalIndex } = entries[oi];
+      const passes = Math.max(1, Math.ceil(tool.depth / tool.step));
+      const step = tool.depth / passes;
+      emit(`(Operacion ${oi+1}/${entries.length}: ${op.type.toUpperCase()})`, -1);
 
       if (op.type === 'drill'){
-        for (const p of op.points){
-          addMove('rapid', [{x:lastX, y:lastY}, {x:p.x, y:p.y}], cfg.safe, S.rapidXY);
-          blockCounter++; S.blockPoints[blockCounter] = [{x:p.x, y:p.y}];
-          for (let k=0;k<passes;k++){
-            const z = -Math.min((k+1)*step, cfg.depth);
-            addMove('cut', [{x:p.x, y:p.y}], z, cfg.feedZ);
-            addMove('rapid', [{x:p.x, y:p.y}], cfg.retract, S.rapidZ);
+        if (!op.points.length){ emit('', -1); continue; }
+        const usePeck = passes > 1;
+        // Cabecera del ciclo: Z safe, ir al primer agujero
+        emit(`G0 Z${tool.safe.toFixed(3)}`, -1);
+        if (Math.abs(lastZ - tool.safe) > 0.01) addMove('rapid', [{x:lastX, y:lastY}], tool.safe, S.rapidZ, -1);
+
+        for (let pi = 0; pi < op.points.length; pi++){
+          const p = op.points[pi];
+          blockId++;
+          // Movimiento al agujero
+          emit(`G0 X${p.x.toFixed(3)} Y${p.y.toFixed(3)}`, blockId);
+          addMove('rapid', [{x:lastX, y:lastY}, {x:p.x, y:p.y}], tool.safe, S.rapidXY, blockId);
+          // Aproximación a R
+          emit(`G0 Z${tool.retract.toFixed(3)}`, blockId);
+          addMove('rapid', [{x:p.x, y:p.y}], tool.retract, S.rapidZ, blockId);
+          // Ciclo (G83 o G81)
+          if (pi === 0){
+            if (usePeck) emit(`G83 X${p.x.toFixed(3)} Y${p.y.toFixed(3)} Z-${tool.depth.toFixed(3)} R${tool.retract.toFixed(3)} Q${step.toFixed(3)} F${tool.feedZ}`, blockId);
+            else emit(`G81 X${p.x.toFixed(3)} Y${p.y.toFixed(3)} Z-${tool.depth.toFixed(3)} R${tool.retract.toFixed(3)} F${tool.feedZ}`, blockId);
+          } else {
+            emit(`X${p.x.toFixed(3)} Y${p.y.toFixed(3)}`, blockId);
           }
-          addMove('rapid', [{x:p.x, y:p.y}], cfg.safe, S.rapidZ);
+          // Movimientos de simulación para el ciclo
+          for (let k = 0; k < passes; k++){
+            const z = -Math.min((k+1)*step, tool.depth);
+            addMove('cut', [{x:p.x, y:p.y}], z, tool.feedZ, blockId);
+            addMove('rapid', [{x:p.x, y:p.y}], tool.retract, S.rapidZ, blockId);
+          }
+          // Retracción al plano seguro
+          emit(`G0 Z${tool.safe.toFixed(3)}`, blockId);
+          addMove('rapid', [{x:p.x, y:p.y}], tool.safe, S.rapidZ, blockId);
         }
+        emit('G80', -1);
+        emit(`G0 Z${tool.safe.toFixed(3)}`, -1);
       } else if (op.type === 'cut'){
         const c = S.cutContours[originalIndex];
-        if (!c || c.points.length < 2) continue;
+        if (!c || c.points.length < 2){ emit('(sin contorno resuelto)', -1); emit('', -1); continue; }
         const ptsEff = effectiveContour(c.points);
-        const f = ptsEff[0];
+        const prims = c.primitives;
         const isClosed = c.closed;
+        const f = ptsEff[0];
         let tabsEff = [];
         if (S.tabs.enabled && isClosed){
           const seed = S.tabs.seed + originalIndex * 137;
-          tabsEff = computeTabSegments(ptsEff, true, S.tabs.count, S.tabs.width, seed, cfg.diam);
+          tabsEff = computeTabSegments(ptsEff, true, S.tabs.count, S.tabs.width, seed, tool.diam);
         }
-        if (Math.abs(lastZ - cfg.safe) > 0.01) addMove('rapid', [{x:lastX, y:lastY}], cfg.safe, S.rapidZ);
-        addMove('rapid', [{x:lastX, y:lastY}, {x:f.x, y:f.y}], cfg.safe, S.rapidXY);
-        blockCounter++; S.blockPoints[blockCounter] = [];
-        for (let k=0;k<passes;k++){
-          if (k > 0) blockCounter++;
-          S.blockPoints[blockCounter] = ptsEff.map(p => ({x:p.x, y:p.y}));
-          const z = -Math.min((k+1)*step, cfg.depth);
+        // Asegurar Z seguro antes de empezar
+        if (Math.abs(lastZ - tool.safe) > 0.01){
+          emit(`G0 Z${tool.safe.toFixed(3)}`, -1);
+          addMove('rapid', [{x:lastX, y:lastY}], tool.safe, S.rapidZ, -1);
+        }
+        // Mover a punto de inicio
+        emit(`G0 X${f.x.toFixed(3)} Y${f.y.toFixed(3)}`, -1);
+        addMove('rapid', [{x:lastX, y:lastY}, {x:f.x, y:f.y}], tool.safe, S.rapidXY, -1);
+
+        // Multiples pasadas: cada pasada es un bloque
+        for (let k = 0; k < passes; k++){
+          blockId++;
+          const z = -Math.min((k+1)*step, tool.depth);
           const isLastPass = (k === passes - 1);
-          addMove('cut', [{x:f.x, y:f.y}], z, cfg.feedZ);
+          // Plunge
+          emit(`G1 Z${z.toFixed(3)} F${tool.feedZ}`, blockId);
+          addMove('cut', [{x:f.x, y:f.y}], z, tool.feedZ, blockId);
+          // Contorno (con arcos)
           if (S.tabs.enabled && isLastPass && isClosed && tabsEff.length > 0){
-            emitSimCutWithTabs(ptsEff, true, z, cfg.feed, S.tabs.height, tabsEff);
+            emit(`(--- pasada con ${tabsEff.length} patillas - patilla final ${S.tabs.width}mm ---)`, blockId);
+            // Emitir con tabs (como puntos, para poder levantar Z)
+            emitCutWithTabsUnified(lines, lineBlocks, blockId, ptsEff, isClosed, tool, z, tabsEff, S.tabs.height, blockPoints);
+            // Sim: misma trayectoria
+            emitSimWithTabs(ptsEff, isClosed, z, tool.feed, S.tabs.height, tabsEff, blockId, addMove);
+          } else if (prims && prims.length > 0){
+            emitPrimitivesGCodeUnified(lines, lineBlocks, blockId, prims, tool, S.offsetX, S.offsetY, tool.feed);
+            const contourPts = isClosed ? ptsEff.concat([ptsEff[0]]) : ptsEff;
+            addMove('cut', contourPts, z, tool.feed, blockId);
           } else {
-            const pts = isClosed ? ptsEff.concat([ptsEff[0]]) : ptsEff;
-            addMove('cut', pts, z, cfg.feed);
+            for (let i = 1; i < ptsEff.length; i++) emit(`G1 X${ptsEff[i].x.toFixed(3)} Y${ptsEff[i].y.toFixed(3)} F${tool.feed}`, blockId);
+            if (isClosed){
+              const lastPt = ptsEff[ptsEff.length - 1];
+              if (Math.hypot(lastPt.x - f.x, lastPt.y - f.y) > 1e-3) emit(`G1 X${f.x.toFixed(3)} Y${f.y.toFixed(3)} F${tool.feed}`, blockId);
+            }
+            const contourPts = isClosed ? ptsEff.concat([ptsEff[0]]) : ptsEff;
+            addMove('cut', contourPts, z, tool.feed, blockId);
           }
         }
-        const lastPt = isClosed ? ptsEff[0] : ptsEff[ptsEff.length - 1];
-        addMove('rapid', [{x:lastPt.x, y:lastPt.y}], cfg.retract, S.rapidZ);
+        // Retracción final
+        emit(`G0 Z${tool.retract.toFixed(3)}`, -1);
+        addMove('rapid', [{x:lastX, y:lastY}], tool.retract, S.rapidZ, -1);
       } else if (op.type === 'pocket'){
-        if (Math.abs(lastZ - cfg.safe) > 0.01) addMove('rapid', [{x:lastX, y:lastY}], cfg.safe, S.rapidZ);
-        let firstMove = true;
+        if (Math.abs(lastZ - tool.safe) > 0.01){
+          emit(`G0 Z${tool.safe.toFixed(3)}`, -1);
+          addMove('rapid', [{x:lastX, y:lastY}], tool.safe, S.rapidZ, -1);
+        }
         for (const a of op.areas){
           if (a.shape === 'rect'){
-            const x1 = Math.min(a.x1,a.x2)+cfg.diam/2, y1 = Math.min(a.y1,a.y2)+cfg.diam/2;
-            const x2 = Math.max(a.x1,a.x2)-cfg.diam/2, y2 = Math.max(a.y1,a.y2)-cfg.diam/2;
+            const x1 = Math.min(a.x1,a.x2)+tool.diam/2, y1 = Math.min(a.y1,a.y2)+tool.diam/2;
+            const x2 = Math.max(a.x1,a.x2)-tool.diam/2, y2 = Math.max(a.y1,a.y2)-tool.diam/2;
             if (x2 <= x1 || y2 <= y1) continue;
-            const stepY = cfg.diam * (1 - cfg.overlap);
-            for (let k=0;k<passes;k++){
-              blockCounter++; S.blockPoints[blockCounter] = [];
-              const z = -Math.min((k+1)*step, cfg.depth);
-              const moveZ = firstMove ? cfg.safe : cfg.retract;
-              addMove('rapid', [{x:lastX, y:lastY}, {x:x1, y:y1}], moveZ, S.rapidXY);
-              firstMove = false;
-              addMove('cut', [{x:x1, y:y1}], z, cfg.feedZ);
-              const seg = [{x:x1,y:y1}];
+            const stepY = tool.diam * (1 - tool.overlap);
+            for (let k = 0; k < passes; k++){
+              blockId++;
+              const z = -Math.min((k+1)*step, tool.depth);
+              emit(`G0 X${x1.toFixed(3)} Y${y1.toFixed(3)}`, blockId);
+              addMove('rapid', [{x:lastX, y:lastY}, {x:x1, y:y1}], tool.safe, S.rapidXY, blockId);
+              emit(`G1 Z${z.toFixed(3)} F${tool.feedZ}`, blockId);
+              addMove('cut', [{x:x1, y:y1}], z, tool.feedZ, blockId);
               let dir = 1, y = y1;
+              const segPts = [{x:x1,y:y1}];
               while (y <= y2 + 1e-9){
                 const xe = dir > 0 ? x2 : x1;
-                seg.push({x:xe,y:y});
-                S.blockPoints[blockCounter].push({x:xe, y:y});
+                emit(`G1 X${xe.toFixed(3)} Y${y.toFixed(3)} F${tool.feed}`, blockId);
+                segPts.push({x:xe, y:y});
                 y += stepY; if (y > y2) break;
                 const xn = dir > 0 ? x1 : x2;
-                seg.push({x:xn,y:y});
-                S.blockPoints[blockCounter].push({x:xn, y:y});
+                emit(`G1 X${xn.toFixed(3)} Y${y.toFixed(3)} F${tool.feed}`, blockId);
+                segPts.push({x:xn, y:y});
                 dir *= -1;
               }
-              addMove('cut', seg, z, cfg.feed);
-              addMove('rapid', [{x:seg[seg.length-1].x, y:seg[seg.length-1].y}], cfg.retract, S.rapidZ);
+              addMove('cut', segPts, z, tool.feed, blockId);
+              emit(`G0 Z${tool.retract.toFixed(3)}`, blockId);
+              addMove('rapid', [{x:segPts[segPts.length-1].x, y:segPts[segPts.length-1].y}], tool.retract, S.rapidZ, blockId);
             }
           } else if (a.shape === 'circle'){
-            const stepR = cfg.diam * (1 - cfg.overlap);
-            for (let k=0;k<passes;k++){
-              blockCounter++; S.blockPoints[blockCounter] = [];
-              const z = -Math.min((k+1)*step, cfg.depth);
+            const stepR = tool.diam * (1 - tool.overlap);
+            for (let k = 0; k < passes; k++){
+              blockId++;
+              const z = -Math.min((k+1)*step, tool.depth);
               let rr = stepR;
               while (rr <= a.r){
                 const st = Math.max(24, Math.ceil(2*Math.PI*rr / (stepR*0.5)));
-                const pts = [];
-                for (let s=0;s<=st;s++){ const ang = s/st*Math.PI*2; pts.push({x:a.cx + rr*Math.cos(ang), y:a.cy + rr*Math.sin(ang)}); }
-                for (const p of pts) S.blockPoints[blockCounter].push({x:p.x, y:p.y});
-                const moveZ = firstMove ? cfg.safe : cfg.retract;
-                addMove('rapid', [{x:lastX, y:lastY}, {x:a.cx+rr, y:a.cy}], moveZ, S.rapidXY);
-                firstMove = false;
-                addMove('cut', [{x:a.cx+rr, y:a.cy}], z, cfg.feedZ);
-                addMove('cut', pts, z, cfg.feed);
-                addMove('rapid', [{x:pts[pts.length-1].x, y:pts[pts.length-1].y}], cfg.retract, S.rapidZ);
+                emit(`G0 X${(a.cx+rr).toFixed(3)} Y${a.cy.toFixed(3)}`, blockId);
+                addMove('rapid', [{x:lastX, y:lastY}, {x:a.cx+rr, y:a.cy}], tool.safe, S.rapidXY, blockId);
+                emit(`G1 Z${z.toFixed(3)} F${tool.feedZ}`, blockId);
+                addMove('cut', [{x:a.cx+rr, y:a.cy}], z, tool.feedZ, blockId);
+                const ringPts = [];
+                for (let s = 1; s <= st; s++){
+                  const ang = s/st*Math.PI*2;
+                  const px = a.cx + rr*Math.cos(ang), py = a.cy + rr*Math.sin(ang);
+                  emit(`G1 X${px.toFixed(3)} Y${py.toFixed(3)} F${tool.feed}`, blockId);
+                  ringPts.push({x:px, y:py});
+                }
+                addMove('cut', ringPts, z, tool.feed, blockId);
+                emit(`G0 Z${tool.retract.toFixed(3)}`, blockId);
+                addMove('rapid', [{x:ringPts[ringPts.length-1].x, y:ringPts[ringPts.length-1].y}], tool.retract, S.rapidZ, blockId);
                 rr += stepR;
               }
             }
           }
         }
       }
+      emit('', -1);
     }
   }
+  emit(`G0 Z${maxSafe.toFixed(3)}`, -1);
+  emit('M5', -1);
+  emit('M30', -1);
+  emit('%', -1);
 
+  // Tiempos de simulación
   const times = [0];
   let total = 0;
   for (const mv of moves){ total += mv.duration; times.push(total); }
-  S.simMoves = moves; S.simMoveTimes = times; S.simTotalTime = total;
-  S.simT = 0; S.simPlaying = false;
+  S.simMoveTimes = times;
+  S.simTotalTime = total;
+  S.simPlaying = false;
+
+  renderGcodeDisplay();
   updateSimUI();
 }
 
+// --- Emisión de contornos con arcos (mantiene block id) ---
+function emitPrimitivesGCodeUnified(lines, lineBlocks, blockId, prims, tool, offX, offY, feed){
+  let curX = 0, curY = 0;
+  const startPt = getPrimStart(prims[0]);
+  curX = startPt.x + offX;
+  curY = startPt.y + offY;
+  for (let i = 0; i < prims.length; i++){
+    const p = prims[i];
+    if (p.type === 'line'){
+      const ex = p.x2 + offX, ey = p.y2 + offY;
+      lines.push(`G1 X${ex.toFixed(3)} Y${ey.toFixed(3)} F${feed}`); lineBlocks.push(blockId);
+      curX = ex; curY = ey;
+    } else {
+      const cx = p.cx + offX, cy = p.cy + offY;
+      const gcode = p.ccw ? 'G3' : 'G2';
+      if (p.closed){
+        const dir = p.ccw ? 1 : -1;
+        const midAng = p.sa + dir * Math.PI;
+        const mx = cx + p.r * Math.cos(midAng), my = cy + p.r * Math.sin(midAng);
+        const ex = cx + p.r * Math.cos(p.sa), ey = cy + p.r * Math.sin(p.sa);
+        let I = cx - curX, J = cy - curY;
+        lines.push(`${gcode} X${mx.toFixed(3)} Y${my.toFixed(3)} I${I.toFixed(3)} J${J.toFixed(3)} F${feed}`); lineBlocks.push(blockId);
+        I = cx - mx; J = cy - my;
+        lines.push(`${gcode} X${ex.toFixed(3)} Y${ey.toFixed(3)} I${I.toFixed(3)} J${J.toFixed(3)} F${feed}`); lineBlocks.push(blockId);
+        curX = ex; curY = ey;
+      } else {
+        const ex = cx + p.r * Math.cos(p.ea), ey = cy + p.r * Math.sin(p.ea);
+        const I = cx - curX, J = cy - curY;
+        lines.push(`${gcode} X${ex.toFixed(3)} Y${ey.toFixed(3)} I${I.toFixed(3)} J${J.toFixed(3)} F${feed}`); lineBlocks.push(blockId);
+        curX = ex; curY = ey;
+      }
+    }
+  }
+}
+// --- Emisión de contorno con patillas (interpolado, Z sube y baja) ---
+function emitCutWithTabsUnified(lines, lineBlocks, blockId, pts, closed, tool, fullZ, tabs, tabHeight, blockPoints){
+  const path = buildPath(pts, closed);
+  const cumLens = computeCumLens(path);
+  const L = cumLens[cumLens.length - 1];
+  const tabZ = fullZ + tabHeight;
+  const sortedTabs = tabs.slice().sort((a, b) => a.sStart - b.sStart);
+  let s = 0;
+  for (const tab of sortedTabs){
+    const sStart = Math.max(0, Math.min(L, tab.sStart));
+    const sEnd = Math.max(0, Math.min(L, tab.sEnd));
+    if (sEnd <= sStart + 1e-6) continue;
+    if (sStart > s + 1e-6){
+      const between = pathPointsBetween(path, cumLens, s, sStart);
+      for (let i = 1; i < between.length; i++){
+        lines.push(`G1 X${between[i].x.toFixed(3)} Y${between[i].y.toFixed(3)} F${tool.feed}`); lineBlocks.push(blockId);
+      }
+    }
+    lines.push(`G1 Z${tabZ.toFixed(3)} F${tool.feedZ}  (patilla subir)`); lineBlocks.push(blockId);
+    const tabPts = pathPointsBetween(path, cumLens, sStart, sEnd);
+    for (let i = 1; i < tabPts.length; i++){ lines.push(`G1 X${tabPts[i].x.toFixed(3)} Y${tabPts[i].y.toFixed(3)} F${tool.feed}`); lineBlocks.push(blockId); }
+    lines.push(`G1 Z${fullZ.toFixed(3)} F${tool.feedZ}  (patilla bajar)`); lineBlocks.push(blockId);
+    s = sEnd;
+  }
+  if (L > s + 1e-6){
+    const rest = pathPointsBetween(path, cumLens, s, L);
+    for (let i = 1; i < rest.length; i++){ lines.push(`G1 X${rest[i].x.toFixed(3)} Y${rest[i].y.toFixed(3)} F${tool.feed}`); lineBlocks.push(blockId); }
+  }
+}
+function emitSimWithTabs(pts, closed, fullZ, feed, tabHeight, tabs, blockId, addMove){
+  const path = buildPath(pts, closed);
+  const cumLens = computeCumLens(path);
+  const L = cumLens[cumLens.length - 1];
+  const tabZ = fullZ + tabHeight;
+  const sortedTabs = tabs.slice().sort((a, b) => a.sStart - b.sStart);
+  let s = 0;
+  for (const tab of sortedTabs){
+    const sStart = Math.max(0, Math.min(L, tab.sStart));
+    const sEnd = Math.max(0, Math.min(L, tab.sEnd));
+    if (sEnd <= sStart + 1e-6) continue;
+    if (sStart > s + 1e-6){
+      const between = pathPointsBetween(path, cumLens, s, sStart);
+      if (between.length >= 2) addMove('cut', between, fullZ, feed, blockId);
+      s = sStart;
+    }
+    const sPt = getPointAtArcLength(path, cumLens, sStart);
+    const ePt = getPointAtArcLength(path, cumLens, sEnd);
+    addMove('cut', [sPt], tabZ, 400, blockId);
+    const tabPts = pathPointsBetween(path, cumLens, sStart, sEnd);
+    if (tabPts.length >= 2) addMove('tab', tabPts, tabZ, feed, blockId);
+    addMove('cut', [ePt], fullZ, 400, blockId);
+    s = sEnd;
+  }
+  if (L > s + 1e-6){
+    const rest = pathPointsBetween(path, cumLens, s, L);
+    if (rest.length >= 2) addMove('cut', rest, fullZ, feed, blockId);
+  }
+}
+
+// ================= UI G-CODE =================
+function renderGcodeDisplay(){
+  if (!S.gcodeLines.length){
+    gcodeEl.innerHTML = '<div class="empty-hint">(Sin generar)</div>';
+    return;
+  }
+  let html = '';
+  for (let i = 0; i < S.gcodeLines.length; i++){
+    const l = S.gcodeLines[i];
+    const isActive = (i === S.activeGlineIdx);
+    const isSelected = (i === S.selectedGlineIdx);
+    let cls = 'gline';
+    if (isActive) cls += ' active';
+    if (isSelected) cls += ' selected';
+    const text = l === '' ? '&nbsp;' : escapeHtml(l);
+    html += `<div class="${cls}" data-idx="${i}">${text}</div>`;
+  }
+  gcodeEl.innerHTML = html;
+  gcodeEl.querySelectorAll('.gline').forEach(el => {
+    el.addEventListener('click', () => onGlineClick(parseInt(el.dataset.idx)));
+  });
+}
+function updateActiveGlineByBlock(blockId){
+  if (blockId === S._lastActiveBlock) return;
+  S._lastActiveBlock = blockId;
+  let targetIdx = -1;
+  if (blockId >= 0){
+    // Buscar la primera linea con este bloque (o la ultima si prefieres marcar la que se va ejecutando)
+    // Mejor: la ULTIMA linea del bloque actual (mas informativo conforme avanza)
+    for (let i = S.gcodeBlock.length - 1; i >= 0; i--){
+      if (S.gcodeBlock[i] === blockId){ targetIdx = i; break; }
+    }
+    // Si no hay ninguna con este bloque exacto (p.ej. bloque muy corto), buscar la primera mayor
+    if (targetIdx < 0){
+      for (let i = 0; i < S.gcodeBlock.length; i++){
+        if (S.gcodeBlock[i] > blockId){ targetIdx = i; break; }
+      }
+    }
+  }
+  updateActiveGlineIdx(targetIdx);
+}
+function updateActiveGlineIdx(idx){
+  if (idx === S.activeGlineIdx) return;
+  const prev = gcodeEl.querySelector('.gline.active');
+  if (prev) prev.classList.remove('active');
+  S.activeGlineIdx = idx;
+  if (idx >= 0){
+    const cur = gcodeEl.querySelector(`.gline[data-idx="${idx}"]`);
+    if (cur){
+      cur.classList.add('active');
+      const cRect = cur.getBoundingClientRect();
+      const pRect = gcodeEl.getBoundingClientRect();
+      if (cRect.top < pRect.top + 4 || cRect.bottom > pRect.bottom - 4){
+        // scroll de forma suave
+        gcodeEl.scrollTop += (cRect.top - pRect.top) - pRect.height / 2 + cRect.height / 2;
+      }
+    }
+  }
+}
+function onGlineClick(idx){
+  if (idx < 0 || idx >= S.gcodeLines.length) return;
+  const prev = gcodeEl.querySelector('.gline.selected');
+  if (prev) prev.classList.remove('selected');
+  S.selectedGlineIdx = idx;
+  const el = gcodeEl.querySelector(`.gline[data-idx="${idx}"]`);
+  if (el) el.classList.add('selected');
+
+  const block = S.gcodeBlock[idx];
+  if (block < 0){ render(); return; } // linea no trackeada
+
+  // Buscar el primer move con ese bloque
+  let moveIdx = -1;
+  for (let i = 0; i < S.simMoves.length; i++){
+    if (S.simMoves[i].block === block){ moveIdx = i; break; }
+  }
+  if (moveIdx >= 0){
+    // Saltar al inicio de ese move
+    S.simT = (moveIdx === 0) ? 0 : S.simMoveTimes[moveIdx - 1];
+    updateSimUI();
+  }
+  render();
+}
+
+// ================= SIMULACION =================
 function updateSimUI(){
   const pct = S.simTotalTime > 0 ? (S.simT / S.simTotalTime) : 0;
   simPctEl.textContent = fmtTime(S.simT) + ' / ' + fmtTime(S.simTotalTime);
@@ -1286,10 +1532,12 @@ function updateSimUI(){
   if (S.simPlaying){ btnPlay.textContent = 'PAUSA'; btnPlay.classList.add('playing'); btnPlay.classList.remove('play'); }
   else { btnPlay.textContent = 'PLAY'; btnPlay.classList.remove('playing'); btnPlay.classList.add('play'); }
 }
-function simPlay(){ if (!S.simMoves.length){ showToast('Genera primero','warn'); return; }
+function simPlay(){
+  if (!S.simMoves.length){ showToast('Genera primero','warn'); return; }
   if (S.simT >= S.simTotalTime) S.simT = 0;
   S.simPlaying = true; S.simLastFrame = performance.now();
-  updateSimUI(); S.simAnimId = requestAnimationFrame(simTick); }
+  updateSimUI(); S.simAnimId = requestAnimationFrame(simTick);
+}
 function simPause(){ S.simPlaying = false; if (S.simAnimId){ cancelAnimationFrame(S.simAnimId); S.simAnimId = null; } updateSimUI(); render(); }
 function simTick(){
   if (!S.simPlaying) return;
@@ -1307,84 +1555,15 @@ function simTick(){
   S.simAnimId = requestAnimationFrame(simTick);
 }
 function simSeek(pct){ S.simT = (pct / 1000) * S.simTotalTime; updateSimUI(); render(); }
-function simReset(){ if (S.simAnimId) cancelAnimationFrame(S.simAnimId); S.simPlaying=false; S.simT=0; updateSimUI(); render(); }
+function simReset(){ if (S.simAnimId) cancelAnimationFrame(S.simAnimId); S.simPlaying=false; S.simT=0; S._lastActiveBlock = -999; updateSimUI(); render(); }
 function simEnd(){ if (S.simAnimId) cancelAnimationFrame(S.simAnimId); S.simPlaying=false; S.simT = S.simTotalTime; updateSimUI(); render(); }
 
-// Localiza el bloque actual segun simT
 function getCurrentBlock(){
   if (!S.simMoves.length) return -1;
   let mi = 0;
   while (mi < S.simMoveTimes.length - 1 && S.simMoveTimes[mi+1] <= S.simT) mi++;
   const mv = S.simMoves[Math.min(mi, S.simMoves.length-1)];
   return mv ? mv.block : -1;
-}
-
-// ================= RENDER DEL G-CODE CON LINEAS =================
-function renderGcodeDisplay(){
-  if (!S.gcodeLines || !S.gcodeLines.length){
-    gcodeEl.innerHTML = '<div class="empty-hint">(Sin generar)</div>';
-    return;
-  }
-  let html = '';
-  for (let i = 0; i < S.gcodeLines.length; i++){
-    const l = S.gcodeLines[i];
-    const cls = 'gline' + (i === S.activeGlineIdx ? ' active' : '') + (i === S.selectedGlineIdx ? ' selected' : '');
-    const text = l === '' ? '&nbsp;' : escapeHtml(l);
-    html += `<div class="${cls}" data-idx="${i}">${text}</div>`;
-  }
-  gcodeEl.innerHTML = html;
-  // Eventos click
-  gcodeEl.querySelectorAll('.gline').forEach(el => {
-    el.addEventListener('click', () => onGlineClick(parseInt(el.dataset.idx)));
-  });
-}
-
-function updateActiveGline(idx){
-  if (idx === S.activeGlineIdx) return;
-  // Quitar 'active' del anterior
-  const prevEl = gcodeEl.querySelector(`.gline[data-idx="${S.activeGlineIdx}"]`);
-  if (prevEl) prevEl.classList.remove('active');
-  S.activeGlineIdx = idx;
-  if (idx >= 0){
-    const curEl = gcodeEl.querySelector(`.gline[data-idx="${idx}"]`);
-    if (curEl){
-      curEl.classList.add('active');
-      // Scroll suave para que la linea activa quede visible
-      const rect = curEl.getBoundingClientRect();
-      const contRect = gcodeEl.getBoundingClientRect();
-      if (rect.top < contRect.top || rect.bottom > contRect.bottom){
-        curEl.scrollIntoView({ block: 'nearest', behavior: 'auto' });
-      }
-    }
-  }
-}
-
-// Cuando clic en una linea del G-code
-function onGlineClick(idx){
-  if (idx < 0 || idx >= S.gcodeLines.length) return;
-  // Quitar seleccion anterior
-  const prevSel = gcodeEl.querySelector('.gline.selected');
-  if (prevSel) prevSel.classList.remove('selected');
-  S.selectedGlineIdx = idx;
-  const el = gcodeEl.querySelector(`.gline[data-idx="${idx}"]`);
-  if (el) el.classList.add('selected');
-
-  // Encontrar el bloque asociado
-  const block = S.gcodeBlock[idx];
-  // Saltar la simulacion al inicio de ese bloque (opcional: al primer move del bloque)
-  let targetT = -1;
-  for (let i = 0; i < S.simMoves.length; i++){
-    if (S.simMoves[i].block === block){
-      // Tiempo de inicio del bloque
-      targetT = (i === 0) ? 0 : S.simMoveTimes[i-1];
-      break;
-    }
-  }
-  if (targetT >= 0){
-    S.simT = targetT;
-    updateSimUI();
-  }
-  render();
 }
 
 // ================= RENDER CANVAS =================
@@ -1424,26 +1603,6 @@ function render(){
     for (let i=1;i<ptsEff.length;i++){ const s = w2s(ptsEff[i].x, ptsEff[i].y); ctx.lineTo(s.x-r.left, s.y-r.top); }
     if (c.closed) ctx.closePath();
     ctx.stroke();
-    // Flechas
-    if (ptsEff.length >= 2){
-      const step = Math.max(1, Math.floor(ptsEff.length / 8));
-      for (let i = 0; i < ptsEff.length - 1; i += step){
-        const p1 = ptsEff[i], p2 = ptsEff[i+1];
-        const s1 = w2s(p1.x,p1.y), s2 = w2s(p2.x,p2.y);
-        const dx = s2.x-s1.x, dy = s2.y-s1.y;
-        if (Math.hypot(dx,dy) < 8) continue;
-        const ang = Math.atan2(dy,dx);
-        const px = s2.x-r.left, py = s2.y-r.top;
-        const a = 6;
-        ctx.strokeStyle = '#ffdd44'; ctx.lineWidth = 1.5;
-        ctx.beginPath();
-        ctx.moveTo(px, py);
-        ctx.lineTo(px - a*Math.cos(ang-0.4), py - a*Math.sin(ang-0.4));
-        ctx.moveTo(px, py);
-        ctx.lineTo(px - a*Math.cos(ang+0.4), py - a*Math.sin(ang+0.4));
-        ctx.stroke();
-      }
-    }
     if (S.tabs.enabled && S.cutTabs[oiStr]){
       const tabs = S.cutTabs[oiStr];
       const op = S.operations[parseInt(oiStr)];
@@ -1454,12 +1613,6 @@ function render(){
       const cumLens = computeCumLens(path);
       ctx.lineCap = 'round';
       for (const tab of tabs){
-        const elevA = getPointAtArcLength(path, cumLens, tab.sStart);
-        const elevB = getPointAtArcLength(path, cumLens, tab.sEnd);
-        const eA = w2s(elevA.x, elevA.y), eB = w2s(elevB.x, elevB.y);
-        ctx.strokeStyle = '#ffaa44'; ctx.lineWidth = 3; ctx.setLineDash([4,3]);
-        ctx.beginPath(); ctx.moveTo(eA.x-r.left, eA.y-r.top); ctx.lineTo(eB.x-r.left, eB.y-r.top); ctx.stroke();
-        ctx.setLineDash([]);
         const matA = getPointAtArcLength(path, cumLens, tab.sStart + R);
         const matB = getPointAtArcLength(path, cumLens, tab.sEnd - R);
         const mA = w2s(matA.x, matA.y), mB = w2s(matB.x, matB.y);
@@ -1468,7 +1621,6 @@ function render(){
       }
       ctx.lineCap = 'butt';
     }
-    // Punto de inicio
     const sStart = w2s(ptsEff[0].x, ptsEff[0].y);
     ctx.beginPath();
     ctx.arc(sStart.x-r.left, sStart.y-r.top, 7, 0, Math.PI*2);
@@ -1479,7 +1631,7 @@ function render(){
     ctx.fillText(contourIdx, sStart.x-r.left, sStart.y-r.top);
     ctx.textAlign = 'start'; ctx.textBaseline = 'alphabetic';
   }
-  // Destacar el bloque seleccionado
+  // Resaltar el bloque seleccionado (por clic en G-code)
   if (S.selectedGlineIdx >= 0){
     const block = S.gcodeBlock[S.selectedGlineIdx];
     const pts = S.blockPoints[block];
@@ -1492,6 +1644,11 @@ function render(){
       for (let i=1;i<pts.length;i++){ const s = w2s(pts[i].x, pts[i].y); ctx.lineTo(s.x-r.left, s.y-r.top); }
       ctx.stroke();
       ctx.globalAlpha = 1;
+    } else if (pts && pts.length === 1){
+      const s = w2s(pts[0].x, pts[0].y);
+      ctx.beginPath();
+      ctx.arc(s.x-r.left, s.y-r.top, 10, 0, Math.PI*2);
+      ctx.strokeStyle = '#ff88dd'; ctx.lineWidth = 4; ctx.stroke();
     }
   }
   for (const p of drillPts){ const s = w2s(p.x, p.y);
@@ -1519,22 +1676,12 @@ function render(){
     ctx.setLineDash([]);
   }
   if (S.showSim && S.simMoves.length) drawSimulation(r);
-  // Actualizar línea activa del G-code
+  // Actualizar línea activa
   const curBlock = getCurrentBlock();
-  if (curBlock >= 0){
-    // Encontrar la última línea cuyo block <= curBlock
-    let target = -1;
-    for (let i = 0; i < S.gcodeBlock.length; i++){
-      if (S.gcodeBlock[i] === curBlock){ target = i; }
-      else if (S.gcodeBlock[i] > curBlock) break;
-    }
-    // Resaltar la última línea de ese bloque
-    if (target >= 0) updateActiveGline(target);
-  }
+  updateActiveGlineByBlock(curBlock);
   coordEl.textContent = `X: ${S.mwx.toFixed(2)} mm | Y: ${S.mwy.toFixed(2)} mm`;
   zoomEl.textContent = `Zoom: ${(S.scale*100).toFixed(0)}%`;
 }
-
 function drawSimulation(r){
   ctx.lineCap = 'round'; ctx.lineJoin = 'round';
   const moves = S.simMoves;
@@ -1680,240 +1827,7 @@ function drawEnt(e, color, lw, r){
     ctx.beginPath(); ctx.arc(s.x-r.left, s.y-r.top, 3, 0, Math.PI*2); ctx.fill(); }
 }
 
-// ================= G-CODE con BLOCK TRACKING =================
-function emitPrimitivesGCode(lines, blocks, blockId, prims, tool, offX, offY, feed){
-  let curX = 0, curY = 0;
-  const startPt = getPrimStart(prims[0]);
-  curX = startPt.x + offX;
-  curY = startPt.y + offY;
-  for (let i = 0; i < prims.length; i++){
-    const p = prims[i];
-    if (p.type === 'line'){
-      const ex = p.x2 + offX, ey = p.y2 + offY;
-      lines.push(`G1 X${ex.toFixed(3)} Y${ey.toFixed(3)} F${feed}`); blocks.push(blockId);
-      curX = ex; curY = ey;
-    } else {
-      const cx = p.cx + offX, cy = p.cy + offY;
-      const gcode = p.ccw ? 'G3' : 'G2';
-      if (p.closed){
-        const dir = p.ccw ? 1 : -1;
-        const midAng = p.sa + dir * Math.PI;
-        const mx = cx + p.r * Math.cos(midAng), my = cy + p.r * Math.sin(midAng);
-        const ex = cx + p.r * Math.cos(p.sa), ey = cy + p.r * Math.sin(p.sa);
-        let I = cx - curX, J = cy - curY;
-        lines.push(`${gcode} X${mx.toFixed(3)} Y${my.toFixed(3)} I${I.toFixed(3)} J${J.toFixed(3)} F${feed}`); blocks.push(blockId);
-        I = cx - mx; J = cy - my;
-        lines.push(`${gcode} X${ex.toFixed(3)} Y${ey.toFixed(3)} I${I.toFixed(3)} J${J.toFixed(3)} F${feed}`); blocks.push(blockId);
-        curX = ex; curY = ey;
-      } else {
-        const ex = cx + p.r * Math.cos(p.ea), ey = cy + p.r * Math.sin(p.ea);
-        const I = cx - curX, J = cy - curY;
-        lines.push(`${gcode} X${ex.toFixed(3)} Y${ey.toFixed(3)} I${I.toFixed(3)} J${J.toFixed(3)} F${feed}`); blocks.push(blockId);
-        curX = ex; curY = ey;
-      }
-    }
-  }
-}
-function emitCutWithTabs(lines, blocks, blockId, pts, closed, tool, fullZ, tabs, tabHeight){
-  const path = buildPath(pts, closed);
-  const cumLens = computeCumLens(path);
-  const L = cumLens[cumLens.length - 1];
-  const tabZ = fullZ + tabHeight;
-  const sortedTabs = tabs.slice().sort((a, b) => a.sStart - b.sStart);
-  let s = 0;
-  for (const tab of sortedTabs){
-    const sStart = Math.max(0, Math.min(L, tab.sStart));
-    const sEnd = Math.max(0, Math.min(L, tab.sEnd));
-    if (sEnd <= sStart + 1e-6) continue;
-    if (sStart > s + 1e-6){
-      const between = pathPointsBetween(path, cumLens, s, sStart);
-      for (let i = 1; i < between.length; i++){
-        lines.push(`G1 X${between[i].x.toFixed(3)} Y${between[i].y.toFixed(3)} F${tool.feed}`); blocks.push(blockId);
-      }
-    }
-    lines.push(`G1 Z${tabZ.toFixed(3)} F${tool.feedZ}  (patilla subir)`); blocks.push(blockId);
-    const tabPts = pathPointsBetween(path, cumLens, sStart, sEnd);
-    for (let i = 1; i < tabPts.length; i++){ lines.push(`G1 X${tabPts[i].x.toFixed(3)} Y${tabPts[i].y.toFixed(3)} F${tool.feed}`); blocks.push(blockId); }
-    lines.push(`G1 Z${fullZ.toFixed(3)} F${tool.feedZ}  (patilla bajar)`); blocks.push(blockId);
-    s = sEnd;
-  }
-  if (L > s + 1e-6){
-    const rest = pathPointsBetween(path, cumLens, s, L);
-    for (let i = 1; i < rest.length; i++){ lines.push(`G1 X${rest[i].x.toFixed(3)} Y${rest[i].y.toFixed(3)} F${tool.feed}`); blocks.push(blockId); }
-  }
-}
-
-function genGCode(){
-  if (!S.operations.length){ gcodeEl.textContent = '(Sin operaciones)'; return ''; }
-  if (!S.tools.length){ gcodeEl.textContent = '(Sin herramientas)'; return ''; }
-  rebuildAllContours();
-
-  const lines = [];
-  const blocks = [];  // Bloque por linea (para sincronizar con la sim)
-  let blockId = 0;
-  const emit = (txt, block) => { lines.push(txt); blocks.push(block === undefined ? blockId : block); };
-
-  const toolOrder = [];
-  const groups = new Map();
-  for (const op of S.operations){
-    let tid = op.toolId;
-    if (!getToolById(tid)) tid = S.tools[0].id;
-    if (!groups.has(tid)){ groups.set(tid, []); toolOrder.push(tid); }
-    groups.get(tid).push({ op, originalIndex: S.operations.indexOf(op) });
-  }
-
-  emit('%', -1);
-  emit('O0001 (CNC DXF)', -1);
-  emit('(Generado por CNC DXF a G-Code)', -1);
-  emit('G21 G90 G17', -1);
-  const maxSafe = Math.max(...S.tools.map(t => t.safe), 10);
-  emit(`G0 Z${maxSafe.toFixed(3)}`, -1);
-  emit('G0 X0 Y0', -1);
-  emit('', -1);
-
-  let toolChangeCount = 0;
-  for (const tid of toolOrder){
-    const tool = getToolById(tid); if (!tool) continue;
-    const entries = groups.get(tid);
-    const spindleDir = tool.spindleDir === 'M4' ? 'M4' : 'M3';
-    const dirName = spindleDir === 'M4' ? 'antihorario' : 'horario';
-    const cutDirName = tool.cutDir === 'cw' ? 'horario' : 'antihorario';
-
-    emit(`(--- Herramienta T${tool.toolNumber}: ${tool.name} ---)`, -1);
-    emit(`(Diam ${tool.diam}mm - ${tool.rpm}rpm - Avance XY ${tool.feed} - Avance Z ${tool.feedZ})`, -1);
-    emit(`(Corte ${cutDirName} - Mandrino ${spindleDir} ${dirName})`, -1);
-    if (S.tabs.enabled){ emit(`(Patillas: ${S.tabs.count} uds - ancho REAL ${S.tabs.width}mm - alto ${S.tabs.height}mm)`, -1); }
-    emit(`G0 Z${tool.safe.toFixed(3)}`, -1);
-    emit(`T${tool.toolNumber} M6`, -1);
-    emit(`S${tool.rpm} ${spindleDir}`, -1);
-    if (S.spindlePause > 0){ const pauseMs = Math.round(S.spindlePause * 1000);
-      emit(`G4 P${pauseMs}  (pausa estabilizacion mandrino ${S.spindlePause}s)`, -1); }
-    emit('', -1);
-    toolChangeCount++;
-
-    for (let oi = 0; oi < entries.length; oi++){
-      const { op, originalIndex } = entries[oi];
-      const passes = Math.max(1, Math.ceil(tool.depth / tool.step));
-      const step = tool.depth / passes;
-      emit(`(Operacion ${oi+1}/${entries.length}: ${op.type.toUpperCase()})`, -1);
-
-      if (op.type === 'drill'){
-        if (op.points.length === 0){ emit('', -1); continue; }
-        const usePeck = passes > 1;
-        emit(`G0 Z${tool.safe.toFixed(3)}`, -1);
-        emit(`G0 X${op.points[0].x.toFixed(3)} Y${op.points[0].y.toFixed(3)}`, blockId);
-        emit(`G0 Z${tool.retract.toFixed(3)}`, -1);
-        if (usePeck){
-          emit(`G83 X${op.points[0].x.toFixed(3)} Y${op.points[0].y.toFixed(3)} Z-${tool.depth.toFixed(3)} R${tool.retract.toFixed(3)} Q${step.toFixed(3)} F${tool.feedZ}`, blockId);
-        } else {
-          emit(`G81 X${op.points[0].x.toFixed(3)} Y${op.points[0].y.toFixed(3)} Z-${tool.depth.toFixed(3)} R${tool.retract.toFixed(3)} F${tool.feedZ}`, blockId);
-        }
-        for (let pi = 1; pi < op.points.length; pi++){
-          blockId++;
-          emit(`X${op.points[pi].x.toFixed(3)} Y${op.points[pi].y.toFixed(3)}`, blockId);
-        }
-        emit('G80', -1);
-        emit(`G0 Z${tool.safe.toFixed(3)}`, -1);
-      } else if (op.type === 'cut'){
-        const c = S.cutContours[originalIndex];
-        if (!c || c.points.length < 2){ emit('(sin contorno)', -1); emit('', -1); continue; }
-        const pts = effectiveContour(c.points);
-        const prims = c.primitives;
-        const isClosed = c.closed;
-        const f = pts[0];
-        let tabsEff = [];
-        if (S.tabs.enabled && isClosed){
-          const seed = S.tabs.seed + originalIndex * 137;
-          tabsEff = computeTabSegments(pts, true, S.tabs.count, S.tabs.width, seed, tool.diam);
-        }
-        emit(`G0 Z${tool.safe.toFixed(3)}`, -1);
-        emit(`G0 X${f.x.toFixed(3)} Y${f.y.toFixed(3)}`, blockId);
-        for (let k=0;k<passes;k++){
-          if (k > 0) blockId++;
-          const z = -Math.min((k+1)*step, tool.depth);
-          const isLastPass = (k === passes - 1);
-          emit(`G1 Z${z.toFixed(3)} F${tool.feedZ}`, blockId);
-          if (S.tabs.enabled && isLastPass && isClosed && tabsEff.length > 0){
-            emit(`(--- pasada con ${tabsEff.length} patillas - patilla final ${S.tabs.width}mm - alto ${S.tabs.height}mm ---)`, blockId);
-            emitCutWithTabs(lines, blocks, blockId, pts, isClosed, tool, z, tabsEff, S.tabs.height);
-          } else if (prims && prims.length > 0){
-            emitPrimitivesGCode(lines, blocks, blockId, prims, tool, S.offsetX, S.offsetY, tool.feed);
-          } else {
-            for (let i = 1; i < pts.length; i++) emit(`G1 X${pts[i].x.toFixed(3)} Y${pts[i].y.toFixed(3)} F${tool.feed}`, blockId);
-            if (isClosed){ const lastPt = pts[pts.length - 1]; if (Math.hypot(lastPt.x - f.x, lastPt.y - f.y) > 1e-3) emit(`G1 X${f.x.toFixed(3)} Y${f.y.toFixed(3)} F${tool.feed}`, blockId); }
-          }
-        }
-        emit(`G0 Z${tool.retract.toFixed(3)}`, -1);
-      } else if (op.type === 'pocket'){
-        emit(`G0 Z${tool.safe.toFixed(3)}`, -1);
-        for (const a of op.areas){
-          if (a.shape === 'rect'){
-            const x1 = Math.min(a.x1,a.x2)+tool.diam/2, y1 = Math.min(a.y1,a.y2)+tool.diam/2;
-            const x2 = Math.max(a.x1,a.x2)-tool.diam/2, y2 = Math.max(a.y1,a.y2)-tool.diam/2;
-            if (x2 <= x1 || y2 <= y1) continue;
-            const stepY = tool.diam * (1 - tool.overlap);
-            emit(`G0 X${x1.toFixed(3)} Y${y1.toFixed(3)}`, blockId);
-            for (let k=0;k<passes;k++){
-              blockId++;
-              const z = -Math.min((k+1)*step, tool.depth);
-              emit(`G1 Z${z.toFixed(3)} F${tool.feedZ}`, blockId);
-              let dir = 1, y = y1;
-              while (y <= y2 + 1e-9){
-                const xe = dir > 0 ? x2 : x1;
-                emit(`G1 X${xe.toFixed(3)} Y${y.toFixed(3)} F${tool.feed}`, blockId);
-                y += stepY; if (y > y2) break;
-                const xn = dir > 0 ? x1 : x2;
-                emit(`G1 X${xn.toFixed(3)} Y${y.toFixed(3)} F${tool.feed}`, blockId);
-                dir *= -1;
-              }
-              if (k < passes - 1){ emit(`G0 X${x1.toFixed(3)} Y${y1.toFixed(3)}`, blockId); }
-            }
-            emit(`G0 Z${tool.retract.toFixed(3)}`, -1);
-          } else if (a.shape === 'circle'){
-            const stepR = tool.diam * (1 - tool.overlap);
-            for (let k=0;k<passes;k++){
-              blockId++;
-              const z = -Math.min((k+1)*step, tool.depth);
-              let rr = stepR;
-              emit(`G0 X${(a.cx+stepR).toFixed(3)} Y${a.cy.toFixed(3)}`, blockId);
-              while (rr <= a.r){
-                const st = Math.max(24, Math.ceil(2*Math.PI*rr / (stepR*0.5)));
-                emit(`G1 Z${z.toFixed(3)} F${tool.feedZ}`, blockId);
-                for (let s=1;s<=st;s++){
-                  const ang = s/st*Math.PI*2;
-                  const px = a.cx + rr*Math.cos(ang), py = a.cy + rr*Math.sin(ang);
-                  emit(`G1 X${px.toFixed(3)} Y${py.toFixed(3)} F${tool.feed}`, blockId);
-                }
-                rr += stepR;
-                if (rr <= a.r) emit(`G0 X${(a.cx+rr).toFixed(3)} Y${a.cy.toFixed(3)}`, blockId);
-              }
-            }
-            emit(`G0 Z${tool.retract.toFixed(3)}`, -1);
-          }
-        }
-      }
-      emit('', -1);
-    }
-  }
-  emit(`G0 Z${maxSafe.toFixed(3)}`, -1);
-  emit('M5', -1);
-  emit('M30', -1);
-  emit('%', -1);
-
-  // Guardar en el estado para sincronizacion
-  S.gcodeLines = lines;
-  S.gcodeBlock = blocks;
-  // Reconstruir blockPoints del G-code (para resaltar en canvas) - usamos los de la sim si existen
-  renderGcodeDisplay();
-  gcodeEl.textContent = ''; // limpiar
-  gcodeEl.innerHTML = '';
-  renderGcodeDisplay();
-
-  showToast(`G-Code generado - ${toolChangeCount} cambio(s)`,'success');
-  return lines.join('\n');
-}
-
-// ================= UI =================
+// ================= UI GENERAL =================
 let toastT;
 function showToast(msg, type=''){
   toastEl.textContent = msg;
@@ -1939,16 +1853,12 @@ function onFile(e){
       const norm = normalize(parsed);
       S.dxfText = text; S.dxfFilename = file.name;
       S.entities = norm; S.operations = []; S.layerVis = {};
-      S.simMoves = []; S.simMoveTimes = []; S.simTotalTime = 0; S.simT = 0;
       S.cutContours = {}; S.cutTabs = {};
-      S.gcodeLines = []; S.gcodeBlock = []; S.blockPoints = {};
-      S.activeGlineIdx = -1; S.selectedGlineIdx = -1;
-      renderGcodeDisplay();
       S.offsetX = 0; S.offsetY = 0;
       $('offsetX').value = 0; $('offsetY').value = 0;
       if (!S.tools.length){ S.tools.push(createDefaultTool(1)); S.activeToolId = S.tools[0].id; loadToolIntoFields(S.tools[0]); }
       extractLayers(); updateToolsList(); updateOpsList();
-      resizeCanvas(); fitView(); updateSimUI(); updateTabsInfo(); render(); scheduleSave();
+      resizeCanvas(); fitView(); buildProgram(); render(); scheduleSave();
       const counts = {}; for (const en of norm) counts[en.type] = (counts[en.type]||0)+1;
       diagEl.textContent = `Archivo: ${file.name}\nTotal: ${norm.length}\n` +
         Object.entries(counts).map(([k,v]) => `${k}: ${v}`).join('\n');
@@ -1969,15 +1879,18 @@ $('projInput').addEventListener('change', e => { const f = e.target.files[0]; if
 $('btnFit').addEventListener('click', () => { fitView(); render(); scheduleSave(); });
 $('btnClear').addEventListener('click', clearOps);
 $('btnUndo').addEventListener('click', undoOp);
-$('btnGen').addEventListener('click', genGCode);
+$('btnGen').addEventListener('click', () => { buildProgram(); render(); showToast('G-Code actualizado','success'); });
 $('btnDl').addEventListener('click', () => {
+  if (!S.gcodeLines.length){ showToast('Genera primero','warn'); return; }
   const g = S.gcodeLines.join('\n');
-  if (!g || g.startsWith('(')){ showToast('Genera primero','warn'); return; }
   const b = new Blob([g], {type:'text/plain'});
-  const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'programa.nc'; a.click(); });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'programa.nc'; a.click();
+});
 $('btnCopy').addEventListener('click', () => {
+  if (!S.gcodeLines.length){ showToast('Genera primero','warn'); return; }
   const g = S.gcodeLines.join('\n');
-  if (g && !g.startsWith('(')) navigator.clipboard.writeText(g).then(() => showToast('Copiado','success')); });
+  navigator.clipboard.writeText(g).then(() => showToast('Copiado','success'));
+});
 $('btnFlipArcs').addEventListener('click', () => { S.flipArcs = !S.flipArcs;
   $('btnFlipArcs').textContent = S.flipArcs ? 'Arcos INV' : 'Arcos'; render(); scheduleSave(); });
 $('btnFlipY').addEventListener('click', () => { S.flipY = !S.flipY;
@@ -1989,7 +1902,7 @@ $('btnDupTool').addEventListener('click', duplicateTool);
 function updateToolField(id, transform){
   const t = getActiveTool(); if (!t) return;
   transform(t); loadToolIntoFields(t); updateToolsList();
-  rebuildAllContours(); buildSimFromOps(); render(); scheduleSave();
+  rebuildAllContours(); buildProgram(); render(); scheduleSave();
 }
 $('tName').addEventListener('change', () => updateToolField('tName', t => { t.name = $('tName').value.trim() || t.name; }));
 $('tNum').addEventListener('change', () => updateToolField('tNum', t => { t.toolNumber = Math.max(1, parseInt($('tNum').value) || 1); }));
@@ -2005,20 +1918,20 @@ $('cOverlap').addEventListener('change', () => updateToolField('cOverlap', t => 
 $('cCutDir').addEventListener('change', () => updateToolField('cCutDir', t => { t.cutDir = $('cCutDir').value; }));
 $('cSpindleDir').addEventListener('change', () => updateToolField('cSpindleDir', t => { t.spindleDir = $('cSpindleDir').value; }));
 
-$('cfgSpindlePause').addEventListener('change', () => { S.spindlePause = Math.max(0, parseFloat($('cfgSpindlePause').value) || 0); buildSimFromOps(); render(); scheduleSave(); });
-$('cfgRapidXY').addEventListener('change', () => { S.rapidXY = Math.max(100, parseFloat($('cfgRapidXY').value) || 5000); buildSimFromOps(); render(); scheduleSave(); });
-$('cfgRapidZ').addEventListener('change', () => { S.rapidZ = Math.max(100, parseFloat($('cfgRapidZ').value) || 3000); buildSimFromOps(); render(); scheduleSave(); });
+$('cfgSpindlePause').addEventListener('change', () => { S.spindlePause = Math.max(0, parseFloat($('cfgSpindlePause').value) || 0); buildProgram(); render(); scheduleSave(); });
+$('cfgRapidXY').addEventListener('change', () => { S.rapidXY = Math.max(100, parseFloat($('cfgRapidXY').value) || 5000); buildProgram(); render(); scheduleSave(); });
+$('cfgRapidZ').addEventListener('change', () => { S.rapidZ = Math.max(100, parseFloat($('cfgRapidZ').value) || 3000); buildProgram(); render(); scheduleSave(); });
 
 $('tabsEnabled').addEventListener('change', () => { S.tabs.enabled = $('tabsEnabled').checked;
-  rebuildAllContours(); buildSimFromOps(); render(); scheduleSave(); });
+  rebuildAllContours(); buildProgram(); render(); scheduleSave(); });
 $('tabsCount').addEventListener('change', () => { S.tabs.count = Math.max(1, Math.min(20, parseInt($('tabsCount').value) || 3));
-  rebuildAllContours(); buildSimFromOps(); render(); scheduleSave(); });
+  rebuildAllContours(); buildProgram(); render(); scheduleSave(); });
 $('tabsWidth').addEventListener('change', () => { S.tabs.width = Math.max(0.1, parseFloat($('tabsWidth').value) || 1);
-  rebuildAllContours(); buildSimFromOps(); render(); scheduleSave(); });
+  rebuildAllContours(); buildProgram(); render(); scheduleSave(); });
 $('tabsHeight').addEventListener('change', () => { S.tabs.height = Math.max(0.1, parseFloat($('tabsHeight').value) || 1);
-  buildSimFromOps(); render(); scheduleSave(); });
+  buildProgram(); render(); scheduleSave(); });
 $('btnShuffleTabs').addEventListener('click', () => { S.tabs.seed = (S.tabs.seed + 7919) >>> 0;
-  rebuildAllContours(); buildSimFromOps(); render(); scheduleSave(); });
+  rebuildAllContours(); buildProgram(); render(); scheduleSave(); });
 
 btnPlay.addEventListener('click', () => { if (S.simPlaying) simPause(); else simPlay(); });
 btnReset.addEventListener('click', simReset);
@@ -2038,7 +1951,6 @@ canvasContainer.addEventListener('wheel', e => {
   S.offX += (wa.x - wb.x) * S.scale; S.offY += -(wa.y - wb.y) * S.scale;
   render();
 }, {passive:false});
-
 canvasContainer.addEventListener('mousedown', e => {
   if (e.button === 1){ const now = Date.now();
     if (now - S.lastMiddleClick < 300){ S.lastMiddleClick = 0; centerOnOrigin(); e.preventDefault(); return; }
@@ -2101,22 +2013,21 @@ window.addEventListener('keydown', e => {
   if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
   if (e.key === 'Escape'){ setMode('view'); S.pocketStart = null; }
   if (e.key === 'f' || e.key === 'F'){ fitView(); render(); }
-  if (e.key === 'g' || e.key === 'G') genGCode();
+  if (e.key === 'g' || e.key === 'G'){ buildProgram(); render(); }
   if (e.key === 'h' || e.key === 'H') centerOnOrigin();
   if (e.key === ' '){ e.preventDefault(); if (S.simPlaying) simPause(); else simPlay(); }
   if (e.ctrlKey && e.key === 'z'){ e.preventDefault(); undoOp(); }
 });
 window.addEventListener('resize', () => { resizeCanvas(); render(); });
-
 $('btnCenter').addEventListener('click', () => {
   const list = effective();
   if (!list.length){ showToast('Sin entidades','warn'); return; }
   const bb = bbox(list);
   S.offsetX = -(bb.mnx + bb.w/2); S.offsetY = -(bb.mny + bb.h/2);
   $('offsetX').value = S.offsetX.toFixed(3); $('offsetY').value = S.offsetY.toFixed(3);
-  fitView(); rebuildAllContours(); buildSimFromOps(); render(); scheduleSave(); });
-$('offsetX').addEventListener('change', () => { S.offsetX = parseFloat($('offsetX').value)||0; fitView(); rebuildAllContours(); buildSimFromOps(); render(); scheduleSave(); });
-$('offsetY').addEventListener('change', () => { S.offsetY = parseFloat($('offsetY').value)||0; fitView(); rebuildAllContours(); buildSimFromOps(); render(); scheduleSave(); });
+  fitView(); rebuildAllContours(); buildProgram(); render(); scheduleSave(); });
+$('offsetX').addEventListener('change', () => { S.offsetX = parseFloat($('offsetX').value)||0; fitView(); rebuildAllContours(); buildProgram(); render(); scheduleSave(); });
+$('offsetY').addEventListener('change', () => { S.offsetY = parseFloat($('offsetY').value)||0; fitView(); rebuildAllContours(); buildProgram(); render(); scheduleSave(); });
 
 function init(){
   resizeCanvas();
@@ -2133,10 +2044,9 @@ function init(){
     S.activeToolId = S.tools[0].id;
     loadToolIntoFields(S.tools[0]);
     updateToolsList(); updateOpsList(); extractLayers();
-    fitView(); updateSimUI(); updateTabsInfo(); render();
+    fitView(); buildProgram(); render();
   } else { showToast('Proyecto restaurado','success'); }
-  renderGcodeDisplay();
-  console.log('CNC DXF a G-Code - resaltado de lineas + seleccion de segmento');
+  console.log('CNC DXF a G-Code - arquitectura unificada G-code + simulacion');
 }
 init();
 })();
