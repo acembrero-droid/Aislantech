@@ -576,7 +576,7 @@ function rotatePrimitivesToStart(prims, ox, oy){
   return newPrims;
 }
 
-// ================= OFFSET MEJORADO =================
+// ================= OFFSET CORREGIDO =================
 function offsetLinePrim(l, d, side){
   const dx = l.x2 - l.x1, dy = l.y2 - l.y1;
   const len = Math.hypot(dx, dy);
@@ -591,7 +591,6 @@ function offsetArcPrim(a, d, side){
   return { ...a, r: newR };
 }
 
-// Devuelven TODAS las intersecciones posibles (0, 1 o 2)
 function intersectLineLineAll(l1, l2){
   const d1x = l1.x2-l1.x1, d1y = l1.y2-l1.y1;
   const d2x = l2.x2-l2.x1, d2y = l2.y2-l2.y1;
@@ -634,7 +633,8 @@ function intersectArcArcAll(a1, a2){
   return [i1, i2];
 }
 
-// Valida que al mover cur.end y next.start a jp las primitivas sigan coherentes
+// Validación de una unión: al mover cur.end y next.start a jp,
+// las primitivas no deben quedar invertidas o absurdamente largas
 function validateJointForAdjust(cur, next, jp){
   if (cur.type === 'line'){
     const dx = jp.x - cur.x1, dy = jp.y - cur.y1;
@@ -650,7 +650,7 @@ function validateJointForAdjust(cur, next, jp){
     if (cur.ccw){ while (ea < cur.sa - 1e-9) ea += 2*Math.PI; }
     else { while (ea > cur.sa + 1e-9) ea -= 2*Math.PI; }
     const sweep = Math.abs(ea - cur.sa);
-    if (sweep > Math.PI * 1.9 || sweep < 1e-6) return false;
+    if (sweep > Math.PI * 1.99 || sweep < 1e-6) return false;
   }
   if (next.type === 'line'){
     const dx = next.x2 - jp.x, dy = next.y2 - jp.y;
@@ -667,7 +667,7 @@ function validateJointForAdjust(cur, next, jp){
     if (next.ccw){ while (ea < sa - 1e-9) ea += 2*Math.PI; }
     else { while (ea > sa + 1e-9) ea -= 2*Math.PI; }
     const sweep = Math.abs(ea - sa);
-    if (sweep > Math.PI * 1.9 || sweep < 1e-6) return false;
+    if (sweep > Math.PI * 1.99 || sweep < 1e-6) return false;
   }
   return true;
 }
@@ -692,14 +692,16 @@ function adjustPrimStart(p, jp){
   }
 }
 
+// =============== OFFSET CORREGIDO (dos pasadas) ===============
 function offsetContourPrimitives(prims, d, side){
   if (Math.abs(d) < 1e-9 || side === 0) return prims.map(p => ({ ...p }));
   const n = prims.length;
   const offset = prims.map(p => p.type === 'line' ? offsetLinePrim(p, d, side) : offsetArcPrim(p, d, side));
   if (n < 2) return offset;
 
-  const miterLimit = Math.abs(d) * 4; // miter limit típico
-  const joints = []; // joints[i] = mejor candidata para la unión offset[i]→offset[i+1]
+  // Miter limit más generoso: permite esquinas hasta ~10° sin chaflanar
+  const miterLimit = Math.abs(d) * 20;
+  const joints = [];
 
   for (let i = 0; i < n; i++){
     const cur = offset[i];
@@ -707,44 +709,43 @@ function offsetContourPrimitives(prims, d, side){
     const origJoint = getPrimEnd(prims[i]);
 
     let candidates = [];
-    if (cur.type === 'line' && next.type === 'line'){
-      candidates = intersectLineLineAll(cur, next);
-    } else if (cur.type === 'line' && next.type === 'arc'){
-      candidates = intersectLineArcAll(cur, next);
-    } else if (cur.type === 'arc' && next.type === 'line'){
-      candidates = intersectLineArcAll(next, cur);
-    } else {
-      candidates = intersectArcArcAll(cur, next);
-    }
+    if (cur.type === 'line' && next.type === 'line') candidates = intersectLineLineAll(cur, next);
+    else if (cur.type === 'line' && next.type === 'arc') candidates = intersectLineArcAll(cur, next);
+    else if (cur.type === 'arc' && next.type === 'line') candidates = intersectLineArcAll(next, cur);
+    else candidates = intersectArcArcAll(cur, next);
 
     let best = null;
     for (const c of candidates){
       const dist = Math.hypot(c.x - origJoint.x, c.y - origJoint.y);
       if (dist > miterLimit) continue;
       if (!validateJointForAdjust(cur, next, c)) continue;
-      if (best === null || dist < best.dist){ best = { p: c, dist }; }
+      if (best === null || dist < best.dist) best = { p: c, dist };
     }
     joints.push(best);
   }
 
+  // PASO 1: Ajustar TODAS las primitivas primero
+  const adjusted = offset.map(p => ({ ...p }));
+  for (let i = 0; i < n; i++){
+    const jStart = joints[(i-1+n) % n];
+    const jEnd = joints[i];
+    if (jStart) adjustPrimStart(adjusted[i], jStart.p);
+    if (jEnd)   adjustPrimEnd(adjusted[i],   jEnd.p);
+  }
+
+  // PASO 2: Construir el resultado insertando chaflanes SOLO donde falta joint
   const result = [];
   for (let i = 0; i < n; i++){
-    const cur = { ...offset[i] };
-    const jointEnd = joints[i];
-    const jointStart = joints[(i-1+n) % n];
-    if (jointStart) adjustPrimStart(cur, jointStart.p);
-    if (jointEnd) adjustPrimEnd(cur, jointEnd.p);
-    result.push(cur);
-    // Si no hay joint válido, insertar chaflán entre cur.end y next.start natural
-    if (!jointEnd){
-      const eA = getPrimEnd(cur);
-      const sB = getPrimStart(offset[(i+1) % n]);
-      if (Math.hypot(eA.x - sB.x, eA.y - sB.y) > 1e-6){
+    result.push(adjusted[i]);
+    if (!joints[i]){
+      const eA = getPrimEnd(adjusted[i]);
+      const sB = getPrimStart(adjusted[(i+1) % n]);
+      const dist = Math.hypot(eA.x - sB.x, eA.y - sB.y);
+      if (dist > 0.001){
         result.push({ type:'line', x1: eA.x, y1: eA.y, x2: sB.x, y2: sB.y });
       }
     }
   }
-
   return result;
 }
 
@@ -1397,7 +1398,6 @@ function buildProgram(){
   emit('M30', -1);
   emit('%', -1);
 
-  // Tiempos de simulación + asignación al estado global (FIX)
   const times = [0];
   let total = 0;
   for (const mv of moves){ total += mv.duration; times.push(total); }
@@ -2110,7 +2110,7 @@ function init(){
     updateToolsList(); updateOpsList(); extractLayers();
     fitView(); buildProgram(); render();
   } else { showToast('Proyecto restaurado','success'); }
-  console.log('CNC DXF a G-Code - offset por primitivas con validacion de intersecciones');
+  console.log('CNC DXF a G-Code - offset corregido (dos pasadas + miter 20x)');
 }
 init();
 })();
