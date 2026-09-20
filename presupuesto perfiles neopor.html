@@ -77,14 +77,15 @@
     .edit-cant { width:60px; padding:4px 6px; border:1px solid var(--color-secondary-light); border-radius:6px; text-align:center; }
     /* BOTONES */
     .btn { display:inline-flex; align-items:center; justify-content:center; gap:8px; background-color:var(--color-primary); color:var(--color-dark); padding:10px 22px; border-radius:40px; font-weight:700; font-size:0.9rem; border:none; cursor:pointer; transition:var(--transition); font-family:'Montserrat',sans-serif; }
-    .btn:hover { background-color:var(--color-primary-dark); color:var(--color-white); transform:translateY(-3px); box-shadow:0 6px 16px rgba(237,208,14,0.3); }
+    .btn:hover:not(:disabled) { background-color:var(--color-primary-dark); color:var(--color-white); transform:translateY(-3px); box-shadow:0 6px 16px rgba(237,208,14,0.3); }
+    .btn:disabled { opacity:0.6; cursor:not-allowed; }
     .btn-secondary { background:transparent; border:2px solid var(--color-secondary-light); color:var(--color-secondary-dark); padding:8px 16px; font-size:0.8rem; }
     .btn-secondary:hover { border-color:var(--color-primary); color:var(--color-primary-dark); background:var(--color-primary-light); transform:translateY(-2px); box-shadow:none; }
     .btn-danger-outline { background:transparent; border:1px solid #c62828; color:#c62828; padding:4px 12px; font-size:0.75rem; }
     .btn-danger-outline:hover { background:#c62828; color:white; transform:translateY(-2px); }
     .btn-sm { padding:5px 14px; font-size:0.8rem; }
     .btn-success { background-color:#2e7d32; color:white; }
-    .btn-success:hover { background-color:#1b5e20; color:white; }
+    .btn-success:hover:not(:disabled) { background-color:#1b5e20; color:white; }
     .help-text { font-size:0.8rem; color:var(--color-gray); margin-top:4px; }
     /* LISTA DE PERFILES */
     .perfil-item { display:flex; align-items:center; gap:12px; padding:8px 12px; border-bottom:1px solid var(--color-secondary-light); cursor:pointer; transition:var(--transition); }
@@ -219,7 +220,11 @@
       <div class="form-group"><label for="clienteEmail">Correo electrónico *</label><input type="email" id="clienteEmail" required placeholder="ejemplo@correo.com"></div>
       <div class="form-group"><label for="clienteTelefono">Teléfono *</label><input type="tel" id="clienteTelefono" required placeholder="+34 600 000 000"></div>
       <div class="form-group"><label for="clienteDireccion">Dirección (opcional)</label><input type="text" id="clienteDireccion" placeholder="Calle, número, ciudad, código postal"></div>
-      <div class="form-group" style="margin-top:20px;"><button type="submit" class="btn btn-success btn-primary"><i class="fas fa-credit-card"></i> Continuar al pago</button></div>
+      <div class="form-group" style="margin-top:20px;">
+        <button type="submit" id="btnPagar" class="btn btn-success btn-primary">
+          <i class="fas fa-credit-card"></i> Continuar al pago
+        </button>
+      </div>
     </form>
   </div>
 </div>
@@ -257,6 +262,10 @@ const TOLERANCIA_DISCRET = 0.2;
 const TOLERANCIA_SIMPLIFICA = 0.3;
 const MIN_DIST = 0.01;
 const MAX_FILE_SIZE = 1024 * 1024; // 1 MB
+
+// ⚠️⚠️⚠️ IMPORTANTE: SUSTITUYE ESTA URL POR LA DE TU WORKER REAL ⚠️⚠️⚠️
+// La encuentras en el panel de Cloudflare, en la parte superior de tu Worker.
+// Ejemplo: 'https://aislantech-payment.workers.dev/api/order'
 const WORKER_URL = 'https://aislantech-payment.workers.dev/api/order';
 
 // -------- DOM ELEMENTS --------
@@ -285,7 +294,8 @@ const els = {
   clienteNombre: document.getElementById('clienteNombre'),
   clienteEmail: document.getElementById('clienteEmail'),
   clienteTelefono: document.getElementById('clienteTelefono'),
-  clienteDireccion: document.getElementById('clienteDireccion')
+  clienteDireccion: document.getElementById('clienteDireccion'),
+  btnPagar: document.getElementById('btnPagar')
 };
 
 // -------- ESTADO --------
@@ -293,8 +303,9 @@ let perfilesCargados = [];      // { id, nombre, puntos, area, perimetro, file (
 let perfilSeleccionadoId = null;
 let lineasPresupuesto = [];     // { id, perfilId, descripcion, cantidad, ... perfil (puntos), file (File) }
 let toleranciaUnion = 0.01;
+let enviandoPedido = false;     // Bandera para evitar doble envío
 
-// -------- FUNCIONES DE PROCESAMIENTO DXF (sin cambios) --------
+// -------- FUNCIONES DE PROCESAMIENTO DXF --------
 function parseDXF(texto) {
   const lines = texto.split(/\r?\n/);
   const entities = [];
@@ -728,7 +739,6 @@ function agregarPerfiles(files) {
     alert(`Los siguientes archivos superan el límite de 1 MB y no serán procesados:\n${archivosGrandes.map(f=>f.name).join('\n')}`);
     const validFiles = fileArray.filter(f => f.size <= MAX_FILE_SIZE);
     if (validFiles.length === 0) return;
-    // Reasignar files con solo los válidos
     files = validFiles;
   }
   const loadingMsg = document.createElement('div');
@@ -795,7 +805,7 @@ function seleccionarPerfil(id) {
   if (perfil) { actualizarVisor(perfil); renderListaPerfiles(); els.perfilSelect.value = id; }
 }
 
-// -------- AÑADIR AL PRESUPUESTO (guardando el archivo original) --------
+// -------- AÑADIR AL PRESUPUESTO --------
 els.calcularBtn.addEventListener('click', ()=>{
   const perfilId = els.perfilSelect.value;
   const perfil = perfilesCargados.find(p => p.id === perfilId);
@@ -821,16 +831,20 @@ els.calcularBtn.addEventListener('click', ()=>{
   actualizarTabla();
 });
 
-// -------- FINALIZAR PEDIDO (envío de archivos DXF) --------
+// -------- FINALIZAR PEDIDO (con feedback visual y nombres únicos) --------
 els.finalizarPedidoBtn.addEventListener('click', ()=>{
   if (lineasPresupuesto.length === 0) { alert('El presupuesto está vacío. Añade al menos una línea.'); return; }
   els.clienteModal.classList.add('active');
 });
-els.modalCloseBtn.addEventListener('click', ()=>{ els.clienteModal.classList.remove('active'); });
-els.clienteModal.addEventListener('click', (e)=>{ if (e.target === els.clienteModal) els.clienteModal.classList.remove('active'); });
+els.modalCloseBtn.addEventListener('click', ()=>{ if (!enviandoPedido) els.clienteModal.classList.remove('active'); });
+els.clienteModal.addEventListener('click', (e)=>{ if (e.target === els.clienteModal && !enviandoPedido) els.clienteModal.classList.remove('active'); });
 
 els.clienteForm.addEventListener('submit', async (e) => {
   e.preventDefault();
+
+  // Evitar doble envío
+  if (enviandoPedido) return;
+
   const nombre = els.clienteNombre.value.trim();
   const email = els.clienteEmail.value.trim();
   const telefono = els.clienteTelefono.value.trim();
@@ -838,6 +852,14 @@ els.clienteForm.addEventListener('submit', async (e) => {
     alert('Por favor, completa todos los campos obligatorios (nombre, email, teléfono).');
     return;
   }
+
+  // Verificar URL del Worker antes de enviar
+  if (!WORKER_URL || WORKER_URL.includes('TU-WORKER')) {
+    alert('⚠️ La URL del Worker no está configurada correctamente.\n\nContacta con el administrador del sitio para que actualice la constante WORKER_URL en el código.');
+    console.error('WORKER_URL no configurada. Valor actual:', WORKER_URL);
+    return;
+  }
+
   const clienteData = { nombre, email, telefono, direccion: els.clienteDireccion.value.trim() || '' };
 
   // Recolectar datos del pedido
@@ -864,16 +886,19 @@ els.clienteForm.addEventListener('submit', async (e) => {
   formData.append('total', total.toFixed(2));
   formData.append('cliente', JSON.stringify(clienteData));
 
-  // Adjuntar cada archivo DXF original (uno por línea)
+  // Adjuntar cada archivo DXF original con nombre único (usando linea.id)
   lineasPresupuesto.forEach((linea) => {
     if (linea.file) {
-      // Usamos un nombre único para evitar colisiones
-      const nombreUnico = `${linea.perfilId}_${linea.file.name}`;
+      const nombreUnico = `${linea.id}_${linea.file.name}`;
       formData.append('dxf', linea.file, nombreUnico);
     }
   });
 
-  els.clienteModal.classList.remove('active');
+  // ---- Feedback visual ----
+  enviandoPedido = true;
+  const textoOriginal = els.btnPagar.innerHTML;
+  els.btnPagar.disabled = true;
+  els.btnPagar.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando pedido...';
 
   try {
     const response = await fetch(WORKER_URL, {
@@ -887,7 +912,16 @@ els.clienteForm.addEventListener('submit', async (e) => {
     }
 
     const html = await response.text();
+
+    // Restaurar botón y cerrar modal
+    els.btnPagar.disabled = false;
+    els.btnPagar.innerHTML = textoOriginal;
+    enviandoPedido = false;
+    els.clienteModal.classList.remove('active');
+
+    // Insertar formulario de Redsys y enviarlo
     const container = document.createElement('div');
+    container.id = 'redsys-container';
     container.innerHTML = html;
     document.body.appendChild(container);
     const form = container.querySelector('form');
@@ -896,9 +930,14 @@ els.clienteForm.addEventListener('submit', async (e) => {
     } else {
       alert('No se pudo iniciar el pago. Inténtalo de nuevo.');
       console.error('Respuesta del Worker sin formulario:', html);
+      container.remove();
     }
   } catch (err) {
-    alert('Error al comunicarse con el servidor: ' + err.message);
+    // Restaurar botón en caso de error
+    els.btnPagar.disabled = false;
+    els.btnPagar.innerHTML = textoOriginal;
+    enviandoPedido = false;
+    alert('Error al comunicarse con el servidor: ' + err.message + '\n\nPor favor, inténtalo de nuevo en unos minutos.');
     console.error(err);
   }
 });
@@ -929,6 +968,12 @@ els.portesSelect.addEventListener('change', ()=>{
 // -------- INICIO --------
 els.perfilSelect.disabled = true;
 els.calcularBtn.disabled = true;
+
+// Advertencia en consola si la URL no está configurada
+if (!WORKER_URL || WORKER_URL.includes('TU-WORKER')) {
+  console.warn('⚠️ ATENCIÓN: La constante WORKER_URL no está configurada. Sustituye "https://TU-WORKER.workers.dev/api/order" por la URL real de tu Worker de Cloudflare.');
+}
+
 console.log('Presupuestador Aislantech con DXF y límite de 1 MB cargado.');
 </script>
 </body>
