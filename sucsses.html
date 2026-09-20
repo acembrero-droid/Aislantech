@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pedido confirmado · Aislantech</title>
+  <link rel="icon" type="image/x-icon" href="favicon.ico" />
+  <link rel="icon" type="image/png" sizes="96x96" href="images/favicon-96x96.png" />
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Open+Sans:wght@300;400;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <style>
+    :root {
+      --color-primary: #EDD00E;
+      --color-primary-dark: #B8860B;
+      --color-primary-light: #FFF8DC;
+      --color-secondary: #3E3E3E;
+      --color-secondary-dark: #696969;
+      --color-secondary-light: #D3D3D3;
+      --color-light: #F5F5F5;
+      --color-dark: #333333;
+      --color-gray: #666666;
+      --color-white: #FFFFFF;
+      --color-success: #2e7d32;
+      --color-success-light: #e8f5e9;
+      --transition: all 0.3s ease;
+      --border-radius: 12px;
+      --box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body {
+      font-family: 'Open Sans', sans-serif;
+      background-color: var(--color-light);
+      color: var(--color-gray);
+      line-height: 1.6;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    h1, h2, h3, .logo-text, .btn { font-family: 'Montserrat', sans-serif; font-weight: 700; color: var(--color-dark); }
+
+    /* HEADER */
+    header {
+      background-color: rgba(255,255,255,0.97);
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+      position: sticky; top: 0; z-index: 1000;
+      backdrop-filter: blur(2px);
+    }
+    .header-container {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 15px 24px; max-width: 1300px; margin: 0 auto;
+    }
+    .logo-container { display: flex; align-items: center; text-decoration: none; }
+    .logo-text { font-weight: 700; display: flex; flex-direction: column; line-height: 1.1; }
+    .logo-aislan { color: var(--color-secondary); font-size: 1.5rem; font-weight: 700; }
+    .logo-tech { color: var(--color-primary); font-size: 1.5rem; font-weight: 800; }
+    .logo-tagline { font-size: 0.7rem; color: var(--color-gray); font-weight: 400; margin-top: 2px; }
+    .btn-yellow {
+      background-color: var(--color-primary); color: var(--color-dark);
+      font-weight: 700; padding: 10px 24px; border-radius: 40px;
+      text-decoration: none; transition: var(--transition);
+      display: inline-flex; align-items: center; gap: 8px;
+      font-size: 0.85rem; border: none; cursor: pointer;
+    }
+    .btn-yellow:hover {
+      background-color: var(--color-primary-dark); color: var(--color-white);
+      transform: translateY(-3px); box-shadow: 0 8px 20px rgba(237,208,14,0.3);
+    }
+
+    /* CONTENIDO */
+    main {
+      flex: 1;
+      display: flex; align-items: center; justify-content: center;
+      padding: 40px 20px;
+    }
+    .card {
+      background: var(--color-white);
+      border-radius: var(--border-radius);
+      box-shadow: var(--box-shadow);
+      border-top: 4px solid var(--color-success);
+      max-width: 600px; width: 100%;
+      padding: 50px 40px;
+      text-align: center;
+      animation: fadeInUp 0.5s ease;
+    }
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .icon-circle {
+      width: 90px; height: 90px;
+      border-radius: 50%;
+      background: var(--color-success-light);
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 24px;
+      animation: scaleIn 0.4s ease 0.2s both;
+    }
+    @keyframes scaleIn {
+      from { transform: scale(0); }
+      to { transform: scale(1); }
+    }
+    .icon-circle i {
+      font-size: 2.8rem;
+      color: var(--color-success);
+    }
+    .card h1 {
+      font-size: 1.9rem;
+      margin-bottom: 12px;
+      color: var(--color-dark);
+    }
+    .card p {
+      font-size: 1rem;
+      color: var(--color-gray);
+      margin-bottom: 12px;
+    }
+    .pedido-numero {
+      display: inline-block;
+      background: var(--color-primary-light);
+      color: var(--color-secondary);
+      padding: 8px 18px;
+      border-radius: 20px;
+      font-family: 'Montserrat', sans-serif;
+      font-weight: 600;
+      font-size: 0.9rem;
+      margin: 16px 0;
+      word-break: break-all;
+    }
+    .divider {
+      height: 1px; background: var(--color-secondary-light);
+      margin: 28px 0;
+    }
+    .info-box {
+      background: var(--color-light);
+      border-radius: var(--border-radius);
+      padding: 18px 20px;
+      text-align: left;
+      font-size: 0.9rem;
+      margin-bottom: 24px;
+    }
+    .info-box i { color: var(--color-primary-dark); margin-right: 8px; }
+    .info-box strong { color: var(--color-dark); }
+    .actions {
+      display: flex; gap: 12px; justify-content: center;
+      flex-wrap: wrap; margin-top: 8px;
+    }
+    .btn-outline {
+      background: transparent;
+      border: 2px solid var(--color-secondary-light);
+      color: var(--color-secondary-dark);
+      padding: 10px 22px;
+      border-radius: 40px;
+      font-weight: 700;
+      font-size: 0.85rem;
+      text-decoration: none;
+      font-family: 'Montserrat', sans-serif;
+      transition: var(--transition);
+      display: inline-flex; align-items: center; gap: 8px;
+      cursor: pointer;
+    }
+    .btn-outline:hover {
+      border-color: var(--color-primary);
+      color: var(--color-primary-dark);
+      background: var(--color-primary-light);
+      transform: translateY(-2px);
+    }
+
+    /* FOOTER */
+    footer {
+      background-color: var(--color-dark);
+      color: var(--color-white);
+      padding: 40px 0 20px;
+      text-align: center;
+    }
+    .footer-logo {
+      font-family: 'Montserrat', sans-serif;
+      font-size: 1.4rem; font-weight: 700;
+      margin-bottom: 12px;
+    }
+    .footer-logo .logo-aislan { color: var(--color-white); }
+    .footer-logo .logo-tech { color: var(--color-primary); }
+    .footer-legal {
+      display: flex; justify-content: center; gap: 24px;
+      margin: 15px 0; flex-wrap: wrap;
+    }
+    .footer-legal a {
+      color: rgba(255,255,255,0.7);
+      text-decoration: none; font-size: 0.8rem;
+      transition: var(--transition);
+    }
+    .footer-legal a:hover { color: var(--color-primary); }
+    .footer-bottom {
+      font-size: 0.8rem;
+      color: rgba(255,255,255,0.6);
+      padding-top: 20px;
+      border-top: 1px solid rgba(255,255,255,0.1);
+    }
+    .footer-bottom a { color: var(--color-primary); text-decoration: none; }
+
+    @media (max-width: 500px) {
+      .card { padding: 35px 24px; }
+      .card h1 { font-size: 1.5rem; }
+      .icon-circle { width: 70px; height: 70px; }
+      .icon-circle i { font-size: 2.2rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="header-container">
+      <a href="https://aislantech.es" class="logo-container">
+        <div class="logo-text">
+          <div><span class="logo-aislan">AISLAN</span><span class="logo-tech">TECH</span></div>
+          <div class="logo-tagline">Soluciones Técnicas Avanzadas</div>
+        </div>
+      </a>
+      <a href="https://aislantech.es" class="btn-yellow">
+        <i class="fas fa-home"></i> Volver al inicio
+      </a>
+    </div>
+  </header>
+
+  <main>
+    <div class="card">
+      <div class="icon-circle">
+        <i class="fas fa-check"></i>
+      </div>
+      <h1>¡Pedido confirmado!</h1>
+      <p>Gracias por tu compra. Hemos recibido tu pago correctamente y ya estamos preparando tu pedido.</p>
+      <div class="pedido-numero" id="pedidoNumero">
+        <i class="fas fa-receipt"></i> Pedido: <span id="orderId">—</span>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="info-box">
+        <p><i class="fas fa-envelope"></i><strong>Confirmación por email:</strong> Recibirás un correo con los detalles de tu pedido en breve.</p>
+        <p style="margin-top:10px;"><i class="fas fa-clock"></i><strong>Plazo de fabricación:</strong> Nos pondremos en contacto contigo para informarte del plazo de entrega.</p>
+        <p style="margin-top:10px;"><i class="fas fa-headset"></i><strong>¿Alguna duda?</strong> Escríbenos a <a href="mailto:info@aislantech.es" style="color: var(--color-primary-dark); text-decoration:none;">info@aislantech.es</a></p>
+      </div>
+
+      <div class="actions">
+        <a href="https://aislantech.es" class="btn-yellow">
+          <i class="fas fa-home"></i> Ir al inicio
+        </a>
+        <a href="mailto:info@aislantech.es" class="btn-outline">
+          <i class="fas fa-envelope"></i> Contactar
+        </a>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <div class="footer-logo">
+      <span class="logo-aislan">AISLAN</span><span class="logo-tech">TECH</span>
+    </div>
+    <div class="footer-legal">
+      <a href="https://aislantech.es">Política de Privacidad</a>
+      <a href="https://aislantech.es">Política de Cookies</a>
+      <a href="https://aislantech.es">Aviso Legal</a>
+    </div>
+    <div class="footer-bottom">
+      &copy; 2026 Aislantech. Todos los derechos reservados. | <a href="https://www.aislantech.es">www.aislantech.es</a>
+    </div>
+  </footer>
+
+  <script>
+    // Mostrar el número de pedido si viene en la URL (?order=...)
+    const params = new URLSearchParams(window.location.search);
+    const orderId = params.get('order') || params.get('Ds_Order');
+    if (orderId) {
+      document.getElementById('orderId').textContent = orderId;
+    } else {
+      document.getElementById('pedidoNumero').style.display = 'none';
+    }
+  </script>
+</body>
+</html>
