@@ -234,6 +234,65 @@
         .ribbon-flyout-menu button svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
         .ribbon-flyout-menu button .fk { margin-left: auto; color: var(--text-dim); font-family: var(--font-mono); font-size: 10px; }
 
+        /* ===== Desplegable de capa actual (ribbon) ===== */
+        .layer-combo { position: relative; }
+        #layer-dropdown {
+            flex-direction: row;
+            font-size: 11px;
+            gap: 6px;
+            min-width: 90px;
+        }
+        .layer-combo-swatch {
+            display: inline-block;
+            width: 11px;
+            height: 11px;
+            border-radius: 2px;
+            border: 1px solid rgba(255,255,255,0.4);
+            flex-shrink: 0;
+        }
+        .layer-combo-caret { width: 9px; height: 9px; stroke: currentColor; fill: none; stroke-width: 2; margin-left: 2px; flex-shrink: 0; }
+        .layer-combo-menu {
+            display: none;
+            position: absolute;
+            top: 100%;
+            margin-top: 6px;
+            left: 0;
+            background: var(--bg-panel);
+            border: 1px solid var(--border-light);
+            border-radius: 4px;
+            box-shadow: var(--shadow);
+            padding: 4px;
+            min-width: 170px;
+            max-height: 240px;
+            overflow-y: auto;
+            z-index: 1000;
+        }
+        .layer-combo-menu.open { display: block; }
+        .layer-combo-menu .lcm-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            width: 100%;
+            background: transparent;
+            border: none;
+            color: var(--text-primary);
+            padding: 6px 8px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 11.5px;
+            text-align: left;
+            white-space: nowrap;
+        }
+        .layer-combo-menu .lcm-item:hover { background: var(--bg-hover); }
+        .layer-combo-menu .lcm-item.active { color: var(--accent-blue); font-weight: 600; }
+        .layer-combo-menu .lcm-swatch {
+            width: 11px;
+            height: 11px;
+            border-radius: 2px;
+            flex-shrink: 0;
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+
         /* ===== Layout principal ===== */
         #main-area {
             flex: 1;
@@ -354,6 +413,67 @@
         #context-menu .cm-key { color: var(--text-dim); font-family: var(--font-mono); font-size: 10.5px; }
         #context-menu .cm-item:hover .cm-key { color: rgba(255,255,255,0.75); }
         #context-menu .cm-sep { height: 1px; background: var(--border-color); margin: 4px 2px; }
+
+        /* ===== Modal genérico ===== */
+        #app-modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.55);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 3000;
+        }
+        #app-modal-overlay.open { display: flex; }
+        #app-modal-box {
+            background: var(--bg-panel);
+            border: 1px solid var(--border-light);
+            border-radius: 6px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+            width: 380px;
+            max-width: 90vw;
+            padding: 18px 20px;
+        }
+        #app-modal-box h3 {
+            font-size: 14px;
+            color: var(--text-primary);
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+        #app-modal-box #app-modal-body {
+            font-size: 12.5px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            margin-bottom: 16px;
+        }
+        #app-modal-box #app-modal-body code {
+            background: var(--bg-main);
+            border: 1px solid var(--border-color);
+            border-radius: 3px;
+            padding: 1px 5px;
+            font-family: var(--font-mono);
+            color: var(--accent-amber);
+        }
+        #app-modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        #app-modal-actions button {
+            background: var(--bg-button);
+            border: 1px solid var(--border-light);
+            color: var(--text-primary);
+            padding: 7px 14px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            transition: var(--transition);
+        }
+        #app-modal-actions button:hover { background: var(--bg-hover); }
+        #app-modal-actions button.primary { background: var(--accent-blue); border-color: var(--accent-blue); color: #06283d; }
+        #app-modal-actions button.primary:hover { filter: brightness(1.1); }
 
         /* ===== Panel de propiedades (interactivo) ===== */
         #properties-panel {
@@ -648,7 +768,7 @@
             CAD&nbsp;Pro
         </span>
         <div class="separator"></div>
-        <button title="Nuevo (Ctrl+N)"><svg viewBox="0 0 24 24"><path d="M13 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V9z"/><path d="M13 3v6h6"/></svg></button>
+        <button id="qa-new" title="Nuevo (Ctrl+N)"><svg viewBox="0 0 24 24"><path d="M13 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V9z"/><path d="M13 3v6h6"/></svg></button>
         <button id="qa-open" title="Importar DXF (Ctrl+O)"><svg viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></button>
         <button id="qa-save" title="Exportar DXF (Ctrl+S)"><svg viewBox="0 0 24 24"><path d="M5 3h11l3 3v15H5z"/><path d="M8 3v6h8V3M8 21v-7h8v7"/></svg></button>
         <div class="separator"></div>
@@ -657,7 +777,7 @@
         <div class="separator"></div>
         <button id="qa-print" title="Imprimir"><svg viewBox="0 0 24 24"><path d="M6 9V3h12v6"/><rect x="4" y="9" width="16" height="8" rx="1"/><path d="M6 17v4h12v-4"/></svg></button>
         <button id="qa-navigator" title="Mini mapa"><svg viewBox="0 0 24 24"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2z"/><path d="M9 4v14M15 6v14"/></svg></button>
-        <input type="file" id="file-input-import" class="file-input-hidden" accept=".dxf">
+        <input type="file" id="file-input-import" class="file-input-hidden" accept=".dxf,.dwg">
     </div>
 
     <!-- ===== Ribbon ===== -->
@@ -842,6 +962,15 @@
                 <canvas id="navCanvas"></canvas>
             </div>
             <div id="context-menu"></div>
+        </div>
+
+        <!-- ===== Modal genérico (avisos, opciones de impresión) ===== -->
+        <div id="app-modal-overlay">
+            <div id="app-modal-box">
+                <h3 id="app-modal-title">Título</h3>
+                <div id="app-modal-body">Cuerpo</div>
+                <div id="app-modal-actions"></div>
+            </div>
         </div>
 
         <!-- Panel de propiedades interactivo -->
@@ -1075,7 +1204,16 @@
             gripDragStart: null,
             gripOriginalSegments: null,
             hoveredItem: null,
+            acquiredPoints: [],
+            trackHoverPoint: null,
+            pickingPrintWindow: false,
+            printPickStart: null,
+            printPickRect: null,
+            circleDiameterMode: false,
+            lineSegmentPaths: [],
         };
+        let trackHoverTimer = null;
+        const TRACK_ACQUIRE_DELAY = 650; // ms, como el retardo de adquisición de AutoCAD
 
         // ============================================================
         //  GROSOR DE LÍNEA CONSTANTE EN PANTALLA (independiente del zoom)
@@ -1151,6 +1289,17 @@
             });
         }
 
+        const layerDropdownBtn = document.getElementById('layer-dropdown');
+        const layerComboMenu = document.getElementById('layer-combo-menu');
+        layerDropdownBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            layerComboMenu.classList.toggle('open');
+        });
+        layerComboMenu.addEventListener('click', (e) => e.stopPropagation());
+        document.addEventListener('click', () => {
+            layerComboMenu.classList.remove('open');
+        });
+
         // ============================================================
         //  PANEL DE CAPAS
         // ============================================================
@@ -1206,7 +1355,28 @@
                 list.appendChild(li);
             }
             document.getElementById('current-layer-name').textContent = activeLayer.data.originalName;
+            document.getElementById('current-layer-swatch').style.background = activeLayer.data.color || '#FFFFFF';
+            renderLayerCombo();
             updateLayerSelect();
+        }
+
+        function renderLayerCombo() {
+            const menu = document.getElementById('layer-combo-menu');
+            menu.innerHTML = '';
+            for (let internal in layers) {
+                const layer = layers[internal];
+                if (layer === gridLayer || layer === guideLayer || layer === snapLayer || layer === selectionLayer ||
+                    layer === previewLayer || layer === gripLayer) continue;
+                const btn = document.createElement('button');
+                btn.className = 'lcm-item' + (layer === activeLayer ? ' active' : '');
+                const color = layer.data.color || '#FFFFFF';
+                btn.innerHTML = `<span class="lcm-swatch" style="background:${color}"></span><span>${layer.data.originalName}</span>`;
+                btn.addEventListener('click', () => {
+                    setActiveLayer(internal);
+                    document.getElementById('layer-combo-menu').classList.remove('open');
+                });
+                menu.appendChild(btn);
+            }
         }
 
         function setActiveLayer(internal) {
@@ -1222,12 +1392,14 @@
             const l = layers[internal];
             l.data.visible = !l.data.visible;
             l.visible = l.data.visible;
+            invalidateSnapCache();
             renderLayerList();
         }
 
         function toggleLayerLock(internal) {
             const l = layers[internal];
             l.data.locked = !l.data.locked;
+            invalidateSnapCache();
             renderLayerList();
         }
 
@@ -1531,6 +1703,9 @@
             state.offsetTarget = null;
             state.pendingCommand = null;
             state.copySourceItems = [];
+            state.lineSegmentPaths = [];
+            state.circleDiameterMode = false;
+            releaseTrackPoints();
             if (state.selectionRect) { state.selectionRect.remove();
                 state.selectionRect = null; }
             guideLayer.removeChildren();
@@ -1553,7 +1728,7 @@
             renderGrips();
         }
 
-        function addToSelection(item) {
+        function addToSelection(item, silent) {
             if (!state.selectedItems.includes(item)) {
                 state.selectedItems.push(item);
                 item.selected = true;
@@ -1561,8 +1736,21 @@
                 item.shadowBlur = 8;
                 item.shadowOffset = new Point(0, 0);
             }
-            updateProperties();
-            renderGrips();
+            if (!silent) {
+                updateProperties();
+                renderGrips();
+            }
+        }
+
+        // El desenfoque de sombra es costoso de mantener en cada repintado del
+        // lienzo; con selecciones muy grandes se desactiva (deja el resaltado de
+        // color, sin blur) para que la interfaz no se quede lenta después de
+        // seleccionar muchos objetos.
+        function refreshSelectionHighlight() {
+            const heavy = state.selectedItems.length > 150;
+            state.selectedItems.forEach(item => {
+                item.shadowBlur = heavy ? 0 : 8;
+            });
         }
 
         function setSingleSelection(item) {
@@ -1596,10 +1784,16 @@
             gripLayer.addChild(marker);
         }
 
+        // AutoCAD deja de mostrar grips cuando la selección supera un límite
+        // (variable GRIPOBJLIMIT), precisamente para evitar que la interfaz se
+        // vuelva lenta con selecciones muy grandes. Se replica ese límite aquí.
+        const GRIP_OBJECT_LIMIT = 150;
+
         function renderGrips() {
             gripLayer.removeChildren();
             if (state.currentCommand || state.pendingCommand) return;
             if (!state.selectedItems.length) return;
+            if (state.selectedItems.length > GRIP_OBJECT_LIMIT) return;
             state.selectedItems.forEach(item => {
                 if (!item || !item.layer) return;
                 if (isCircleItem(item)) {
@@ -1712,12 +1906,34 @@
             return project.hitTest(pt, options);
         }
 
-        function getSnapPoint(mousePoint, excludeItems) {
-            if (!state.snapEnabled) return null;
-            const tol = 10 / view.zoom;
-            let best = null,
-                bestDist = tol,
-                bestType = null;
+        // ============================================================
+        //  CACHÉ DE PUNTOS DE REFERENCIA (rendimiento)
+        //  getSnapPoint y collectKeyPoints necesitaban recorrer TODO el
+        //  dibujo en cada mousemove (hasta varias veces por evento). Se
+        //  centraliza ese recorrido aquí y se reutiliza mientras el
+        //  dibujo no cambie, evitando barridos redundantes.
+        // ============================================================
+        let _snapCandidatesCache = null;
+        let _snapCandidatesCacheExclude = undefined;
+
+        function sameExcludeSet(a, b) {
+            if (a === b) return true;
+            if (!a || !b) return false;
+            if (a.length !== b.length) return false;
+            for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return false;
+            return true;
+        }
+
+        function invalidateSnapCache() {
+            _snapCandidatesCache = null;
+            _snapCandidatesCacheExclude = undefined;
+        }
+
+        function collectSnapCandidates(excludeItems) {
+            if (_snapCandidatesCache && sameExcludeSet(_snapCandidatesCacheExclude, excludeItems)) {
+                return _snapCandidatesCache;
+            }
+            const candidates = [];
             for (let internal in layers) {
                 const layer = layers[internal];
                 if (!layer.data.visible || layer.data.locked) continue;
@@ -1726,28 +1942,35 @@
                 layer.children.forEach(item => {
                     if (excludeItems && excludeItems.includes(item)) return;
                     if (item instanceof Path) {
-                        item.segments.forEach(seg => {
-                            const d = seg.point.getDistance(mousePoint);
-                            if (d < bestDist) { bestDist = d;
-                                best = seg.point; bestType = 'endpoint'; }
-                        });
+                        item.segments.forEach(seg => candidates.push({ point: seg.point, type: 'endpoint' }));
                         for (let i = 0; i < item.segments.length; i++) {
                             const s1 = item.segments[i],
                                 s2 = item.segments[(i + 1) % item.segments.length];
                             if (s1.handleOut.length === 0 && s2.handleIn.length === 0) {
-                                const mid = s1.point.add(s2.point).divide(2);
-                                const d = mid.getDistance(mousePoint);
-                                if (d < bestDist) { bestDist = d;
-                                    best = mid; bestType = 'midpoint'; }
+                                candidates.push({ point: s1.point.add(s2.point).divide(2), type: 'midpoint' });
                             }
                         }
                     }
-                    if (isCircleItem(item)) {
-                        const d = item.position.getDistance(mousePoint);
-                        if (d < bestDist) { bestDist = d;
-                            best = item.position; bestType = 'center'; }
-                    }
+                    if (isCircleItem(item)) candidates.push({ point: item.position, type: 'center' });
                 });
+            }
+            _snapCandidatesCache = candidates;
+            _snapCandidatesCacheExclude = excludeItems;
+            return candidates;
+        }
+
+        function getSnapPoint(mousePoint, excludeItems) {
+            if (!state.snapEnabled) return null;
+            const tol = 10 / view.zoom;
+            let best = null,
+                bestDist = tol,
+                bestType = null;
+            const candidates = collectSnapCandidates(excludeItems);
+            for (let i = 0; i < candidates.length; i++) {
+                const d = candidates[i].point.getDistance(mousePoint);
+                if (d < bestDist) { bestDist = d;
+                    best = candidates[i].point;
+                    bestType = candidates[i].type; }
             }
             if (!best) return null;
             return { point: best, type: bestType };
@@ -1760,34 +1983,72 @@
         //  devuelve las guías de alineación encontradas.
         // ============================================================
         function collectKeyPoints(excludeItems) {
-            const pts = [];
-            for (let internal in layers) {
-                const layer = layers[internal];
-                if (!layer.data.visible || layer.data.locked) continue;
-                if (layer === gridLayer || layer === guideLayer || layer === snapLayer || layer === selectionLayer ||
-                    layer === previewLayer || layer === gripLayer) continue;
-                layer.children.forEach(item => {
-                    if (excludeItems && excludeItems.includes(item)) return;
-                    if (item instanceof Path) {
-                        item.segments.forEach(seg => pts.push(seg.point));
-                        for (let i = 0; i < item.segments.length; i++) {
-                            const s1 = item.segments[i],
-                                s2 = item.segments[(i + 1) % item.segments.length];
-                            if (s1.handleOut.length === 0 && s2.handleIn.length === 0) {
-                                pts.push(s1.point.add(s2.point).divide(2));
-                            }
-                        }
-                    }
-                    if (isCircleItem(item)) pts.push(item.position);
-                });
+            return collectSnapCandidates(excludeItems).map(c => c.point);
+        }
+
+        // ============================================================
+        //  ADQUISICIÓN DE PUNTOS DE REFERENCIA (OTRACK), como en AutoCAD:
+        //  al detenerse sobre un punto de referencia (sin hacer clic) durante
+        //  un momento, ese punto queda "adquirido" y sus líneas de rastreo
+        //  (horizontal/vertical) permanecen visibles al alejar el cursor,
+        //  permitiendo teclear una distancia medida desde ese punto.
+        // ============================================================
+        function acquireTrackPoint(pt) {
+            if (state.acquiredPoints.some(p => p.getDistance(pt) < 1e-6)) return;
+            state.acquiredPoints.push(pt.clone());
+            if (state.acquiredPoints.length > 2) state.acquiredPoints.shift();
+            setPrompt('Referencia adquirida — mueve el ratón para rastrear, o teclea una distancia (ESC para soltar)');
+        }
+
+        function releaseTrackPoints() {
+            state.acquiredPoints = [];
+            state.trackHoverPoint = null;
+            if (trackHoverTimer) { clearTimeout(trackHoverTimer);
+                trackHoverTimer = null; }
+        }
+
+        function updateTrackAcquisition(snap) {
+            // Solo se adquiere mientras se espera un punto dentro de un comando,
+            // y con la referencia a objetos activada.
+            if (!(state.currentCommand && state.expectingPoint) || !state.snapEnabled) {
+                if (trackHoverTimer) { clearTimeout(trackHoverTimer);
+                    trackHoverTimer = null; }
+                state.trackHoverPoint = null;
+                return;
             }
-            return pts;
+            const same = state.trackHoverPoint && snap && state.trackHoverPoint.getDistance(snap.point) < 1e-6;
+            if (same) return; // sigue sobre el mismo punto: deja correr el temporizador ya armado
+            if (trackHoverTimer) { clearTimeout(trackHoverTimer);
+                trackHoverTimer = null; }
+            state.trackHoverPoint = snap ? snap.point : null;
+            if (snap) {
+                const target = snap.point.clone();
+                trackHoverTimer = setTimeout(() => {
+                    acquireTrackPoint(target);
+                    trackHoverTimer = null;
+                }, TRACK_ACQUIRE_DELAY);
+            }
         }
 
         function computeAlignmentGuides(cursor, base, excludeItems) {
             const tol = 7 / view.zoom;
             let vBest = null, vBestDist = tol;
             let hBest = null, hBestDist = tol;
+
+            // Si hay puntos de referencia adquiridos (por fijación del ratón), el
+            // rastreo se hace SOLO contra ellos, como el OTRACK de AutoCAD: sus
+            // líneas guía permanecen aunque el cursor esté lejos de cualquier otra
+            // geometría, y tienen prioridad sobre el rastreo automático genérico.
+            if (state.acquiredPoints && state.acquiredPoints.length) {
+                state.acquiredPoints.forEach(p => {
+                    const dx = Math.abs(p.x - cursor.x);
+                    if (dx < vBestDist) { vBestDist = dx; vBest = p; }
+                    const dy = Math.abs(p.y - cursor.y);
+                    if (dy < hBestDist) { hBestDist = dy; hBest = p; }
+                });
+                return { v: vBest, h: hBest, acquired: true };
+            }
+
             const keyPoints = collectKeyPoints(excludeItems);
             keyPoints.forEach(p => {
                 if (base && p.getDistance(base) < 1e-6) return;
@@ -1800,7 +2061,23 @@
             return { v: vBest, h: hBest };
         }
 
+        function renderAcquiredMarkers() {
+            if (!state.acquiredPoints || !state.acquiredPoints.length) return;
+            const r = 4.5 / view.zoom;
+            const c = new Color(0.32, 0.85, 0.45);
+            state.acquiredPoints.forEach(p => {
+                const m1 = new Path.Line(p.add(new Point(-r, 0)), p.add(new Point(r, 0)));
+                const m2 = new Path.Line(p.add(new Point(0, -r)), p.add(new Point(0, r)));
+                [m1, m2].forEach(m => {
+                    m.strokeColor = c;
+                    m.strokeWidth = 1.8 / view.zoom;
+                    guideLayer.addChild(m);
+                });
+            });
+        }
+
         function renderTrackingGuides(guides, resolvedPoint) {
+            renderAcquiredMarkers();
             if (!guides) return;
             const b = view.bounds;
             const r = 4.5 / view.zoom;
@@ -1852,7 +2129,7 @@
                 return snap.point;
             }
 
-            const trackingCmds = ['LINE', 'CIRCLE', 'RECTANG', 'ARC', 'MOVE', 'COPY'];
+            const trackingCmds = ['LINE', 'CIRCLE', 'RECTANG', 'ARC', 'MOVE', 'COPY', 'ROTATE', 'SCALE'];
             let guides = null;
             if (base && trackingCmds.includes(cmd)) {
                 guides = computeAlignmentGuides(pt, base, excludeItems);
@@ -1863,7 +2140,7 @@
             }
             state.trackGuides = guides;
 
-            const orthoCmds = ['LINE', 'MOVE', 'COPY', 'ARC'];
+            const orthoCmds = ['LINE', 'MOVE', 'COPY', 'ARC', 'ROTATE', 'SCALE'];
             const orthoActive = state.shiftKeyDown ? !state.ortho : state.ortho;
             const axisLockedByTracking = guides && (guides.v || guides.h);
             if (base && orthoCmds.includes(cmd) && !axisLockedByTracking) {
@@ -1919,8 +2196,22 @@
             }
 
             if (/^-?\d+(\.\d+)?$/.test(body)) {
-                if (!lastPoint) return null;
                 const dist = parseFloat(body);
+                // Si hay una referencia de rastreo activa (adquirida por fijación del
+                // ratón, u OTRACK automático), la distancia se mide desde ESE punto
+                // a lo largo de la línea de rastreo, igual que en AutoCAD — no desde
+                // el punto base del comando.
+                const g = state.trackGuides;
+                if (g && g.acquired && (g.v || g.h) && !(g.v && g.h)) {
+                    if (g.v) {
+                        const dirY = state.lastMousePoint.y >= g.v.y ? 1 : -1;
+                        return new Point(g.v.x, g.v.y + dist * dirY);
+                    } else {
+                        const dirX = state.lastMousePoint.x >= g.h.x ? 1 : -1;
+                        return new Point(g.h.x + dist * dirX, g.h.y);
+                    }
+                }
+                if (!lastPoint) return null;
                 const dir = state.lastMousePoint.subtract(lastPoint);
                 const orthoActive = state.shiftKeyDown ? !state.ortho : state.ortho;
                 let angleRad;
@@ -2047,6 +2338,7 @@
             state.dynamicLastPoint = null;
             previewLayer.removeChildren();
             gripLayer.removeChildren();
+            releaseTrackPoints();
         }
 
         // ============================================================
@@ -2077,9 +2369,11 @@
             state.history.push(snapshotCurrent());
             state.redoStack = [];
             if (state.history.length > 50) state.history.shift();
+            invalidateSnapCache();
         }
 
         function restoreState(snap) {
+            invalidateSnapCache();
             state.selectedItems = [];
             resetStateCmd();
             for (let internal in layers) {
@@ -2151,6 +2445,9 @@
         function handlePointInput(point) {
             if (!state.currentCommand) return;
             const cmd = state.currentCommand;
+            // El punto ya fue resuelto (usando la referencia adquirida si aplicaba);
+            // se sueltan las referencias para el siguiente punto, como en AutoCAD.
+            releaseTrackPoints();
 
             if (cmd === 'LINE') {
                 state.collectedPoints.push(point);
@@ -2163,12 +2460,13 @@
                     line.strokeWidth = currentStrokeWidth();
                     tagShape(line, 'line');
                     activeLayer.addChild(line);
+                    state.lineSegmentPaths.push(line);
                     // Sigue encadenando segmentos desde el último punto, como en
                     // AutoCAD ("Especifique el siguiente punto o [Cerrar/Deshacer]"),
-                    // hasta Enter/ESC, o "C" para cerrar contra el punto inicial.
+                    // hasta Enter/ESC, "C" para cerrar, o "U" para deshacer el último tramo.
                     state.expectingPoint = true;
                     state.dynamicLastPoint = point;
-                    setPrompt('LINE: Siguiente punto (Enter/ESC para terminar, C para cerrar)');
+                    setPrompt('LINE: Siguiente punto (Enter/ESC terminar · C cerrar · U deshacer tramo)');
                 } else {
                     state.expectingPoint = true;
                     state.dynamicLastPoint = point;
@@ -2180,11 +2478,12 @@
                     state.step = 2;
                     state.expectingPoint = true;
                     state.dynamicLastPoint = point;
-                    setPrompt('CIRCLE: Radio');
+                    setPrompt('CIRCLE: Radio (o escribe D para indicar el diámetro)');
                 } else {
                     saveState();
                     const c = state.collectedPoints[0];
-                    const r = c.getDistance(point);
+                    let r = c.getDistance(point);
+                    if (state.circleDiameterMode) r = r / 2;
                     const circle = new Path.Circle(c, r);
                     circle.strokeColor = 'white';
                     circle.strokeWidth = currentStrokeWidth();
@@ -2639,6 +2938,12 @@
         function onMouseDown(event) {
             state.lastMousePoint = event.point;
 
+            if (state.pickingPrintWindow) {
+                state.printPickStart = event.point;
+                state.printPickRect = new Rectangle(event.point, event.point);
+                return;
+            }
+
             if (event.event.button === 1) {
                 event.event.preventDefault();
                 if (middleClickTimer) {
@@ -2754,15 +3059,29 @@
             state.lastClientX = event.event.clientX;
             state.lastClientY = event.event.clientY;
             updateCoords(event.point);
-            updateDynamicPreview(event);
+
+            if (state.pickingPrintWindow) {
+                if (!state.printPickStart) return;
+                state.printPickRect = new Rectangle(state.printPickStart, event.point);
+                selectionLayer.removeChildren();
+                const rectPath = new Path.Rectangle(state.printPickRect);
+                rectPath.strokeColor = new Color('#4FC3F7');
+                rectPath.strokeWidth = 1.5 / view.zoom;
+                rectPath.dashArray = [6 / view.zoom, 4 / view.zoom];
+                rectPath.fillColor = new Color(0.31, 0.76, 0.97, 0.08);
+                selectionLayer.addChild(rectPath);
+                return;
+            }
 
             if (state.panning) {
                 const delta = event.point.subtract(state.panStartPoint);
                 view.center = view.center.subtract(delta);
                 state.panStartPoint = event.point;
-                drawGrid();
+                drawGridThrottled();
                 return;
             }
+
+            updateDynamicPreview(event);
 
             if (state.gripDrag) {
                 const grip = state.gripDrag;
@@ -2827,7 +3146,24 @@
         }
 
         function onMouseUp(event) {
-            if (state.panning) { state.panning = false; return; }
+            if (state.pickingPrintWindow) {
+                state.pickingPrintWindow = false;
+                selectionLayer.removeChildren();
+                const rect = state.printPickRect;
+                state.printPickStart = null;
+                state.printPickRect = null;
+                if (rect && rect.width > 1 && rect.height > 1) {
+                    setPrompt('Generando vista de impresión…');
+                    generatePrintView(rect);
+                } else {
+                    setPrompt('Ventana de impresión no válida (demasiado pequeña)');
+                }
+                return;
+            }
+
+            if (state.panning) { state.panning = false;
+                drawGrid();
+                return; }
 
             if (state.gripDrag) {
                 state.gripDrag = null;
@@ -2868,9 +3204,9 @@
                         layer.children.forEach(item => {
                             if (item.bounds) {
                                 if (isWindow) {
-                                    if (rect.contains(item.bounds)) addToSelection(item);
+                                    if (rect.contains(item.bounds)) addToSelection(item, true);
                                 } else {
-                                    if (rect.intersects(item.bounds)) addToSelection(item);
+                                    if (rect.intersects(item.bounds)) addToSelection(item, true);
                                 }
                             }
                         });
@@ -2884,6 +3220,8 @@
                         setPrompt(`Seleccionados: ${state.selectedItems.length}`);
                     }
                     updateProperties();
+                    renderGrips();
+                    refreshSelectionHighlight();
                 }
             }
         }
@@ -2901,6 +3239,13 @@
             const moveExclude = ((state.currentCommand === 'MOVE' || state.currentCommand === 'COPY') && state.step >= 2) ?
                 state.selectedItems : null;
 
+            if (snapMarker) { snapMarker.remove();
+                snapMarker = null; }
+            const snap = (state.snapEnabled && !state.selecting) ? getSnapPoint(event.point, moveExclude) : null;
+
+            // Adquisición de puntos de referencia por fijación del ratón (OTRACK)
+            updateTrackAcquisition(snap);
+
             if (state.currentCommand && state.expectingPoint && state.dynamicLastPoint) {
                 const base = state.dynamicLastPoint;
                 const cursor = resolvePoint(event.point, base, state.currentCommand, moveExclude);
@@ -2909,35 +3254,32 @@
                 guideLine.strokeWidth = 1 / view.zoom;
                 guideLayer.addChild(guideLine);
                 renderTrackingGuides(state.trackGuides, cursor);
+            } else {
+                renderAcquiredMarkers();
             }
 
-            if (snapMarker) { snapMarker.remove();
-                snapMarker = null; }
-            if (state.snapEnabled && !state.selecting) {
-                const snap = getSnapPoint(event.point, moveExclude);
-                if (snap) {
-                    const r = 5 / view.zoom;
-                    const p = snap.point;
-                    let marker;
-                    // Glifos estilo AutoCAD: cuadrado = extremo, triángulo = punto medio, círculo = centro
-                    if (snap.type === 'endpoint') {
-                        marker = new Path.Rectangle(new paper.Rectangle(p.x - r, p.y - r, r * 2, r * 2));
-                    } else if (snap.type === 'midpoint') {
-                        marker = new Path([
-                            p.add(new Point(0, -r * 1.15)),
-                            p.add(new Point(r * 1.15, r * 0.85)),
-                            p.add(new Point(-r * 1.15, r * 0.85))
-                        ]);
-                        marker.closed = true;
-                    } else {
-                        marker = new Path.Circle(p, r);
-                    }
-                    marker.strokeColor = new Color(0.91, 0.64, 0.24);
-                    marker.strokeWidth = 1.6 / view.zoom;
-                    marker.fillColor = null;
-                    snapLayer.addChild(marker);
-                    snapMarker = marker;
+            if (snap) {
+                const r = 5 / view.zoom;
+                const p = snap.point;
+                let marker;
+                // Glifos estilo AutoCAD: cuadrado = extremo, triángulo = punto medio, círculo = centro
+                if (snap.type === 'endpoint') {
+                    marker = new Path.Rectangle(new paper.Rectangle(p.x - r, p.y - r, r * 2, r * 2));
+                } else if (snap.type === 'midpoint') {
+                    marker = new Path([
+                        p.add(new Point(0, -r * 1.15)),
+                        p.add(new Point(r * 1.15, r * 0.85)),
+                        p.add(new Point(-r * 1.15, r * 0.85))
+                    ]);
+                    marker.closed = true;
+                } else {
+                    marker = new Path.Circle(p, r);
                 }
+                marker.strokeColor = new Color(0.91, 0.64, 0.24);
+                marker.strokeWidth = 1.6 / view.zoom;
+                marker.fillColor = null;
+                snapLayer.addChild(marker);
+                snapMarker = marker;
             }
 
             // Resaltado al pasar el ratón (hover), como en AutoCAD: solo en reposo,
@@ -3020,12 +3362,13 @@
                     const text = `L: ${dist.toFixed(2)}  ∠: ${angle.toFixed(1)}°  ΔX: ${dx.toFixed(2)}  ΔY: ${dy.toFixed(2)}`;
                     showTooltipAt(event.event.clientX, event.event.clientY - 30, text);
                 } else if (state.currentCommand === 'CIRCLE') {
-                    const circle = new Path.Circle(base, dist);
+                    const r = state.circleDiameterMode ? dist / 2 : dist;
+                    const circle = new Path.Circle(base, r);
                     circle.strokeColor = new Color(0, 0.75, 1, 0.6);
                     circle.strokeWidth = 1 / view.zoom;
                     circle.dashArray = [4, 4];
                     previewLayer.addChild(circle);
-                    const text = `Radio: ${dist.toFixed(2)}`;
+                    const text = state.circleDiameterMode ? `Diámetro: ${dist.toFixed(2)}  (Radio: ${r.toFixed(2)})` : `Radio: ${dist.toFixed(2)}`;
                     showTooltipAt(event.event.clientX, event.event.clientY - 30, text);
                 } else if (state.currentCommand === 'RECTANG') {
                     const rect = new Path.Rectangle(base, cursor);
@@ -3075,6 +3418,11 @@
                     const text = `Distancia: ${dist.toFixed(2)}  ∠: ${angle.toFixed(1)}°`;
                     showTooltipAt(event.event.clientX, event.event.clientY - 30, text);
                 } else if (state.currentCommand === 'ROTATE') {
+                    const guideLine = new Path.Line(state.basePoint, cursor);
+                    guideLine.strokeColor = new Color(0, 0.75, 1, 0.4);
+                    guideLine.strokeWidth = 1 / view.zoom;
+                    guideLine.dashArray = [3, 3];
+                    previewLayer.addChild(guideLine);
                     const currentAngle = cursor.subtract(state.basePoint).angle;
                     const delta = currentAngle - state.startAngle;
                     state.selectedItems.forEach(item => {
@@ -3089,6 +3437,11 @@
                     if (angleDeg < 0) angleDeg += 360;
                     showTooltipAt(event.event.clientX, event.event.clientY - 30, `Ángulo: ${angleDeg.toFixed(2)}°`);
                 } else if (state.currentCommand === 'SCALE') {
+                    const guideLine = new Path.Line(state.basePoint, cursor);
+                    guideLine.strokeColor = new Color(0, 0.75, 1, 0.4);
+                    guideLine.strokeWidth = 1 / view.zoom;
+                    guideLine.dashArray = [3, 3];
+                    previewLayer.addChild(guideLine);
                     const refDist = state.referencePoint.subtract(state.basePoint).length || 1;
                     const curDist = cursor.subtract(state.basePoint).length;
                     const sf = curDist / refDist;
@@ -3219,6 +3572,17 @@
             }
         }
 
+        // Versión limitada en frecuencia de drawGrid(), usada durante la
+        // panorámica: evita reconstruir toda la cuadrícula en cada frame del
+        // arrastre (antes se regeneraba ~60-150 líneas en cada mousemove).
+        let _lastGridDrawTime = 0;
+        function drawGridThrottled() {
+            const now = Date.now();
+            if (now - _lastGridDrawTime < 50) return;
+            _lastGridDrawTime = now;
+            drawGrid();
+        }
+
         // ============================================================
         //  ZOOM
         // ============================================================
@@ -3290,6 +3654,7 @@
                 try {
                     const result = parseDXF(ev.target.result);
                     if (result && result.length > 0) {
+                        invalidateSnapCache();
                         setPrompt(`DXF importado: ${result.length} entidades`);
                         zoomExtents();
                     } else {
@@ -3527,6 +3892,102 @@
         // ============================================================
         //  EXPORTACIÓN DXF (R12) – CORREGIDO
         // ============================================================
+        // ============================================================
+        //  IMPRIMIR / EXPORTAR A PDF
+        // ============================================================
+        function getContentBounds() {
+            let bounds = null;
+            for (let internal in layers) {
+                const l = layers[internal];
+                if (!l.data.visible) continue;
+                l.children.forEach(item => {
+                    if (!item.bounds) return;
+                    bounds = bounds ? bounds.unite(item.bounds) : item.bounds.clone();
+                });
+            }
+            if (!bounds || bounds.width === 0 || bounds.height === 0) {
+                bounds = new paper.Rectangle(-100, -100, 200, 200);
+            }
+            const pad = Math.max(bounds.width, bounds.height) * 0.06 + 5;
+            return new paper.Rectangle(bounds.x - pad, bounds.y - pad, bounds.width + pad * 2, bounds.height + pad * 2);
+        }
+
+        function isWhiteish(color) {
+            try { return color.red > 0.85 && color.green > 0.85 && color.blue > 0.85; } catch (e) { return false; }
+        }
+
+        function generatePrintView(bounds) {
+            const utilityLayers = [gridLayer, guideLayer, snapLayer, selectionLayer, previewLayer, gripLayer];
+            const prevVisibility = utilityLayers.map(l => l.visible);
+            utilityLayers.forEach(l => l.visible = false);
+
+            // Convierte temporalmente los trazos blancos a negro para que se vean
+            // sobre el papel blanco; el resto de colores de capa se conservan.
+            const colorBackups = [];
+            for (let internal in layers) {
+                layers[internal].children.forEach(item => {
+                    if (item.strokeColor && isWhiteish(item.strokeColor)) {
+                        colorBackups.push({ item, color: item.strokeColor });
+                        item.strokeColor = new Color('black');
+                    }
+                });
+            }
+            // Quita temporalmente los resaltados de selección/hover
+            const shadowBackups = [];
+            state.selectedItems.forEach(it => { shadowBackups.push({ item: it, color: it.shadowColor });
+                it.shadowColor = null; });
+            if (state.hoveredItem) { shadowBackups.push({ item: state.hoveredItem, color: state.hoveredItem.shadowColor });
+                state.hoveredItem.shadowColor = null; }
+
+            let svg;
+            try {
+                svg = project.exportSVG({ asString: true, bounds: bounds });
+            } finally {
+                utilityLayers.forEach((l, i) => l.visible = prevVisibility[i]);
+                colorBackups.forEach(b => b.item.strokeColor = b.color);
+                shadowBackups.forEach(b => b.item.shadowColor = b.color);
+            }
+            openPrintWindow(svg);
+        }
+
+        function openPrintWindow(svgString) {
+            const win = window.open('', '_blank');
+            if (!win) {
+                setPrompt('El navegador bloqueó la ventana de impresión. Permite ventanas emergentes e inténtalo de nuevo.');
+                return;
+            }
+            win.document.write(
+                '<!DOCTYPE html><html><head><title>Imprimir dibujo</title><style>' +
+                'html,body{margin:0;padding:0;background:#fff;}' +
+                '.sheet{padding:24px;display:flex;align-items:center;justify-content:center;min-height:100vh;box-sizing:border-box;}' +
+                'svg{max-width:100%;height:auto;}' +
+                '@media print{.sheet{padding:0;min-height:0;}}' +
+                '</style></head><body><div class="sheet">' + svgString + '</div>' +
+                '<script>window.onload=function(){setTimeout(function(){window.print();},250);};<' + '/script>' +
+                '</body></html>'
+            );
+            win.document.close();
+        }
+
+        function startPrintWindowPick() {
+            state.pickingPrintWindow = true;
+            state.printPickStart = null;
+            state.printPickRect = null;
+            setPrompt('Impresión: arrastra una ventana sobre el dibujo (ESC para cancelar)');
+        }
+
+        document.getElementById('qa-print').addEventListener('click', () => {
+            showModal({
+                title: 'Imprimir / Exportar a PDF',
+                body: 'Elige qué parte del dibujo quieres imprimir. Se abrirá el diálogo de impresión del navegador, donde puedes elegir <b>Guardar como PDF</b>.',
+                buttons: [
+                    { label: 'Cancelar' },
+                    { label: 'Ventana de selección', onClick: startPrintWindowPick },
+                    { label: 'Todo el dibujo', primary: true, onClick: () => generatePrintView(getContentBounds()) }
+                ]
+            });
+        });
+
         function exportDXF() {
             const dxf = generateDXF();
             if (!dxf) {
@@ -3545,6 +4006,42 @@
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
             setPrompt('DXF exportado correctamente (AutoCAD R12+)');
+        }
+
+        // Exporta cualquier trazado (recto o curvo) como POLYLINE de DXF, aproximando
+        // las curvas con segmentos rectos. Se usa tanto para polilíneas normales
+        // como de respaldo cuando un "arco" resulta no ser un arco circular limpio.
+        function writePolylineEntity(item, layerName) {
+            const isCurved = item.curves.some(c => !c.isStraight());
+            let pts;
+            if (isCurved) {
+                // Muestrea la curva real en vez de usar solo los puntos de segmento,
+                // para que la aproximación conserve la forma visual.
+                const steps = Math.max(8, Math.min(64, Math.round(item.length / 2)));
+                pts = [];
+                for (let i = 0; i <= steps; i++) pts.push(item.getPointAt((item.length * i) / steps));
+                pts = pts.filter(Boolean);
+            } else {
+                pts = item.segments.map(s => s.point);
+            }
+            if (pts.length < 2) return '';
+            let dxf = '';
+            dxf += '0\nPOLYLINE\n';
+            dxf += '8\n' + layerName + '\n';
+            dxf += '66\n1\n';
+            dxf += '70\n' + (item.closed ? 1 : 0) + '\n';
+            dxf += '10\n0.0\n20\n0.0\n30\n0.0\n';
+            pts.forEach(p => {
+                dxf += '0\nVERTEX\n';
+                dxf += '8\n' + layerName + '\n';
+                dxf += '10\n' + p.x.toFixed(6) + '\n';
+                dxf += '20\n' + (-p.y).toFixed(6) + '\n';
+                dxf += '30\n0.0\n';
+                dxf += '70\n0\n';
+            });
+            dxf += '0\nSEQEND\n';
+            dxf += '8\n' + layerName + '\n';
+            return dxf;
         }
 
         function generateDXF() {
@@ -3634,14 +4131,27 @@
                         dxf += '40\n' + getCircleRadius(item).toFixed(6) + '\n';
                         hasEntities = true;
                     } else if (isArcItem(item) && item.segments.length > 1) {
-                        // Reconstruir centro y ángulos (corregido)
+                        // Se usa getPointAt() (sobre la curva real) en vez de adivinar qué
+                        // segmento es "el del medio": es fiable pase lo que pase con el
+                        // número de segmentos internos (antes, un arco de poco arqueo con
+                        // solo 2 segmentos hacía que el "punto medio" coincidiera con el
+                        // punto final, y el arco desaparecía de la exportación).
                         const p0 = item.segments[0].point;
                         const p1 = item.segments[item.segments.length - 1].point;
-                        const midIdx = Math.floor(item.segments.length / 2);
-                        const mid = item.segments[midIdx].point;
+                        const mid = item.getPointAt(item.length / 2) || item.segments[Math.floor(item.segments.length / 2)].point;
                         const center = circumcenter(p0, mid, p1);
+                        let validArc = false;
+                        let radius = 0;
                         if (center) {
-                            const radius = center.getDistance(p0);
+                            radius = center.getDistance(p0);
+                            // Comprueba que el trazado sea REALMENTE un arco circular limpio
+                            // (por ejemplo, tras editar con un grip o un JOIN mixto de línea+
+                            // arco, deja de serlo): si algún segmento no cae sobre ese círculo,
+                            // se exporta como polilínea en vez de como ARC con datos erróneos.
+                            const tol = Math.max(radius * 0.02, 0.05);
+                            validArc = radius > 1e-6 && item.segments.every(s => Math.abs(s.point.getDistance(center) - radius) < tol);
+                        }
+                        if (validArc) {
                             const toDxfAngle = (p) => {
                                 const dx = p.x - center.x;
                                 const dy = -(p.y - center.y);
@@ -3671,25 +4181,12 @@
                             dxf += '50\n' + sa.toFixed(6) + '\n';
                             dxf += '51\n' + ea.toFixed(6) + '\n';
                             hasEntities = true;
+                        } else {
+                            dxf += writePolylineEntity(item, layerName);
+                            hasEntities = true;
                         }
                     } else if (item instanceof Path && item.segments.length > 1) {
-                        const pts = item.segments.map(s => s.point);
-                        if (pts.length < 2) return;
-                        dxf += '0\nPOLYLINE\n';
-                        dxf += '8\n' + layerName + '\n';
-                        dxf += '66\n1\n';
-                        dxf += '70\n' + (item.closed ? 1 : 0) + '\n';
-                        dxf += '10\n0.0\n20\n0.0\n30\n0.0\n';
-                        pts.forEach(p => {
-                            dxf += '0\nVERTEX\n';
-                            dxf += '8\n' + layerName + '\n';
-                            dxf += '10\n' + p.x.toFixed(6) + '\n';
-                            dxf += '20\n' + (-p.y).toFixed(6) + '\n';
-                            dxf += '30\n0.0\n';
-                            dxf += '70\n0\n';
-                        });
-                        dxf += '0\nSEQEND\n';
-                        dxf += '8\n' + layerName + '\n';
+                        dxf += writePolylineEntity(item, layerName);
                         hasEntities = true;
                     }
                 });
@@ -3783,7 +4280,21 @@
         document.getElementById('file-input-import').addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (file) {
-                importDXF(file);
+                if (/\.dwg$/i.test(file.name)) {
+                    showModal({
+                        title: 'Los archivos DWG no se pueden abrir directamente',
+                        body: `DWG es el formato binario propietario de Autodesk y no puede leerse desde el navegador
+                               sin las librerías oficiales de Autodesk.<br><br>
+                               Para importar <b>${file.name}</b>, expórtalo primero como <code>.dxf</code> desde
+                               AutoCAD (o con una herramienta gratuita como <code>ODA File Converter</code>) y
+                               vuelve a importarlo aquí — DXF sí se abre directamente.`,
+                        buttons: [
+                            { label: 'Entendido', primary: true }
+                        ]
+                    });
+                } else {
+                    importDXF(file);
+                }
             }
             e.target.value = '';
         });
@@ -3846,6 +4357,28 @@
                     activeLayer.addChild(closeLine);
                     setPrompt('LINE cerrado');
                     resetStateCmd();
+                    cmdInputEl.value = '';
+                    e.preventDefault();
+                    return;
+                }
+                if (input.toUpperCase() === 'U' && state.currentCommand === 'LINE' && state.expectingPoint &&
+                    state.lineSegmentPaths.length > 0) {
+                    const lastPath = state.lineSegmentPaths.pop();
+                    lastPath.remove();
+                    state.collectedPoints.pop();
+                    invalidateSnapCache();
+                    // Retira también la entrada de historial creada al dibujar ese tramo,
+                    // para no dejar un "deshacer" fantasma más tarde con Ctrl+Z.
+                    state.history.pop();
+                    state.dynamicLastPoint = state.collectedPoints[state.collectedPoints.length - 1];
+                    setPrompt('LINE: Último tramo deshecho. Siguiente punto (U para seguir deshaciendo)');
+                    cmdInputEl.value = '';
+                    e.preventDefault();
+                    return;
+                }
+                if (input.toUpperCase() === 'D' && state.currentCommand === 'CIRCLE' && state.step === 2) {
+                    state.circleDiameterMode = true;
+                    setPrompt('CIRCLE: Diámetro');
                     cmdInputEl.value = '';
                     e.preventDefault();
                     return;
@@ -3959,6 +4492,10 @@
                 undo(); }
             if (e.ctrlKey && e.key === 'y') { e.preventDefault();
                 redo(); }
+            if (e.ctrlKey && e.key === 'n') {
+                e.preventDefault();
+                document.getElementById('qa-new').click();
+            }
             if (e.key === 'F3') { e.preventDefault(); setOsnap(!state.snapEnabled); }
             if (e.key === 'F8') { e.preventDefault(); setOrtho(!state.ortho); }
             if (e.key === 'F10') { e.preventDefault(); setPolar(!state.polar); }
@@ -3985,6 +4522,13 @@
                 setPrompt('Objetos borrados');
                 updateProperties();
                 if (document.activeElement === cmdInputEl) e.preventDefault();
+            }
+            if (e.key === 'Escape' && state.pickingPrintWindow) {
+                state.pickingPrintWindow = false;
+                state.printPickStart = null;
+                state.printPickRect = null;
+                selectionLayer.removeChildren();
+                setPrompt('Impresión cancelada');
             }
             if (e.key === 'Escape' && state.currentCommand) {
                 const wasGathering = !!state.pendingCommand;
@@ -4137,6 +4681,75 @@
             document.getElementById('context-menu').style.display = 'none';
         }
 
+        // ============================================================
+        //  NUEVO DIBUJO
+        // ============================================================
+        function newDrawing() {
+            resetStateCmd();
+            clearSelection();
+            for (let internal in layers) {
+                if (internal === '0') { layers[internal].removeChildren();
+                    continue; }
+                layers[internal].remove();
+                delete layers[internal];
+            }
+            activeLayer = layers['0'];
+            project.activeLayer = activeLayer;
+            activeLayer.visible = true;
+            activeLayer.data.visible = true;
+            activeLayer.data.locked = false;
+            activeLayer.data.color = '#FFFFFF';
+            state.history = [];
+            state.redoStack = [];
+            invalidateSnapCache();
+            view.zoom = 1;
+            view.center = new Point(0, 0);
+            drawGrid();
+            refreshStrokeWidths();
+            renderLayerList();
+            renderGrips();
+            updateProperties();
+            setPrompt('Dibujo nuevo. Listo.');
+            view.update();
+        }
+        document.getElementById('qa-new').addEventListener('click', () => {
+            showModal({
+                title: 'Nuevo dibujo',
+                body: 'Se borrará todo el dibujo actual y no se podrá deshacer. ¿Quieres continuar?',
+                buttons: [
+                    { label: 'Cancelar' },
+                    { label: 'Crear nuevo', primary: true, onClick: newDrawing }
+                ]
+            });
+        });
+
+        // ============================================================
+        //  MODAL GENÉRICO
+        // ============================================================
+        function showModal({ title, body, buttons }) {
+            document.getElementById('app-modal-title').textContent = title;
+            document.getElementById('app-modal-body').innerHTML = body;
+            const actions = document.getElementById('app-modal-actions');
+            actions.innerHTML = '';
+            buttons.forEach(b => {
+                const btn = document.createElement('button');
+                btn.textContent = b.label;
+                if (b.primary) btn.classList.add('primary');
+                btn.addEventListener('click', () => {
+                    closeModal();
+                    if (b.onClick) b.onClick();
+                });
+                actions.appendChild(btn);
+            });
+            document.getElementById('app-modal-overlay').classList.add('open');
+        }
+        function closeModal() {
+            document.getElementById('app-modal-overlay').classList.remove('open');
+        }
+        document.getElementById('app-modal-overlay').addEventListener('click', (e) => {
+            if (e.target.id === 'app-modal-overlay') closeModal();
+        });
+
         function cancelCurrentCommand() {
             resetStateCmd();
             previewLayer.removeChildren();
@@ -4156,8 +4769,11 @@
                 if (layer === gridLayer || layer === guideLayer || layer === snapLayer ||
                     layer === selectionLayer || layer === previewLayer || layer === gripLayer) continue;
                 if (!layer.data.visible || layer.data.locked) continue;
-                layer.children.forEach(item => addToSelection(item));
+                layer.children.forEach(item => addToSelection(item, true));
             }
+            updateProperties();
+            renderGrips();
+            refreshSelectionHighlight();
             setPrompt(`${state.selectedItems.length} objeto(s) seleccionados`);
         }
 
@@ -4195,10 +4811,13 @@
         const navBtn = document.getElementById('qa-navigator');
         const navContainer = document.getElementById('navigator');
         const navCanvas = document.getElementById('navCanvas');
-        navBtn.addEventListener('click', () => {
+        function toggleNavigator() {
             navContainer.classList.toggle('visible');
+            document.getElementById('btn-navigator-toggle').classList.toggle('active', navContainer.classList.contains('visible'));
             if (navContainer.classList.contains('visible')) updateNavigator();
-        });
+        }
+        navBtn.addEventListener('click', toggleNavigator);
+        document.getElementById('btn-navigator-toggle').addEventListener('click', toggleNavigator);
 
         function updateNavigator() {
             const ctx = navCanvas.getContext('2d');
