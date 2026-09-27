@@ -2,7 +2,14 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>CNC DXF → G-Code · Multi-Herramienta (Clipper2)</title>
+<title>CNC DXF → G-Code · Clipper Offset</title>
+<!-- js-angusj-clipper vía esm.sh → se expone como window.clipperLib y window.jsAngusjClipper -->
+<script type="module">
+  import * as clipperLib from 'https://esm.sh/js-angusj-clipper@1.3.1';
+  window.clipperLib = clipperLib;
+  window.jsAngusjClipper = clipperLib;
+  window.dispatchEvent(new Event('clipper-ready'));
+</script>
 <style>
 :root{--bg:#1a1d23;--panel:#21252b;--border:#333842;--text:#cdd6e0;--text2:#8b949e;--accent:#4da6ff;--accentH:#3d8ed9;--danger:#e0556a;--success:#4ec990;--warning:#e5a855;--input:#2a2d35;--canvas:#0d1014}
 *{margin:0;padding:0;box-sizing:border-box}
@@ -104,12 +111,11 @@ canvas{display:block;position:absolute;top:0;left:0}
 .tabs-sec{background:linear-gradient(180deg,#2a1e2b,#1a1d24);border:1px solid #503a50}
 .tabs-sec h3{color:#ff88dd}
 .tabs-sec .info-line{font-size:.62rem;color:var(--text2);padding:4px 6px;background:#1a1d24;border-radius:4px;margin-top:4px;font-family:monospace;line-height:1.5}
-.clipper-badge{font-size:.55rem;background:#1a2d1a;color:#4ec990;padding:1px 5px;border-radius:6px;border:1px solid #2a4a2a}
 </style>
 </head>
 <body>
 <div class="header">
-  <div class="logo">CNC<span>DXF</span> → G-Code <span class="clipper-badge">Clipper2</span></div>
+  <div class="logo">CNC<span>DXF</span> → G-Code</div>
   <button class="btn accent" id="btnLoad">📂 DXF</button>
   <input type="file" id="fileInput" accept=".dxf" style="display:none">
   <button class="btn" id="btnSaveProj">💾 Proyecto</button>
@@ -224,114 +230,16 @@ canvas{display:block;position:absolute;top:0;left:0}
 </div>
 <div class="toast" id="toast"></div>
 
-<!-- Clipper2-ts desde CDN (esm.sh) -->
-<script type="module">
-import { inflatePaths, JoinType, EndType } from 'https://esm.sh/clipper2-ts@2.0.1-18';
+<script>
+(function(){
+'use strict';
 
-// =================================================================
-//  ESTADO GLOBAL
-// =================================================================
-const STORAGE_KEY = 'cncdxf_project_clipper2';
-const PROJECT_VERSION = 3;
+const STORAGE_KEY = 'cncdxf_project_v2';
+const PROJECT_VERSION = 2;
+const CLIPPER_SCALE = 1000;   // 1 mm = 1000 unidades enteras (0.001 mm precisión)
+const CLIPPER_ARC_TOLERANCE = 0.1; // tolerancia del aplanado de arcos, en mm reales
 
-const S = {
-  entities: [], operations: [], tools: [], activeToolId: null,
-  dxfText: '', dxfFilename: '',
-  mode:'view', scale:2, offX:0, offY:0,
-  panning:false, psx:0, psy:0, poffx:0, poffy:0,
-  mwx:0, mwy:0, hover:-1,
-  pocketStart:null, layerVis:{}, layers:new Set(),
-  selRect:null, selecting:false, selStart:null, selEnd:null,
-  showSim:true, offsetX:0, offsetY:0,
-  flipArcs:false, flipY:false, lastMiddleClick: 0,
-  spindlePause: 12, rapidXY: 5000, rapidZ: 3000,
-  tabs: { enabled: false, count: 3, width: 1.0, height: 1.0, seed: 12345 },
-  simMoves: [], simMoveTimes: [], simTotalTime: 0, simT: 0,
-  simPlaying:false, simSpeedMult: 1, simAnimId:null, simLastFrame:0,
-  saveTimer: null, cutContours: {}, cutTabs: {},
-  gcodeLines: [], gcodeBlock: [], blockPoints: {}, blockZ: {},
-  activeGlineIdx: -1, selectedGlineIdx: -1,
-  _lastActiveBlock: -999,
-};
-
-const $ = id => document.getElementById(id);
-const canvasContainer = $('canvasContainer'), canvas = $('mainCanvas'), ctx = canvas.getContext('2d');
-const coordEl = $('coord'), zoomEl = $('zoom'), fileEl = $('fileInfo'), opsEl = $('opsList');
-const gcodeEl = $('gcode'), toastEl = $('toast'), modeBtns = $('modeBtns'), layerEl = $('layerList'), diagEl = $('diag');
-const toolListEl = $('toolList'), toolCountEl = $('toolCount'), opCountEl = $('opCount');
-const activeToolBadge = $('activeToolBadge'), saveInd = $('saveInd');
-const btnPlay = $('btnPlay'), btnReset = $('btnReset'), btnEnd = $('btnEnd');
-const simSpeedEl = $('simSpeed'), simSpeedVal = $('simSpeedVal');
-const simProgressEl = $('simProgress'), simPctEl = $('simPct'), simOpInfoEl = $('simOpInfo');
-const simTotalLabel = $('simTotalLabel'), tabsInfoEl = $('tabsInfo');
-
-function uid(prefix){ return prefix + Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
-function createDefaultTool(num){
-  return { id: uid('tool_'), name: 'Herramienta ' + num, toolNumber: num,
-    diam: 3.175, rpm: 12000, feed: 800, feedZ: 400,
-    step: 1.5, depth: 6, safe: 15, retract: 5, overlap: 0.35,
-    cutDir: 'ccw', spindleDir: 'M3' };
-}
-function getActiveTool(){ return S.tools.find(t => t.id === S.activeToolId) || null; }
-function getToolById(id){ return S.tools.find(t => t.id === id) || null; }
-function nextToolNumber(){ let max = 0; for (const t of S.tools) if (t.toolNumber > max) max = t.toolNumber; return max + 1; }
-
-function addTool(){ const t = createDefaultTool(nextToolNumber()); S.tools.push(t); S.activeToolId = t.id;
-  loadToolIntoFields(t); updateToolsList(); updateOpsList(); scheduleSave(); showToast('Herramienta anadida','success'); }
-function duplicateTool(){ const src = getActiveTool(); if (!src){ showToast('Sin herramienta activa','warn'); return; }
-  const t = JSON.parse(JSON.stringify(src)); t.id = uid('tool_'); t.toolNumber = nextToolNumber();
-  t.name = t.name.replace(/\s*\(copia\)$/,'') + ' (copia)';
-  S.tools.push(t); S.activeToolId = t.id; loadToolIntoFields(t); updateToolsList(); updateOpsList(); scheduleSave();
-  showToast('Herramienta duplicada','success'); }
-function deleteTool(id){
-  const usedBy = S.operations.filter(o => o.toolId === id);
-  if (usedBy.length > 0){ if (!confirm(`En ${usedBy.length} operacion(es). Eliminar?`)) return;
-    S.operations = S.operations.filter(o => o.toolId !== id); }
-  S.tools = S.tools.filter(t => t.id !== id);
-  if (S.activeToolId === id){ S.activeToolId = S.tools.length ? S.tools[0].id : null;
-    if (S.activeToolId) loadToolIntoFields(getActiveTool()); }
-  updateToolsList(); updateOpsList(); rebuildAllContours(); buildProgram(); render(); scheduleSave(); }
-function selectTool(id){ S.activeToolId = id; loadToolIntoFields(getToolById(id)); updateToolsList(); scheduleSave(); updateTabsInfo(); }
-function renameTool(id){ const t = getToolById(id); if (!t) return;
-  const n = prompt('Nuevo nombre:', t.name); if (n === null) return;
-  const trimmed = n.trim(); if (!trimmed) return; t.name = trimmed;
-  loadToolIntoFields(t); updateToolsList(); scheduleSave(); }
-function loadToolIntoFields(t){
-  if (!t) return;
-  $('tName').value = t.name; $('tNum').value = t.toolNumber;
-  $('cDiam').value = t.diam; $('cRpm').value = t.rpm;
-  $('cFeed').value = t.feed; $('cFeedZ').value = t.feedZ;
-  $('cStep').value = t.step; $('cDepth').value = t.depth;
-  $('cSafe').value = t.safe; $('cRetract').value = t.retract;
-  $('cOverlap').value = t.overlap;
-  $('cCutDir').value = t.cutDir || 'ccw';
-  $('cSpindleDir').value = t.spindleDir || 'M3';
-  activeToolBadge.textContent = 'T' + t.toolNumber;
-}
-function updateToolsList(){
-  toolCountEl.textContent = S.tools.length;
-  if (!S.tools.length){ toolListEl.innerHTML = '<div class="empty-hint">Sin herramientas.</div>'; return; }
-  toolListEl.innerHTML = S.tools.map(t => {
-    const isActive = t.id === S.activeToolId;
-    const dirIcon = (t.cutDir === 'ccw' ? '↺' : '↻');
-    const spinIcon = (t.spindleDir === 'M4' ? 'M4' : 'M3');
-    return `<div class="tool-item ${isActive?'active':''}" data-id="${t.id}">
-      <span class="tnum">T${t.toolNumber}</span>
-      <div class="tinfo"><div class="tname">${escapeHtml(t.name)}</div>
-      <div class="tspec">D${t.diam}mm - ${t.rpm}rpm - ${dirIcon}${spinIcon}</div></div>
-      <div class="tact"><button class="rename" data-id="${t.id}">✏</button><button class="del" data-id="${t.id}">🗑</button></div>
-    </div>`;
-  }).join('');
-  toolListEl.querySelectorAll('.tool-item').forEach(el => {
-    el.addEventListener('click', e => { if (e.target.closest('.tact')) return; selectTool(el.dataset.id); }); });
-  toolListEl.querySelectorAll('.rename').forEach(b => b.addEventListener('click', e => { e.stopPropagation(); renameTool(b.dataset.id); }));
-  toolListEl.querySelectorAll('.del').forEach(b => b.addEventListener('click', e => { e.stopPropagation(); deleteTool(b.dataset.id); }));
-}
-function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
-
-// =================================================================
-//  PARSER DXF
-// =================================================================
+// ================= PARSER DXF =================
 function parseDXF(text){
   text = text.replace(/^\uFEFF/,'').replace(/\r\n/g,'\n').replace(/\r/g,'\n');
   const lines = text.split('\n');
@@ -435,9 +343,124 @@ function normalize(parsed){
   return out;
 }
 
-// =================================================================
-//  GEOMETRÍA BÁSICA
-// =================================================================
+const S = {
+  entities: [], operations: [], tools: [], activeToolId: null,
+  dxfText: '', dxfFilename: '',
+  mode:'view', scale:2, offX:0, offY:0,
+  panning:false, psx:0, psy:0, poffx:0, poffy:0,
+  mwx:0, mwy:0, hover:-1,
+  pocketStart:null, layerVis:{}, layers:new Set(),
+  selRect:null, selecting:false, selStart:null, selEnd:null,
+  showSim:true, offsetX:0, offsetY:0,
+  flipArcs:false, flipY:false, lastMiddleClick: 0,
+  spindlePause: 12, rapidXY: 5000, rapidZ: 3000,
+  tabs: { enabled: false, count: 3, width: 1.0, height: 1.0, seed: 12345 },
+  simMoves: [], simMoveTimes: [], simTotalTime: 0, simT: 0,
+  simPlaying:false, simSpeedMult: 1, simAnimId:null, simLastFrame:0,
+  saveTimer: null, cutContours: {}, cutTabs: {},
+  gcodeLines: [], gcodeBlock: [], blockPoints: {}, blockZ: {},
+  activeGlineIdx: -1, selectedGlineIdx: -1,
+  _lastActiveBlock: -999,
+  clipperInstance: null,
+  clipperReady: false,
+};
+
+const $ = id => document.getElementById(id);
+const canvasContainer = $('canvasContainer'), canvas = $('mainCanvas'), ctx = canvas.getContext('2d');
+const coordEl = $('coord'), zoomEl = $('zoom'), fileEl = $('fileInfo'), opsEl = $('opsList');
+const gcodeEl = $('gcode'), toastEl = $('toast'), modeBtns = $('modeBtns'), layerEl = $('layerList'), diagEl = $('diag');
+const toolListEl = $('toolList'), toolCountEl = $('toolCount'), opCountEl = $('opCount');
+const activeToolBadge = $('activeToolBadge'), saveInd = $('saveInd');
+const btnPlay = $('btnPlay'), btnReset = $('btnReset'), btnEnd = $('btnEnd');
+const simSpeedEl = $('simSpeed'), simSpeedVal = $('simSpeedVal');
+const simProgressEl = $('simProgress'), simPctEl = $('simPct'), simOpInfoEl = $('simOpInfo');
+const simTotalLabel = $('simTotalLabel'), tabsInfoEl = $('tabsInfo');
+
+// Cargar la instancia nativa de Clipper en cuanto esté disponible la librería
+window.addEventListener('clipper-ready', async () => {
+  try {
+    const lib = window.jsAngusjClipper;
+    if (!lib) return;
+    S.clipperInstance = await lib.loadNativeClipperLibInstanceAsync(
+      lib.NativeClipperLibRequestedFormat.WasmWithAsmJsFallback
+    );
+    S.clipperReady = true;
+    console.log('✅ Clipper nativo cargado');
+    // Recalcular contornos con Clipper real
+    rebuildAllContours();
+    buildProgram();
+    render();
+  } catch (err){
+    console.warn('❌ No se pudo cargar Clipper, usando fallback simple:', err);
+  }
+});
+
+function uid(prefix){ return prefix + Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+function createDefaultTool(num){
+  return { id: uid('tool_'), name: 'Herramienta ' + num, toolNumber: num,
+    diam: 3.175, rpm: 12000, feed: 800, feedZ: 400,
+    step: 1.5, depth: 6, safe: 15, retract: 5, overlap: 0.35,
+    cutDir: 'ccw', spindleDir: 'M3' };
+}
+function getActiveTool(){ return S.tools.find(t => t.id === S.activeToolId) || null; }
+function getToolById(id){ return S.tools.find(t => t.id === id) || null; }
+function nextToolNumber(){ let max = 0; for (const t of S.tools) if (t.toolNumber > max) max = t.toolNumber; return max + 1; }
+
+function addTool(){ const t = createDefaultTool(nextToolNumber()); S.tools.push(t); S.activeToolId = t.id;
+  loadToolIntoFields(t); updateToolsList(); updateOpsList(); scheduleSave(); showToast('Herramienta anadida','success'); }
+function duplicateTool(){ const src = getActiveTool(); if (!src){ showToast('Sin herramienta activa','warn'); return; }
+  const t = JSON.parse(JSON.stringify(src)); t.id = uid('tool_'); t.toolNumber = nextToolNumber();
+  t.name = t.name.replace(/\s*\(copia\)$/,'') + ' (copia)';
+  S.tools.push(t); S.activeToolId = t.id; loadToolIntoFields(t); updateToolsList(); updateOpsList(); scheduleSave();
+  showToast('Herramienta duplicada','success'); }
+function deleteTool(id){
+  const usedBy = S.operations.filter(o => o.toolId === id);
+  if (usedBy.length > 0){ if (!confirm(`En ${usedBy.length} operacion(es). Eliminar?`)) return;
+    S.operations = S.operations.filter(o => o.toolId !== id); }
+  S.tools = S.tools.filter(t => t.id !== id);
+  if (S.activeToolId === id){ S.activeToolId = S.tools.length ? S.tools[0].id : null;
+    if (S.activeToolId) loadToolIntoFields(getActiveTool()); }
+  updateToolsList(); updateOpsList(); rebuildAllContours(); buildProgram(); render(); scheduleSave(); }
+function selectTool(id){ S.activeToolId = id; loadToolIntoFields(getToolById(id)); updateToolsList(); scheduleSave(); updateTabsInfo(); }
+function renameTool(id){ const t = getToolById(id); if (!t) return;
+  const n = prompt('Nuevo nombre:', t.name); if (n === null) return;
+  const trimmed = n.trim(); if (!trimmed) return; t.name = trimmed;
+  loadToolIntoFields(t); updateToolsList(); scheduleSave(); }
+function loadToolIntoFields(t){
+  if (!t) return;
+  $('tName').value = t.name; $('tNum').value = t.toolNumber;
+  $('cDiam').value = t.diam; $('cRpm').value = t.rpm;
+  $('cFeed').value = t.feed; $('cFeedZ').value = t.feedZ;
+  $('cStep').value = t.step; $('cDepth').value = t.depth;
+  $('cSafe').value = t.safe; $('cRetract').value = t.retract;
+  $('cOverlap').value = t.overlap;
+  $('cCutDir').value = t.cutDir || 'ccw';
+  $('cSpindleDir').value = t.spindleDir || 'M3';
+  activeToolBadge.textContent = 'T' + t.toolNumber;
+}
+function updateToolsList(){
+  toolCountEl.textContent = S.tools.length;
+  if (!S.tools.length){ toolListEl.innerHTML = '<div class="empty-hint">Sin herramientas.</div>'; return; }
+  toolListEl.innerHTML = S.tools.map(t => {
+    const isActive = t.id === S.activeToolId;
+    const uses = S.operations.filter(o => o.toolId === t.id).length;
+    const dirIcon = (t.cutDir === 'ccw' ? '↺' : '↻');
+    const spinIcon = (t.spindleDir === 'M4' ? 'M4' : 'M3');
+    return `<div class="tool-item ${isActive?'active':''}" data-id="${t.id}">
+      <span class="tnum">T${t.toolNumber}</span>
+      <div class="tinfo"><div class="tname">${escapeHtml(t.name)}</div>
+      <div class="tspec">D${t.diam}mm - ${t.rpm}rpm - ${dirIcon}${spinIcon}</div></div>
+      <div class="tact"><button class="rename" data-id="${t.id}">✏</button><button class="del" data-id="${t.id}">🗑</button></div>
+    </div>`;
+  }).join('');
+  toolListEl.querySelectorAll('.tool-item').forEach(el => {
+    el.addEventListener('click', e => { if (e.target.closest('.tact')) return; selectTool(el.dataset.id); }); });
+  toolListEl.querySelectorAll('.rename').forEach(b => b.addEventListener('click', e => { e.stopPropagation(); renameTool(b.dataset.id); }));
+  toolListEl.querySelectorAll('.del').forEach(b => b.addEventListener('click', e => { e.stopPropagation(); deleteTool(b.dataset.id); }));
+}
+function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+// ================= GEOMETRIA =================
 function signedArea(pts){ let a = 0; const n = pts.length;
   for (let i = 0; i < n; i++){ const p1 = pts[i], p2 = pts[(i + 1) % n]; a += p1.x * p2.y - p2.x * p1.y; }
   return a / 2;
@@ -472,311 +495,218 @@ function pathPointsBetween(path, cumLens, s1, s2){
 }
 
 // =================================================================
-//  CONVERSIÓN A PRIMITIVAS
+//  CONVERSIÓN DXF → PUNTOS (aplana todo, incluyendo arcos)
+//  Clipper trabajará a partir de puntos, no de primitivas.
 // =================================================================
-function entityToPrimitives(e){
-  const prims = [];
-  if (e.type === 'LINE'){ prims.push({ type:'line', x1:e.x1, y1:e.y1, x2:e.x2, y2:e.y2 }); }
-  else if (e.type === 'CIRCLE'){ prims.push({ type:'arc', cx:e.cx, cy:e.cy, r:e.r, sa:0, ea:2*Math.PI, ccw:true, closed:true }); }
-  else if (e.type === 'ARC'){ prims.push({ type:'arc', cx:e.cx, cy:e.cy, r:e.r, sa:e.sa, ea:e.ea, ccw:true, closed:false }); }
-  else if (e.type === 'LWPOLYLINE'){
-    const verts = e.vertices;
-    const n = verts.length;
-    const segCount = e.closed ? n : n - 1;
-    for (let i = 0; i < segCount; i++){
-      const v1 = verts[i], v2 = verts[(i+1) % n];
-      const b = v1.bulge || 0;
-      if (Math.abs(b) < 1e-9){ prims.push({ type:'line', x1:v1.x, y1:v1.y, x2:v2.x, y2:v2.y }); }
-      else {
-        const dx = v2.x - v1.x, dy = v2.y - v1.y;
-        const chord = Math.hypot(dx, dy);
-        if (chord < 1e-9) continue;
-        const theta = 4 * Math.atan(b);
-        const half = theta / 2;
-        const R = Math.abs(chord / (2 * Math.sin(half)));
-        const h = (chord / 2) / Math.tan(half);
-        const mx = (v1.x + v2.x) / 2, my = (v1.y + v2.y) / 2;
-        const px = -dy / chord, py = dx / chord;
-        const cx = mx + px * h, cy = my + py * h;
-        let sa = Math.atan2(v1.y - cy, v1.x - cx);
-        let ea = Math.atan2(v2.y - cy, v2.x - cx);
-        const ccw = b > 0;
-        if (ccw && ea <= sa) ea += 2*Math.PI;
-        if (!ccw && ea >= sa) ea -= 2*Math.PI;
-        prims.push({ type:'arc', cx, cy, r:R, sa, ea, ccw, closed:false });
-      }
-    }
-  }
-  return prims;
-}
-function getPrimStart(p){ if (p.type === 'line') return { x: p.x1, y: p.y1 }; return { x: p.cx + p.r * Math.cos(p.sa), y: p.cy + p.r * Math.sin(p.sa) }; }
-function getPrimEnd(p){ if (p.type === 'line') return { x: p.x2, y: p.y2 }; return { x: p.cx + p.r * Math.cos(p.ea), y: p.cy + p.r * Math.sin(p.ea) }; }
-function flipPrimitive(p){ if (p.type === 'line') return { type:'line', x1:p.x2, y1:p.y2, x2:p.x1, y2:p.y1 }; return { ...p, sa:p.ea, ea:p.sa, ccw: !p.ccw }; }
-function reversePrimitives(prims){ return prims.slice().reverse().map(flipPrimitive); }
-function primLength(p){
-  if (p.type === 'line') return Math.hypot(p.x2 - p.x1, p.y2 - p.y1);
-  let sweep = p.ea - p.sa;
-  if (p.ccw && sweep < 0) sweep += 2*Math.PI;
-  if (!p.ccw && sweep > 0) sweep -= 2*Math.PI;
-  return Math.abs(sweep) * p.r;
-}
-function primitivesToPoints(prims, closed){
+function entityToPointsDense(e){
   const pts = [];
-  for (let i = 0; i < prims.length; i++){
-    const p = prims[i];
-    if (p.type === 'line'){
-      if (pts.length === 0) pts.push({ x:p.x1, y:p.y1 });
-      else { const last = pts[pts.length-1]; if (Math.hypot(last.x - p.x1, last.y - p.y1) > 1e-6) pts.push({ x:p.x1, y:p.y1 }); }
-      pts.push({ x:p.x2, y:p.y2 });
-    } else {
-      let sweep = p.ea - p.sa;
-      if (p.ccw && sweep < 0) sweep += 2*Math.PI;
-      if (!p.ccw && sweep > 0) sweep -= 2*Math.PI;
-      const steps = Math.max(8, Math.ceil(Math.abs(sweep) * p.r / 0.3));
-      const startPt = { x: p.cx + p.r*Math.cos(p.sa), y: p.cy + p.r*Math.sin(p.sa) };
-      let startIdx = 0;
-      if (pts.length > 0){ const last = pts[pts.length-1]; if (Math.hypot(last.x - startPt.x, last.y - startPt.y) < 1e-6) startIdx = 1; }
-      for (let s = startIdx; s <= steps; s++){
-        const t = s / steps;
-        const ang = p.sa + t * sweep;
-        pts.push({ x: p.cx + p.r*Math.cos(ang), y: p.cy + p.r*Math.sin(ang) });
-      }
+  if (e.type === 'LINE'){
+    pts.push({ x: e.x1, y: e.y1 });
+    pts.push({ x: e.x2, y: e.y2 });
+  } else if (e.type === 'CIRCLE'){
+    const N = 96;
+    for (let s = 0; s < N; s++){
+      const a = s / N * Math.PI * 2;
+      pts.push({ x: e.cx + e.r * Math.cos(a), y: e.cy + e.r * Math.sin(a) });
+    }
+  } else if (e.type === 'ARC'){
+    // Intervalo angular fijo para buena resolución
+    const delta = e.ea - e.sa;
+    const N = Math.max(8, Math.ceil(Math.abs(delta) / 0.08));
+    for (let s = 0; s <= N; s++){
+      const a = e.sa + (s / N) * delta;
+      pts.push({ x: e.cx + e.r * Math.cos(a), y: e.cy + e.r * Math.sin(a) });
+    }
+  } else if (e.type === 'LWPOLYLINE'){
+    for (const v of e.vertices) pts.push({ x: v.x, y: v.y });
+    if (e.closed && pts.length > 1){
+      const f = pts[0], l = pts[pts.length - 1];
+      if (Math.hypot(f.x - l.x, f.y - l.y) > 1e-6) pts.push({ x: f.x, y: f.y });
     }
   }
   return pts;
 }
-function chainPrimitivesToContour(prims, tol){
-  if (!prims.length) return { prims: [], closed: false };
-  if (prims.length === 1) return { prims: [prims[0]], closed: !!prims[0].closed };
-  const used = new Array(prims.length).fill(false);
+
+// Encadena puntos de varias entidades en un contorno continuo
+function chainPointsFromEntities(entityList, tol){
+  tol = tol || 0.15;
+  // Convertir cada entidad a su lista de puntos
+  const parts = [];
+  const partMeta = [];
+  for (const e of entityList){
+    const pts = entityToPointsDense(e);
+    if (pts.length < 2) continue;
+    parts.push(pts);
+    partMeta.push({ closed: (e.type === 'CIRCLE' || (e.type === 'LWPOLYLINE' && e.closed)) });
+  }
+  if (!parts.length) return { points: [], closed: false };
+  if (parts.length === 1){
+    let pts = parts[0];
+    const closed = partMeta[0].closed;
+    if (closed && pts.length > 2){
+      const f = pts[0], l = pts[pts.length - 1];
+      if (Math.hypot(f.x - l.x, f.y - l.y) < tol * 2) pts = pts.slice(0, -1);
+    }
+    return { points: pts, closed };
+  }
+  const used = new Array(parts.length).fill(false);
   let startIdx = 0;
-  for (let i = 0; i < prims.length; i++){ if (!prims[i].closed){ startIdx = i; break; } }
+  for (let i = 0; i < partMeta.length; i++){ if (!partMeta[i].closed){ startIdx = i; break; } }
   used[startIdx] = true;
-  const result = [prims[startIdx]];
-  if (prims[startIdx].closed) return { prims: result, closed: true };
+  let result = parts[startIdx].slice();
+  if (partMeta[startIdx].closed){
+    if (result.length > 2){
+      const f = result[0], l = result[result.length - 1];
+      if (Math.hypot(f.x - l.x, f.y - l.y) < tol * 2) result = result.slice(0, -1);
+    }
+    return { points: result, closed: true };
+  }
   let safety = 0;
-  while (safety++ < prims.length * 3){
-    const endPt = getPrimEnd(result[result.length - 1]);
+  while (safety++ < parts.length * 3){
+    const end = result[result.length - 1];
     let bestIdx = -1, bestFlip = false, bestDist = tol;
-    for (let i = 0; i < prims.length; i++){
+    for (let i = 0; i < parts.length; i++){
       if (used[i]) continue;
-      const p = prims[i];
-      const sPt = getPrimStart(p), ePt = getPrimEnd(p);
-      const dS = Math.hypot(sPt.x - endPt.x, sPt.y - endPt.y);
-      const dE = Math.hypot(ePt.x - endPt.x, ePt.y - endPt.y);
-      if (dS < bestDist){ bestDist = dS; bestIdx = i; bestFlip = false; }
-      if (dE < bestDist){ bestDist = dE; bestIdx = i; bestFlip = true; }
+      const p = parts[i];
+      const dStart = Math.hypot(p[0].x - end.x, p[0].y - end.y);
+      const dEnd = Math.hypot(p[p.length-1].x - end.x, p[p.length-1].y - end.y);
+      if (dStart < bestDist){ bestDist = dStart; bestIdx = i; bestFlip = false; }
+      if (dEnd < bestDist){ bestDist = dEnd; bestIdx = i; bestFlip = true; }
     }
     if (bestIdx < 0) break;
     used[bestIdx] = true;
-    let next = prims[bestIdx];
-    if (bestFlip) next = flipPrimitive(next);
-    result.push(next);
+    let next = parts[bestIdx].slice();
+    if (bestFlip) next.reverse();
+    if (next.length > 1 && Math.hypot(next[0].x - end.x, next[0].y - end.y) < tol) next = next.slice(1);
+    result.push(...next);
   }
-  const fs = getPrimStart(result[0]);
-  const le = getPrimEnd(result[result.length - 1]);
-  const isClosed = Math.hypot(fs.x - le.x, fs.y - le.y) < tol * 2;
-  return { prims: result, closed: isClosed };
+  const first = result[0], last = result[result.length - 1];
+  const isClosed = Math.hypot(first.x - last.x, first.y - last.y) < tol * 2;
+  if (isClosed && result.length > 2) result = result.slice(0, -1);
+  return { points: result, closed: isClosed };
 }
-function isContourCCW(prims){ return signedArea(primitivesToPoints(prims, true)) > 0; }
 
-// =================================================================
-//  OFFSET CON CLIPPER2 (v2 - robusto, auto-detecta signo)
-// =================================================================
-
-/**
- * Convierte primitivas a un polígono cerrado denso (sagita tol).
- * NO ordena ni normaliza orientación — eso lo hace el caller.
- */
-function primitivesToPolygon(prims, sagittaTol = 0.01) {
-  const pts = [];
-  for (let i = 0; i < prims.length; i++) {
-    const p = prims[i];
-    if (p.type === 'line') {
-      if (pts.length === 0) pts.push({ x: p.x1, y: p.y1 });
-      else {
-        const last = pts[pts.length - 1];
-        if (Math.hypot(last.x - p.x1, last.y - p.y1) > 1e-9) pts.push({ x: p.x1, y: p.y1 });
-      }
-      pts.push({ x: p.x2, y: p.y2 });
-    } else {
-      let sweep = p.ea - p.sa;
-      if (p.ccw && sweep < 0) sweep += 2 * Math.PI;
-      if (!p.ccw && sweep > 0) sweep -= 2 * Math.PI;
-      const arcLen = Math.abs(sweep) * p.r;
-      const maxSegLen = Math.max(0.001, Math.sqrt(8 * sagittaTol * p.r));
-      const steps = Math.max(4, Math.ceil(arcLen / maxSegLen));
-      const startPt = { x: p.cx + p.r * Math.cos(p.sa), y: p.cy + p.r * Math.sin(p.sa) };
-      let startIdx = 0;
-      if (pts.length > 0) {
-        const last = pts[pts.length - 1];
-        if (Math.hypot(last.x - startPt.x, last.y - startPt.y) < 1e-6) startIdx = 1;
-      }
-      for (let s = startIdx; s <= steps; s++) {
-        const t = s / steps;
-        const ang = p.sa + t * sweep;
-        pts.push({ x: p.cx + p.r * Math.cos(ang), y: p.cy + p.r * Math.sin(ang) });
-      }
-    }
+function rotatePointsToStart(pts, ox, oy){
+  if (!pts || pts.length < 2) return pts;
+  let bestIdx = 0, bestDist = Infinity;
+  for (let i = 0; i < pts.length; i++){
+    const d = Math.hypot(pts[i].x - ox, pts[i].y - oy);
+    if (d < bestDist){ bestDist = d; bestIdx = i; }
   }
+  if (bestIdx === 0) return pts;
+  return pts.slice(bestIdx).concat(pts.slice(0, bestIdx));
+}
+
+// =================================================================
+//  OFFSET VÍA CLIPPER (reemplaza todo el sistema de miter/bevel/round)
+// =================================================================
+async function offsetPointsWithClipper(pts, delta, joinTypeName){
+  if (!S.clipperReady || !S.clipperInstance){
+    console.warn('Clipper no disponible, usando offset simple (fallback)');
+    return offsetPointsSimpleFallback(pts, delta);
+  }
+  const lib = window.jsAngusjClipper;
+  const clipper = S.clipperInstance;
+
+  // 1. Escalar a enteros
+  const intPath = pts.map(p => ({ x: Math.round(p.x * CLIPPER_SCALE), y: Math.round(p.y * CLIPPER_SCALE) }));
+
+  // 2. Crear ClipperOffset
+  const co = new clipper.ClipperOffset(2.0, CLIPPER_ARC_TOLERANCE * CLIPPER_SCALE);
+
+  // 3. Mapear joinType
+  let joinType = lib.JoinType.Round;
+  if (joinTypeName === 'miter') joinType = lib.JoinType.Miter;
+  else if (joinTypeName === 'square') joinType = lib.JoinType.Square;
+
+  // 4. Añadir path
+  co.addPath(intPath, joinType, lib.EndType.ClosedPolygon);
+
+  // 5. Ejecutar offset con cleanDistance para eliminar micro-vertices
+  const deltaInt = Math.round(delta * CLIPPER_SCALE);
+  const solution = co.executeToPaths(deltaInt, 0.5);
+
+  // 6. Convertir de vuelta a puntos en mm
+  if (!solution || solution.length === 0) return [];
+  // Elegir la primera solución (la más externa)
+  const result = solution[0].map(p => ({ x: p.x / CLIPPER_SCALE, y: p.y / CLIPPER_SCALE }));
+
+  co.dispose();
+
+  return result;
+}
+
+// Fallback simple por si Clipper no carga
+function offsetPointsSimpleFallback(pts, delta){
+  if (!pts.length) return pts;
+  const n = pts.length;
   const out = [];
-  for (let i = 0; i < pts.length; i++) {
-    if (i === 0 || Math.hypot(pts[i].x - out[out.length-1].x, pts[i].y - out[out.length-1].y) > 1e-9) {
-      out.push(pts[i]);
-    }
-  }
-  if (out.length > 1 && Math.hypot(out[0].x - out[out.length-1].x, out[0].y - out[out.length-1].y) < 1e-6) {
-    out.pop();
+  for (let i = 0; i < n; i++){
+    const prev = pts[(i - 1 + n) % n];
+    const curr = pts[i];
+    const next = pts[(i + 1) % n];
+    const v1x = curr.x - prev.x, v1y = curr.y - prev.y;
+    const v2x = next.x - curr.x, v2y = next.y - curr.y;
+    const l1 = Math.hypot(v1x, v1y), l2 = Math.hypot(v2x, v2y);
+    if (l1 < 1e-9 || l2 < 1e-9){ out.push({ x: curr.x, y: curr.y }); continue; }
+    const n1x = -v1y / l1, n1y = v1x / l1;
+    const n2x = -v2y / l2, n2y = v2x / l2;
+    const mx = (n1x + n2x) / 2, my = (n1y + n2y) / 2;
+    const ml = Math.hypot(mx, my);
+    if (ml < 1e-9){ out.push({ x: curr.x, y: curr.y }); continue; }
+    out.push({ x: curr.x + (mx / ml) * delta, y: curr.y + (my / ml) * delta });
   }
   return out;
 }
 
-/**
- * Offset con Clipper2. Auto-normaliza a CCW y auto-detecta el signo correcto
- * comparando áreas (si Clipper2 tiene la convención invertida, reintenta).
- *
- * @param {Array<{x,y}>} polygon - Polígono en mm
- * @param {number} signedDelta - Negativo = interior, positivo = exterior (en mm)
- * @returns {Array<{x,y}>|null} - Polígono resultante en CCW
- */
-function offsetWithClipper2(polygon, signedDelta) {
-  const SCALE = 1000;
-  if (polygon.length < 3) return null;
-
-  const area0 = signedArea(polygon);
-  const normalized = area0 < 0 ? polygon.slice().reverse() : polygon.slice();
-  const inArea = Math.abs(area0);
-  if (inArea < 1e-6) return null;
-
-  const path = normalized.map(p => ({
-    x: Math.round(p.x * SCALE),
-    y: Math.round(p.y * SCALE)
-  }));
-
-  const pickLargest = (solution) => {
-    if (!solution || solution.length === 0) return null;
-    let best = null, bestA = -1;
-    for (const p of solution) {
-      if (!p || p.length < 3) continue;
-      const scaled = p.map(pt => ({ x: pt.x / SCALE, y: pt.y / SCALE }));
-      const a = Math.abs(signedArea(scaled));
-      if (a > bestA) { bestA = a; best = scaled; }
-    }
-    return best;
-  };
-
-  let solution;
-  try {
-    solution = inflatePaths([path], signedDelta * SCALE, JoinType.Round, EndType.Polygon);
-  } catch (err) {
-    console.error('Clipper2 inflatePaths error:', err);
-    return null;
-  }
-  let result = pickLargest(solution);
-  if (!result) return null;
-
-  const outArea = Math.abs(signedArea(result));
-  const wantExpand = signedDelta > 0;
-  const gotExpand = outArea > inArea;
-  const directionOK = (wantExpand === gotExpand);
-
-  console.log('[Clipper2] delta=', signedDelta.toFixed(3),
-              'inArea=', inArea.toFixed(3),
-              'outArea=', outArea.toFixed(3),
-              'wantExpand=', wantExpand,
-              'gotExpand=', gotExpand,
-              'OK=', directionOK);
-
-  if (!directionOK) {
-    try {
-      solution = inflatePaths([path], -signedDelta * SCALE, JoinType.Round, EndType.Polygon);
-    } catch (err) {
-      console.error('Clipper2 reintento error:', err);
-      return result;
-    }
-    const alt = pickLargest(solution);
-    if (alt) {
-      const altArea = Math.abs(signedArea(alt));
-      const altGotExpand = altArea > inArea;
-      if (altGotExpand === wantExpand) {
-        console.warn('[Clipper2] Signo invertido detectado → usando delta opuesto');
-        result = alt;
-      }
-    }
-  }
-
-  if (signedArea(result) < 0) result.reverse();
-  return result;
-}
-
-/**
- * Resuelve el contorno de corte. Independiza el offset de cutDir:
- * primero normaliza a CCW, luego offsetea, luego aplica cutDir.
- */
-function resolveCutContour(op, tool) {
+// =================================================================
+//  RESOLUCIÓN DEL CONTORNO DE CORTE
+// =================================================================
+function resolveCutContour(op, tool){
   const entityList = op.ids.map(i => S.entities[i]).filter(Boolean);
   if (!entityList.length) return null;
 
-  const primsRaw = [];
-  for (const e of entityList) {
-    const ps = entityToPrimitives(e);
-    for (const p of ps) primsRaw.push(p);
-  }
-  if (!primsRaw.length) return null;
-
-  const chainRes = chainPrimitivesToContour(primsRaw, 0.15);
-  let prims = chainRes.prims;
+  // 1. Encadenar entidades a puntos
+  const chainRes = chainPointsFromEntities(entityList, 0.15);
+  let pts = chainRes.points;
   const closed = chainRes.closed;
-  if (!prims.length) return null;
+  if (pts.length < 2) return null;
 
-  // 1) Normalizar SIEMPRE a CCW para el cálculo del offset
-  if (closed) {
-    const ccwNow = isContourCCW(prims);
-    if (!ccwNow) prims = reversePrimitives(prims);
+  // 2. Orientar según cutDir
+  if (closed && pts.length >= 3){
+    const wantCCW = (tool.cutDir !== 'cw');
+    const isCCW = signedArea(pts) > 0;
+    if (isCCW !== wantCCW) pts = pts.slice().reverse();
   }
 
+  // 3. Offset con Clipper si está disponible
   const off = op.offset || 'center';
-  let finalPts = null;
-  let finalPrims = prims;
-
-  // 2) Offset con Clipper2 (delta negativo = interior, positivo = exterior)
-  if ((off === 'inside' || off === 'outside') && closed) {
-    const polygon = primitivesToPolygon(prims, 0.01);
-    if (polygon.length >= 3) {
-      const delta = (off === 'inside') ? -(tool.diam / 2) : +(tool.diam / 2);
-      const offsetPoly = offsetWithClipper2(polygon, delta);
-      if (offsetPoly && offsetPoly.length >= 3) {
-        finalPts = offsetPoly.slice();
-        finalPrims = [];
-        const n = offsetPoly.length;
-        for (let i = 0; i < n; i++) {
-          const a = offsetPoly[i];
-          const b = offsetPoly[(i + 1) % n];
-          finalPrims.push({ type: 'line', x1: a.x, y1: a.y, x2: b.x, y2: b.y });
-        }
-      }
+  if ((off === 'inside' || off === 'outside') && closed && pts.length >= 3){
+    const ccw = signedArea(pts) > 0;
+    const toolRadius = tool.diam / 2;
+    let delta;
+    if (off === 'inside') delta = ccw ? -toolRadius : +toolRadius;
+    else delta = ccw ? +toolRadius : -toolRadius;
+    // Clipper: delta negativo contrae, positivo expande
+    try {
+      const result = offsetPointsWithClipper(pts, delta, 'round');
+      if (result && result.length >= 3) pts = result;
+    } catch (err){
+      console.warn('Error en Clipper offset, fallback:', err);
+      pts = offsetPointsSimpleFallback(pts, delta);
     }
   }
 
-  // 3) Sin offset (center)
-  if (!finalPts) {
-    finalPts = primitivesToPoints(prims, closed);
+  // 4. Punto de inicio más cercano a (0,0)
+  if (closed && pts.length >= 3) pts = rotatePointsToStart(pts, 0, 0);
+
+  // 5. Devolver también primitivas originales para G2/G3 si NO hay offset
+  let primitives = null;
+  if (off === 'center' && closed){
+    primitives = null; // Podríamos devolver primitivas, pero para simplificar todo va por puntos
   }
 
-  if (finalPts.length < 2) return null;
-
-  // 4) Aplicar cutDir (sentido de corte del usuario) DESPUÉS del offset
-  if (closed && tool.cutDir === 'cw') {
-    finalPts = finalPts.slice().reverse();
-    if (finalPrims && finalPrims.length) {
-      finalPrims = finalPrims.slice().reverse().map(p => {
-        if (p.type === 'line') return { type:'line', x1:p.x2, y1:p.y2, x2:p.x1, y2:p.y1 };
-        return { ...p, sa: p.ea, ea: p.sa, ccw: !p.ccw };
-      });
-    }
-  }
-
-  return { points: finalPts, primitives: finalPrims, closed };
+  return { points: pts, primitives: null, closed };
 }
 
 function rebuildAllContours(){
@@ -798,9 +728,7 @@ function rebuildAllContours(){
   updateTabsInfo();
 }
 
-// =================================================================
-//  PATILLAS
-// =================================================================
+// ================= PATILLAS =================
 function computeTabSegments(pts, closed, count, width, seed, toolDiameter){
   toolDiameter = Math.max(0, toolDiameter || 0);
   const pathWidth = Math.max(0.1, width + toolDiameter);
@@ -852,9 +780,7 @@ function fmtTime(sec){
   return String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
 }
 
-// =================================================================
-//  PERSISTENCIA
-// =================================================================
+// ================= PERSISTENCIA =================
 function scheduleSave(){ clearTimeout(S.saveTimer); S.saveTimer = setTimeout(saveToLocalStorage, 500); }
 function serializeProject(){
   return { version: PROJECT_VERSION, savedAt: new Date().toISOString(),
@@ -920,9 +846,7 @@ function importProject(file){
   r.readAsText(file);
 }
 
-// =================================================================
-//  TRANSFORMACIONES DE VISTA
-// =================================================================
+// ================= TRANSFORMACIONES =================
 function resizeCanvas(){
   const r = canvasContainer.getBoundingClientRect();
   const dpr = window.devicePixelRatio || 1;
@@ -1015,9 +939,7 @@ function closestCircle(wx, wy, thr){
   return bi;
 }
 
-// =================================================================
-//  OPERACIONES
-// =================================================================
+// ================= OPERACIONES =================
 function addDrill(wx, wy){
   if (!S.tools.length){ showToast('Anade primero una herramienta','warn'); return; }
   const ci = closestCircle(wx, wy, 10);
@@ -1098,9 +1020,7 @@ function updateOpsList(){
     s.addEventListener('click', e => e.stopPropagation()); });
 }
 
-// =================================================================
-//  CAPAS
-// =================================================================
+// ================= CAPAS =================
 function extractLayers(){
   S.layers.clear();
   for (const e of S.entities) S.layers.add(e.layer);
@@ -1130,7 +1050,7 @@ function updateLayerList(){
 }
 
 // =================================================================
-//  CONSTRUCCIÓN DEL PROGRAMA G-CODE
+//  PROGRAMA UNIFICADO
 // =================================================================
 function buildProgram(){
   S.gcodeLines = []; S.gcodeBlock = []; S.blockPoints = {}; S.blockZ = {};
@@ -1184,7 +1104,7 @@ function buildProgram(){
   };
 
   emit('%', -1);
-  emit('O0001 (CNC DXF - Clipper2)', -1);
+  emit('O0001 (CNC DXF)', -1);
   emit('(Generado por CNC DXF a G-Code)', -1);
   emit('G21 G90 G17', -1);
   emit(`G0 Z${maxSafe.toFixed(3)}`, -1);
@@ -1201,6 +1121,7 @@ function buildProgram(){
     groups.get(tid).push({ op, originalIndex: S.operations.indexOf(op) });
   }
 
+  let toolChangeCount = 0;
   for (const tid of toolOrder){
     const tool = getToolById(tid); if (!tool) continue;
     const entries = groups.get(tid);
@@ -1224,6 +1145,7 @@ function buildProgram(){
       addSpindlePause(-1);
     }
     emit('', -1);
+    toolChangeCount++;
 
     for (let oi = 0; oi < entries.length; oi++){
       const { op, originalIndex } = entries[oi];
@@ -1284,18 +1206,18 @@ function buildProgram(){
           const isLastPass = (k === passes - 1);
           emit(`G1 Z${z.toFixed(3)} F${tool.feedZ}`, blockId);
           addMove('cut', [{x:f.x, y:f.y}], z, tool.feedZ, blockId);
-
           if (S.tabs.enabled && isLastPass && isClosed && tabsEff.length > 0){
             emit(`(--- pasada con ${tabsEff.length} patillas - patilla final ${S.tabs.width}mm ---)`, blockId);
             emitCutWithTabsUnified(lines, lineBlocks, blockId, ptsEff, isClosed, tool, z, tabsEff, S.tabs.height);
             emitSimWithTabs(ptsEff, isClosed, z, tool.feed, S.tabs.height, tabsEff, blockId, addMove);
           } else {
-            for (let i = 1; i < ptsEff.length; i++) {
+            // Emisión de puntos (G1). Clipper devuelve puntos densos para arcos.
+            for (let i = 1; i < ptsEff.length; i++){
               emit(`G1 X${ptsEff[i].x.toFixed(3)} Y${ptsEff[i].y.toFixed(3)} F${tool.feed}`, blockId);
             }
-            if (isClosed) {
+            if (isClosed){
               const lastPt = ptsEff[ptsEff.length - 1];
-              if (Math.hypot(lastPt.x - f.x, lastPt.y - f.y) > 1e-3) {
+              if (Math.hypot(lastPt.x - f.x, lastPt.y - f.y) > 1e-3){
                 emit(`G1 X${f.x.toFixed(3)} Y${f.y.toFixed(3)} F${tool.feed}`, blockId);
               }
             }
@@ -1445,9 +1367,7 @@ function emitSimWithTabs(pts, closed, fullZ, feed, tabHeight, tabs, blockId, add
   }
 }
 
-// =================================================================
-//  UI G-CODE
-// =================================================================
+// ================= UI G-CODE =================
 function renderGcodeDisplay(){
   if (!S.gcodeLines.length){
     gcodeEl.innerHTML = '<div class="empty-hint">(Sin generar)</div>';
@@ -1524,9 +1444,7 @@ function onGlineClick(idx){
   render();
 }
 
-// =================================================================
-//  SIMULACIÓN
-// =================================================================
+// ================= SIMULACION =================
 function updateSimUI(){
   const pct = S.simTotalTime > 0 ? (S.simT / S.simTotalTime) : 0;
   simPctEl.textContent = fmtTime(S.simT) + ' / ' + fmtTime(S.simTotalTime);
@@ -1580,9 +1498,7 @@ function getCurrentBlock(){
   return mv ? mv.block : -1;
 }
 
-// =================================================================
-//  RENDER CANVAS
-// =================================================================
+// ================= RENDER CANVAS =================
 function render(){
   const r = canvasContainer.getBoundingClientRect();
   ctx.clearRect(0,0,r.width,r.height);
@@ -1818,32 +1734,40 @@ function drawGrid(r){
   for (let y=sy; y<=ey; y+=sp){ const p = w2s(0,y); ctx.moveTo(0,p.y-r.top); ctx.lineTo(r.width,p.y-r.top); }
   ctx.stroke();
 }
+
 function drawEnt(e, color, lw, r){
   ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = lw; ctx.setLineDash([]);
-  if (e.type === 'LINE'){ const s1 = w2s(e.x1,e.y1), s2 = w2s(e.x2,e.y2);
-    ctx.beginPath(); ctx.moveTo(s1.x-r.left, s1.y-r.top); ctx.lineTo(s2.x-r.left, s2.y-r.top); ctx.stroke(); }
-  else if (e.type === 'CIRCLE'){ const c = w2s(e.cx, e.cy);
-    ctx.beginPath(); ctx.arc(c.x-r.left, c.y-r.top, e.r*S.scale, 0, Math.PI*2); ctx.stroke(); }
-  else if (e.type === 'ARC'){ const sa = e.sa, ea = e.ea; let sweep = ea - sa; if (S.flipArcs) sweep = -sweep;
+  if (e.type === 'LINE'){
+    const s1 = w2s(e.x1,e.y1), s2 = w2s(e.x2,e.y2);
+    ctx.beginPath(); ctx.moveTo(s1.x-r.left, s1.y-r.top); ctx.lineTo(s2.x-r.left, s2.y-r.top); ctx.stroke();
+  } else if (e.type === 'CIRCLE'){
+    const c = w2s(e.cx, e.cy);
+    ctx.beginPath(); ctx.arc(c.x-r.left, c.y-r.top, e.r*S.scale, 0, Math.PI*2); ctx.stroke();
+  } else if (e.type === 'ARC'){
+    const sa = e.sa, ea = e.ea; let sweep = ea - sa; if (S.flipArcs) sweep = -sweep;
     const steps = Math.max(20, Math.ceil(Math.abs(sweep) / 0.1));
     ctx.beginPath();
-    for (let i=0; i<=steps; i++){ const t = i / steps; const ang = sa + t * sweep;
+    for (let i=0; i<=steps; i++){
+      const t = i / steps; const ang = sa + t * sweep;
       const wx = e.cx + e.r * Math.cos(ang), wy = e.cy + e.r * Math.sin(ang);
       const s = w2s(wx, wy);
-      if (i === 0) ctx.moveTo(s.x-r.left, s.y-r.top); else ctx.lineTo(s.x-r.left, s.y-r.top); }
-    ctx.stroke(); }
-  else if (e.type === 'LWPOLYLINE'){ if (e.vertices.length < 2) return;
+      if (i === 0) ctx.moveTo(s.x-r.left, s.y-r.top); else ctx.lineTo(s.x-r.left, s.y-r.top);
+    }
+    ctx.stroke();
+  } else if (e.type === 'LWPOLYLINE'){
+    if (e.vertices.length < 2) return;
     ctx.beginPath();
     const s0 = w2s(e.vertices[0].x, e.vertices[0].y); ctx.moveTo(s0.x-r.left, s0.y-r.top);
     for (let i=1;i<e.vertices.length;i++){ const s = w2s(e.vertices[i].x, e.vertices[i].y); ctx.lineTo(s.x-r.left, s.y-r.top); }
-    if (e.closed) ctx.closePath(); ctx.stroke(); }
-  else if (e.type === 'POINT'){ const s = w2s(e.x, e.y);
-    ctx.beginPath(); ctx.arc(s.x-r.left, s.y-r.top, 3, 0, Math.PI*2); ctx.fill(); }
+    if (e.closed) ctx.closePath();
+    ctx.stroke();
+  } else if (e.type === 'POINT'){
+    const s = w2s(e.x, e.y);
+    ctx.beginPath(); ctx.arc(s.x-r.left, s.y-r.top, 3, 0, Math.PI*2); ctx.fill();
+  }
 }
 
-// =================================================================
-//  UI GENERAL
-// =================================================================
+// ================= UI GENERAL =================
 let toastT;
 function showToast(msg, type=''){
   toastEl.textContent = msg;
@@ -1851,6 +1775,7 @@ function showToast(msg, type=''){
   clearTimeout(toastT);
   toastT = setTimeout(() => toastEl.classList.remove('show'), 2400);
 }
+
 function setMode(m){
   S.mode = m; S.pocketStart = null; S.selRect = null; S.selecting = false;
   modeBtns.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
@@ -1859,6 +1784,7 @@ function setMode(m){
   canvasContainer.classList.toggle('mode-view', m === 'view');
   render();
 }
+
 function onFile(e){
   const file = e.target.files[0]; if (!file) return;
   const reader = new FileReader();
@@ -1872,21 +1798,30 @@ function onFile(e){
       S.cutContours = {}; S.cutTabs = {};
       S.offsetX = 0; S.offsetY = 0;
       $('offsetX').value = 0; $('offsetY').value = 0;
-      if (!S.tools.length){ S.tools.push(createDefaultTool(1)); S.activeToolId = S.tools[0].id; loadToolIntoFields(S.tools[0]); }
+      if (!S.tools.length){
+        S.tools.push(createDefaultTool(1));
+        S.activeToolId = S.tools[0].id;
+        loadToolIntoFields(S.tools[0]);
+      }
       extractLayers(); updateToolsList(); updateOpsList();
       resizeCanvas(); fitView(); buildProgram(); render(); scheduleSave();
+
       const counts = {}; for (const en of norm) counts[en.type] = (counts[en.type]||0)+1;
       diagEl.textContent = `Archivo: ${file.name}\nTotal: ${norm.length}\n` +
         Object.entries(counts).map(([k,v]) => `${k}: ${v}`).join('\n');
       fileEl.textContent = `${file.name} (${norm.length})`;
       if (norm.length === 0) showToast('Sin entidades','warn');
       else showToast(`${norm.length} ent - ${Object.keys(counts).join(', ')}`,'success');
-    } catch (err){ console.error(err); showToast('Error: '+err.message,'warn'); }
+    } catch (err){
+      console.error(err);
+      showToast('Error: '+err.message,'warn');
+    }
   };
   reader.readAsText(file);
   e.target.value = '';
 }
 
+// ================= EVENTOS =================
 $('btnLoad').addEventListener('click', () => $('fileInput').click());
 $('fileInput').addEventListener('change', onFile);
 $('btnSaveProj').addEventListener('click', exportProject);
@@ -1900,17 +1835,26 @@ $('btnDl').addEventListener('click', () => {
   if (!S.gcodeLines.length){ showToast('Genera primero','warn'); return; }
   const g = S.gcodeLines.join('\n');
   const b = new Blob([g], {type:'text/plain'});
-  const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'programa.nc'; a.click();
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(b);
+  a.download = 'programa.nc';
+  a.click();
 });
 $('btnCopy').addEventListener('click', () => {
   if (!S.gcodeLines.length){ showToast('Genera primero','warn'); return; }
   const g = S.gcodeLines.join('\n');
   navigator.clipboard.writeText(g).then(() => showToast('Copiado','success'));
 });
-$('btnFlipArcs').addEventListener('click', () => { S.flipArcs = !S.flipArcs;
-  $('btnFlipArcs').textContent = S.flipArcs ? 'Arcos INV' : 'Arcos'; render(); scheduleSave(); });
-$('btnFlipY').addEventListener('click', () => { S.flipY = !S.flipY;
-  $('btnFlipY').textContent = S.flipY ? 'Y INV' : 'Y'; fitView(); render(); scheduleSave(); });
+$('btnFlipArcs').addEventListener('click', () => {
+  S.flipArcs = !S.flipArcs;
+  $('btnFlipArcs').textContent = S.flipArcs ? 'Arcos INV' : 'Arcos';
+  render(); scheduleSave();
+});
+$('btnFlipY').addEventListener('click', () => {
+  S.flipY = !S.flipY;
+  $('btnFlipY').textContent = S.flipY ? 'Y INV' : 'Y';
+  fitView(); render(); scheduleSave();
+});
 modeBtns.addEventListener('click', e => { const b = e.target.closest('.mode-btn'); if (b) setMode(b.dataset.mode); });
 $('btnAddTool').addEventListener('click', addTool);
 $('btnDupTool').addEventListener('click', duplicateTool);
@@ -1953,73 +1897,119 @@ btnPlay.addEventListener('click', () => { if (S.simPlaying) simPause(); else sim
 btnReset.addEventListener('click', simReset);
 btnEnd.addEventListener('click', simEnd);
 simProgressEl.addEventListener('input', () => { if (S.simPlaying) simPause(); simSeek(parseInt(simProgressEl.value)); });
-simSpeedEl.addEventListener('input', () => { const raw = parseInt(simSpeedEl.value) || 10;
-  S.simSpeedMult = raw / 10; simSpeedVal.textContent = S.simSpeedMult.toFixed(1) + 'x'; });
+simSpeedEl.addEventListener('input', () => {
+  const raw = parseInt(simSpeedEl.value) || 10;
+  S.simSpeedMult = raw / 10;
+  simSpeedVal.textContent = S.simSpeedMult.toFixed(1) + 'x';
+});
 S.simSpeedMult = parseInt(simSpeedEl.value) / 10;
 simSpeedVal.textContent = S.simSpeedMult.toFixed(1) + 'x';
 
+// =================================================================
+//  ZOOM centrado en el cursor (fórmula robusta con/sin flipY)
+// =================================================================
 canvasContainer.addEventListener('wheel', e => {
   e.preventDefault();
   const rect = canvasContainer.getBoundingClientRect();
   const cx = rect.width / 2, cy = rect.height / 2;
   const localX = e.clientX - rect.left - cx;
   const localY = e.clientY - rect.top - cy;
+  // Punto del mundo bajo el cursor AHORA
   const worldX = (localX - S.offX) / S.scale;
   const worldY = -(localY + S.offY) / S.scale * (S.flipY ? -1 : 1);
+
   const factor = e.deltaY < 0 ? 1.015 : 0.985;
   S.scale *= factor;
   S.scale = Math.max(0.005, Math.min(500, S.scale));
+
+  // Reposicionar offset para que el punto del mundo siga bajo el cursor
   S.offX = localX - worldX * S.scale;
-  if (S.flipY){ S.offY = worldY * S.scale - localY; }
-  else { S.offY = -localY - worldY * S.scale; }
+  if (S.flipY){
+    S.offY = worldY * S.scale - localY;
+  } else {
+    S.offY = -localY - worldY * S.scale;
+  }
   render();
 }, {passive:false});
 
 canvasContainer.addEventListener('mousedown', e => {
-  if (e.button === 1){ const now = Date.now();
+  if (e.button === 1){
+    const now = Date.now();
     if (now - S.lastMiddleClick < 300){ S.lastMiddleClick = 0; centerOnOrigin(); e.preventDefault(); return; }
-    S.lastMiddleClick = now; }
+    S.lastMiddleClick = now;
+  }
   if (e.button === 1 || e.button === 2 || (S.mode === 'view' && e.button === 0)){
     S.panning = true; S.psx = e.clientX; S.psy = e.clientY;
     S.poffx = S.offX; S.poffy = S.offY;
-    canvasContainer.classList.add('panning'); e.preventDefault(); return; }
+    canvasContainer.classList.add('panning');
+    e.preventDefault(); return;
+  }
   if (e.button === 0){
     const w = s2w(e.clientX, e.clientY);
     if (S.mode === 'drill') addDrill(w.x, w.y);
-    else if (S.mode === 'cut'){ S.selecting = true; S.selStart = { x:w.x, y:w.y }; S.selEnd = { x:w.x, y:w.y }; S.selRect = null; e.preventDefault(); }
-    else if (S.mode === 'pocket'){
+    else if (S.mode === 'cut'){
+      S.selecting = true;
+      S.selStart = { x:w.x, y:w.y };
+      S.selEnd = { x:w.x, y:w.y };
+      S.selRect = null;
+      e.preventDefault();
+    } else if (S.mode === 'pocket'){
       const ci = closestCircle(w.x, w.y, 8);
-      if (ci >= 0 && !S.pocketStart){ const c = effective()[ci]; addPocket({ shape:'circle', cx:c.cx, cy:c.cy, r:c.r }); }
-      else if (!S.pocketStart){ S.pocketStart = { x:w.x, y:w.y }; }
-      else { addPocket({ shape:'rect', x1:S.pocketStart.x, y1:S.pocketStart.y, x2:w.x, y2:w.y }); S.pocketStart = null; }
+      if (ci >= 0 && !S.pocketStart){
+        const c = effective()[ci];
+        addPocket({ shape:'circle', cx:c.cx, cy:c.cy, r:c.r });
+      } else if (!S.pocketStart){
+        S.pocketStart = { x:w.x, y:w.y };
+      } else {
+        addPocket({ shape:'rect', x1:S.pocketStart.x, y1:S.pocketStart.y, x2:w.x, y2:w.y });
+        S.pocketStart = null;
+      }
     }
   }
 });
+
 canvasContainer.addEventListener('mousemove', e => {
   const w = s2w(e.clientX, e.clientY);
   S.mwx = w.x; S.mwy = w.y;
-  if (S.panning){ S.offX = S.poffx + (e.clientX - S.psx); S.offY = S.poffy - (e.clientY - S.psy); render(); return; }
+  if (S.panning){
+    S.offX = S.poffx + (e.clientX - S.psx);
+    S.offY = S.poffy - (e.clientY - S.psy);
+    render(); return;
+  }
   if (S.selecting && S.mode === 'cut'){
     S.selEnd = { x:w.x, y:w.y };
-    S.selRect = { x1: Math.min(S.selStart.x, S.selEnd.x), y1: Math.min(S.selStart.y, S.selEnd.y),
-                  x2: Math.max(S.selStart.x, S.selEnd.x), y2: Math.max(S.selStart.y, S.selEnd.y) };
-    render(); return; }
+    S.selRect = {
+      x1: Math.min(S.selStart.x, S.selEnd.x),
+      y1: Math.min(S.selStart.y, S.selEnd.y),
+      x2: Math.max(S.selStart.x, S.selEnd.x),
+      y2: Math.max(S.selStart.y, S.selEnd.y)
+    };
+    render(); return;
+  }
   const nh = closestEnt(w.x, w.y, 5);
   if (nh !== S.hover){ S.hover = nh; render(); }
   else coordEl.textContent = `X: ${w.x.toFixed(2)} mm | Y: ${w.y.toFixed(2)} mm`;
 });
+
 window.addEventListener('mouseup', () => {
-  if (S.panning){ S.panning = false; canvasContainer.classList.remove('panning'); render(); return; }
+  if (S.panning){
+    S.panning = false;
+    canvasContainer.classList.remove('panning');
+    render(); return;
+  }
   if (S.selecting && S.mode === 'cut'){
     S.selecting = false;
     const d = Math.hypot(S.selStart.x - S.selEnd.x, S.selStart.y - S.selEnd.y);
-    if (d < 0.5){ const i = closestEnt(S.selStart.x, S.selStart.y, 6); if (i >= 0) addCut(i); }
-    else if (S.selRect){
+    if (d < 0.5){
+      const i = closestEnt(S.selStart.x, S.selStart.y, 6);
+      if (i >= 0) addCut(i);
+    } else if (S.selRect){
       const list = effective(); const r = S.selRect;
       const ptIn = (x,y) => x>=r.x1 && x<=r.x2 && y>=r.y1 && y<=r.y2;
       let count = 0;
       for (let i=0;i<list.length;i++){
-        const en = list[i]; if (!S.layerVis[en.layer]) continue;
+        const en = list[i];
+        if (!S.layerVis[en.layer]) continue;
         let inside = false;
         if (en.type === 'LINE') inside = ptIn(en.x1,en.y1) || ptIn(en.x2,en.y2);
         else if (en.type === 'CIRCLE' || en.type === 'ARC') inside = ptIn(en.cx,en.cy);
@@ -2032,7 +2022,9 @@ window.addEventListener('mouseup', () => {
     S.selRect = null; render();
   }
 });
+
 canvasContainer.addEventListener('contextmenu', e => e.preventDefault());
+
 window.addEventListener('keydown', e => {
   if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
   if (e.key === 'Escape'){ setMode('view'); S.pocketStart = null; }
@@ -2042,17 +2034,29 @@ window.addEventListener('keydown', e => {
   if (e.key === ' '){ e.preventDefault(); if (S.simPlaying) simPause(); else simPlay(); }
   if (e.ctrlKey && e.key === 'z'){ e.preventDefault(); undoOp(); }
 });
+
 window.addEventListener('resize', () => { resizeCanvas(); render(); });
+
 $('btnCenter').addEventListener('click', () => {
   const list = effective();
   if (!list.length){ showToast('Sin entidades','warn'); return; }
   const bb = bbox(list);
-  S.offsetX = -(bb.mnx + bb.w/2); S.offsetY = -(bb.mny + bb.h/2);
-  $('offsetX').value = S.offsetX.toFixed(3); $('offsetY').value = S.offsetY.toFixed(3);
-  fitView(); rebuildAllContours(); buildProgram(); render(); scheduleSave(); });
-$('offsetX').addEventListener('change', () => { S.offsetX = parseFloat($('offsetX').value)||0; fitView(); rebuildAllContours(); buildProgram(); render(); scheduleSave(); });
-$('offsetY').addEventListener('change', () => { S.offsetY = parseFloat($('offsetY').value)||0; fitView(); rebuildAllContours(); buildProgram(); render(); scheduleSave(); });
+  S.offsetX = -(bb.mnx + bb.w/2);
+  S.offsetY = -(bb.mny + bb.h/2);
+  $('offsetX').value = S.offsetX.toFixed(3);
+  $('offsetY').value = S.offsetY.toFixed(3);
+  fitView(); rebuildAllContours(); buildProgram(); render(); scheduleSave();
+});
+$('offsetX').addEventListener('change', () => {
+  S.offsetX = parseFloat($('offsetX').value)||0;
+  fitView(); rebuildAllContours(); buildProgram(); render(); scheduleSave();
+});
+$('offsetY').addEventListener('change', () => {
+  S.offsetY = parseFloat($('offsetY').value)||0;
+  fitView(); rebuildAllContours(); buildProgram(); render(); scheduleSave();
+});
 
+// ================= INIT =================
 function init(){
   resizeCanvas();
   $('cfgSpindlePause').value = S.spindlePause;
@@ -2062,6 +2066,7 @@ function init(){
   $('tabsCount').value = S.tabs.count;
   $('tabsWidth').value = S.tabs.width;
   $('tabsHeight').value = S.tabs.height;
+
   const restored = loadFromLocalStorage();
   if (!restored){
     S.tools = [createDefaultTool(1)];
@@ -2069,10 +2074,19 @@ function init(){
     loadToolIntoFields(S.tools[0]);
     updateToolsList(); updateOpsList(); extractLayers();
     fitView(); buildProgram(); render();
-  } else { showToast('Proyecto restaurado (Clipper2)','success'); }
-  console.log('CNC DXF a G-Code - Clipper2 offset activo');
+  } else {
+    showToast('Proyecto restaurado','success');
+  }
+  console.log('CNC DXF a G-Code - Clipper offset + zoom centrado');
+  if (S.clipperReady){
+    console.log('  ✅ Clipper activo');
+  } else {
+    console.log('  ⏳ Esperando Clipper...');
+  }
 }
 init();
+
+})();
 </script>
 </body>
 </html>
