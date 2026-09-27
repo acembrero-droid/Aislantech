@@ -39,21 +39,47 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Open+Sans:wght@300;400;600&display=swap" rel="stylesheet">
     
-    <!-- Google Analytics con consentimiento -->
+    <!-- ============================================================
+         GOOGLE CONSENT MODE V2 - Configuración inicial (todo denegado)
+         ============================================================ -->
     <script>
-        // Configuración inicial sin cookies
         window.dataLayer = window.dataLayer || [];
         function gtag(){dataLayer.push(arguments);}
+        
+        // Consent Mode v2: TODAS las señales denegadas por defecto
+        gtag('consent', 'default', {
+            'ad_storage': 'denied',
+            'ad_user_data': 'denied',
+            'ad_personalization': 'denied',
+            'analytics_storage': 'denied',
+            'functionality_storage': 'denied',
+            'personalization_storage': 'denied',
+            'security_storage': 'granted',
+            'wait_for_update': 500
+        });
+        
         gtag('js', new Date());
         
-        // Configurar con consentimiento denegado por defecto
+        // Configuración con anonimización y sin señales de Google
         gtag('config', 'G-100G9QWNGY', {
             'anonymize_ip': true,
             'allow_google_signals': false,
             'allow_ad_personalization_signals': false
         });
+        
+        // Función para cargar Google Analytics DESPUÉS del consentimiento
+        function loadGoogleAnalytics() {
+            if (window.gaLoaded) return;
+            window.gaLoaded = true;
+            
+            const script = document.createElement('script');
+            script.async = true;
+            script.src = 'https://www.googletagmanager.com/gtag/js?id=G-100G9QWNGY';
+            document.head.appendChild(script);
+            
+            console.log('✅ Script de Google Analytics cargado tras consentimiento');
+        }
     </script>
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-100G9QWNGY"></script>
 
     <!-- Datos Estructurados LocalBusiness (SEO e IA) -->
     <script type="application/ld+json">
@@ -69,6 +95,7 @@
       "email": "info@aislantech.es",
       "address": {
         "@type": "PostalAddress",
+        "streetAddress": "Carrer Santa Teresa, 14 Fase A 1",
         "addressLocality": "Caldes d'Estrac",
         "addressRegion": "Barcelona, Catalunya",
         "postalCode": "08393",
@@ -108,7 +135,7 @@
             --box-shadow-hover: 0 15px 30px rgba(0, 0, 0, 0.1);
         }
 
-        /* ========== BANNER DE COOKIES ========== */
+        /* ========== BANNER DE COOKIES MEJORADO (SIMÉTRICO) ========== */
         .cookie-banner {
             position: fixed;
             bottom: 0;
@@ -116,11 +143,13 @@
             right: 0;
             background-color: var(--color-dark);
             color: var(--color-white);
-            padding: 20px;
+            padding: 25px 20px;
             z-index: 9999;
             box-shadow: 0 -2px 20px rgba(0, 0, 0, 0.3);
             transform: translateY(100%);
             transition: transform 0.5s ease;
+            max-height: 100vh;
+            overflow-y: auto;
         }
         
         .cookie-banner.show {
@@ -164,52 +193,192 @@
             color: #ffffff;
         }
         
+        /* Botones simétricos: mismo tamaño, misma prominencia */
         .cookie-buttons {
             display: flex;
-            gap: 15px;
+            gap: 12px;
             flex-wrap: wrap;
+            align-items: center;
         }
         
         .cookie-btn {
-            padding: 10px 25px;
+            padding: 12px 24px;
             border-radius: var(--border-radius);
-            border: none;
+            border: 2px solid transparent;
             cursor: pointer;
             font-family: 'Montserrat', sans-serif;
             font-weight: 600;
-            font-size: 0.95rem;
+            font-size: 0.9rem;
             transition: var(--transition);
             white-space: nowrap;
+            min-width: 150px;
+            text-align: center;
         }
         
         .cookie-btn-accept {
             background-color: var(--color-primary);
             color: var(--color-dark);
+            border-color: var(--color-primary);
         }
         
         .cookie-btn-accept:hover {
             background-color: #ffffff;
+            border-color: #ffffff;
             transform: translateY(-2px);
         }
         
         .cookie-btn-reject {
             background-color: transparent;
             color: var(--color-white);
-            border: 2px solid rgba(255, 255, 255, 0.3);
+            border: 2px solid var(--color-white);
         }
         
         .cookie-btn-reject:hover {
+            background-color: var(--color-white);
+            color: var(--color-dark);
+            transform: translateY(-2px);
+        }
+        
+        .cookie-btn-config {
+            background-color: transparent;
+            color: var(--color-white);
+            border: 2px solid rgba(255, 255, 255, 0.5);
+        }
+        
+        .cookie-btn-config:hover {
             background-color: rgba(255, 255, 255, 0.1);
             border-color: var(--color-white);
+            transform: translateY(-2px);
+        }
+
+        /* ========== PANEL DE PREFERENCIAS GRANULAR ========== */
+        .cookie-preferences {
+            max-width: 900px;
+            margin: 25px auto 0;
+            padding: 25px;
+            background-color: rgba(255, 255, 255, 0.05);
+            border-radius: var(--border-radius);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            animation: fadeIn 0.3s ease;
+        }
+        
+        .cookie-preferences h3 {
+            color: var(--color-primary);
+            margin-bottom: 20px;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 1.1rem;
+        }
+        
+        .cookie-category {
+            padding: 18px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .cookie-category:last-of-type {
+            border-bottom: none;
+        }
+        
+        .category-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+            margin-bottom: 8px;
+            flex-wrap: wrap;
+        }
+        
+        .category-header strong {
+            color: var(--color-white);
+            font-size: 1rem;
+        }
+        
+        .always-active {
+            color: var(--color-primary);
+            font-size: 0.85rem;
+            font-weight: 600;
+            background-color: rgba(237, 208, 14, 0.15);
+            padding: 4px 12px;
+            border-radius: 20px;
+        }
+        
+        .cookie-category p {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.85rem;
+            margin: 0;
+        }
+        
+        /* Toggle switch */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 26px;
+            flex-shrink: 0;
+        }
+        
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #666;
+            transition: .3s;
+            border-radius: 26px;
+        }
+        
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 20px;
+            width: 20px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .3s;
+            border-radius: 50%;
+        }
+        
+        .switch input:checked + .slider {
+            background-color: var(--color-primary);
+        }
+        
+        .switch input:checked + .slider:before {
+            transform: translateX(24px);
+        }
+        
+        .cookie-pref-buttons {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .cookie-pref-buttons .cookie-btn {
+            flex: 1;
+            min-width: 180px;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         /* ========== ENLACES EN FOOTER PARA POLÍTICAS ========== */
         .footer-legal {
             display: flex;
             justify-content: center;
-            gap: 30px;
+            gap: 25px;
             margin-top: 15px;
             flex-wrap: wrap;
+            align-items: center;
         }
         
         .footer-legal a {
@@ -222,6 +391,20 @@
         .footer-legal a:hover {
             color: var(--color-primary);
             text-decoration: underline;
+        }
+        
+        .footer-legal a.revoke-consent {
+            color: var(--color-primary);
+            border: 1px solid var(--color-primary);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+        
+        .footer-legal a.revoke-consent:hover {
+            background-color: var(--color-primary);
+            color: var(--color-dark);
+            text-decoration: none;
         }
 
         /* ========== ESTILOS GENERALES ========== */
@@ -246,50 +429,13 @@
         header { position: fixed; top: 0; left: 0; width: 100%; z-index: 1000; background-color: rgba(255, 255, 255, 0.97); box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05); transition: var(--transition); }
         .header-container { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; }
         
-        .logo-container { 
-            display: flex; 
-            align-items: center; 
-            text-decoration: none; 
-        }
-        
-        .logo-img { 
-            height: 40px; 
-            width: auto; 
-            margin-right: 12px; 
-            transition: var(--transition); 
-        }
-        
-        .logo-img:hover {
-            transform: scale(1.05);
-        }
-        
-        .logo-text { 
-            font-family: 'Montserrat', sans-serif; 
-            font-weight: 700; 
-            display: flex; 
-            flex-direction: column; 
-            line-height: 1.1; 
-        }
-        
-        .logo-aislan { 
-            color: var(--color-secondary); 
-            font-size: 1.5rem; 
-            font-weight: 700; 
-        }
-        
-        .logo-tech { 
-            color: var(--color-primary); 
-            font-size: 1.5rem; 
-            font-weight: 800; 
-        }
-        
-        .logo-tagline {
-            font-size: 0.7rem;
-            color: var(--color-gray);
-            font-weight: 400;
-            margin-top: 2px;
-            font-family: 'Open Sans', sans-serif;
-        }
+        .logo-container { display: flex; align-items: center; text-decoration: none; }
+        .logo-img { height: 40px; width: auto; margin-right: 12px; transition: var(--transition); }
+        .logo-img:hover { transform: scale(1.05); }
+        .logo-text { font-family: 'Montserrat', sans-serif; font-weight: 700; display: flex; flex-direction: column; line-height: 1.1; }
+        .logo-aislan { color: var(--color-secondary); font-size: 1.5rem; font-weight: 700; }
+        .logo-tech { color: var(--color-primary); font-size: 1.5rem; font-weight: 800; }
+        .logo-tagline { font-size: 0.7rem; color: var(--color-gray); font-weight: 400; margin-top: 2px; font-family: 'Open Sans', sans-serif; }
         
         nav ul { display: flex; list-style: none; }
         nav li { margin-left: 30px; }
@@ -300,20 +446,7 @@
         .mobile-menu-btn { display: none; font-size: 1.5rem; background: none; border: none; color: var(--color-secondary); cursor: pointer; z-index: 1001; }
 
         /* ========== HERO SECTION ========== */
-        .hero { 
-            height: 100vh; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            position: relative; 
-            overflow: hidden; 
-            background: 
-                linear-gradient(rgba(62, 62, 62, 0.85), rgba(62, 62, 62, 0.8)), 
-                url('images/cabecera.JPG') no-repeat center center/cover;
-            color: var(--color-white); 
-            text-align: center; 
-        }
-        
+        .hero { height: 100vh; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; background: linear-gradient(rgba(62, 62, 62, 0.85), rgba(62, 62, 62, 0.8)), url('images/cabecera.JPG') no-repeat center center/cover; color: var(--color-white); text-align: center; }
         .hero-content { max-width: 800px; padding: 0 20px; z-index: 2; }
         .hero h1 { font-size: 3.5rem; margin-bottom: 20px; color: var(--color-white); animation: fadeInDown 1s ease; }
         .hero p { font-size: 1.2rem; margin-bottom: 40px; animation: fadeInUp 1s ease 0.3s both; }
@@ -327,55 +460,11 @@
         .service-card { background-color: var(--color-white); border-radius: var(--border-radius); overflow: hidden; box-shadow: var(--box-shadow); transition: var(--transition); height: 100%; border-top: 4px solid var(--color-primary); }
         .service-card:hover { transform: translateY(-10px); box-shadow: var(--box-shadow-hover); border-top-color: var(--color-accent); }
         
-        .service-img { 
-            height: 200px; 
-            background-color: var(--color-secondary); 
-            background-position: center center;
-            background-size: cover;
-            background-repeat: no-repeat;
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            color: var(--color-white); 
-            font-size: 3rem; 
-            position: relative;
-            overflow: hidden;
-            transition: transform 0.5s ease;
-        }
-        
-        .service-card:hover .service-img {
-            transform: scale(1.05);
-        }
-        
-        .service-img::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(135deg, rgba(62, 62, 62, 0.3) 0%, rgba(105, 105, 105, 0.3) 100%);
-            z-index: 1;
-            transition: opacity 0.3s ease;
-        }
-        
-        .service-card:hover .service-img::before {
-            opacity: 0.1;
-        }
-        
-        .service-img i {
-            z-index: 2;
-            position: relative;
-            text-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
-            background-color: rgba(62, 62, 62, 0.7);
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border: 3px solid var(--color-primary);
-        }
+        .service-img { height: 200px; background-color: var(--color-secondary); background-position: center center; background-size: cover; background-repeat: no-repeat; display: flex; align-items: center; justify-content: center; color: var(--color-white); font-size: 3rem; position: relative; overflow: hidden; transition: transform 0.5s ease; }
+        .service-card:hover .service-img { transform: scale(1.05); }
+        .service-img::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, rgba(62, 62, 62, 0.3) 0%, rgba(105, 105, 105, 0.3) 100%); z-index: 1; transition: opacity 0.3s ease; }
+        .service-card:hover .service-img::before { opacity: 0.1; }
+        .service-img i { z-index: 2; position: relative; text-shadow: 0 2px 5px rgba(0, 0, 0, 0.5); background-color: rgba(62, 62, 62, 0.7); width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 3px solid var(--color-primary); }
         
         .service-content { padding: 25px; }
         .service-content h3 { font-size: 1.5rem; margin-bottom: 15px; color: var(--color-secondary); }
@@ -396,44 +485,10 @@
         /* ========== I+D+i SECTION ========== */
         .innovation { padding: 100px 0; background-color: var(--color-light); }
         .innovation-content { display: flex; flex-wrap: wrap; gap: 50px; align-items: center; }
-        .innovation-image { 
-            flex: 1; 
-            min-width: 300px; 
-            border-radius: var(--border-radius); 
-            overflow: hidden; 
-            box-shadow: var(--box-shadow-hover);
-            height: 400px;
-            background: url('images/innovacion.png') center center/cover;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            position: relative;
-        }
-        
-        .innovation-image::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(135deg, rgba(62, 62, 62, 0.7) 0%, rgba(105, 105, 105, 0.7) 100%);
-        }
-        
-        .innovation-image-content {
-            text-align: center;
-            padding: 30px;
-            width: 100%;
-            z-index: 2;
-            position: relative;
-        }
-        
-        .innovation-image i { 
-            font-size: 4rem; 
-            margin-bottom: 20px; 
-            color: #EDD00E; 
-        }
+        .innovation-image { flex: 1; min-width: 300px; border-radius: var(--border-radius); overflow: hidden; box-shadow: var(--box-shadow-hover); height: 400px; background: url('images/innovacion.png') center center/cover; display: flex; align-items: center; justify-content: center; color: white; position: relative; }
+        .innovation-image::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, rgba(62, 62, 62, 0.7) 0%, rgba(105, 105, 105, 0.7) 100%); }
+        .innovation-image-content { text-align: center; padding: 30px; width: 100%; z-index: 2; position: relative; }
+        .innovation-image i { font-size: 4rem; margin-bottom: 20px; color: #EDD00E; }
         
         .innovation-features { flex: 1; min-width: 300px; }
         .innovation-features h3 { color: var(--color-secondary); margin-bottom: 15px; }
@@ -464,11 +519,7 @@
         .feature-item p { font-size: 0.95rem; color: var(--color-gray); margin: 0; }
 
         /* ========== FOOTER ========== */
-        footer { 
-            background-color: var(--color-dark); 
-            color: var(--color-white); 
-            padding: 100px 0 30px;
-        }
+        footer { background-color: var(--color-dark); color: var(--color-white); padding: 100px 0 30px; }
         .footer-content { display: flex; flex-wrap: wrap; justify-content: space-between; margin-bottom: 40px; gap: 40px; }
         .footer-about { flex: 1; min-width: 250px; }
         .footer-logo { font-family: 'Montserrat', sans-serif; font-size: 1.8rem; font-weight: 700; color: var(--color-white); margin-bottom: 15px; }
@@ -514,29 +565,14 @@
             .footer-content { flex-direction: column; gap: 30px; }
             .innovation-content, .software-content { flex-direction: column; }
             
-            .logo-img { 
-                height: 35px; 
-                margin-right: 10px; 
-            }
+            .logo-img { height: 35px; margin-right: 10px; }
+            .logo-aislan, .logo-tech { font-size: 1.3rem; }
+            .logo-tagline { font-size: 0.65rem; }
             
-            .logo-aislan, 
-            .logo-tech { 
-                font-size: 1.3rem; 
-            }
-            
-            .logo-tagline {
-                font-size: 0.65rem;
-            }
-            
-            .cookie-content {
-                flex-direction: column;
-                text-align: center;
-                gap: 15px;
-            }
-            
-            .cookie-buttons {
-                justify-content: center;
-            }
+            .cookie-content { flex-direction: column; text-align: center; gap: 15px; }
+            .cookie-buttons { justify-content: center; width: 100%; }
+            .cookie-btn { flex: 1; min-width: 140px; }
+            .cookie-pref-buttons .cookie-btn { min-width: 100%; }
         }
         
         @media (max-width: 576px) {
@@ -550,47 +586,64 @@
             nav { order: 3; width: 100%; margin-top: 15px; }
             .btn-yellow { order: 4; margin-top: 15px; width: 100%; text-align: center; }
             
-            .logo-img { 
-                height: 30px; 
-                margin-right: 8px; 
-            }
+            .logo-img { height: 30px; margin-right: 8px; }
+            .logo-aislan, .logo-tech { font-size: 1.1rem; }
+            .logo-tagline { display: none; }
+            .header-container { flex-wrap: wrap; padding: 10px 15px; }
             
-            .logo-aislan, 
-            .logo-tech { 
-                font-size: 1.1rem; 
-            }
-            
-            .logo-tagline {
-                display: none;
-            }
-            
-            .header-container {
-                flex-wrap: wrap;
-                padding: 10px 15px;
-            }
-            
-            .cookie-buttons {
-                flex-direction: column;
-                width: 100%;
-            }
-            
-            .cookie-btn {
-                width: 100%;
-            }
+            .cookie-buttons { flex-direction: column; width: 100%; }
+            .cookie-btn { width: 100%; min-width: 100%; }
+            .cookie-pref-buttons { flex-direction: column; }
         }
     </style>
 </head>
 <body>
-    <!-- Banner de Cookies -->
-    <div id="cookieConsent" class="cookie-banner">
+    <!-- ============================================================
+         BANNER DE COOKIES MEJORADO (SIMÉTRICO Y GRANULAR)
+         ============================================================ -->
+    <div id="cookieConsent" class="cookie-banner" role="dialog" aria-label="Gestión de cookies" aria-modal="true">
         <div class="cookie-content">
             <div class="cookie-text">
-                <h3>🍪 Uso de Cookies</h3>
-                <p>Utilizamos cookies propias y de Google Analytics para analizar el tráfico web y mejorar tu experiencia. Puedes aceptar todas, configurar o rechazar las no necesarias. <a href="politica-cookies.html" target="_blank">Más información</a></p>
+                <h3>🍪 Tu privacidad es importante</h3>
+                <p>
+                    En <strong>Aislantes Técnicos del Mediterraneo S.L.</strong> utilizamos cookies propias y de terceros (Google Analytics) 
+                    para fines analíticos y para mejorar tu experiencia de navegación. Puedes aceptar todas, rechazar las no esenciales 
+                    o configurar tus preferencias. <a href="politica-cookies.html" target="_blank" rel="noopener">Más información</a>
+                </p>
             </div>
             <div class="cookie-buttons">
-                <button id="rejectCookies" class="cookie-btn cookie-btn-reject">Solo necesarias</button>
+                <button id="rejectCookies" class="cookie-btn cookie-btn-reject">Rechazar todas</button>
+                <button id="configCookies" class="cookie-btn cookie-btn-config">Configurar</button>
                 <button id="acceptCookies" class="cookie-btn cookie-btn-accept">Aceptar todas</button>
+            </div>
+        </div>
+
+        <!-- Panel de preferencias granular -->
+        <div id="cookiePreferences" class="cookie-preferences" style="display: none;">
+            <h3>Preferencias de cookies</h3>
+            
+            <div class="cookie-category">
+                <div class="category-header">
+                    <strong>Cookies técnicas (necesarias)</strong>
+                    <span class="always-active">Siempre activas</span>
+                </div>
+                <p>Imprescindibles para el funcionamiento del sitio web (sesión, seguridad, carrito). No se pueden desactivar.</p>
+            </div>
+
+            <div class="cookie-category">
+                <div class="category-header">
+                    <strong>Cookies de análisis (Google Analytics)</strong>
+                    <label class="switch">
+                        <input type="checkbox" id="analyticsCookies">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <p>Nos permiten medir y analizar el tráfico del sitio web para mejorar nuestros servicios. Se activan solo si las aceptas.</p>
+            </div>
+
+            <div class="cookie-preferences-buttons cookie-pref-buttons">
+                <button id="cancelPreferences" class="cookie-btn cookie-btn-reject">Cancelar</button>
+                <button id="savePreferences" class="cookie-btn cookie-btn-accept">Guardar preferencias</button>
             </div>
         </div>
     </div>
@@ -626,7 +679,7 @@
         </div>
     </header>
 
-    <!-- Hero Section Optimizada -->
+    <!-- Hero Section -->
     <section class="hero" id="inicio">
         <div class="hero-content">
             <h1>Ingeniería de Cerramientos y Cajón Túnel</h1>
@@ -649,7 +702,6 @@
             </div>
             
             <div class="services-grid">
-                <!-- Oficina Técnica -->
                 <div class="service-card">
                     <div class="service-img" id="oficina-tecnica-img">
                         <i class="fas fa-drafting-compass"></i>
@@ -665,7 +717,6 @@
                     </div>
                 </div>
                 
-                <!-- Consultoría Industrial -->
                 <div class="service-card">
                     <div class="service-img" id="consultoria-industrial-img">
                         <i class="fas fa-industry"></i>
@@ -681,7 +732,6 @@
                     </div>
                 </div>
                 
-                <!-- Precerco Avanzado -->
                 <div class="service-card">
                     <div class="service-img" id="precerco-avanzado-img">
                         <i class="fas fa-cube"></i>
@@ -697,7 +747,6 @@
                     </div>
                 </div>
                 
-                <!-- Soluciones de Cajón Túnel (Optimizado) -->
                 <a href="cajon-tunel.html" style="text-decoration: none; color: inherit; display: block; height: 100%;">
                     <div class="service-card" style="height: 100%;">
                         <div class="service-img" id="cajon-tunel-img">
@@ -718,7 +767,6 @@
                     </div>
                 </a>
                 
-                <!-- Software & Proceso Integral -->
                 <div class="service-card">
                     <div class="service-img" id="software-proceso-img">
                         <i class="fas fa-laptop-code"></i>
@@ -812,9 +860,7 @@
                     
                     <div class="innovation-list">
                         <div class="innovation-item">
-                            <div class="innovation-icon">
-                                <i class="fas fa-cogs"></i>
-                            </div>
+                            <div class="innovation-icon"><i class="fas fa-cogs"></i></div>
                             <div>
                                 <h4>Desarrollo de Maquinaria</h4>
                                 <p>Diseño y fabricación de equipos especializados para procesos industriales específicos.</p>
@@ -822,9 +868,7 @@
                         </div>
                         
                         <div class="innovation-item">
-                            <div class="innovation-icon">
-                                <i class="fas fa-tools"></i>
-                            </div>
+                            <div class="innovation-icon"><i class="fas fa-tools"></i></div>
                             <div>
                                 <h4>Útiles Específicos</h4>
                                 <p>Creación de herramientas y dispositivos personalizados para optimizar operaciones técnicas.</p>
@@ -832,9 +876,7 @@
                         </div>
                         
                         <div class="innovation-item">
-                            <div class="innovation-icon">
-                                <i class="fas fa-print"></i>
-                            </div>
+                            <div class="innovation-icon"><i class="fas fa-print"></i></div>
                             <div>
                                 <h4>Construcción Aditiva</h4>
                                 <p>Implementación de tecnologías de impresión 3D para prototipado rápido y fabricación avanzada.</p>
@@ -842,9 +884,7 @@
                         </div>
                         
                         <div class="innovation-item">
-                            <div class="innovation-icon">
-                                <i class="fas fa-robot"></i>
-                            </div>
+                            <div class="innovation-icon"><i class="fas fa-robot"></i></div>
                             <div>
                                 <h4>Automatización Industrial</h4>
                                 <p>Desarrollo de sistemas automatizados para mejorar la eficiencia y precisión en procesos productivos.</p>
@@ -895,47 +935,37 @@
                     <p>Desarrollamos herramientas digitales para optimizar cada fase de tu proyecto técnico.</p>
 
                     <div class="feature-item">
-                            <div class="feature-icon">
-                                <i class="fas fa-file-contract"></i>
-                            </div>
-                            <div>
-                                <h4><li><a href="Aislantherm.html">Informes térmicos</a></li></h4>
-                                <p>Informes de transmitancia y puentes térmicos listos para proyecto en 24–48h.</p>
-                            </div>
+                        <div class="feature-icon"><i class="fas fa-file-contract"></i></div>
+                        <div>
+                            <h4><li><a href="Aislantherm.html">Informes térmicos</a></li></h4>
+                            <p>Informes de transmitancia y puentes térmicos listos para proyecto en 24–48h.</p>
                         </div>
+                    </div>
                     
-                     <div class="feature-item">
-                            <div class="feature-icon">
-                                <i class="fas fa-calculator"></i>
-                            </div>
-                            <div>
-                                <h4><li><a href="Análisis premarcos.html">Cálculo Estructural</a></li></h4>
-                                <p>Análisis de cargas y dimensionamiento para precercos y estructuras.</p>
-                            </div>
-                        </div>    
+                    <div class="feature-item">
+                        <div class="feature-icon"><i class="fas fa-calculator"></i></div>
+                        <div>
+                            <h4><li><a href="Análisis premarcos.html">Cálculo Estructural</a></li></h4>
+                            <p>Análisis de cargas y dimensionamiento para precercos y estructuras.</p>
+                        </div>
+                    </div>    
                     
                     <div class="feature-list">
                         <div class="feature-item">
-                            <div class="feature-icon">
-                                <i class="fas fa-cube"></i>
-                            </div>
+                            <div class="feature-icon"><i class="fas fa-cube"></i></div>
                             <div>
-                               <h4><li><a href="Análisis viento persianas.html">Cálculo resistencia al viento de persianas</a></li></h4>
+                                <h4><li><a href="Análisis viento persianas.html">Cálculo resistencia al viento de persianas</a></li></h4>
                                 <p>Herramienta para realizar informe de resistencia al viento de persianas.</p>
                             </div>
                         </div>
                         
                         <div class="feature-item">
-                            <div class="feature-icon">
-                                <i class="fas fa-sun"></i>
-                            </div>
+                            <div class="feature-icon"><i class="fas fa-sun"></i></div>
                             <div>
-                                  <h4><li><a href="Calculadora de CO2.html">Calculadora de CO2 para Premarcos y Cajones</a></li></h4>
+                                <h4><li><a href="Calculadora de CO2.html">Calculadora de CO2 para Premarcos y Cajones</a></li></h4>
                                 <p>Cálculo A1-A3 de CO2 de diferentes soluciones, configurable.</p>
                             </div>
                         </div>
-                        
-                        
                     </div>
                     
                     <a href="#footer" class="btn btn-yellow" style="margin-top: 20px;">Información de Contacto</a>
@@ -944,7 +974,7 @@
         </div>
     </section>
 
-    <!-- Footer Optimizado E-E-A-T -->
+    <!-- Footer -->
     <footer id="footer">
         <div class="container">
             <div class="section-title" style="margin-bottom: 40px;">
@@ -960,7 +990,7 @@
                     <p class="footer-description">Aislantes Técnicos del Mediterráneo S.L. ofrece soluciones avanzadas para industria y construcción en Catalunya. Dirigido por profesionales con certificaciones <strong>Passivhaus Tradesperson</strong> y <strong>BREEAM Associate</strong>, garantizamos el máximo rigor en el cálculo de transmitancia y diseño de cajón túnel.</p>
                     
                     <div class="social-links">
-                        <a href="https://www.linkedin.com/company/aislantech/" target="_blank" title="LinkedIn Aislantech">
+                        <a href="https://www.linkedin.com/company/aislantech/" target="_blank" rel="noopener" title="LinkedIn Aislantech">
                             <i class="fab fa-linkedin-in"></i>
                         </a>
                         <a href="#" title="YouTube Aislantech">
@@ -1010,82 +1040,179 @@
                 </div>
             </div>
             
-            <!-- Enlaces legales añadidos -->
+            <!-- Enlaces legales + Revocación de consentimiento -->
             <div class="footer-legal">
-                <a href="politica-privacidad.html" target="_blank">Política de Privacidad</a>
-                <a href="politica-cookies.html" target="_blank">Política de Cookies</a>
-                <a href="aviso-legal.html" target="_blank">Aviso Legal</a>
+                <a href="politica-privacidad.html" target="_blank" rel="noopener">Política de Privacidad</a>
+                <a href="politica-cookies.html" target="_blank" rel="noopener">Política de Cookies</a>
+                <a href="aviso-legal.html" target="_blank" rel="noopener">Aviso Legal</a>
+                <a href="#" id="revokeConsent" class="revoke-consent" title="Cambiar tus preferencias de cookies">
+                    <i class="fas fa-cookie-bite"></i> Cambiar preferencias
+                </a>
             </div>
             
             <div class="footer-bottom">
-                <p>&copy; 2026 Aislantech. Todos los derechos reservados. | <a href="https://www.aislantech.es" style="color: var(--color-primary);">www.aislantech.es</a></p>
+                <p>&copy; 2026 Aislantes Técnicos del Mediterraneo S.L. Todos los derechos reservados. | <a href="https://www.aislantech.es" style="color: var(--color-primary);">www.aislantech.es</a></p>
+                <p style="margin-top: 8px; font-size: 0.8rem;">NIF: B27624477 | Registro Mercantil de Barcelona, Hoja B-599241</p>
             </div>
         </div>
     </footer>
 
     <script>
-        // ========== GESTIÓN DE COOKIES ==========
+        // ============================================================
+        //  GESTIÓN DE COOKIES CON CONSENT MODE V2
+        // ============================================================
         document.addEventListener('DOMContentLoaded', function() {
             const cookieBanner = document.getElementById('cookieConsent');
+            const preferencesPanel = document.getElementById('cookiePreferences');
             const acceptBtn = document.getElementById('acceptCookies');
             const rejectBtn = document.getElementById('rejectCookies');
+            const configBtn = document.getElementById('configCookies');
+            const savePrefBtn = document.getElementById('savePreferences');
+            const cancelPrefBtn = document.getElementById('cancelPreferences');
+            const analyticsCheckbox = document.getElementById('analyticsCookies');
+            const revokeLink = document.getElementById('revokeConsent');
             
-            // Verificar si ya hay consentimiento
-            const hasConsent = localStorage.getItem('cookieConsentAislantech');
+            const CONSENT_KEY = 'cookieConsentAislantech';
+            const CONSENT_DATE_KEY = 'cookieConsentDate';
+            const CONSENT_DETAILS_KEY = 'cookieConsentDetails';
+            
+            // --- Verificar consentimiento previo ---
+            const hasConsent = localStorage.getItem(CONSENT_KEY);
+            const consentDetails = localStorage.getItem(CONSENT_DETAILS_KEY);
             
             if (!hasConsent) {
                 // Mostrar banner después de 1 segundo
                 setTimeout(() => {
                     cookieBanner.classList.add('show');
                 }, 1000);
-            } else if (hasConsent === 'accepted') {
-                // Si ya aceptó, habilitar Analytics
-                enableGoogleAnalytics();
+            } else {
+                // Aplicar consentimiento previo
+                if (consentDetails) {
+                    try {
+                        const details = JSON.parse(consentDetails);
+                        if (details.analytics === 'granted') {
+                            loadGoogleAnalytics();
+                            enableGoogleAnalytics();
+                        }
+                    } catch(e) {
+                        console.warn('Error al recuperar preferencias:', e);
+                    }
+                }
             }
             
-            // Botón aceptar
-            acceptBtn.addEventListener('click', function() {
-                localStorage.setItem('cookieConsentAislantech', 'accepted');
-                localStorage.setItem('cookieConsentDate', new Date().toISOString());
-                cookieBanner.classList.remove('show');
-                enableGoogleAnalytics();
+            // --- Función para guardar consentimiento ---
+            function saveConsent(analyticsGranted) {
+                localStorage.setItem(CONSENT_KEY, analyticsGranted ? 'accepted' : 'rejected');
+                localStorage.setItem(CONSENT_DATE_KEY, new Date().toISOString());
+                localStorage.setItem(CONSENT_DETAILS_KEY, JSON.stringify({
+                    necessary: 'granted',
+                    analytics: analyticsGranted ? 'granted' : 'denied'
+                }));
                 
-                // Evento para Analytics
-                gtag('event', 'cookie_consent_accepted', {
-                    'event_category': 'engagement'
-                });
-            });
-            
-            // Botón rechazar
-            rejectBtn.addEventListener('click', function() {
-                localStorage.setItem('cookieConsentAislantech', 'rejected');
-                localStorage.setItem('cookieConsentDate', new Date().toISOString());
-                cookieBanner.classList.remove('show');
-                disableGoogleAnalytics();
+                if (analyticsGranted) {
+                    loadGoogleAnalytics();
+                    enableGoogleAnalytics();
+                    gtag('event', 'cookie_consent_analytics_granted', {
+                        'event_category': 'privacy'
+                    });
+                } else {
+                    disableGoogleAnalytics();
+                    gtag('event', 'cookie_consent_analytics_denied', {
+                        'event_category': 'privacy'
+                    });
+                }
                 
-                // Evento para Analytics
-                gtag('event', 'cookie_consent_rejected', {
-                    'event_category': 'engagement'
-                });
-            });
+                cookieBanner.classList.remove('show');
+                preferencesPanel.style.display = 'none';
+            }
             
-            // Función para habilitar Google Analytics
+            // --- Actualizar Consent Mode v2 ---
             function enableGoogleAnalytics() {
                 gtag('consent', 'update', {
-                    'analytics_storage': 'granted'
+                    'ad_storage': 'granted',
+                    'ad_user_data': 'granted',
+                    'ad_personalization': 'granted',
+                    'analytics_storage': 'granted',
+                    'functionality_storage': 'granted',
+                    'personalization_storage': 'granted'
                 });
-                console.log('✅ Google Analytics habilitado con consentimiento');
+                console.log('✅ Consent Mode v2 actualizado: TODAS las señales granted');
             }
             
-            // Función para deshabilitar Google Analytics
             function disableGoogleAnalytics() {
                 gtag('consent', 'update', {
-                    'analytics_storage': 'denied'
+                    'ad_storage': 'denied',
+                    'ad_user_data': 'denied',
+                    'ad_personalization': 'denied',
+                    'analytics_storage': 'denied',
+                    'functionality_storage': 'denied',
+                    'personalization_storage': 'denied'
                 });
-                console.log('🚫 Google Analytics deshabilitado');
+                console.log('🚫 Consent Mode v2 actualizado: señales denied');
             }
             
-            // ========== CÓDIGO ORIGINAL DE TU PÁGINA ==========
+            // --- Botón Aceptar todas ---
+            acceptBtn.addEventListener('click', function() {
+                analyticsCheckbox.checked = true;
+                saveConsent(true);
+            });
+            
+            // --- Botón Rechazar todas ---
+            rejectBtn.addEventListener('click', function() {
+                analyticsCheckbox.checked = false;
+                saveConsent(false);
+            });
+            
+            // --- Botón Configurar ---
+            configBtn.addEventListener('click', function() {
+                if (preferencesPanel.style.display === 'none' || !preferencesPanel.style.display) {
+                    preferencesPanel.style.display = 'block';
+                } else {
+                    preferencesPanel.style.display = 'none';
+                }
+            });
+            
+            // --- Botón Guardar preferencias ---
+            savePrefBtn.addEventListener('click', function() {
+                saveConsent(analyticsCheckbox.checked);
+            });
+            
+            // --- Botón Cancelar ---
+            cancelPrefBtn.addEventListener('click', function() {
+                preferencesPanel.style.display = 'none';
+            });
+            
+            // --- Revocar consentimiento desde el footer ---
+            if (revokeLink) {
+                revokeLink.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    // Recuperar preferencias actuales para mostrarlas en el panel
+                    try {
+                        const details = JSON.parse(localStorage.getItem(CONSENT_DETAILS_KEY) || '{}');
+                        analyticsCheckbox.checked = (details.analytics === 'granted');
+                    } catch(e) {
+                        analyticsCheckbox.checked = false;
+                    }
+                    
+                    // Borrar consentimiento y mostrar banner con panel abierto
+                    localStorage.removeItem(CONSENT_KEY);
+                    localStorage.removeItem(CONSENT_DATE_KEY);
+                    localStorage.removeItem(CONSENT_DETAILS_KEY);
+                    
+                    disableGoogleAnalytics();
+                    
+                    cookieBanner.classList.add('show');
+                    preferencesPanel.style.display = 'block';
+                    
+                    // Scroll al banner
+                    cookieBanner.scrollIntoView({ behavior: 'smooth', block: 'end' });
+                });
+            }
+            
+            // ============================================================
+            //  CÓDIGO FUNCIONAL DE LA PÁGINA
+            // ============================================================
             
             // Mobile menu toggle
             const mobileMenuBtn = document.getElementById('mobileMenuBtn');
@@ -1105,7 +1232,6 @@
                 anchor.addEventListener('click', function(e) {
                     e.preventDefault();
                     
-                    // Close mobile menu if open
                     if(mainMenu && mainMenu.classList.contains('active')) {
                         mainMenu.classList.remove('active');
                         mobileMenuBtn.innerHTML = '<i class="fas fa-bars"></i>';
@@ -1136,11 +1262,10 @@
                 }
             });
             
-            // Función para cargar imágenes de servicios
+            // Cargar imágenes de servicios
             function cargarImagenesServicios() {
                 console.log('🖼️ Cargando imágenes personalizadas de servicios...');
                 
-                // RUTAS DE LAS IMÁGENES
                 const rutasImagenes = {
                     'oficina-tecnica': 'images/oficina-tecnica.png',
                     'consultoria-industrial': 'images/consultoria-industrial.png',
@@ -1149,7 +1274,6 @@
                     'software-proceso': 'images/software-proceso.png'
                 };
                 
-                // Cargar cada imagen
                 Object.keys(rutasImagenes).forEach(servicioId => {
                     const imgElement = document.getElementById(`${servicioId}-img`);
                     const rutaImagen = rutasImagenes[servicioId];
@@ -1158,16 +1282,12 @@
                         const img = new Image();
                         
                         img.onload = function() {
-                            console.log(`✅ Imagen cargada: ${rutaImagen}`);
                             imgElement.style.backgroundImage = `url('${rutaImagen}')`;
                             const icon = imgElement.querySelector('i');
-                            if (icon) {
-                                icon.style.display = 'none';
-                            }
+                            if (icon) icon.style.display = 'none';
                         };
                         
                         img.onerror = function() {
-                            console.log(`❌ No se pudo cargar: ${rutaImagen}`);
                             const icon = imgElement.querySelector('i');
                             if (icon) {
                                 icon.style.display = 'flex';
@@ -1182,10 +1302,8 @@
                 });
             }
             
-            // Función para cargar otras imágenes del sitio
+            // Cargar imágenes adicionales
             function cargarImagenesAdicionales() {
-                console.log('🌄 Cargando imágenes adicionales...');
-                
                 const imagenesAdicionales = [
                     { id: 'hero-bg', ruta: 'images/cabecera.JPG' },
                     { id: 'innovation-img', ruta: 'images/innovacion.png' },
@@ -1196,8 +1314,6 @@
                     const img = new Image();
                     
                     img.onload = function() {
-                        console.log(`✅ ${imgData.id} cargada: ${imgData.ruta}`);
-                        
                         if (imgData.id === 'hero-bg') {
                             document.querySelector('.hero').style.backgroundImage = 
                                 `linear-gradient(rgba(62, 62, 62, 0.85), rgba(62, 62, 62, 0.8)), url('${imgData.ruta}')`;
@@ -1205,16 +1321,12 @@
                     };
                     
                     img.onerror = function() {
-                        console.log(`❌ ${imgData.id} no encontrada: ${imgData.ruta}`);
-                        
                         if (imgData.id === 'hero-bg') {
                             document.querySelector('.hero').style.background = 
                                 'linear-gradient(135deg, #3E3E3E 0%, #696969 100%)';
                         } else if (imgData.id === 'header-logo') {
                             const logoImg = document.getElementById('header-logo');
-                            if (logoImg) {
-                                logoImg.style.display = 'none';
-                            }
+                            if (logoImg) logoImg.style.display = 'none';
                         }
                     };
                     
@@ -1240,22 +1352,18 @@
                 observer.observe(el);
             });
             
-            // Carga de la página
-            console.log('✅ Página de Aislantech cargada correctamente');
-            
-            // Cargar imágenes de servicios
+            // Cargar imágenes
             cargarImagenesServicios();
-            
-            // Cargar imágenes adicionales
             cargarImagenesAdicionales();
             
-            // Configurar enlace de LinkedIn
+            // LinkedIn
             const linkedinLink = document.querySelector('a[href*="linkedin"]');
             if (linkedinLink) {
                 linkedinLink.href = 'https://www.linkedin.com/company/aislantech/';
                 linkedinLink.target = '_blank';
-                console.log('🔗 LinkedIn configurado correctamente');
             }
+            
+            console.log('✅ Página de Aislantech cargada correctamente');
         });
     </script>
 </body>
