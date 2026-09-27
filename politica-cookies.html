@@ -4,84 +4,473 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Política de Cookies - Aislantech</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="images/favicon-32x32.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="images/apple-touch-icon.png">
+    
+    <!-- CSS y fuentes -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Open+Sans:wght@300;400;600&display=swap" rel="stylesheet">
+    
     <style>
-        body {
-            font-family: 'Arial', sans-serif;
-            line-height: 1.6;
-            max-width: 800px;
-            margin: 40px auto;
-            padding: 0 20px;
-            color: #333;
+        :root {
+            --color-primary: #EDD00E;
+            --color-primary-dark: #B8860B;
+            --color-primary-light: #FFF8DC;
+            --color-secondary: #3E3E3E;
+            --color-secondary-dark: #696969;
+            --color-secondary-light: #D3D3D3;
+            --color-accent: #EDD00E;
+            --color-light: #F5F5F5;
+            --color-dark: #333333;
+            --color-gray: #666666;
+            --color-white: #FFFFFF;
+            --transition: all 0.3s ease;
+            --border-radius: 8px;
+            --box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            --box-shadow-hover: 0 15px 30px rgba(0, 0, 0, 0.1);
         }
-        h1, h2 {
-            color: #3E3E3E;
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+        body { font-family: 'Open Sans', sans-serif; color: var(--color-gray); line-height: 1.6; background-color: var(--color-white); }
+        h1, h2, h3, h4, h5 { font-family: 'Montserrat', sans-serif; font-weight: 600; color: var(--color-dark); line-height: 1.3; margin-bottom: 20px; }
+        .container { width: 100%; max-width: 1200px; margin: 0 auto; padding: 0 20px; }
+
+        /* HEADER */
+        .legal-header {
+            background: linear-gradient(rgba(62, 62, 62, 0.9), rgba(62, 62, 62, 0.95)), 
+                        url('images/cabecera.JPG') no-repeat center center/cover;
+            color: var(--color-white);
+            padding: 120px 0 60px;
+            text-align: center;
+            position: relative;
+            margin-bottom: 40px;
         }
-        h1 {
-            border-bottom: 3px solid #EDD00E;
-            padding-bottom: 10px;
+        .legal-header::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 4px;
+            background-color: var(--color-primary);
         }
-        .logo {
-            color: #EDD00E;
-            font-weight: bold;
+        .legal-header h1 { font-size: 2.8rem; color: var(--color-white); margin-bottom: 15px; }
+        .legal-subtitle { font-size: 1.2rem; color: rgba(255, 255, 255, 0.9); max-width: 800px; margin: 0 auto; }
+        .legal-logo { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; text-decoration: none; }
+        .legal-logo-text { font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 1.8rem; line-height: 1; }
+        .logo-aislan { color: var(--color-white); }
+        .logo-tech { color: var(--color-primary); }
+
+        /* CONTENIDO */
+        .legal-content { padding: 60px 0; background-color: var(--color-white); }
+        .legal-section {
+            margin-bottom: 50px;
+            padding: 30px;
+            background-color: var(--color-light);
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            border-left: 4px solid var(--color-primary);
+            transition: var(--transition);
         }
-        .back-link {
+        .legal-section:hover { box-shadow: var(--box-shadow-hover); transform: translateY(-5px); }
+        .legal-section h2 { color: var(--color-secondary); font-size: 1.8rem; display: flex; align-items: center; margin-bottom: 25px; }
+        .legal-section h2 i { color: var(--color-primary); margin-right: 15px; font-size: 1.5rem; }
+        .legal-section p { margin-bottom: 15px; color: var(--color-gray); }
+        .legal-section ul, .legal-section ol { margin: 15px 0 15px 25px; color: var(--color-gray); }
+        .legal-section li { margin-bottom: 10px; }
+        .legal-section h3 { font-size: 1.3rem; color: var(--color-secondary-dark); margin-top: 25px; margin-bottom: 12px; }
+        
+        .highlight-box {
+            background-color: var(--color-primary-light);
+            border: 2px solid var(--color-primary);
+            border-radius: var(--border-radius);
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .highlight-box h3 { color: var(--color-primary-dark); font-size: 1.3rem; margin-bottom: 10px; }
+        .contact-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin: 15px 0;
+            padding: 15px;
+            background-color: rgba(237, 208, 14, 0.1);
+            border-radius: var(--border-radius);
+        }
+        .contact-info i { color: var(--color-primary); font-size: 1.2rem; min-width: 30px; }
+
+        /* TABLAS */
+        .legal-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background-color: var(--color-white);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            border-radius: var(--border-radius);
+            overflow: hidden;
+        }
+        .legal-table th { background-color: var(--color-secondary); color: var(--color-white); padding: 15px; text-align: left; font-weight: 600; }
+        .legal-table td { padding: 15px; border-bottom: 1px solid var(--color-secondary-light); font-size: 0.9rem; }
+        .legal-table tr:last-child td { border-bottom: none; }
+        .legal-table tr:hover { background-color: rgba(237, 208, 14, 0.05); }
+
+        /* BOTONES */
+        .btn {
             display: inline-block;
-            margin-top: 30px;
-            color: #EDD00E;
+            background-color: var(--color-accent);
+            color: var(--color-dark);
+            padding: 12px 30px;
+            border-radius: var(--border-radius);
             text-decoration: none;
+            font-weight: 700;
+            border: none;
+            cursor: pointer;
+            transition: var(--transition);
+            font-family: 'Montserrat', sans-serif;
+            font-size: 1rem;
+            margin-top: 10px;
         }
-        .back-link:hover {
-            text-decoration: underline;
+        .btn:hover { background-color: var(--color-primary-dark); color: var(--color-white); transform: translateY(-3px); box-shadow: 0 5px 15px rgba(237, 208, 14, 0.3); }
+        .btn-outline { background-color: transparent; border: 2px solid var(--color-accent); color: var(--color-accent); }
+        .btn-outline:hover { background-color: var(--color-accent); color: var(--color-dark); }
+
+        /* FOOTER */
+        .legal-footer { background-color: var(--color-dark); color: var(--color-white); padding: 50px 0 30px; margin-top: 60px; }
+        .footer-content { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 40px; margin-bottom: 40px; }
+        .footer-links { display: flex; flex-wrap: wrap; gap: 40px; }
+        .footer-links-column h3 { color: var(--color-white); margin-bottom: 20px; font-size: 1.2rem; }
+        .footer-links-column ul { list-style: none; padding: 0; }
+        .footer-links-column li { margin-bottom: 10px; }
+        .footer-links-column a { color: rgba(255, 255, 255, 0.8); text-decoration: none; transition: var(--transition); font-size: 0.95rem; }
+        .footer-links-column a:hover { color: var(--color-primary); padding-left: 5px; }
+        .footer-bottom { text-align: center; padding-top: 30px; border-top: 1px solid rgba(255, 255, 255, 0.1); font-size: 0.9rem; color: rgba(255, 255, 255, 0.7); }
+        .footer-bottom a { color: var(--color-primary); text-decoration: none; }
+        .footer-bottom a:hover { text-decoration: underline; }
+        .back-home { text-align: center; margin-top: 40px; }
+
+        @media (max-width: 768px) {
+            .legal-header { padding: 100px 0 50px; }
+            .legal-header h1 { font-size: 2.2rem; }
+            .legal-subtitle { font-size: 1.1rem; padding: 0 20px; }
+            .legal-section { padding: 20px; }
+            .legal-section h2 { font-size: 1.5rem; }
+            .footer-content { flex-direction: column; gap: 30px; }
+            .footer-links { gap: 30px; }
+            .legal-table { font-size: 0.85rem; }
+            .legal-table th, .legal-table td { padding: 10px; }
+        }
+        @media (max-width: 576px) {
+            .legal-header h1 { font-size: 1.8rem; }
+            .legal-logo-text { font-size: 1.5rem; }
+            .legal-section { padding: 15px; }
+            .contact-info { flex-direction: column; align-items: flex-start; gap: 10px; }
+            .footer-links { flex-direction: column; gap: 20px; }
         }
     </style>
 </head>
 <body>
-    <h1>Política de Cookies - <span class="logo">AISLANTECH</span></h1>
-    
-    <h2>¿Qué son las cookies?</h2>
-    <p>Las cookies son pequeños archivos de texto que los sitios web pueden colocar en su dispositivo cuando lo visita. Se usan ampliamente para hacer que los sitios web funcionen, o funcionen de manera más eficiente, así como para proporcionar información a los propietarios del sitio.</p>
-    
-    <h2>Cookies que utilizamos</h2>
-    <p><strong>Cookies técnicas (esenciales):</strong></p>
-    <ul>
-        <li>Necesarias para el funcionamiento básico del sitio web</li>
-        <li>No requieren consentimiento del usuario</li>
-    </ul>
-    
-    <p><strong>Cookies de análisis (Google Analytics):</strong></p>
-    <ul>
-        <li>_ga: Distingue a los usuarios (2 años)</li>
-        <li>_gid: Distingue a los usuarios (24 horas)</li>
-        <li>_gat: Limita el porcentaje de solicitudes (1 minuto)</li>
-    </ul>
-    
-    <h2>Finalidad de las cookies</h2>
-    <p>Utilizamos Google Analytics para:</p>
-    <ul>
-        <li>Analizar el tráfico de nuestro sitio web</li>
-        <li>Conocer qué páginas son más visitadas</li>
-        <li>Entender cómo los usuarios interactúan con nuestro contenido</li>
-        <li>Mejorar nuestros servicios y experiencia de usuario</li>
-    </ul>
-    
-    <h2>Control de cookies</h2>
-    <p>Puede controlar y/o eliminar las cookies como desee. Puede eliminar todas las cookies que ya están en su dispositivo y configurar la mayoría de los navegadores para evitar que se coloquen.</p>
-    
-    <p><strong>Para más información sobre cómo gestionar cookies:</strong></p>
-    <ul>
-        <li><a href="https://support.google.com/chrome/answer/95647" target="_blank">Chrome</a></li>
-        <li><a href="https://support.mozilla.org/es/kb/habilitar-y-deshabilitar-cookies-sitios-web-rastrear-preferencias" target="_blank">Firefox</a></li>
-        <li><a href="https://support.microsoft.com/es-es/help/17442/windows-internet-explorer-delete-manage-cookies" target="_blank">Internet Explorer</a></li>
-        <li><a href="https://support.apple.com/es-es/guide/safari/sfri11471/mac" target="_blank">Safari</a></li>
-    </ul>
-    
-    <h2>Consentimiento</h2>
-    <p>Al continuar utilizando nuestro sitio web después de haber visto nuestro banner de cookies, usted acepta nuestro uso de cookies de acuerdo con esta política.</p>
-    
-    <p><strong>Fecha de última actualización:</strong> Diciembre 2024</p>
-    
-    <p><strong>Contacto:</strong> Para cualquier pregunta sobre nuestra política de cookies, contáctenos en: <a href="mailto:info@aislantech.es">info@aislantech.es</a></p>
-    
-    <a href="index.html" class="back-link">← Volver a Aislantech</a>
+    <!-- Header Legal -->
+    <header class="legal-header">
+        <a href="index.html" class="legal-logo">
+            <div class="legal-logo-text">
+                <span class="logo-aislan">AISLAN</span><span class="logo-tech">TECH</span>
+            </div>
+        </a>
+        
+        <div class="container">
+            <h1>Política de Cookies</h1>
+            <p class="legal-subtitle">Información sobre las cookies que utilizamos y cómo gestionarlas conforme a la LSSI-CE</p>
+        </div>
+    </header>
+
+    <!-- Contenido Principal -->
+    <main class="legal-content">
+        <div class="container">
+
+            <!-- ¿Qué son las cookies? -->
+            <section class="legal-section">
+                <h2><i class="fas fa-question-circle"></i> ¿Qué son las cookies?</h2>
+                <p>Las cookies son pequeños archivos de texto que se almacenan en tu dispositivo (ordenador, móvil o tablet) cuando visitas un sitio web. Su finalidad es facilitar el funcionamiento del sitio, recordar tus preferencias o recopilar información sobre tus hábitos de navegación.</p>
+                <p>Algunas cookies son esenciales para que la web funcione correctamente, mientras que otras no lo son y solo se instalan con tu consentimiento previo, conforme al artículo 22.2 de la Ley 34/2002 (LSSI-CE).</p>
+            </section>
+
+            <!-- Tipos de cookies -->
+            <section class="legal-section">
+                <h2><i class="fas fa-cookie-bite"></i> Tipos de Cookies Utilizadas</h2>
+                
+                <h3>Cookies técnicas (esenciales)</h3>
+                <p>Son aquellas que permiten al usuario navegar por el sitio web y utilizar sus funcionalidades básicas. <strong>No requieren consentimiento</strong>, ya que son imprescindibles para el funcionamiento del sitio.</p>
+
+                <h3>Cookies de personalización o preferencias</h3>
+                <p>Permiten recordar las opciones del usuario (idioma, moneda, etc.). En nuestro caso, solo se usa la cookie de consentimiento, que es <strong>técnica</strong> porque su única función es recordar tu decisión sobre las cookies.</p>
+
+                <h3>Cookies de análisis o publicitarias</h3>
+                <p>Actualmente <strong>no utilizamos cookies de análisis (como Google Analytics) ni cookies publicitarias o de redes sociales</strong>. Si en el futuro las incorporamos, se informará previamente y se solicitará el consentimiento del usuario.</p>
+            </section>
+
+            <!-- Detalle de las cookies utilizadas -->
+            <section class="legal-section">
+                <h2><i class="fas fa-list-ul"></i> Detalle de las Cookies Utilizadas</h2>
+                <p>A continuación, se detallan las cookies que este sitio web utiliza:</p>
+
+                <table class="legal-table">
+                    <thead>
+                        <tr>
+                            <th>Nombre</th>
+                            <th>Titular</th>
+                            <th>Finalidad</th>
+                            <th>Tipo</th>
+                            <th>Duración</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>cookie_consent</code></td>
+                            <td>Aislantech (propia)</td>
+                            <td>Almacenar la elección del usuario sobre el uso de cookies en el sitio</td>
+                            <td>Técnica / Necesaria</td>
+                            <td>12 meses</td>
+                        </tr>
+                        <tr>
+                            <td><code>__cf_bm</code></td>
+                            <td>Cloudflare, Inc.</td>
+                            <td>Distingue entre usuarios y bots para proteger el sitio de ataques automatizados</td>
+                            <td>Técnica de seguridad</td>
+                            <td>30 minutos</td>
+                        </tr>
+                        <tr>
+                            <td><code>cf_clearance</code></td>
+                            <td>Cloudflare, Inc.</td>
+                            <td>Verifica que el usuario ha superado un desafío de seguridad de Cloudflare</td>
+                            <td>Técnica de seguridad</td>
+                            <td>30 minutos</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="highlight-box">
+                    <p><strong>ℹ️ Nota:</strong> Las cookies de Cloudflare son cookies técnicas necesarias para proteger el sitio web contra ataques maliciosos. No rastrean al usuario con fines publicitarios ni de análisis.</p>
+                </div>
+            </section>
+
+            <!-- Base legal -->
+            <section class="legal-section">
+                <h2><i class="fas fa-gavel"></i> Base Legal</h2>
+                <p>El uso de cookies está regulado por:</p>
+                <ul>
+                    <li><strong>Artículo 22.2 de la Ley 34/2002 (LSSI-CE)</strong>: establece la obligación de informar y obtener consentimiento para las cookies no esenciales.</li>
+                    <li><strong>Reglamento General de Protección de Datos (RGPD)</strong>: cuando las cookies tratan datos personales, se aplican las bases legales correspondientes (interés legítimo para las técnicas, consentimiento para las no esenciales).</li>
+                    <li><strong>Guía sobre el uso de cookies de la AEPD</strong>: criterios técnicos y legales sobre el uso de cookies.</li>
+                </ul>
+            </section>
+
+            <!-- Cómo gestionar las cookies -->
+            <section class="legal-section">
+                <h2><i class="fas fa-sliders-h"></i> Cómo Gestionar o Desactivar las Cookies</h2>
+                <p>Puedes permitir, bloquear o eliminar las cookies instaladas en tu dispositivo a través de la configuración de tu navegador:</p>
+
+                <table class="legal-table">
+                    <thead>
+                        <tr>
+                            <th>Navegador</th>
+                            <th>Enlace de ayuda</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Google Chrome</td>
+                            <td><a href="https://support.google.com/chrome/answer/95647" target="_blank" rel="noopener">support.google.com/chrome/answer/95647</a></td>
+                        </tr>
+                        <tr>
+                            <td>Mozilla Firefox</td>
+                            <td><a href="https://support.mozilla.org/es/kb/habilitar-y-deshabilitar-cookies-sitios-web-rastrear-preferencias" target="_blank" rel="noopener">support.mozilla.org/...</a></td>
+                        </tr>
+                        <tr>
+                            <td>Safari (Mac)</td>
+                            <td><a href="https://support.apple.com/es-es/guide/safari/sfri11471/mac" target="_blank" rel="noopener">support.apple.com/...</a></td>
+                        </tr>
+                        <tr>
+                            <td>Microsoft Edge</td>
+                            <td><a href="https://support.microsoft.com/es-es/microsoft-edge/eliminar-las-cookies-en-microsoft-edge-63947406-40ac-c3b8-57b9-2a946a29ae09" target="_blank" rel="noopener">support.microsoft.com/...</a></td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="highlight-box">
+                    <h3>⚠️ Advertencia</h3>
+                    <p>Si desactivas las cookies técnicas o esenciales, es posible que algunas funcionalidades del sitio web (como el proceso de compra o el carrito) no funcionen correctamente.</p>
+                </div>
+            </section>
+
+            <!-- Consentimiento y revocación -->
+            <section class="legal-section">
+                <h2><i class="fas fa-check-circle"></i> Consentimiento y Cómo Revocarlo</h2>
+                <p>Al acceder por primera vez a nuestro sitio web, verás un <strong>banner de cookies</strong> donde podrás:</p>
+                <ul>
+                    <li><strong>Aceptar todas las cookies</strong> (aunque actualmente todas son técnicas).</li>
+                    <li><strong>Rechazar las cookies no esenciales</strong> (actualmente no hay ninguna, por lo que rechazar tiene el mismo efecto que aceptar).</li>
+                    <li><strong>Configurar tus preferencias</strong> de forma granular.</li>
+                </ul>
+
+                <p>Tu decisión se almacenará en la cookie <code>cookie_consent</code> durante 12 meses. Puedes <strong>revocar tu consentimiento en cualquier momento</strong>:</p>
+                <ul>
+                    <li>Eliminando las cookies de tu navegador.</li>
+                    <li>Volviendo a configurar tus preferencias en el banner de cookies (puedes acceder a él de nuevo borrando las cookies).</li>
+                    <li>Escribiéndonos a <a href="mailto:info@aislantech.es" style="color: var(--color-primary-dark); text-decoration: none;">info@aislantech.es</a>.</li>
+                </ul>
+
+                <p>La revocación del consentimiento no afectará a la licitud del tratamiento basado en el consentimiento previo a su retirada.</p>
+            </section>
+
+            <!-- Actualizaciones -->
+            <section class="legal-section">
+                <h2><i class="fas fa-sync-alt"></i> Actualizaciones de la Política de Cookies</h2>
+                <p>Aislantech se reserva el derecho a modificar esta Política de Cookies para adaptarla a novedades legislativas, técnicas o de funcionamiento del sitio web. En caso de cambios significativos, se informará al usuario mediante un aviso en la web o por correo electrónico.</p>
+                
+                <div class="highlight-box">
+                    <h3>Información Adicional</h3>
+                    <p><strong>Fecha de última actualización:</strong> Abril de 2026</p>
+                </div>
+            </section>
+
+            <!-- Contacto -->
+            <section class="legal-section">
+                <h2><i class="fas fa-envelope"></i> Contacto</h2>
+                <p>Si tienes cualquier duda sobre nuestra Política de Cookies, puedes contactarnos a través de:</p>
+                
+                <div class="contact-info">
+                    <i class="fas fa-building"></i>
+                    <div>
+                        <p><strong>Aislantes Técnicos del Mediterraneo S.L.</strong></p>
+                        <p>NIF: B27624477</p>
+                    </div>
+                </div>
+                <div class="contact-info">
+                    <i class="fas fa-map-marker-alt"></i>
+                    <div>
+                        <p>Carrer Santa Teresa, 14 Fase A 1, 08393 Caldes d'Estrac, Barcelona</p>
+                    </div>
+                </div>
+                <div class="contact-info">
+                    <i class="fas fa-envelope"></i>
+                    <div>
+                        <p><a href="mailto:info@aislantech.es" style="color: var(--color-primary-dark); text-decoration: none;">info@aislantech.es</a></p>
+                    </div>
+                </div>
+                <div class="contact-info">
+                    <i class="fas fa-phone"></i>
+                    <div>
+                        <p>623 976 341</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Enlaces a otras políticas -->
+            <section class="legal-section" style="text-align: center; background-color: rgba(237, 208, 14, 0.1);">
+                <h2><i class="fas fa-link"></i> Documentación Relacionada</h2>
+                <p style="margin-bottom: 25px;">Consulta nuestra documentación legal completa:</p>
+                
+                <div style="display: flex; flex-wrap: wrap; gap: 20px; justify-content: center;">
+                    <a href="aviso-legal.html" class="btn">
+                        <i class="fas fa-file-contract" style="margin-right: 8px;"></i> Aviso Legal
+                    </a>
+                    <a href="politica-privacidad.html" class="btn">
+                        <i class="fas fa-user-shield" style="margin-right: 8px;"></i> Política de Privacidad
+                    </a>
+                    <a href="index.html" class="btn btn-outline">
+                        <i class="fas fa-home" style="margin-right: 8px;"></i> Volver al Inicio
+                    </a>
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="legal-footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-links">
+                    <div class="footer-links-column">
+                        <h3>Legal</h3>
+                        <ul>
+                            <li><a href="aviso-legal.html">Aviso Legal</a></li>
+                            <li><a href="politica-privacidad.html">Política de Privacidad</a></li>
+                            <li><a href="politica-cookies.html">Política de Cookies</a></li>
+                        </ul>
+                    </div>
+                    
+                    <div class="footer-links-column">
+                        <h3>Contacto</h3>
+                        <ul>
+                            <li><a href="mailto:info@aislantech.es">info@aislantech.es</a></li>
+                            <li><a href="tel:623976341">623 976 341</a></li>
+                            <li><a href="https://maps.google.com/?q=Carrer+Santa+Teresa+14+Caldes+d'Estrac" target="_blank">Cómo llegar</a></li>
+                        </ul>
+                    </div>
+                    
+                    <div class="footer-links-column">
+                        <h3>Empresa</h3>
+                        <ul>
+                            <li><a href="index.html#servicios">Servicios</a></li>
+                            <li><a href="index.html#innovacion">I+D+i</a></li>
+                            <li><a href="index.html#software">Software</a></li>
+                            <li><a href="index.html#contacto">Contacto</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p>&copy; 2026 Aislantes Técnicos del Mediterraneo S.L. - Todos los derechos reservados</p>
+                <p style="margin-top: 10px;">Carrer Santa Teresa, 14 Fase A 1, 08393 Caldes d'Estrac, Barcelona | NIF: B27624477 | Registro Mercantil de Barcelona, Hoja B-599241</p>
+            </div>
+            
+            <div class="back-home">
+                <a href="index.html" class="btn" style="background-color: var(--color-primary); color: var(--color-dark);">
+                    <i class="fas fa-arrow-left" style="margin-right: 10px;"></i> Volver a la Página Principal
+                </a>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('✅ Página de Política de Cookies cargada correctamente');
+            
+            const sections = document.querySelectorAll('.legal-section');
+            const observerOptions = {
+                threshold: 0.1,
+                rootMargin: '0px 0px -50px 0px'
+            };
+            
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.style.opacity = '1';
+                        entry.target.style.transform = 'translateY(0)';
+                    }
+                });
+            }, observerOptions);
+            
+            sections.forEach(section => {
+                section.style.opacity = '0';
+                section.style.transform = 'translateY(20px)';
+                section.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+                observer.observe(section);
+            });
+            
+            const currentYear = new Date().getFullYear();
+            const yearElements = document.querySelectorAll('.footer-bottom p');
+            yearElements.forEach(element => {
+                element.innerHTML = element.innerHTML.replace('2025', currentYear);
+            });
+        });
+    </script>
 </body>
 </html>
