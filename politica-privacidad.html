@@ -4,133 +4,545 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Política de Privacidad - Aislantech</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="images/favicon-32x32.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="images/apple-touch-icon.png">
+    
+    <!-- CSS y fuentes -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Open+Sans:wght@300;400;600&display=swap" rel="stylesheet">
+    
     <style>
-        body {
-            font-family: 'Arial', sans-serif;
-            line-height: 1.6;
-            max-width: 800px;
-            margin: 40px auto;
-            padding: 0 20px;
-            color: #333;
+        :root {
+            --color-primary: #EDD00E;
+            --color-primary-dark: #B8860B;
+            --color-primary-light: #FFF8DC;
+            --color-secondary: #3E3E3E;
+            --color-secondary-dark: #696969;
+            --color-secondary-light: #D3D3D3;
+            --color-accent: #EDD00E;
+            --color-light: #F5F5F5;
+            --color-dark: #333333;
+            --color-gray: #666666;
+            --color-white: #FFFFFF;
+            --transition: all 0.3s ease;
+            --border-radius: 8px;
+            --box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            --box-shadow-hover: 0 15px 30px rgba(0, 0, 0, 0.1);
         }
-        h1, h2 {
-            color: #3E3E3E;
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+        body { font-family: 'Open Sans', sans-serif; color: var(--color-gray); line-height: 1.6; background-color: var(--color-white); }
+        h1, h2, h3, h4, h5 { font-family: 'Montserrat', sans-serif; font-weight: 600; color: var(--color-dark); line-height: 1.3; margin-bottom: 20px; }
+        .container { width: 100%; max-width: 1200px; margin: 0 auto; padding: 0 20px; }
+
+        /* HEADER */
+        .legal-header {
+            background: linear-gradient(rgba(62, 62, 62, 0.9), rgba(62, 62, 62, 0.95)), 
+                        url('images/cabecera.JPG') no-repeat center center/cover;
+            color: var(--color-white);
+            padding: 120px 0 60px;
+            text-align: center;
+            position: relative;
+            margin-bottom: 40px;
         }
-        h1 {
-            border-bottom: 3px solid #EDD00E;
-            padding-bottom: 10px;
+        .legal-header::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 4px;
+            background-color: var(--color-primary);
         }
-        .logo {
-            color: #EDD00E;
-            font-weight: bold;
+        .legal-header h1 { font-size: 2.8rem; color: var(--color-white); margin-bottom: 15px; }
+        .legal-subtitle { font-size: 1.2rem; color: rgba(255, 255, 255, 0.9); max-width: 800px; margin: 0 auto; }
+        .legal-logo { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; text-decoration: none; }
+        .legal-logo-text { font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 1.8rem; line-height: 1; }
+        .logo-aislan { color: var(--color-white); }
+        .logo-tech { color: var(--color-primary); }
+
+        /* CONTENIDO */
+        .legal-content { padding: 60px 0; background-color: var(--color-white); }
+        .legal-section {
+            margin-bottom: 50px;
+            padding: 30px;
+            background-color: var(--color-light);
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            border-left: 4px solid var(--color-primary);
+            transition: var(--transition);
         }
-        .back-link {
-            display: inline-block;
-            margin-top: 30px;
-            color: #EDD00E;
-            text-decoration: none;
+        .legal-section:hover { box-shadow: var(--box-shadow-hover); transform: translateY(-5px); }
+        .legal-section h2 { color: var(--color-secondary); font-size: 1.8rem; display: flex; align-items: center; margin-bottom: 25px; }
+        .legal-section h2 i { color: var(--color-primary); margin-right: 15px; font-size: 1.5rem; }
+        .legal-section p { margin-bottom: 15px; color: var(--color-gray); }
+        .legal-section ul, .legal-section ol { margin: 15px 0 15px 25px; color: var(--color-gray); }
+        .legal-section li { margin-bottom: 10px; }
+        .legal-section h3 { font-size: 1.3rem; color: var(--color-secondary-dark); margin-top: 25px; margin-bottom: 12px; }
+        
+        .highlight-box {
+            background-color: var(--color-primary-light);
+            border: 2px solid var(--color-primary);
+            border-radius: var(--border-radius);
+            padding: 20px;
+            margin: 20px 0;
         }
-        .back-link:hover {
-            text-decoration: underline;
+        .highlight-box h3 { color: var(--color-primary-dark); font-size: 1.3rem; margin-bottom: 10px; }
+        .contact-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin: 15px 0;
+            padding: 15px;
+            background-color: rgba(237, 208, 14, 0.1);
+            border-radius: var(--border-radius);
         }
-        table {
+        .contact-info i { color: var(--color-primary); font-size: 1.2rem; min-width: 30px; }
+
+        /* TABLAS */
+        .legal-table {
             width: 100%;
             border-collapse: collapse;
             margin: 20px 0;
+            background-color: var(--color-white);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            border-radius: var(--border-radius);
+            overflow: hidden;
         }
-        th, td {
-            border: 1px solid #ddd;
-            padding: 12px;
-            text-align: left;
+        .legal-table th { background-color: var(--color-secondary); color: var(--color-white); padding: 15px; text-align: left; font-weight: 600; }
+        .legal-table td { padding: 15px; border-bottom: 1px solid var(--color-secondary-light); }
+        .legal-table tr:last-child td { border-bottom: none; }
+        .legal-table tr:hover { background-color: rgba(237, 208, 14, 0.05); }
+
+        /* BOTONES */
+        .btn {
+            display: inline-block;
+            background-color: var(--color-accent);
+            color: var(--color-dark);
+            padding: 12px 30px;
+            border-radius: var(--border-radius);
+            text-decoration: none;
+            font-weight: 700;
+            border: none;
+            cursor: pointer;
+            transition: var(--transition);
+            font-family: 'Montserrat', sans-serif;
+            font-size: 1rem;
+            margin-top: 10px;
         }
-        th {
-            background-color: #f2f2f2;
+        .btn:hover { background-color: var(--color-primary-dark); color: var(--color-white); transform: translateY(-3px); box-shadow: 0 5px 15px rgba(237, 208, 14, 0.3); }
+        .btn-outline { background-color: transparent; border: 2px solid var(--color-accent); color: var(--color-accent); }
+        .btn-outline:hover { background-color: var(--color-accent); color: var(--color-dark); }
+
+        /* FOOTER */
+        .legal-footer { background-color: var(--color-dark); color: var(--color-white); padding: 50px 0 30px; margin-top: 60px; }
+        .footer-content { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 40px; margin-bottom: 40px; }
+        .footer-links { display: flex; flex-wrap: wrap; gap: 40px; }
+        .footer-links-column h3 { color: var(--color-white); margin-bottom: 20px; font-size: 1.2rem; }
+        .footer-links-column ul { list-style: none; padding: 0; }
+        .footer-links-column li { margin-bottom: 10px; }
+        .footer-links-column a { color: rgba(255, 255, 255, 0.8); text-decoration: none; transition: var(--transition); font-size: 0.95rem; }
+        .footer-links-column a:hover { color: var(--color-primary); padding-left: 5px; }
+        .footer-bottom { text-align: center; padding-top: 30px; border-top: 1px solid rgba(255, 255, 255, 0.1); font-size: 0.9rem; color: rgba(255, 255, 255, 0.7); }
+        .footer-bottom a { color: var(--color-primary); text-decoration: none; }
+        .footer-bottom a:hover { text-decoration: underline; }
+        .back-home { text-align: center; margin-top: 40px; }
+
+        @media (max-width: 768px) {
+            .legal-header { padding: 100px 0 50px; }
+            .legal-header h1 { font-size: 2.2rem; }
+            .legal-subtitle { font-size: 1.1rem; padding: 0 20px; }
+            .legal-section { padding: 20px; }
+            .legal-section h2 { font-size: 1.5rem; }
+            .footer-content { flex-direction: column; gap: 30px; }
+            .footer-links { gap: 30px; }
+            .legal-table { font-size: 0.85rem; }
+            .legal-table th, .legal-table td { padding: 10px; }
+        }
+        @media (max-width: 576px) {
+            .legal-header h1 { font-size: 1.8rem; }
+            .legal-logo-text { font-size: 1.5rem; }
+            .legal-section { padding: 15px; }
+            .contact-info { flex-direction: column; align-items: flex-start; gap: 10px; }
+            .footer-links { flex-direction: column; gap: 20px; }
         }
     </style>
 </head>
 <body>
-    <h1>Política de Privacidad - <span class="logo">AISLANTECH</span></h1>
-    
-    <h2>Responsable del tratamiento</h2>
-    <p><strong>AISLANTEs TÉCNICOS DEL MEDDITERRANEO S.L.</strong></p>
-    <p>Caldes d'Estrac 08393, Barcelona</p>
-    <p>Email: info@aislantech.es</p>
-    <p>Teléfono: 622 562 499</p>
-    
-    <h2>Finalidades del tratamiento de datos</h2>
-    <p>Tratamos sus datos para las siguientes finalidades:</p>
-    <ul>
-        <li>Gestionar consultas y solicitudes de información</li>
-        <li>Prestar los servicios contratados</li>
-        <li>Enviar comunicaciones comerciales (si ha dado su consentimiento)</li>
-        <li>Analizar el tráfico web mediante Google Analytics</li>
-    </ul>
-    
-    <h2>Legitimación para el tratamiento</h2>
-    <p>La base legal para el tratamiento de sus datos es:</p>
-    <table>
-        <tr>
-            <th>Finalidad</th>
-            <th>Base Legal</th>
-        </tr>
-        <tr>
-            <td>Gestión de consultas</td>
-            <td>Interés legítimo</td>
-        </tr>
-        <tr>
-            <td>Ejecución de contratos</td>
-            <td>Ejecución contractual</td>
-        </tr>
-        <tr>
-            <td>Comunicaciones comerciales</td>
-            <td>Consentimiento expreso</td>
-        </tr>
-        <tr>
-            <td>Análisis web (Google Analytics)</td>
-            <td>Consentimiento expreso</td>
-        </tr>
-    </table>
-    
-    <h2>Destinatarios de los datos</h2>
-    <p>Sus datos pueden ser comunicados a:</p>
-    <ul>
-        <li>Proveedores de servicios necesarios para la ejecución de nuestras actividades</li>
-        <li>Google Analytics (EE.UU.) – Acogido al Privacy Shield</li>
-        <li>Autoridades competentes en los casos legalmente previstos</li>
-    </ul>
-    
-    <h2>Plazos de conservación</h2>
-    <ul>
-        <li><strong>Datos de contacto:</strong> Mientras mantenga relación comercial con nosotros o hasta que solicite su supresión</li>
-        <li><strong>Datos contables:</strong> 6 años según obligación legal</li>
-        <li><strong>Cookies:</strong> Los plazos indicados en nuestra Política de Cookies</li>
-    </ul>
-    
-    <h2>Derechos de los interesados</h2>
-    <p>Usted tiene derecho a:</p>
-    <ul>
-        <li><strong>Acceso:</strong> Saber qué datos tenemos sobre usted</li>
-        <li><strong>Rectificación:</strong> Modificar datos inexactos</li>
-        <li><strong>Supresión:</strong> Solicitar la eliminación de sus datos</li>
-        <li><strong>Oposición:</strong> Oponerse al tratamiento de sus datos</li>
-        <li><strong>Portabilidad:</strong> Obtener sus datos en formato estructurado</li>
-        <li><strong>Limitación:</strong> Limitar el tratamiento en ciertos casos</li>
-        <li><strong>Revocación del consentimiento:</strong> Retirar el consentimiento en cualquier momento</li>
-    </ul>
-    
-    <p>Para ejercer estos derechos, diríjase a: <a href="mailto:info@aislantech.es">info@aislantech.es</a></p>
-    
-    <h2>Transferencias internacionales</h2>
-    <p>Utilizamos Google Analytics, servicio de Google LLC (EE.UU.), que está acogido al acuerdo Privacy Shield, considerándose por tanto un país con nivel adecuado de protección.</p>
-    
-    <h2>Procedencia de los datos</h2>
-    <p>Los datos personales que tratamos proceden del propio interesado o de sus representantes legales.</p>
-    
-    <h2>Información adicional</h2>
-    <p>Puede presentar una reclamación ante la autoridad de control competente en materia de protección de datos (Agencia Española de Protección de Datos) si considera que el tratamiento no se ajusta a la normativa vigente.</p>
-    
-    <p><strong>Fecha de última actualización:</strong> Abril 2026</p>
-    
-    <a href="index.html" class="back-link">← Volver a Aislantech</a>
+    <!-- Header Legal -->
+    <header class="legal-header">
+        <a href="index.html" class="legal-logo">
+            <div class="legal-logo-text">
+                <span class="logo-aislan">AISLAN</span><span class="logo-tech">TECH</span>
+            </div>
+        </a>
+        
+        <div class="container">
+            <h1>Política de Privacidad</h1>
+            <p class="legal-subtitle">Información sobre el tratamiento de tus datos personales conforme al RGPD y la LOPDGDD</p>
+        </div>
+    </header>
+
+    <!-- Contenido Principal -->
+    <main class="legal-content">
+        <div class="container">
+
+            <!-- Responsable -->
+            <section class="legal-section">
+                <h2><i class="fas fa-user-shield"></i> Responsable del Tratamiento</h2>
+                <p>De conformidad con el Reglamento (UE) 2016/679 (RGPD) y la Ley Orgánica 3/2018 (LOPDGDD), le informamos que el responsable del tratamiento de sus datos personales es:</p>
+                
+                <div class="highlight-box">
+                    <h3>Datos del Responsable</h3>
+                    <div class="contact-info">
+                        <i class="fas fa-building"></i>
+                        <div>
+                            <p><strong>Aislantes Técnicos del Mediterraneo S.L.</strong></p>
+                            <p>NIF: B27624477</p>
+                        </div>
+                    </div>
+                    <div class="contact-info">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <div>
+                            <p><strong>Domicilio Social:</strong></p>
+                            <p>Carrer Santa Teresa, 14 Fase A 1, 08393 Caldes d'Estrac, Barcelona, España</p>
+                        </div>
+                    </div>
+                    <div class="contact-info">
+                        <i class="fas fa-envelope"></i>
+                        <div>
+                            <p><strong>Email:</strong> info@aislantech.es</p>
+                        </div>
+                    </div>
+                    <div class="contact-info">
+                        <i class="fas fa-phone"></i>
+                        <div>
+                            <p><strong>Teléfono:</strong> 623 976 341</p>
+                        </div>
+                    </div>
+                    <div class="contact-info">
+                        <i class="fas fa-book"></i>
+                        <div>
+                            <p><strong>Registro Mercantil:</strong> Barcelona, Hoja B-599241, Sección 8, Inscripción 1 (I/A)</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Finalidades -->
+            <section class="legal-section">
+                <h2><i class="fas fa-bullseye"></i> Finalidades del Tratamiento</h2>
+                <p>En Aislantech tratamos los datos personales que nos proporcionas con las siguientes finalidades:</p>
+                <ul>
+                    <li><strong>Gestión de consultas y solicitudes de información</strong> recibidas a través de nuestros formularios o correo electrónico.</li>
+                    <li><strong>Gestión y tramitación de pedidos</strong> de presupuestos y productos, incluyendo el proceso de pago a través de la pasarela Redsys.</li>
+                    <li><strong>Envío de comunicaciones comerciales</strong> sobre productos, servicios y novedades de Aislantech, siempre que hayas otorgado tu consentimiento expreso.</li>
+                    <li><strong>Análisis del tráfico web</strong> para mejorar nuestros servicios, mediante herramientas de analítica.</li>
+                    <li><strong>Gestión de currículums</strong> y procesos de selección de personal, si nos envías tu candidatura.</li>
+                </ul>
+            </section>
+
+            <!-- Base jurídica -->
+            <section class="legal-section">
+                <h2><i class="fas fa-gavel"></i> Legitimación para el Tratamiento</h2>
+                <p>La base legal que nos legitima para tratar tus datos, según cada finalidad, es la siguiente:</p>
+                
+                <table class="legal-table">
+                    <thead>
+                        <tr>
+                            <th>Finalidad</th>
+                            <th>Base Legal</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Gestión de consultas y solicitudes de información</td>
+                            <td>Interés legítimo (Art. 6.1.f RGPD)</td>
+                        </tr>
+                        <tr>
+                            <td>Gestión y tramitación de pedidos</td>
+                            <td>Ejecución de contrato (Art. 6.1.b RGPD)</td>
+                        </tr>
+                        <tr>
+                            <td>Envío de comunicaciones comerciales</td>
+                            <td>Consentimiento expreso (Art. 6.1.a RGPD)</td>
+                        </tr>
+                        <tr>
+                            <td>Análisis del tráfico web</td>
+                            <td>Consentimiento expreso (Art. 6.1.a RGPD)</td>
+                        </tr>
+                        <tr>
+                            <td>Gestión de currículums</td>
+                            <td>Consentimiento expreso (Art. 6.1.a RGPD)</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <!-- Destinatarios -->
+            <section class="legal-section">
+                <h2><i class="fas fa-share-alt"></i> Destinatarios de los Datos</h2>
+                <p>Sus datos no se cederán a terceros, salvo obligación legal. No obstante, para poder prestar el servicio, utilizamos los siguientes proveedores que actúan como <strong>encargados del tratamiento</strong> y que están contractualmente obligados a cumplir con las mismas garantías que nosotros:</p>
+                
+                <table class="legal-table">
+                    <thead>
+                        <tr>
+                            <th>Proveedor</th>
+                            <th>Finalidad</th>
+                            <th>Ubicación</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Redsys</strong></td>
+                            <td>Procesamiento de pagos</td>
+                            <td>España (UE)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Resend</strong></td>
+                            <td>Envío de correos electrónicos transaccionales</td>
+                            <td>EE.UU.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Cloudflare, Inc.</strong></td>
+                            <td>Infraestructura, CDN y seguridad web</td>
+                            <td>EE.UU.</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <p>También podrán tener acceso a tus datos las <strong>autoridades competentes</strong> en los casos legalmente previstos.</p>
+            </section>
+
+            <!-- Transferencias internacionales -->
+            <section class="legal-section">
+                <h2><i class="fas fa-globe"></i> Transferencias Internacionales de Datos</h2>
+                <p>Algunos de nuestros proveedores están ubicados fuera del Espacio Económico Europeo (EEE), concretamente en Estados Unidos. De conformidad con el RGPD, este tipo de transferencias requieren garantías adecuadas.</p>
+                
+                <p>En Aislantech nos aseguramos de que dichas transferencias se realicen con las garantías legales exigidas:</p>
+                <ul>
+                    <li><strong>EU-US Data Privacy Framework (DPF)</strong>: Marco de privacidad aprobado por la Comisión Europea en julio de 2023, que garantiza un nivel adecuado de protección para las empresas certificadas.</li>
+                    <li><strong>Cláusulas Contractuales Tipo (SCC)</strong>: Aprobadas por la Comisión Europea, que imponen obligaciones concretas al importador de datos para garantizar la protección de los mismos.</li>
+                </ul>
+
+                <div class="highlight-box">
+                    <p><strong>ℹ️ Nota:</strong> Puedes consultar más información sobre estas garantías en la web de la Agencia Española de Protección de Datos (www.aepd.es) o en la web oficial del Comité Europeo de Protección de Datos (EDPB).</p>
+                </div>
+            </section>
+
+            <!-- Plazos de conservación -->
+            <section class="legal-section">
+                <h2><i class="fas fa-clock"></i> Plazos de Conservación</h2>
+                <p>Conservamos tus datos durante el tiempo estrictamente necesario para cumplir con las finalidades para las que fueron recogidos y, posteriormente, durante los plazos legalmente establecidos:</p>
+                
+                <table class="legal-table">
+                    <thead>
+                        <tr>
+                            <th>Tipo de dato</th>
+                            <th>Plazo de conservación</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Datos de contacto y consultas</td>
+                            <td>Mientras se mantenga la relación comercial o hasta que solicites su supresión</td>
+                        </tr>
+                        <tr>
+                            <td>Datos vinculados a pedidos y facturación</td>
+                            <td>5 años (obligaciones fiscales y mercantiles)</td>
+                        </tr>
+                        <tr>
+                            <td>Datos para comunicaciones comerciales</td>
+                            <td>Hasta que retires tu consentimiento</td>
+                        </tr>
+                        <tr>
+                            <td>Datos de currículums</td>
+                            <td>1 año desde la recepción, salvo que autorices su conservación para procesos futuros</td>
+                        </tr>
+                        <tr>
+                            <td>Datos de navegación (cookies)</td>
+                            <td>Los plazos indicados en la Política de Cookies</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <!-- Derechos -->
+            <section class="legal-section">
+                <h2><i class="fas fa-user-check"></i> Derechos de los Interesados</h2>
+                <p>Como interesado, puedes ejercer en cualquier momento los siguientes derechos reconocidos por el RGPD:</p>
+                <ul>
+                    <li><strong>Derecho de acceso:</strong> Conocer qué datos personales tratamos sobre ti.</li>
+                    <li><strong>Derecho de rectificación:</strong> Solicitar la modificación de datos inexactos o incompletos.</li>
+                    <li><strong>Derecho de supresión ("derecho al olvido"):</strong> Solicitar la eliminación de tus datos cuando ya no sean necesarios.</li>
+                    <li><strong>Derecho de oposición:</strong> Oponerte al tratamiento de tus datos en determinadas circunstancias.</li>
+                    <li><strong>Derecho a la limitación del tratamiento:</strong> Solicitar que se limite el uso de tus datos en ciertos casos.</li>
+                    <li><strong>Derecho a la portabilidad:</strong> Recibir tus datos en un formato estructurado, de uso común y lectura mecánica.</li>
+                    <li><strong>Derecho a retirar el consentimiento:</strong> Revocar en cualquier momento el consentimiento otorgado, sin que ello afecte a la licitud del tratamiento previo.</li>
+                    <li><strong>Derecho a no ser objeto de decisiones individuales automatizadas:</strong> Incluida la elaboración de perfiles.</li>
+                </ul>
+
+                <div class="highlight-box">
+                    <h3>¿Cómo ejercer tus derechos?</h3>
+                    <p>Para ejercer cualquiera de estos derechos, puedes dirigirte a nosotros mediante escrito a:</p>
+                    <div class="contact-info">
+                        <i class="fas fa-envelope"></i>
+                        <div>
+                            <p><strong>Email:</strong> <a href="mailto:info@aislantech.es" style="color: var(--color-primary-dark); text-decoration: none;">info@aislantech.es</a></p>
+                        </div>
+                    </div>
+                    <div class="contact-info">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <div>
+                            <p><strong>Dirección postal:</strong> Carrer Santa Teresa, 14 Fase A 1, 08393 Caldes d'Estrac, Barcelona</p>
+                        </div>
+                    </div>
+                    <p style="margin-top:15px;">Deberás acreditar tu identidad mediante documento oficial en vigor. Atenderemos tu solicitud en el plazo máximo de un mes.</p>
+                </div>
+            </section>
+
+            <!-- Reclamaciones -->
+            <section class="legal-section">
+                <h2><i class="fas fa-balance-scale"></i> Reclamaciones ante la Autoridad de Control</h2>
+                <p>Si consideras que el tratamiento de tus datos personales no se ajusta a la normativa vigente, tienes derecho a presentar una reclamación ante la <strong>Agencia Española de Protección de Datos (AEPD)</strong>, autoridad de control competente en España:</p>
+                <ul>
+                    <li><strong>Web:</strong> <a href="https://www.aepd.es" target="_blank" style="color: var(--color-primary-dark); text-decoration: none;">www.aepd.es</a></li>
+                    <li><strong>Dirección:</strong> C/ Jorge Juan, 6, 28001 Madrid</li>
+                    <li><strong>Teléfono:</strong> 901 100 099 / 912 663 517</li>
+                </ul>
+            </section>
+
+            <!-- Procedencia -->
+            <section class="legal-section">
+                <h2><i class="fas fa-database"></i> Procedencia de los Datos</h2>
+                <p>Los datos personales que tratamos en Aislantech proceden directamente del propio interesado, a través de:</p>
+                <ul>
+                    <li>El formulario de contacto de nuestra página web.</li>
+                    <li>El formulario de pedido de presupuestos.</li>
+                    <li>El proceso de compra y pago.</li>
+                    <li>Comunicaciones por correo electrónico o teléfono.</li>
+                    <li>Envío de currículums para procesos de selección.</li>
+                </ul>
+                <p>No tratamos datos especialmente protegidos (categorías especiales de datos según el Art. 9 RGPD) ni datos de menores de 14 años sin el consentimiento de sus padres o tutores.</p>
+            </section>
+
+            <!-- Modificaciones -->
+            <section class="legal-section">
+                <h2><i class="fas fa-sync-alt"></i> Modificaciones de la Política</h2>
+                <p>Aislantech se reserva el derecho a modificar la presente Política de Privacidad para adaptarla a novedades legislativas, jurisprudenciales o técnicas. En caso de cambios significativos, se informará a los usuarios a través de nuestra página web o por correo electrónico.</p>
+                
+                <div class="highlight-box">
+                    <h3>Información Adicional</h3>
+                    <p><strong>Fecha de última actualización:</strong> Abril de 2026</p>
+                </div>
+            </section>
+
+            <!-- Enlaces a otras políticas -->
+            <section class="legal-section" style="text-align: center; background-color: rgba(237, 208, 14, 0.1);">
+                <h2><i class="fas fa-link"></i> Documentación Relacionada</h2>
+                <p style="margin-bottom: 25px;">Consulta nuestra documentación legal completa:</p>
+                
+                <div style="display: flex; flex-wrap: wrap; gap: 20px; justify-content: center;">
+                    <a href="aviso-legal.html" class="btn">
+                        <i class="fas fa-file-contract" style="margin-right: 8px;"></i> Aviso Legal
+                    </a>
+                    <a href="politica-cookies.html" class="btn">
+                        <i class="fas fa-cookie-bite" style="margin-right: 8px;"></i> Política de Cookies
+                    </a>
+                    <a href="index.html" class="btn btn-outline">
+                        <i class="fas fa-home" style="margin-right: 8px;"></i> Volver al Inicio
+                    </a>
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="legal-footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-links">
+                    <div class="footer-links-column">
+                        <h3>Legal</h3>
+                        <ul>
+                            <li><a href="aviso-legal.html">Aviso Legal</a></li>
+                            <li><a href="politica-privacidad.html">Política de Privacidad</a></li>
+                            <li><a href="politica-cookies.html">Política de Cookies</a></li>
+                        </ul>
+                    </div>
+                    
+                    <div class="footer-links-column">
+                        <h3>Contacto</h3>
+                        <ul>
+                            <li><a href="mailto:info@aislantech.es">info@aislantech.es</a></li>
+                            <li><a href="tel:623976341">623 976 341</a></li>
+                            <li><a href="https://maps.google.com/?q=Carrer+Santa+Teresa+14+Caldes+d'Estrac" target="_blank">Cómo llegar</a></li>
+                        </ul>
+                    </div>
+                    
+                    <div class="footer-links-column">
+                        <h3>Empresa</h3>
+                        <ul>
+                            <li><a href="index.html#servicios">Servicios</a></li>
+                            <li><a href="index.html#innovacion">I+D+i</a></li>
+                            <li><a href="index.html#software">Software</a></li>
+                            <li><a href="index.html#contacto">Contacto</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p>&copy; 2026 Aislantes Técnicos del Mediterraneo S.L. - Todos los derechos reservados</p>
+                <p style="margin-top: 10px;">Carrer Santa Teresa, 14 Fase A 1, 08393 Caldes d'Estrac, Barcelona | NIF: B27624477 | Registro Mercantil de Barcelona, Hoja B-599241</p>
+            </div>
+            
+            <div class="back-home">
+                <a href="index.html" class="btn" style="background-color: var(--color-primary); color: var(--color-dark);">
+                    <i class="fas fa-arrow-left" style="margin-right: 10px;"></i> Volver a la Página Principal
+                </a>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('✅ Página de Política de Privacidad cargada correctamente');
+            
+            const sections = document.querySelectorAll('.legal-section');
+            const observerOptions = {
+                threshold: 0.1,
+                rootMargin: '0px 0px -50px 0px'
+            };
+            
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.style.opacity = '1';
+                        entry.target.style.transform = 'translateY(0)';
+                    }
+                });
+            }, observerOptions);
+            
+            sections.forEach(section => {
+                section.style.opacity = '0';
+                section.style.transform = 'translateY(20px)';
+                section.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+                observer.observe(section);
+            });
+            
+            const currentYear = new Date().getFullYear();
+            const yearElements = document.querySelectorAll('.footer-bottom p');
+            yearElements.forEach(element => {
+                element.innerHTML = element.innerHTML.replace('2025', currentYear);
+            });
+        });
+    </script>
 </body>
 </html>
