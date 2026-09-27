@@ -145,7 +145,7 @@
         <label>Archivos DXF (unidades en mm, selección múltiple)</label>
         <input type="file" id="dxfInput" accept=".dxf" multiple>
         <p class="help-text" style="margin-top:8px;"><strong>Tolerancia de unión (mm):</strong>
-          <input type="range" id="toleranciaSlider" min="0.1" max="1" value="0.01" step="0.01" style="width:200px; display:inline-block; vertical-align:middle;">
+          <input type="range" id="toleranciaSlider" min="0.001" max="1" value="0.01" step="0.001" style="width:200px; display:inline-block; vertical-align:middle;">
           <span id="toleranciaValor">0.01 mm</span>
           <br><small>Solo se unen extremos que coinciden exactamente (dentro de esta tolerancia).</small>
         </p>
@@ -245,6 +245,7 @@
 <script>
 // ============================================================
 //  FRONTEND – Presupuestador con DXF y límite de 1 MB
+//  (soporta LINE, ARC, CIRCLE, LWPOLYLINE y POLYLINE con bulges)
 // ============================================================
 
 // -------- CONSTANTES --------
@@ -264,8 +265,6 @@ const MIN_DIST = 0.01;
 const MAX_FILE_SIZE = 1024 * 1024; // 1 MB
 
 // ⚠️⚠️⚠️ IMPORTANTE: SUSTITUYE ESTA URL POR LA DE TU WORKER REAL ⚠️⚠️⚠️
-// La encuentras en el panel de Cloudflare, en la parte superior de tu Worker.
-// Ejemplo: 'https://aislantech-payment.workers.dev/api/order'
 const WORKER_URL = 'https://aislantech-payment.a-cembrero.workers.dev/api/order';
 
 // -------- DOM ELEMENTS --------
@@ -299,87 +298,219 @@ const els = {
 };
 
 // -------- ESTADO --------
-let perfilesCargados = [];      // { id, nombre, puntos, area, perimetro, file (File) }
+let perfilesCargados = [];      // { id, nombre, puntos, area, perimetro, file }
 let perfilSeleccionadoId = null;
-let lineasPresupuesto = [];     // { id, perfilId, descripcion, cantidad, ... perfil (puntos), file (File) }
+let lineasPresupuesto = [];     // { id, perfilId, descripcion, cantidad, ... }
 let toleranciaUnion = 0.01;
-let enviandoPedido = false;     // Bandera para evitar doble envío
+let enviandoPedido = false;
 
-// -------- FUNCIONES DE PROCESAMIENTO DXF --------
+// ============================================================
+//  PARSER DXF  (LINE / ARC / CIRCLE / LWPOLYLINE / POLYLINE)
+// ============================================================
 function parseDXF(texto) {
   const lines = texto.split(/\r?\n/);
-  const entities = [];
-  let currentEntity = null, inEntities = false, i = 0;
+  let i = 0;
+
+  // Buscar la sección ENTITIES de forma robusta
+  let foundEntities = false;
   while (i < lines.length - 1) {
-    const code = parseInt(lines[i].trim(), 10);
-    const value = lines[i+1].trim();
-    if (code === 2 && value === 'ENTITIES') { inEntities = true; i += 2; break; }
-    i++;
+    const code = parseInt((lines[i] || '').trim(), 10);
+    const value = (lines[i + 1] || '').trim();
+    if (code === 0 && value === 'SECTION') {
+      const nc = parseInt((lines[i + 2] || '').trim(), 10);
+      const nv = (lines[i + 3] || '').trim();
+      if (nc === 2 && nv === 'ENTITIES') { i += 4; foundEntities = true; break; }
+    }
+    i += 2;
   }
-  if (!inEntities) return entities;
+  if (!foundEntities) return [];
+
+  // Parsear preservando el ORDEN de códigos repetidos (10/20/42...)
+  const rawEntities = [];
+  let current = null;
   while (i < lines.length) {
-    const code = parseInt(lines[i].trim(), 10); i++;
-    const value = lines[i].trim(); i++;
+    const codeStr = (lines[i] || '').trim();
+    const valueStr = (lines[i + 1] || '').trim();
+    i += 2;
+    if (codeStr === '') continue;
+    const code = parseInt(codeStr, 10);
+    if (isNaN(code)) continue;
+
     if (code === 0) {
-      if (value === 'ENDSEC') break;
-      if (currentEntity) entities.push(currentEntity);
-      currentEntity = { type: value, data: {} };
-    } else if (currentEntity) {
-      if ([10,11,20,21,30,31,40,50,51,42,70].includes(code)) {
-        currentEntity.data[code] = parseFloat(value);
-      } else if (code === 8) {
-        currentEntity.layer = value;
-      }
+      if (valueStr === 'ENDSEC') break;
+      if (current) rawEntities.push(current);
+      current = { type: valueStr, pairs: [] };
+    } else if (current) {
+      current.pairs.push([code, valueStr]);
     }
   }
-  if (currentEntity) entities.push(currentEntity);
-  return entities;
+  if (current) rawEntities.push(current);
+
+  return interpretarEntidades(rawEntities);
 }
+
+function interpretarEntidades(rawEntities) {
+  const result = [];
+  let i = 0;
+  while (i < rawEntities.length) {
+    const ent = rawEntities[i];
+
+    if (ent.type === 'LWPOLYLINE') {
+      // Polilínea ligera: pares 10/20 consecutivos, bulge opcional 42
+      const vertices = [];
+      let closed = false;
+      let curV = null;
+      for (const [code, value] of ent.pairs) {
+        if (code === 70) {
+          closed = (parseInt(value, 10) & 1) === 1;
+        } else if (code === 10) {
+          if (curV) vertices.push(curV);
+          curV = { x: parseFloat(value), y: 0, bulge: 0 };
+        } else if (code === 20) {
+          if (curV) curV.y = parseFloat(value);
+        } else if (code === 42) {
+          if (curV) curV.bulge = parseFloat(value);
+        }
+      }
+      if (curV) vertices.push(curV);
+      if (vertices.length >= 2) result.push({ type: 'POLYLINE_JOINED', vertices, closed });
+      i++;
+
+    } else if (ent.type === 'POLYLINE') {
+      // Polilínea clásica: seguida de N VERTEX y un SEQEND
+      let closed = false;
+      for (const [code, value] of ent.pairs) {
+        if (code === 70) closed = (parseInt(value, 10) & 1) === 1;
+      }
+      const vertices = [];
+      let k = i + 1;
+      while (k < rawEntities.length && rawEntities[k].type === 'VERTEX') {
+        const v = { x: 0, y: 0, bulge: 0 };
+        for (const [code, value] of rawEntities[k].pairs) {
+          if (code === 10) v.x = parseFloat(value);
+          else if (code === 20) v.y = parseFloat(value);
+          else if (code === 42) v.bulge = parseFloat(value);
+        }
+        vertices.push(v);
+        k++;
+      }
+      if (k < rawEntities.length && rawEntities[k].type === 'SEQEND') k++;
+      if (vertices.length >= 2) result.push({ type: 'POLYLINE_JOINED', vertices, closed });
+      i = k;
+
+    } else if (ent.type === 'LINE' || ent.type === 'ARC' || ent.type === 'CIRCLE') {
+      const d = {};
+      for (const [code, value] of ent.pairs) d[code] = parseFloat(value);
+      result.push({ type: ent.type, data: d });
+      i++;
+
+    } else {
+      i++;
+    }
+  }
+  return result;
+}
+
+// Convierte un tramo con "bulge" (arco) en una lista de puntos
+function bulgeToPoints(p1, p2, bulge, tolerance) {
+  if (Math.abs(bulge) < 1e-12) return [p1, p2];
+  const dx = p2.x - p1.x, dy = p2.y - p1.y;
+  const chord = Math.hypot(dx, dy);
+  if (chord < 1e-12) return [p1, p2];
+
+  const theta = 4 * Math.atan(bulge); // ángulo incluido firmado
+  const radius = chord / (2 * Math.sin(Math.abs(theta) / 2));
+
+  const mx = (p1.x + p2.x) / 2, my = (p1.y + p2.y) / 2;
+  const lx = -dy / chord, ly = dx / chord;
+  const dSigned = (chord / 2) / Math.tan(theta / 2);
+  const cx = mx + dSigned * lx;
+  const cy = my + dSigned * ly;
+
+  const startAngle = Math.atan2(p1.y - cy, p1.x - cx);
+  const sweep = theta;
+  const arcLen = Math.abs(sweep) * radius;
+  const steps = Math.max(2, Math.ceil(arcLen / tolerance));
+
+  const pts = [];
+  for (let k = 0; k <= steps; k++) {
+    const a = startAngle + (sweep * k) / steps;
+    pts.push({ x: cx + radius * Math.cos(a), y: cy + radius * Math.sin(a) });
+  }
+  return pts;
+}
+
+// Convierte los vértices de una polilínea (con bulges) en segmentos
+function polylineToSegments(vertices, closed) {
+  if (vertices.length < 2) return [];
+  const segments = [];
+  const n = vertices.length;
+  const numSeg = closed ? n : n - 1;
+  for (let k = 0; k < numSeg; k++) {
+    const v1 = vertices[k];
+    const v2 = vertices[(k + 1) % n];
+    const pts = bulgeToPoints(v1, v2, v1.bulge || 0, TOLERANCIA_DISCRET);
+    if (pts.length >= 2) segments.push(pts);
+  }
+  return segments;
+}
+
+// Devuelve SIEMPRE un array de segmentos (o null)
 function entityToSegment(ent) {
+  if (ent.type === 'POLYLINE_JOINED') {
+    return polylineToSegments(ent.vertices, ent.closed);
+  }
   const d = ent.data;
   switch (ent.type) {
     case 'LINE': {
-      const x1=d[10], y1=d[20], x2=d[11], y2=d[21];
-      if (isNaN(x1)||isNaN(y1)||isNaN(x2)||isNaN(y2)) return null;
-      return [{x:x1,y:y1},{x:x2,y:y2}];
+      const x1 = d[10], y1 = d[20], x2 = d[11], y2 = d[21];
+      if (isNaN(x1) || isNaN(y1) || isNaN(x2) || isNaN(y2)) return null;
+      return [[{ x: x1, y: y1 }, { x: x2, y: y2 }]];
     }
     case 'CIRCLE': {
-      const cx=d[10], cy=d[20], r=d[40];
-      if (isNaN(cx)||isNaN(cy)||isNaN(r)) return null;
-      const steps = Math.max(24, Math.ceil((2*Math.PI*r)/TOLERANCIA_DISCRET));
+      const cx = d[10], cy = d[20], r = d[40];
+      if (isNaN(cx) || isNaN(cy) || isNaN(r)) return null;
+      const steps = Math.max(24, Math.ceil((2 * Math.PI * r) / TOLERANCIA_DISCRET));
       const pts = [];
-      for (let i=0; i<=steps; i++) {
-        const a = (i/steps)*2*Math.PI;
-        pts.push({x: cx + r*Math.cos(a), y: cy + r*Math.sin(a)});
+      for (let i = 0; i <= steps; i++) {
+        const a = (i / steps) * 2 * Math.PI;
+        pts.push({ x: cx + r * Math.cos(a), y: cy + r * Math.sin(a) });
       }
-      return pts;
+      return [pts];
     }
     case 'ARC': {
-      const cx=d[10], cy=d[20], r=d[40];
-      let sa = (d[50]||0)*Math.PI/180, ea = (d[51]||0)*Math.PI/180;
-      if (ea < sa) ea += 2*Math.PI;
+      const cx = d[10], cy = d[20], r = d[40];
+      let sa = (d[50] || 0) * Math.PI / 180;
+      let ea = (d[51] || 0) * Math.PI / 180;
+      if (ea < sa) ea += 2 * Math.PI;
       const delta = ea - sa;
-      const steps = Math.max(2, Math.ceil((r*delta)/TOLERANCIA_DISCRET));
+      const steps = Math.max(2, Math.ceil((r * delta) / TOLERANCIA_DISCRET));
       const pts = [];
-      for (let i=0; i<=steps; i++) {
-        const a = sa + (delta*i)/steps;
-        pts.push({x: cx + r*Math.cos(a), y: cy + r*Math.sin(a)});
+      for (let i = 0; i <= steps; i++) {
+        const a = sa + (delta * i) / steps;
+        pts.push({ x: cx + r * Math.cos(a), y: cy + r * Math.sin(a) });
       }
-      return pts;
+      return [pts];
     }
     default: return null;
   }
 }
+
 function buildSegments(entities) {
   const segments = [];
   entities.forEach(ent => {
-    if (ent.type === 'LINE' || ent.type === 'ARC' || ent.type === 'CIRCLE') {
-      const pts = entityToSegment(ent);
-      if (pts && pts.length >= 2) segments.push(pts);
+    const segs = entityToSegment(ent);
+    if (!segs) return;
+    for (const s of segs) {
+      if (s && s.length >= 2) segments.push(s);
     }
   });
   return segments;
 }
+
+// ============================================================
+//  EXTRACCIÓN DE CONTORNO / SIMPLIFICACIÓN
+// ============================================================
 function extraerContornoPorGrafo(segments, tolerance) {
   if (segments.length === 0) return null;
   const puntoClave = (p) => `${Math.round(p.x/tolerance)*tolerance},${Math.round(p.y/tolerance)*tolerance}`;
@@ -431,6 +562,7 @@ function extraerContornoPorGrafo(segments, tolerance) {
   if (puntos.length > 1 && Math.hypot(puntos[0].x - puntos[puntos.length-1].x, puntos[0].y - puntos[puntos.length-1].y) < 0.01) puntos.pop();
   return puntos;
 }
+
 function concatenarSecuencial(segments, tolerance) {
   if (segments.length === 0) return null;
   const puntos = [];
@@ -444,6 +576,7 @@ function concatenarSecuencial(segments, tolerance) {
   });
   return puntos;
 }
+
 function douglasPeucker(points, tolerance) {
   if (points.length <= 2) return points;
   const sqTolerance = tolerance * tolerance;
@@ -475,6 +608,7 @@ function douglasPeucker(points, tolerance) {
   simplify(0, points.length-1);
   return points.filter((_,i) => keep[i]);
 }
+
 function removeClosePoints(points, minDist) {
   if (points.length < 2) return points;
   const result = [points[0]];
@@ -484,6 +618,7 @@ function removeClosePoints(points, minDist) {
   }
   return result;
 }
+
 function importarDXF(texto) {
   const entities = parseDXF(texto);
   if (entities.length === 0) return null;
@@ -496,6 +631,10 @@ function importarDXF(texto) {
   const final = removeClosePoints(simplificado, MIN_DIST);
   return final;
 }
+
+// ============================================================
+//  GEOMETRÍA / CÁLCULOS
+// ============================================================
 function polygonArea(vertices) {
   let area = 0;
   const n = vertices.length;
@@ -572,7 +711,9 @@ function calcularNesting(W, H) {
                   Math.floor(BLOQUE_MAX_ANCHO/H)*Math.floor(BLOQUE_MAX_ALTO/W));
 }
 
-// -------- DIBUJO --------
+// ============================================================
+//  DIBUJO
+// ============================================================
 function drawAll(vertices, rectNoMargin, rectWithMargin, dims, showDimensions=true) {
   const canvas = els.viewer2d, ctx = canvas.getContext('2d');
   ctx.clearRect(0,0,canvas.width,canvas.height);
@@ -648,7 +789,9 @@ function drawMini(canvas, vertices) {
   ctx.closePath(); ctx.stroke();
 }
 
-// -------- LÓGICA DE PRESUPUESTO --------
+// ============================================================
+//  LÓGICA DE PRESUPUESTO
+// ============================================================
 function recalcularSubtotalLinea(linea) {
   const base = (linea.precioPiezaUnit + linea.precioRetalUnit + linea.costeCorteUnit) * linea.cantidad + linea.manejo;
   return base / DIVISOR;
@@ -681,7 +824,7 @@ function actualizarTabla() {
     });
     miniCanvas.addEventListener('click', ()=>{
       const perfil = perfilesCargados.find(p => p.id === linea.perfilId);
-      if (perfil) { perfilSeleccionadoId = perfil.id; actualizarVisor(perfil); 
+      if (perfil) { perfilSeleccionadoId = perfil.id; actualizarVisor(perfil);
         document.querySelectorAll('.perfil-item').forEach(el=>el.classList.remove('active'));
         const item = document.querySelector(`.perfil-item[data-id="${perfil.id}"]`);
         if (item) item.classList.add('active');
@@ -729,11 +872,12 @@ function calcularPrecioParaPerfil(perfil, cantidad) {
   return { precioPiezaUnit, precioRetalUnit, costeCorteUnit, manejo: COSTE_MANEJO, subtotal: precioTotalLinea, width, height, wM, hM, piezasPorBloque: calcularNesting(wM,hM) };
 }
 
-// -------- GESTIÓN DE PERFILES CARGADOS (con límite de 1 MB) --------
+// ============================================================
+//  CARGA DE PERFILES
+// ============================================================
 function agregarPerfiles(files) {
   const fileArray = Array.from(files);
   if (fileArray.length === 0) return;
-  // Validar tamaño
   const archivosGrandes = fileArray.filter(f => f.size > MAX_FILE_SIZE);
   if (archivosGrandes.length > 0) {
     alert(`Los siguientes archivos superan el límite de 1 MB y no serán procesados:\n${archivosGrandes.map(f=>f.name).join('\n')}`);
@@ -805,7 +949,9 @@ function seleccionarPerfil(id) {
   if (perfil) { actualizarVisor(perfil); renderListaPerfiles(); els.perfilSelect.value = id; }
 }
 
-// -------- AÑADIR AL PRESUPUESTO --------
+// ============================================================
+//  AÑADIR AL PRESUPUESTO
+// ============================================================
 els.calcularBtn.addEventListener('click', ()=>{
   const perfilId = els.perfilSelect.value;
   const perfil = perfilesCargados.find(p => p.id === perfilId);
@@ -825,13 +971,15 @@ els.calcularBtn.addEventListener('click', ()=>{
     manejo: resultado.manejo,
     subtotal: resultado.subtotal,
     perfil: perfil.puntos.slice(),
-    file: perfil.file  // Guardamos el archivo original
+    file: perfil.file
   };
   lineasPresupuesto.push(nuevaLinea);
   actualizarTabla();
 });
 
-// -------- FINALIZAR PEDIDO (con feedback visual y nombres únicos) --------
+// ============================================================
+//  FINALIZAR PEDIDO
+// ============================================================
 els.finalizarPedidoBtn.addEventListener('click', ()=>{
   if (lineasPresupuesto.length === 0) { alert('El presupuesto está vacío. Añade al menos una línea.'); return; }
   els.clienteModal.classList.add('active');
@@ -841,8 +989,6 @@ els.clienteModal.addEventListener('click', (e)=>{ if (e.target === els.clienteMo
 
 els.clienteForm.addEventListener('submit', async (e) => {
   e.preventDefault();
-
-  // Evitar doble envío
   if (enviandoPedido) return;
 
   const nombre = els.clienteNombre.value.trim();
@@ -853,7 +999,6 @@ els.clienteForm.addEventListener('submit', async (e) => {
     return;
   }
 
-  // Verificar URL del Worker antes de enviar
   if (!WORKER_URL || WORKER_URL.includes('TU-WORKER')) {
     alert('⚠️ La URL del Worker no está configurada correctamente.\n\nContacta con el administrador del sitio para que actualice la constante WORKER_URL en el código.');
     console.error('WORKER_URL no configurada. Valor actual:', WORKER_URL);
@@ -862,7 +1007,6 @@ els.clienteForm.addEventListener('submit', async (e) => {
 
   const clienteData = { nombre, email, telefono, direccion: els.clienteDireccion.value.trim() || '' };
 
-  // Recolectar datos del pedido
   const items = lineasPresupuesto.map((linea) => ({
     id: linea.id,
     descripcion: linea.descripcion,
@@ -877,7 +1021,6 @@ els.clienteForm.addEventListener('submit', async (e) => {
   const portes = parseFloat(els.portesSelect.value);
   const total = subtotal + preparacion + portes;
 
-  // Construir FormData con los archivos DXF
   const formData = new FormData();
   formData.append('items', JSON.stringify(items));
   formData.append('subtotal', subtotal.toFixed(2));
@@ -886,7 +1029,6 @@ els.clienteForm.addEventListener('submit', async (e) => {
   formData.append('total', total.toFixed(2));
   formData.append('cliente', JSON.stringify(clienteData));
 
-  // Adjuntar cada archivo DXF original con nombre único (usando linea.id)
   lineasPresupuesto.forEach((linea) => {
     if (linea.file) {
       const nombreUnico = `${linea.id}_${linea.file.name}`;
@@ -894,7 +1036,6 @@ els.clienteForm.addEventListener('submit', async (e) => {
     }
   });
 
-  // ---- Feedback visual ----
   enviandoPedido = true;
   const textoOriginal = els.btnPagar.innerHTML;
   els.btnPagar.disabled = true;
@@ -913,13 +1054,11 @@ els.clienteForm.addEventListener('submit', async (e) => {
 
     const html = await response.text();
 
-    // Restaurar botón y cerrar modal
     els.btnPagar.disabled = false;
     els.btnPagar.innerHTML = textoOriginal;
     enviandoPedido = false;
     els.clienteModal.classList.remove('active');
 
-    // Insertar formulario de Redsys y enviarlo
     const container = document.createElement('div');
     container.id = 'redsys-container';
     container.innerHTML = html;
@@ -933,7 +1072,6 @@ els.clienteForm.addEventListener('submit', async (e) => {
       container.remove();
     }
   } catch (err) {
-    // Restaurar botón en caso de error
     els.btnPagar.disabled = false;
     els.btnPagar.innerHTML = textoOriginal;
     enviandoPedido = false;
@@ -942,12 +1080,16 @@ els.clienteForm.addEventListener('submit', async (e) => {
   }
 });
 
-// -------- LIMPIAR PRESUPUESTO --------
+// ============================================================
+//  LIMPIAR PRESUPUESTO
+// ============================================================
 els.limpiarPresupuestoBtn.addEventListener('click', ()=>{
   if (confirm('¿Limpiar todo el presupuesto?')) { lineasPresupuesto = []; actualizarTabla(); }
 });
 
-// -------- EVENTOS DE CARGA --------
+// ============================================================
+//  EVENTOS DE CARGA
+// ============================================================
 els.dxfInput.addEventListener('change', (e) => {
   const files = e.target.files;
   if (files.length === 0) return;
@@ -965,16 +1107,17 @@ els.portesSelect.addEventListener('change', ()=>{
   actualizarTabla();
 });
 
-// -------- INICIO --------
+// ============================================================
+//  INICIO
+// ============================================================
 els.perfilSelect.disabled = true;
 els.calcularBtn.disabled = true;
 
-// Advertencia en consola si la URL no está configurada
 if (!WORKER_URL || WORKER_URL.includes('TU-WORKER')) {
-  console.warn('⚠️ ATENCIÓN: La constante WORKER_URL no está configurada. Sustituye "https://TU-WORKER.workers.dev/api/order" por la URL real de tu Worker de Cloudflare.');
+  console.warn('⚠️ ATENCIÓN: La constante WORKER_URL no está configurada.');
 }
 
-console.log('Presupuestador Aislantech con DXF y límite de 1 MB cargado.');
+console.log('Presupuestador Aislantech con DXF (soporta polilíneas unidas) cargado.');
 </script>
 </body>
 </html>
