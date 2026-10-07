@@ -386,7 +386,6 @@ window.addEventListener('clipper-ready', async () => {
     );
     S.clipperReady = true;
     console.log('✅ Clipper nativo cargado');
-    // Recalcular contornos con Clipper real
     rebuildAllContours();
     buildProgram();
     render();
@@ -443,7 +442,6 @@ function updateToolsList(){
   if (!S.tools.length){ toolListEl.innerHTML = '<div class="empty-hint">Sin herramientas.</div>'; return; }
   toolListEl.innerHTML = S.tools.map(t => {
     const isActive = t.id === S.activeToolId;
-    const uses = S.operations.filter(o => o.toolId === t.id).length;
     const dirIcon = (t.cutDir === 'ccw' ? '↺' : '↻');
     const spinIcon = (t.spindleDir === 'M4' ? 'M4' : 'M3');
     return `<div class="tool-item ${isActive?'active':''}" data-id="${t.id}">
@@ -494,9 +492,50 @@ function pathPointsBetween(path, cumLens, s1, s2){
   return result;
 }
 
+// --- NUEVAS funciones para el cajeado ---
+function pointInPolygon(px, py, verts){
+  let inside = false;
+  const n = verts.length;
+  for (let i = 0, j = n - 1; i < n; j = i++){
+    const xi = verts[i].x, yi = verts[i].y;
+    const xj = verts[j].x, yj = verts[j].y;
+    if (((yi > py) !== (yj > py)) &&
+        (px < (xj - xi) * (py - yi) / (yj - yi) + xi)) inside = !inside;
+  }
+  return inside;
+}
+function circleToPolygonPoints(c, segs){
+  segs = segs || 72;
+  const pts = [];
+  for (let i = 0; i < segs; i++){
+    const a = i / segs * Math.PI * 2;
+    pts.push({ x: c.cx + c.r * Math.cos(a), y: c.cy + c.r * Math.sin(a) });
+  }
+  return pts;
+}
+function findClosedEntityAt(wx, wy){
+  const list = effective();
+  let best = null, bestArea = Infinity;
+  for (let i = 0; i < list.length; i++){
+    const e = list[i];
+    if (!S.layerVis[e.layer]) continue;
+    if (e.type === 'CIRCLE'){
+      if (Math.hypot(wx - e.cx, wy - e.cy) < e.r + 0.01){
+        const a = Math.PI * e.r * e.r;
+        if (a < bestArea){ bestArea = a; best = { boundary: circleToPolygonPoints(e), source:i }; }
+      }
+    } else if (e.type === 'LWPOLYLINE' && e.closed && e.vertices.length >= 3){
+      if (pointInPolygon(wx, wy, e.vertices)){
+        const a = Math.abs(signedArea(e.vertices));
+        if (a < bestArea){ bestArea = a; best = { boundary: e.vertices.map(v => ({x:v.x, y:v.y})), source:i }; }
+      }
+    }
+  }
+  return best;
+}
+
 // =================================================================
 //  CONVERSIÓN DXF → PUNTOS (aplana todo, incluyendo arcos)
-//  Clipper trabajará a partir de puntos, no de primitivas.
 // =================================================================
 function entityToPointsDense(e){
   const pts = [];
@@ -510,7 +549,6 @@ function entityToPointsDense(e){
       pts.push({ x: e.cx + e.r * Math.cos(a), y: e.cy + e.r * Math.sin(a) });
     }
   } else if (e.type === 'ARC'){
-    // Intervalo angular fijo para buena resolución
     const delta = e.ea - e.sa;
     const N = Math.max(8, Math.ceil(Math.abs(delta) / 0.08));
     for (let s = 0; s <= N; s++){
@@ -527,10 +565,8 @@ function entityToPointsDense(e){
   return pts;
 }
 
-// Encadena puntos de varias entidades en un contorno continuo
 function chainPointsFromEntities(entityList, tol){
   tol = tol || 0.15;
-  // Convertir cada entidad a su lista de puntos
   const parts = [];
   const partMeta = [];
   for (const e of entityList){
@@ -598,9 +634,9 @@ function rotatePointsToStart(pts, ox, oy){
 }
 
 // =================================================================
-//  OFFSET VÍA CLIPPER (reemplaza todo el sistema de miter/bevel/round)
+//  OFFSET VÍA CLIPPER (síncrono: la API de js-angusj-clipper es síncrona una vez cargada)
 // =================================================================
-async function offsetPointsWithClipper(pts, delta, joinTypeName){
+function offsetPointsWithClipper(pts, delta, joinTypeName){
   if (!S.clipperReady || !S.clipperInstance){
     console.warn('Clipper no disponible, usando offset simple (fallback)');
     return offsetPointsSimpleFallback(pts, delta);
@@ -608,35 +644,24 @@ async function offsetPointsWithClipper(pts, delta, joinTypeName){
   const lib = window.jsAngusjClipper;
   const clipper = S.clipperInstance;
 
-  // 1. Escalar a enteros
   const intPath = pts.map(p => ({ x: Math.round(p.x * CLIPPER_SCALE), y: Math.round(p.y * CLIPPER_SCALE) }));
-
-  // 2. Crear ClipperOffset
   const co = new clipper.ClipperOffset(2.0, CLIPPER_ARC_TOLERANCE * CLIPPER_SCALE);
 
-  // 3. Mapear joinType
   let joinType = lib.JoinType.Round;
   if (joinTypeName === 'miter') joinType = lib.JoinType.Miter;
   else if (joinTypeName === 'square') joinType = lib.JoinType.Square;
 
-  // 4. Añadir path
   co.addPath(intPath, joinType, lib.EndType.ClosedPolygon);
 
-  // 5. Ejecutar offset con cleanDistance para eliminar micro-vertices
   const deltaInt = Math.round(delta * CLIPPER_SCALE);
   const solution = co.executeToPaths(deltaInt, 0.5);
 
-  // 6. Convertir de vuelta a puntos en mm
-  if (!solution || solution.length === 0) return [];
-  // Elegir la primera solución (la más externa)
+  if (!solution || solution.length === 0){ co.dispose(); return []; }
   const result = solution[0].map(p => ({ x: p.x / CLIPPER_SCALE, y: p.y / CLIPPER_SCALE }));
-
   co.dispose();
-
   return result;
 }
 
-// Fallback simple por si Clipper no carga
 function offsetPointsSimpleFallback(pts, delta){
   if (!pts.length) return pts;
   const n = pts.length;
@@ -666,20 +691,17 @@ function resolveCutContour(op, tool){
   const entityList = op.ids.map(i => S.entities[i]).filter(Boolean);
   if (!entityList.length) return null;
 
-  // 1. Encadenar entidades a puntos
   const chainRes = chainPointsFromEntities(entityList, 0.15);
   let pts = chainRes.points;
   const closed = chainRes.closed;
   if (pts.length < 2) return null;
 
-  // 2. Orientar según cutDir
   if (closed && pts.length >= 3){
     const wantCCW = (tool.cutDir !== 'cw');
     const isCCW = signedArea(pts) > 0;
     if (isCCW !== wantCCW) pts = pts.slice().reverse();
   }
 
-  // 3. Offset con Clipper si está disponible
   const off = op.offset || 'center';
   if ((off === 'inside' || off === 'outside') && closed && pts.length >= 3){
     const ccw = signedArea(pts) > 0;
@@ -687,7 +709,6 @@ function resolveCutContour(op, tool){
     let delta;
     if (off === 'inside') delta = ccw ? -toolRadius : +toolRadius;
     else delta = ccw ? +toolRadius : -toolRadius;
-    // Clipper: delta negativo contrae, positivo expande
     try {
       const result = offsetPointsWithClipper(pts, delta, 'round');
       if (result && result.length >= 3) pts = result;
@@ -697,14 +718,7 @@ function resolveCutContour(op, tool){
     }
   }
 
-  // 4. Punto de inicio más cercano a (0,0)
   if (closed && pts.length >= 3) pts = rotatePointsToStart(pts, 0, 0);
-
-  // 5. Devolver también primitivas originales para G2/G3 si NO hay offset
-  let primitives = null;
-  if (off === 'center' && closed){
-    primitives = null; // Podríamos devolver primitivas, pero para simplificar todo va por puntos
-  }
 
   return { points: pts, primitives: null, closed };
 }
@@ -802,12 +816,24 @@ function loadFromLocalStorage(){
     const data = JSON.parse(raw); if (!data || data.version !== PROJECT_VERSION) return false;
     applyProjectData(data); return true; } catch (err){ console.warn(err); return false; }
 }
+function migrateOperation(op){
+  if (op.type === 'pocket' && !op.pockets && op.areas){
+    op.pockets = op.areas.map(a => {
+      if (a.shape === 'circle') return { boundary: circleToPolygonPoints(a) };
+      return { boundary: [
+        {x:a.x1,y:a.y1},{x:a.x2,y:a.y1},{x:a.x2,y:a.y2},{x:a.x1,y:a.y2}
+      ]};
+    });
+    delete op.areas;
+  }
+  return op;
+}
 function applyProjectData(data){
   S.dxfText = data.dxfText || ''; S.dxfFilename = data.dxfFilename || '';
   S.entities = data.entities || [];
   S.tools = (data.tools || []).map(t => ({ ...createDefaultTool(1), ...t }));
   S.activeToolId = data.activeToolId || (S.tools[0] ? S.tools[0].id : null);
-  S.operations = data.operations || [];
+  S.operations = (data.operations || []).map(migrateOperation);
   S.offsetX = data.offsetX || 0; S.offsetY = data.offsetY || 0;
   S.layerVis = data.layerVis || {};
   S.flipArcs = !!data.flipArcs; S.flipY = !!data.flipY;
@@ -961,13 +987,23 @@ function addCut(idx){
   op.ids.push(idx);
   updateOpsList(); rebuildAllContours(); buildProgram(); render(); scheduleSave();
 }
-function addPocket(area){
+
+// --- NUEVAS funciones de cajeado ---
+function addPocketBoundary(boundary){
   if (!S.tools.length){ showToast('Anade primero una herramienta','warn'); return; }
+  if (signedArea(boundary) < 0) boundary = boundary.slice().reverse(); // CCW
   let op = S.operations.find(o => o.type === 'pocket');
-  if (!op){ op = { type:'pocket', areas:[], toolId: S.activeToolId }; S.operations.push(op); }
-  op.areas.push(area);
+  if (!op){ op = { type:'pocket', pockets:[], toolId: S.activeToolId }; S.operations.push(op); }
+  op.pockets.push({ boundary });
   updateOpsList(); buildProgram(); render(); scheduleSave();
+  showToast('Cajeado anadido','success');
 }
+function selectPocketAt(wx, wy){
+  const found = findClosedEntityAt(wx, wy);
+  if (!found){ showToast('Haz clic dentro de una figura cerrada','warn'); return; }
+  addPocketBoundary(found.boundary);
+}
+
 function removeOp(i){ if (i>=0 && i<S.operations.length) S.operations.splice(i,1); updateOpsList(); rebuildAllContours(); buildProgram(); render(); scheduleSave(); }
 function clearOps(){
   S.operations = []; S.pocketStart = null;
@@ -983,7 +1019,7 @@ function undoOp(){
   const op = S.operations[S.operations.length-1];
   if (op.type==='drill' && op.points.length>1) op.points.pop();
   else if (op.type==='cut' && op.ids.length>1) op.ids.pop();
-  else if (op.type==='pocket' && op.areas.length>1) op.areas.pop();
+  else if (op.type==='pocket' && op.pockets && op.pockets.length>1) op.pockets.pop();
   else S.operations.pop();
   updateOpsList(); rebuildAllContours(); buildProgram(); render(); scheduleSave();
 }
@@ -995,7 +1031,7 @@ function updateOpsList(){
     let det = '';
     if (op.type==='drill') det = `${op.points.length} pts`;
     else if (op.type==='cut') det = `${op.ids.length} ent`;
-    else if (op.type==='pocket') det = `${op.areas.length} areas`;
+    else if (op.type==='pocket') det = `${(op.pockets||[]).length} cajeados`;
     let offSel = '';
     if (op.type === 'cut'){ const off = op.offset || 'center';
       offSel = `<select class="op-tool-select" data-i="${i}" data-k="offset" style="max-width:34px;">
@@ -1121,7 +1157,6 @@ function buildProgram(){
     groups.get(tid).push({ op, originalIndex: S.operations.indexOf(op) });
   }
 
-  let toolChangeCount = 0;
   for (const tid of toolOrder){
     const tool = getToolById(tid); if (!tool) continue;
     const entries = groups.get(tid);
@@ -1145,7 +1180,6 @@ function buildProgram(){
       addSpindlePause(-1);
     }
     emit('', -1);
-    toolChangeCount++;
 
     for (let oi = 0; oi < entries.length; oi++){
       const { op, originalIndex } = entries[oi];
@@ -1211,7 +1245,6 @@ function buildProgram(){
             emitCutWithTabsUnified(lines, lineBlocks, blockId, ptsEff, isClosed, tool, z, tabsEff, S.tabs.height);
             emitSimWithTabs(ptsEff, isClosed, z, tool.feed, S.tabs.height, tabsEff, blockId, addMove);
           } else {
-            // Emisión de puntos (G1). Clipper devuelve puntos densos para arcos.
             for (let i = 1; i < ptsEff.length; i++){
               emit(`G1 X${ptsEff[i].x.toFixed(3)} Y${ptsEff[i].y.toFixed(3)} F${tool.feed}`, blockId);
             }
@@ -1228,65 +1261,68 @@ function buildProgram(){
         emit(`G0 Z${tool.retract.toFixed(3)}`, -1);
         addMove('rapid', [{x:lastX, y:lastY}], tool.retract, S.rapidZ, -1);
       } else if (op.type === 'pocket'){
+        const pockets = op.pockets || [];
+        if (!pockets.length){ emit('(cajeado sin contornos)', -1); emit('', -1); continue; }
         if (Math.abs(lastZ - tool.safe) > 0.01){
           emit(`G0 Z${tool.safe.toFixed(3)}`, -1);
           addMove('rapid', [{x:lastX, y:lastY}], tool.safe, S.rapidZ, -1);
         }
-        for (const a of op.areas){
-          if (a.shape === 'rect'){
-            const x1 = Math.min(a.x1,a.x2)+tool.diam/2, y1 = Math.min(a.y1,a.y2)+tool.diam/2;
-            const x2 = Math.max(a.x1,a.x2)-tool.diam/2, y2 = Math.max(a.y1,a.y2)-tool.diam/2;
-            if (x2 <= x1 || y2 <= y1) continue;
-            const stepY = tool.diam * (1 - tool.overlap);
-            for (let k = 0; k < passes; k++){
+        const toolR    = tool.diam / 2;
+        const stepOver = Math.max(0.1, tool.diam * (1 - tool.overlap));
+
+        for (let pki = 0; pki < pockets.length; pki++){
+          let boundary = pockets[pki].boundary.map(p => ({ x:p.x + S.offsetX, y:p.y + S.offsetY }));
+          if (signedArea(boundary) < 0) boundary = boundary.slice().reverse();
+
+          // Generar anillos concéntricos: offsets[0] = perímetro (-toolR)
+          const offsets = [];
+          let d = -toolR;
+          const maxIter = 800;
+          let iter = 0;
+          while (iter++ < maxIter){
+            let off;
+            try { off = offsetPointsWithClipper(boundary, d, 'round'); }
+            catch(err){ off = offsetPointsSimpleFallback(boundary, d); }
+            if (!off || off.length < 3) break;
+            const area = Math.abs(signedArea(off));
+            if (area < Math.PI * toolR * toolR * 0.35) break;
+            offsets.push(off);
+            d -= stepOver;
+          }
+          if (!offsets.length){
+            emit('(cajeado demasiado pequeno para la herramienta)', -1); emit('', -1); continue;
+          }
+          emit(`(Cajeado ${pki+1}/${pockets.length}: ${offsets.length} anillos x ${passes} pasadas Z)`, -1);
+
+          for (let zPass = 0; zPass < passes; zPass++){
+            const zLevel = -Math.min((zPass+1)*step, tool.depth);
+            emit(`(Pasada Z ${zLevel.toFixed(3)}mm)`, -1);
+
+            // De dentro hacia fuera: el último anillo de cada Z es el perímetro (acabado)
+            for (let oi = offsets.length - 1; oi >= 0; oi--){
+              const ring = offsets[oi];
+              if (ring.length < 3) continue;
               blockId++;
-              const z = -Math.min((k+1)*step, tool.depth);
-              emit(`G0 X${x1.toFixed(3)} Y${y1.toFixed(3)}`, blockId);
-              addMove('rapid', [{x:lastX, y:lastY}, {x:x1, y:y1}], tool.safe, S.rapidXY, blockId);
-              emit(`G1 Z${z.toFixed(3)} F${tool.feedZ}`, blockId);
-              addMove('cut', [{x:x1, y:y1}], z, tool.feedZ, blockId);
-              let dir = 1, y = y1;
-              const segPts = [{x:x1,y:y1}];
-              while (y <= y2 + 1e-9){
-                const xe = dir > 0 ? x2 : x1;
-                emit(`G1 X${xe.toFixed(3)} Y${y.toFixed(3)} F${tool.feed}`, blockId);
-                segPts.push({x:xe, y:y});
-                y += stepY; if (y > y2) break;
-                const xn = dir > 0 ? x1 : x2;
-                emit(`G1 X${xn.toFixed(3)} Y${y.toFixed(3)} F${tool.feed}`, blockId);
-                segPts.push({x:xn, y:y});
-                dir *= -1;
+              const f = ring[0];
+
+              emit(`G0 Z${tool.safe.toFixed(3)}`, blockId);
+              addMove('rapid', [{x:lastX, y:lastY}], tool.safe, S.rapidZ, blockId);
+              emit(`G0 X${f.x.toFixed(3)} Y${f.y.toFixed(3)}`, blockId);
+              addMove('rapid', [{x:lastX, y:lastY}, {x:f.x, y:f.y}], tool.safe, S.rapidXY, blockId);
+              emit(`G1 Z${zLevel.toFixed(3)} F${tool.feedZ}`, blockId);
+              addMove('cut', [{x:f.x, y:f.y}], zLevel, tool.feedZ, blockId);
+
+              for (let i = 1; i < ring.length; i++){
+                emit(`G1 X${ring[i].x.toFixed(3)} Y${ring[i].y.toFixed(3)} F${tool.feed}`, blockId);
               }
-              addMove('cut', segPts, z, tool.feed, blockId);
+              emit(`G1 X${f.x.toFixed(3)} Y${f.y.toFixed(3)} F${tool.feed}`, blockId);
+              addMove('cut', ring.concat([{x:f.x, y:f.y}]), zLevel, tool.feed, blockId);
+
               emit(`G0 Z${tool.retract.toFixed(3)}`, blockId);
-              addMove('rapid', [{x:segPts[segPts.length-1].x, y:segPts[segPts.length-1].y}], tool.retract, S.rapidZ, blockId);
-            }
-          } else if (a.shape === 'circle'){
-            const stepR = tool.diam * (1 - tool.overlap);
-            for (let k = 0; k < passes; k++){
-              blockId++;
-              const z = -Math.min((k+1)*step, tool.depth);
-              let rr = stepR;
-              while (rr <= a.r){
-                const st = Math.max(24, Math.ceil(2*Math.PI*rr / (stepR*0.5)));
-                emit(`G0 X${(a.cx+rr).toFixed(3)} Y${a.cy.toFixed(3)}`, blockId);
-                addMove('rapid', [{x:lastX, y:lastY}, {x:a.cx+rr, y:a.cy}], tool.safe, S.rapidXY, blockId);
-                emit(`G1 Z${z.toFixed(3)} F${tool.feedZ}`, blockId);
-                addMove('cut', [{x:a.cx+rr, y:a.cy}], z, tool.feedZ, blockId);
-                const ringPts = [];
-                for (let s = 1; s <= st; s++){
-                  const ang = s/st*Math.PI*2;
-                  const px = a.cx + rr*Math.cos(ang), py = a.cy + rr*Math.sin(ang);
-                  emit(`G1 X${px.toFixed(3)} Y${py.toFixed(3)} F${tool.feed}`, blockId);
-                  ringPts.push({x:px, y:py});
-                }
-                addMove('cut', ringPts, z, tool.feed, blockId);
-                emit(`G0 Z${tool.retract.toFixed(3)}`, blockId);
-                addMove('rapid', [{x:ringPts[ringPts.length-1].x, y:ringPts[ringPts.length-1].y}], tool.retract, S.rapidZ, blockId);
-                rr += stepR;
-              }
+              addMove('rapid', [{x:lastX, y:lastY}], tool.retract, S.rapidZ, blockId);
             }
           }
+          emit(`G0 Z${tool.safe.toFixed(3)}`, -1);
         }
       }
       emit('', -1);
@@ -1507,11 +1543,9 @@ function render(){
   const list = effective();
   const cutSet = new Set();
   const drillPts = [];
-  const pockets = [];
   for (const op of S.operations){
     if (op.type === 'cut') op.ids.forEach(i => cutSet.add(i));
     if (op.type === 'drill') drillPts.push(...op.points);
-    if (op.type === 'pocket') pockets.push(...op.areas);
   }
   for (let i=0;i<list.length;i++){
     const e = list[i];
@@ -1585,21 +1619,31 @@ function render(){
   for (const p of drillPts){ const s = w2s(p.x, p.y);
     ctx.fillStyle = 'rgba(255,107,107,0.3)'; ctx.strokeStyle = '#ff6b6b'; ctx.lineWidth = 1.5;
     ctx.beginPath(); ctx.arc(s.x-r.left, s.y-r.top, 5, 0, Math.PI*2); ctx.fill(); ctx.stroke(); }
-  for (const a of pockets){
-    if (a.shape === 'circle'){ const sc = w2s(a.cx, a.cy);
-      ctx.strokeStyle = 'rgba(78,201,144,0.4)'; ctx.lineWidth = 1.5; ctx.setLineDash([5,4]);
-      ctx.beginPath(); ctx.arc(sc.x-r.left, sc.y-r.top, a.r*S.scale, 0, Math.PI*2); ctx.stroke(); ctx.setLineDash([]); }
-    else if (a.shape === 'rect'){ const s1 = w2s(a.x1, a.y1), s2 = w2s(a.x2, a.y2);
-      ctx.strokeStyle = 'rgba(78,201,144,0.4)'; ctx.lineWidth = 1.5; ctx.setLineDash([5,4]);
-      ctx.strokeRect(Math.min(s1.x,s2.x)-r.left, Math.min(s1.y,s2.y)-r.top, Math.abs(s2.x-s1.x), Math.abs(s2.y-s1.y));
-      ctx.setLineDash([]); }
+
+  // Render de cajeados (contornos seleccionados)
+  for (const op of S.operations){
+    if (op.type !== 'pocket' || !op.pockets) continue;
+    for (const pk of op.pockets){
+      const pts = pk.boundary.map(p => ({ x:p.x + S.offsetX, y:p.y + S.offsetY }));
+      if (pts.length < 2) continue;
+      ctx.strokeStyle = 'rgba(78,201,144,0.85)';
+      ctx.fillStyle   = 'rgba(78,201,144,0.12)';
+      ctx.lineWidth   = 2;
+      ctx.setLineDash([5,4]);
+      ctx.beginPath();
+      const s0 = w2s(pts[0].x, pts[0].y);
+      ctx.moveTo(s0.x-r.left, s0.y-r.top);
+      for (let i=1;i<pts.length;i++){
+        const s = w2s(pts[i].x, pts[i].y);
+        ctx.lineTo(s.x-r.left, s.y-r.top);
+      }
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
   }
-  if (S.pocketStart && S.mode === 'pocket'){
-    const s1 = w2s(S.pocketStart.x, S.pocketStart.y), s2 = w2s(S.mwx, S.mwy);
-    ctx.strokeStyle = '#4ec990'; ctx.lineWidth = 1.5; ctx.setLineDash([4,3]);
-    ctx.strokeRect(Math.min(s1.x,s2.x)-r.left, Math.min(s1.y,s2.y)-r.top, Math.abs(s2.x-s1.x), Math.abs(s2.y-s1.y));
-    ctx.setLineDash([]);
-  }
+
   if (S.selRect){
     const s1 = w2s(S.selRect.x1, S.selRect.y1), s2 = w2s(S.selRect.x2, S.selRect.y2);
     ctx.strokeStyle = '#ffb347'; ctx.lineWidth = 1.5; ctx.setLineDash([4,3]);
@@ -1906,7 +1950,7 @@ S.simSpeedMult = parseInt(simSpeedEl.value) / 10;
 simSpeedVal.textContent = S.simSpeedMult.toFixed(1) + 'x';
 
 // =================================================================
-//  ZOOM centrado en el cursor (fórmula robusta con/sin flipY)
+//  ZOOM centrado en el cursor
 // =================================================================
 canvasContainer.addEventListener('wheel', e => {
   e.preventDefault();
@@ -1914,7 +1958,6 @@ canvasContainer.addEventListener('wheel', e => {
   const cx = rect.width / 2, cy = rect.height / 2;
   const localX = e.clientX - rect.left - cx;
   const localY = e.clientY - rect.top - cy;
-  // Punto del mundo bajo el cursor AHORA
   const worldX = (localX - S.offX) / S.scale;
   const worldY = -(localY + S.offY) / S.scale * (S.flipY ? -1 : 1);
 
@@ -1922,7 +1965,6 @@ canvasContainer.addEventListener('wheel', e => {
   S.scale *= factor;
   S.scale = Math.max(0.005, Math.min(500, S.scale));
 
-  // Reposicionar offset para que el punto del mundo siga bajo el cursor
   S.offX = localX - worldX * S.scale;
   if (S.flipY){
     S.offY = worldY * S.scale - localY;
@@ -1954,16 +1996,7 @@ canvasContainer.addEventListener('mousedown', e => {
       S.selRect = null;
       e.preventDefault();
     } else if (S.mode === 'pocket'){
-      const ci = closestCircle(w.x, w.y, 8);
-      if (ci >= 0 && !S.pocketStart){
-        const c = effective()[ci];
-        addPocket({ shape:'circle', cx:c.cx, cy:c.cy, r:c.r });
-      } else if (!S.pocketStart){
-        S.pocketStart = { x:w.x, y:w.y };
-      } else {
-        addPocket({ shape:'rect', x1:S.pocketStart.x, y1:S.pocketStart.y, x2:w.x, y2:w.y });
-        S.pocketStart = null;
-      }
+      selectPocketAt(w.x, w.y);
     }
   }
 });
@@ -2077,7 +2110,7 @@ function init(){
   } else {
     showToast('Proyecto restaurado','success');
   }
-  console.log('CNC DXF a G-Code - Clipper offset + zoom centrado');
+  console.log('CNC DXF a G-Code - Clipper offset + cajeado por figura');
   if (S.clipperReady){
     console.log('  ✅ Clipper activo');
   } else {
