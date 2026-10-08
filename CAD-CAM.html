@@ -3,7 +3,6 @@
 <head>
 <meta charset="UTF-8">
 <title>CNC DXF → G-Code · Clipper Offset</title>
-<!-- js-angusj-clipper vía esm.sh → se expone como window.clipperLib y window.jsAngusjClipper -->
 <script type="module">
   import * as clipperLib from 'https://esm.sh/js-angusj-clipper@1.3.1';
   window.clipperLib = clipperLib;
@@ -236,8 +235,10 @@ canvas{display:block;position:absolute;top:0;left:0}
 
 const STORAGE_KEY = 'cncdxf_project_v2';
 const PROJECT_VERSION = 2;
-const CLIPPER_SCALE = 1000;   // 1 mm = 1000 unidades enteras (0.001 mm precisión)
-const CLIPPER_ARC_TOLERANCE = 0.1; // tolerancia del aplanado de arcos, en mm reales
+const CLIPPER_SCALE = 1000;          // 1 mm = 1000 uds enteras
+const CLIPPER_ARC_TOLERANCE = 0.1;   // mm (tolerancia de aplanado de arcos)
+const MAX_GCODE_LINES = 40000;       // aviso + limitación de render
+const MAX_POCKET_RINGS = 300;        // tope duro por cajeado
 
 // ================= PARSER DXF =================
 function parseDXF(text){
@@ -349,7 +350,7 @@ const S = {
   mode:'view', scale:2, offX:0, offY:0,
   panning:false, psx:0, psy:0, poffx:0, poffy:0,
   mwx:0, mwy:0, hover:-1,
-  pocketStart:null, layerVis:{}, layers:new Set(),
+  layerVis:{}, layers:new Set(),
   selRect:null, selecting:false, selStart:null, selEnd:null,
   showSim:true, offsetX:0, offsetY:0,
   flipArcs:false, flipY:false, lastMiddleClick: 0,
@@ -376,7 +377,7 @@ const simSpeedEl = $('simSpeed'), simSpeedVal = $('simSpeedVal');
 const simProgressEl = $('simProgress'), simPctEl = $('simPct'), simOpInfoEl = $('simOpInfo');
 const simTotalLabel = $('simTotalLabel'), tabsInfoEl = $('tabsInfo');
 
-// Cargar la instancia nativa de Clipper en cuanto esté disponible la librería
+// ================= Clipper =================
 window.addEventListener('clipper-ready', async () => {
   try {
     const lib = window.jsAngusjClipper;
@@ -463,6 +464,29 @@ function signedArea(pts){ let a = 0; const n = pts.length;
   for (let i = 0; i < n; i++){ const p1 = pts[i], p2 = pts[(i + 1) % n]; a += p1.x * p2.y - p2.x * p1.y; }
   return a / 2;
 }
+function dedupePolygon(pts, tol){
+  tol = tol || 1e-4;
+  if (!pts || pts.length < 2) return pts ? pts.slice() : [];
+  const out = [pts[0]];
+  for (let i = 1; i < pts.length; i++){
+    const last = out[out.length - 1];
+    if (Math.hypot(pts[i].x - last.x, pts[i].y - last.y) > tol) out.push(pts[i]);
+  }
+  while (out.length > 1 && Math.hypot(out[0].x - out[out.length-1].x, out[0].y - out[out.length-1].y) < tol){
+    out.pop();
+  }
+  return out;
+}
+function bboxFromPoints(pts){
+  let mnx=Infinity,mny=Infinity,mxx=-Infinity,mxy=-Infinity;
+  for (const p of pts){
+    if (p.x < mnx) mnx = p.x;
+    if (p.y < mny) mny = p.y;
+    if (p.x > mxx) mxx = p.x;
+    if (p.y > mxy) mxy = p.y;
+  }
+  return { mnx, mny, mxx, mxy, w: mxx-mnx, h: mxy-mny };
+}
 function buildPath(pts, closed){ return closed ? pts.concat([{ x: pts[0].x, y: pts[0].y }]) : pts.slice(); }
 function computeCumLens(path){
   const cum = [0];
@@ -492,7 +516,7 @@ function pathPointsBetween(path, cumLens, s1, s2){
   return result;
 }
 
-// --- NUEVAS funciones para el cajeado ---
+// --- Utilidades para el cajeado ---
 function pointInPolygon(px, py, verts){
   let inside = false;
   const n = verts.length;
@@ -505,7 +529,7 @@ function pointInPolygon(px, py, verts){
   return inside;
 }
 function circleToPolygonPoints(c, segs){
-  segs = segs || 72;
+  segs = segs || 48;
   const pts = [];
   for (let i = 0; i < segs; i++){
     const a = i / segs * Math.PI * 2;
@@ -535,7 +559,7 @@ function findClosedEntityAt(wx, wy){
 }
 
 // =================================================================
-//  CONVERSIÓN DXF → PUNTOS (aplana todo, incluyendo arcos)
+//  CONVERSIÓN DXF → PUNTOS
 // =================================================================
 function entityToPointsDense(e){
   const pts = [];
@@ -564,7 +588,6 @@ function entityToPointsDense(e){
   }
   return pts;
 }
-
 function chainPointsFromEntities(entityList, tol){
   tol = tol || 0.15;
   const parts = [];
@@ -621,7 +644,6 @@ function chainPointsFromEntities(entityList, tol){
   if (isClosed && result.length > 2) result = result.slice(0, -1);
   return { points: result, closed: isClosed };
 }
-
 function rotatePointsToStart(pts, ox, oy){
   if (!pts || pts.length < 2) return pts;
   let bestIdx = 0, bestDist = Infinity;
@@ -634,36 +656,72 @@ function rotatePointsToStart(pts, ox, oy){
 }
 
 // =================================================================
-//  OFFSET VÍA CLIPPER (síncrono: la API de js-angusj-clipper es síncrona una vez cargada)
+//  OFFSET CON CLIPPER
+//  Convención: delta > 0 → expande (hacia fuera);
+//               delta < 0 → contrae (hacia dentro).
+//  Solo se usan polígonos cerrados y se asume orientación CCW para
+//  que la elección de signo sea coherente.
 // =================================================================
 function offsetPointsWithClipper(pts, delta, joinTypeName){
+  pts = dedupePolygon(pts, 1e-4);
+  if (pts.length < 3) return [];
+
   if (!S.clipperReady || !S.clipperInstance){
-    console.warn('Clipper no disponible, usando offset simple (fallback)');
     return offsetPointsSimpleFallback(pts, delta);
   }
   const lib = window.jsAngusjClipper;
   const clipper = S.clipperInstance;
 
   const intPath = pts.map(p => ({ x: Math.round(p.x * CLIPPER_SCALE), y: Math.round(p.y * CLIPPER_SCALE) }));
-  const co = new clipper.ClipperOffset(2.0, CLIPPER_ARC_TOLERANCE * CLIPPER_SCALE);
 
-  let joinType = lib.JoinType.Round;
-  if (joinTypeName === 'miter') joinType = lib.JoinType.Miter;
-  else if (joinTypeName === 'square') joinType = lib.JoinType.Square;
+  let co = null;
+  try {
+    co = new clipper.ClipperOffset(2.0, CLIPPER_ARC_TOLERANCE * CLIPPER_SCALE);
+    let joinType = lib.JoinType.Round;
+    if (joinTypeName === 'miter') joinType = lib.JoinType.Miter;
+    else if (joinTypeName === 'square') joinType = lib.JoinType.Square;
+    co.addPath(intPath, joinType, lib.EndType.ClosedPolygon);
 
-  co.addPath(intPath, joinType, lib.EndType.ClosedPolygon);
+    const deltaInt = Math.round(delta * CLIPPER_SCALE);
 
-  const deltaInt = Math.round(delta * CLIPPER_SCALE);
-  const solution = co.executeToPaths(deltaInt, 0.5);
+    // Compatibilidad con distintas versiones de la API
+    let solution = null;
+    if (typeof co.executeToPaths === 'function'){
+      solution = co.executeToPaths(deltaInt, 0.5);
+    } else if (typeof co.execute === 'function'){
+      solution = co.execute(deltaInt);
+    }
+    if (!solution || solution.length === 0) return [];
 
-  if (!solution || solution.length === 0){ co.dispose(); return []; }
-  const result = solution[0].map(p => ({ x: p.x / CLIPPER_SCALE, y: p.y / CLIPPER_SCALE }));
-  co.dispose();
-  return result;
+    // Elegir el path con MAYOR área (contorno principal)
+    let bestIdx = -1, bestArea = -Infinity;
+    for (let i = 0; i < solution.length; i++){
+      const path = solution[i];
+      if (!path || path.length < 3) continue;
+      let a = 0;
+      for (let k = 0; k < path.length; k++){
+        const p1 = path[k], p2 = path[(k+1) % path.length];
+        a += p1.x * p2.y - p2.x * p1.y;
+      }
+      a = Math.abs(a / 2);
+      if (a > bestArea){ bestArea = a; bestIdx = i; }
+    }
+    if (bestIdx < 0) return [];
+    return solution[bestIdx].map(p => ({ x: p.x / CLIPPER_SCALE, y: p.y / CLIPPER_SCALE }));
+  } catch (err){
+    console.warn('Clipper offset error, fallback:', err);
+    return offsetPointsSimpleFallback(pts, delta);
+  } finally {
+    if (co && typeof co.dispose === 'function'){
+      try { co.dispose(); } catch(e){ /* ignore */ }
+    }
+  }
 }
 
+// Fallback: usa la MISMA convención que Clipper (delta<0 contrae, delta>0 expande).
+// Se asume polígono CCW. La normal OUTWARD de un CCW es (dy, -dx)/len.
 function offsetPointsSimpleFallback(pts, delta){
-  if (!pts.length) return pts;
+  if (!pts || pts.length < 3) return [];
   const n = pts.length;
   const out = [];
   for (let i = 0; i < n; i++){
@@ -674,8 +732,9 @@ function offsetPointsSimpleFallback(pts, delta){
     const v2x = next.x - curr.x, v2y = next.y - curr.y;
     const l1 = Math.hypot(v1x, v1y), l2 = Math.hypot(v2x, v2y);
     if (l1 < 1e-9 || l2 < 1e-9){ out.push({ x: curr.x, y: curr.y }); continue; }
-    const n1x = -v1y / l1, n1y = v1x / l1;
-    const n2x = -v2y / l2, n2y = v2x / l2;
+    // Outward normal para CCW: (dy, -dx)/len
+    const n1x =  v1y / l1, n1y = -v1x / l1;
+    const n2x =  v2y / l2, n2y = -v2x / l2;
     const mx = (n1x + n2x) / 2, my = (n1y + n2y) / 2;
     const ml = Math.hypot(mx, my);
     if (ml < 1e-9){ out.push({ x: curr.x, y: curr.y }); continue; }
@@ -707,8 +766,9 @@ function resolveCutContour(op, tool){
     const ccw = signedArea(pts) > 0;
     const toolRadius = tool.diam / 2;
     let delta;
+    // Clipper: delta>0 expande, delta<0 contrae
     if (off === 'inside') delta = ccw ? -toolRadius : +toolRadius;
-    else delta = ccw ? +toolRadius : -toolRadius;
+    else                 delta = ccw ? +toolRadius : -toolRadius;
     try {
       const result = offsetPointsWithClipper(pts, delta, 'round');
       if (result && result.length >= 3) pts = result;
@@ -988,10 +1048,11 @@ function addCut(idx){
   updateOpsList(); rebuildAllContours(); buildProgram(); render(); scheduleSave();
 }
 
-// --- NUEVAS funciones de cajeado ---
 function addPocketBoundary(boundary){
   if (!S.tools.length){ showToast('Anade primero una herramienta','warn'); return; }
-  if (signedArea(boundary) < 0) boundary = boundary.slice().reverse(); // CCW
+  boundary = dedupePolygon(boundary, 1e-3);
+  if (boundary.length < 3){ showToast('Contorno invalido','warn'); return; }
+  if (signedArea(boundary) < 0) boundary = boundary.slice().reverse();  // CCW
   let op = S.operations.find(o => o.type === 'pocket');
   if (!op){ op = { type:'pocket', pockets:[], toolId: S.activeToolId }; S.operations.push(op); }
   op.pockets.push({ boundary });
@@ -1006,7 +1067,7 @@ function selectPocketAt(wx, wy){
 
 function removeOp(i){ if (i>=0 && i<S.operations.length) S.operations.splice(i,1); updateOpsList(); rebuildAllContours(); buildProgram(); render(); scheduleSave(); }
 function clearOps(){
-  S.operations = []; S.pocketStart = null;
+  S.operations = [];
   S.simMoves = []; S.simMoveTimes = []; S.simTotalTime = 0; S.simT = 0;
   S.cutContours = {}; S.cutTabs = {};
   S.gcodeLines = []; S.gcodeBlock = []; S.blockPoints = {}; S.blockZ = {};
@@ -1110,6 +1171,7 @@ function buildProgram(){
   const blockZ = S.blockZ;
 
   const emit = (txt, block) => {
+    if (lines.length >= MAX_GCODE_LINES * 1.5) return;  // límite duro de seguridad
     lines.push(txt);
     lineBlocks.push(block === undefined ? -1 : block);
   };
@@ -1167,7 +1229,7 @@ function buildProgram(){
     emit(`(--- Herramienta T${tool.toolNumber}: ${tool.name} ---)`, -1);
     emit(`(Diam ${tool.diam}mm - ${tool.rpm}rpm - Avance XY ${tool.feed} - Avance Z ${tool.feedZ})`, -1);
     emit(`(Corte ${cutDirName} - Mandrino ${spindleDir} ${dirName})`, -1);
-    if (S.tabs.enabled){ emit(`(Patillas: ${S.tabs.count} uds - ancho REAL ${S.tabs.width}mm - alto ${S.tabs.height}mm)`, -1); }
+    if (S.tabs.enabled){ emit(`(Patillas: ${S.tabs.count} uds - ancho ${S.tabs.width}mm - alto ${S.tabs.height}mm)`, -1); }
     if (Math.abs(lastZ - tool.safe) > 0.01){
       emit(`G0 Z${tool.safe.toFixed(3)}`, -1);
       addMove('rapid', [{x:lastX, y:lastY}], tool.safe, S.rapidZ, -1);
@@ -1183,7 +1245,7 @@ function buildProgram(){
 
     for (let oi = 0; oi < entries.length; oi++){
       const { op, originalIndex } = entries[oi];
-      const passes = Math.max(1, Math.ceil(tool.depth / tool.step));
+      const passes = Math.max(1, Math.min(500, Math.ceil(tool.depth / tool.step)));
       const step = tool.depth / passes;
       emit(`(Operacion ${oi+1}/${entries.length}: ${op.type.toUpperCase()})`, -1);
 
@@ -1269,23 +1331,35 @@ function buildProgram(){
         }
         const toolR    = tool.diam / 2;
         const stepOver = Math.max(0.1, tool.diam * (1 - tool.overlap));
+        const minArea  = Math.PI * toolR * toolR * 0.25;
 
         for (let pki = 0; pki < pockets.length; pki++){
           let boundary = pockets[pki].boundary.map(p => ({ x:p.x + S.offsetX, y:p.y + S.offsetY }));
-          if (signedArea(boundary) < 0) boundary = boundary.slice().reverse();
+          boundary = dedupePolygon(boundary, 1e-3);
+          if (boundary.length < 3){ emit('(cajeado invalido)', -1); emit('', -1); continue; }
+          if (signedArea(boundary) < 0) boundary = boundary.slice().reverse();  // CCW
 
-          // Generar anillos concéntricos: offsets[0] = perímetro (-toolR)
+          // --- Generar anillos concéntricos (de fuera hacia dentro) ---
           const offsets = [];
+          const bbBoundary = bboxFromPoints(boundary);
+          const maxRingsBySize = Math.ceil(Math.max(bbBoundary.w, bbBoundary.h) / stepOver) + 5;
+          const maxRings = Math.min(MAX_POCKET_RINGS, Math.max(1, maxRingsBySize));
           let d = -toolR;
-          const maxIter = 800;
-          let iter = 0;
-          while (iter++ < maxIter){
-            let off;
+          let prevArea = Infinity;
+          let ok = true;
+          for (let iter = 0; iter < maxRings; iter++){
+            let off = null;
             try { off = offsetPointsWithClipper(boundary, d, 'round'); }
-            catch(err){ off = offsetPointsSimpleFallback(boundary, d); }
+            catch(err){ off = null; }
             if (!off || off.length < 3) break;
             const area = Math.abs(signedArea(off));
-            if (area < Math.PI * toolR * toolR * 0.35) break;
+            if (area < minArea) break;
+            // Si el área no decrece, Clipper está devolviendo algo raro → parar
+            if (iter > 0 && area >= prevArea * 0.9999){
+              console.warn('Offset detenido: area no decrece en iter', iter, 'area=', area, 'prev=', prevArea);
+              break;
+            }
+            prevArea = area;
             offsets.push(off);
             d -= stepOver;
           }
@@ -1297,10 +1371,9 @@ function buildProgram(){
           for (let zPass = 0; zPass < passes; zPass++){
             const zLevel = -Math.min((zPass+1)*step, tool.depth);
             emit(`(Pasada Z ${zLevel.toFixed(3)}mm)`, -1);
-
-            // De dentro hacia fuera: el último anillo de cada Z es el perímetro (acabado)
-            for (let oi = offsets.length - 1; oi >= 0; oi--){
-              const ring = offsets[oi];
+            // De dentro hacia fuera: el ÚLTIMO anillo de cada Z es el perímetro
+            for (let ri = offsets.length - 1; ri >= 0; ri--){
+              const ring = offsets[ri];
               if (ring.length < 3) continue;
               blockId++;
               const f = ring[0];
@@ -1343,6 +1416,10 @@ function buildProgram(){
 
   renderGcodeDisplay();
   updateSimUI();
+
+  if (S.gcodeLines.length >= MAX_GCODE_LINES){
+    showToast('G-Code grande: ' + S.gcodeLines.length + ' líneas (vista limitada)', 'warn');
+  }
 }
 
 function emitCutWithTabsUnified(lines, lineBlocks, blockId, pts, closed, tool, fullZ, tabs, tabHeight){
@@ -1403,14 +1480,19 @@ function emitSimWithTabs(pts, closed, fullZ, feed, tabHeight, tabs, blockId, add
   }
 }
 
-// ================= UI G-CODE =================
+// ================= UI G-CODE (con delegación, render limitado) =================
 function renderGcodeDisplay(){
   if (!S.gcodeLines.length){
     gcodeEl.innerHTML = '<div class="empty-hint">(Sin generar)</div>';
     return;
   }
-  let html = '';
-  for (let i = 0; i < S.gcodeLines.length; i++){
+  const total = S.gcodeLines.length;
+  const displayCount = Math.min(total, MAX_GCODE_LINES);
+  const parts = [];
+  if (total > MAX_GCODE_LINES){
+    parts.push(`<div class="empty-hint" style="color:var(--warning);">Vista limitada: mostrando ${MAX_GCODE_LINES} de ${total} líneas</div>`);
+  }
+  for (let i = 0; i < displayCount; i++){
     const l = S.gcodeLines[i];
     const isActive = (i === S.activeGlineIdx);
     const isSelected = (i === S.selectedGlineIdx);
@@ -1418,12 +1500,9 @@ function renderGcodeDisplay(){
     if (isActive) cls += ' active';
     if (isSelected) cls += ' selected';
     const text = l === '' ? '&nbsp;' : escapeHtml(l);
-    html += `<div class="${cls}" data-idx="${i}">${text}</div>`;
+    parts.push(`<div class="${cls}" data-idx="${i}">${text}</div>`);
   }
-  gcodeEl.innerHTML = html;
-  gcodeEl.querySelectorAll('.gline').forEach(el => {
-    el.addEventListener('click', () => onGlineClick(parseInt(el.dataset.idx)));
-  });
+  gcodeEl.innerHTML = parts.join('');
 }
 function updateActiveGlineByBlock(blockId){
   if (blockId === S._lastActiveBlock) return;
@@ -1479,6 +1558,14 @@ function onGlineClick(idx){
   }
   render();
 }
+// Delegación de eventos (se registra UNA vez)
+gcodeEl.addEventListener('click', e => {
+  const el = e.target.closest('.gline');
+  if (!el) return;
+  const idx = parseInt(el.dataset.idx);
+  if (isNaN(idx)) return;
+  onGlineClick(idx);
+});
 
 // ================= SIMULACION =================
 function updateSimUI(){
@@ -1620,7 +1707,7 @@ function render(){
     ctx.fillStyle = 'rgba(255,107,107,0.3)'; ctx.strokeStyle = '#ff6b6b'; ctx.lineWidth = 1.5;
     ctx.beginPath(); ctx.arc(s.x-r.left, s.y-r.top, 5, 0, Math.PI*2); ctx.fill(); ctx.stroke(); }
 
-  // Render de cajeados (contornos seleccionados)
+  // Cajeado: contornos seleccionados
   for (const op of S.operations){
     if (op.type !== 'pocket' || !op.pockets) continue;
     for (const pk of op.pockets){
@@ -1821,7 +1908,7 @@ function showToast(msg, type=''){
 }
 
 function setMode(m){
-  S.mode = m; S.pocketStart = null; S.selRect = null; S.selecting = false;
+  S.mode = m; S.selRect = null; S.selecting = false;
   modeBtns.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
   const b = modeBtns.querySelector(`[data-mode="${m}"]`);
   if (b) b.classList.add('active');
@@ -1874,7 +1961,13 @@ $('projInput').addEventListener('change', e => { const f = e.target.files[0]; if
 $('btnFit').addEventListener('click', () => { fitView(); render(); scheduleSave(); });
 $('btnClear').addEventListener('click', clearOps);
 $('btnUndo').addEventListener('click', undoOp);
-$('btnGen').addEventListener('click', () => { buildProgram(); render(); showToast('G-Code actualizado','success'); });
+$('btnGen').addEventListener('click', () => {
+  const t0 = performance.now();
+  buildProgram();
+  const dt = Math.round(performance.now() - t0);
+  render();
+  showToast(`G-Code actualizado (${S.gcodeLines.length} líneas, ${dt} ms)`,'success');
+});
 $('btnDl').addEventListener('click', () => {
   if (!S.gcodeLines.length){ showToast('Genera primero','warn'); return; }
   const g = S.gcodeLines.join('\n');
@@ -1910,15 +2003,15 @@ function updateToolField(id, transform){
 }
 $('tName').addEventListener('change', () => updateToolField('tName', t => { t.name = $('tName').value.trim() || t.name; }));
 $('tNum').addEventListener('change', () => updateToolField('tNum', t => { t.toolNumber = Math.max(1, parseInt($('tNum').value) || 1); }));
-$('cDiam').addEventListener('change', () => updateToolField('cDiam', t => { t.diam = parseFloat($('cDiam').value) || 3.175; }));
+$('cDiam').addEventListener('change', () => updateToolField('cDiam', t => { t.diam = Math.max(0.1, parseFloat($('cDiam').value) || 3.175); }));
 $('cRpm').addEventListener('change', () => updateToolField('cRpm', t => { t.rpm = parseInt($('cRpm').value) || 12000; }));
-$('cFeed').addEventListener('change', () => updateToolField('cFeed', t => { t.feed = parseFloat($('cFeed').value) || 800; }));
-$('cFeedZ').addEventListener('change', () => updateToolField('cFeedZ', t => { t.feedZ = parseFloat($('cFeedZ').value) || 400; }));
-$('cStep').addEventListener('change', () => updateToolField('cStep', t => { t.step = parseFloat($('cStep').value) || 1.5; }));
-$('cDepth').addEventListener('change', () => updateToolField('cDepth', t => { t.depth = parseFloat($('cDepth').value) || 6; }));
+$('cFeed').addEventListener('change', () => updateToolField('cFeed', t => { t.feed = Math.max(1, parseFloat($('cFeed').value) || 800); }));
+$('cFeedZ').addEventListener('change', () => updateToolField('cFeedZ', t => { t.feedZ = Math.max(1, parseFloat($('cFeedZ').value) || 400); }));
+$('cStep').addEventListener('change', () => updateToolField('cStep', t => { t.step = Math.max(0.01, parseFloat($('cStep').value) || 1.5); }));
+$('cDepth').addEventListener('change', () => updateToolField('cDepth', t => { t.depth = Math.max(0, parseFloat($('cDepth').value) || 6); }));
 $('cSafe').addEventListener('change', () => updateToolField('cSafe', t => { t.safe = parseFloat($('cSafe').value) || 15; }));
 $('cRetract').addEventListener('change', () => updateToolField('cRetract', t => { t.retract = parseFloat($('cRetract').value) || 5; }));
-$('cOverlap').addEventListener('change', () => updateToolField('cOverlap', t => { t.overlap = parseFloat($('cOverlap').value) || 0.35; }));
+$('cOverlap').addEventListener('change', () => updateToolField('cOverlap', t => { t.overlap = Math.max(0, Math.min(0.95, parseFloat($('cOverlap').value) || 0.35)); }));
 $('cCutDir').addEventListener('change', () => updateToolField('cCutDir', t => { t.cutDir = $('cCutDir').value; }));
 $('cSpindleDir').addEventListener('change', () => updateToolField('cSpindleDir', t => { t.spindleDir = $('cSpindleDir').value; }));
 
@@ -1949,9 +2042,7 @@ simSpeedEl.addEventListener('input', () => {
 S.simSpeedMult = parseInt(simSpeedEl.value) / 10;
 simSpeedVal.textContent = S.simSpeedMult.toFixed(1) + 'x';
 
-// =================================================================
-//  ZOOM centrado en el cursor
-// =================================================================
+// Zoom centrado en el cursor
 canvasContainer.addEventListener('wheel', e => {
   e.preventDefault();
   const rect = canvasContainer.getBoundingClientRect();
@@ -2060,7 +2151,7 @@ canvasContainer.addEventListener('contextmenu', e => e.preventDefault());
 
 window.addEventListener('keydown', e => {
   if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
-  if (e.key === 'Escape'){ setMode('view'); S.pocketStart = null; }
+  if (e.key === 'Escape'){ setMode('view'); }
   if (e.key === 'f' || e.key === 'F'){ fitView(); render(); }
   if (e.key === 'g' || e.key === 'G'){ buildProgram(); render(); }
   if (e.key === 'h' || e.key === 'H') centerOnOrigin();
@@ -2110,7 +2201,7 @@ function init(){
   } else {
     showToast('Proyecto restaurado','success');
   }
-  console.log('CNC DXF a G-Code - Clipper offset + cajeado por figura');
+  console.log('CNC DXF a G-Code - Clipper offset + cajeado por figura (v2 corregida)');
   if (S.clipperReady){
     console.log('  ✅ Clipper activo');
   } else {
