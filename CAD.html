@@ -1,4 +1,1072 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CAD Pro – Exportación DXF R12 (AutoCAD compatible)</title>
+    <style>
+        /* ═══════════════════════════════════════════════════════════
+           SECCIÓN: Variables y reset
+           ═══════════════════════════════════════════════════════════ */
+        :root {
+            --bg-main: #1A1A1A;
+            --bg-canvas: #16181A;
+            --bg-ribbon: #232323;
+            --bg-ribbon-2: #2A2A2A;
+            --bg-panel: #262626;
+            --bg-button: #333333;
+            --bg-hover: #3E3E3E;
+            --bg-pressed: #1567C4;
+            --bg-selection: #1567C4;
+            --text-primary: #D9D9D9;
+            --text-secondary: #8C8C8C;
+            --text-dim: #6B6B6B;
+            --border-color: #383838;
+            --border-light: #454545;
+            --accent-blue: #4FC3F7;
+            --accent-amber: #E8A33D;
+            --accent-green: #57C46B;
+            --shadow: 0 3px 10px rgba(0,0,0,0.5);
+            --transition: all 0.12s ease;
+            --font-ui: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+            --font-mono: 'Cascadia Mono', 'Consolas', 'SF Mono', monospace;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background: var(--bg-main);
+            color: var(--text-primary);
+            font-family: var(--font-ui);
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            user-select: none;
+            font-size: 13px;
+        }
+
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-panel); }
+        ::-webkit-scrollbar-thumb { background: #555; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #777; }
+
+        /* ═══════════════════════════════════════════════════════════
+           SECCIÓN: Barra de acceso rápido
+           ═══════════════════════════════════════════════════════════ */
+        #quick-access {
+            background: linear-gradient(to bottom, #2C2C2C, #202020);
+            border-bottom: 1px solid var(--border-color);
+            padding: 0 10px;
+            display: flex;
+            align-items: center;
+            gap: 2px;
+            height: 30px;
+        }
+        #quick-access .brand {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-right: 10px;
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-size: 12px;
+            letter-spacing: 0.4px;
+        }
+        #quick-access .brand svg { width: 16px; height: 16px; }
+        #quick-access button {
+            background: transparent;
+            border: 1px solid transparent;
+            color: var(--text-secondary);
+            cursor: pointer;
+            width: 26px;
+            height: 24px;
+            border-radius: 3px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
+        }
+        #quick-access button svg { width: 15px; height: 15px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+        #quick-access button:hover { background: var(--bg-hover); color: var(--text-primary); border-color: var(--border-light); }
+        #quick-access button:active { background: var(--bg-pressed); color: #fff; }
+        #quick-access .separator { width: 1px; height: 18px; background: var(--border-color); margin: 0 6px; }
+        #quick-access .file-input-hidden { display: none; }
+
+        /* ═══════════════════════════════════════════════════════════
+           SECCIÓN: Ribbon
+           ═══════════════════════════════════════════════════════════ */
+        #ribbon {
+            background: var(--bg-ribbon);
+            border-bottom: 1px solid var(--border-color);
+            padding: 0 8px;
+            display: flex;
+            flex-direction: column;
+        }
+        #ribbon-tabs {
+            display: flex;
+            gap: 2px;
+            padding: 5px 0 0 2px;
+            height: 26px;
+            align-items: flex-end;
+        }
+        #ribbon-tabs button {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            padding: 5px 14px;
+            font-size: 11px;
+            cursor: pointer;
+            border-radius: 3px 3px 0 0;
+            transition: var(--transition);
+            font-weight: 600;
+            letter-spacing: 0.4px;
+            text-transform: uppercase;
+        }
+        #ribbon-tabs button:hover { background: var(--bg-hover); color: var(--text-primary); }
+        #ribbon-tabs button.active { background: var(--bg-panel); color: var(--accent-blue); box-shadow: inset 0 -2px 0 var(--accent-blue); }
+        #ribbon-content {
+            background: var(--bg-panel);
+            padding: 5px 10px;
+            border-top: 1px solid var(--border-light);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2px 8px;
+            min-height: 50px;
+            align-items: stretch;
+        }
+        .ribbon-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 3px;
+            padding: 2px 10px 0;
+            border-right: 1px solid var(--border-color);
+        }
+        .ribbon-group:last-child { border-right: none; }
+        .ribbon-group .ribbon-group-btns { display: flex; align-items: flex-start; gap: 1px; }
+        .ribbon-group label {
+            font-size: 9px;
+            text-transform: uppercase;
+            color: var(--text-dim);
+            letter-spacing: 0.6px;
+            font-weight: 600;
+            order: 2;
+            width: 100%;
+            text-align: center;
+        }
+        .ribbon-btn {
+            background: transparent;
+            border: 1px solid transparent;
+            color: var(--text-primary);
+            padding: 4px 9px;
+            border-radius: 3px;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-size: 9.5px;
+            transition: var(--transition);
+            min-width: 42px;
+            gap: 3px;
+            position: relative;
+        }
+        .ribbon-btn svg {
+            width: 19px;
+            height: 19px;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 1.6;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+        .ribbon-btn svg.fill { fill: currentColor; stroke: none; }
+        .ribbon-btn:hover { background: var(--bg-hover); border-color: var(--border-light); }
+        .ribbon-btn.active { background: var(--bg-selection); color: white; border-color: var(--bg-selection); }
+        .ribbon-btn .tooltip {
+            display: none;
+            position: absolute;
+            top: 100%;
+            margin-top: 6px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #111;
+            color: #eee;
+            padding: 3px 8px;
+            border: 1px solid var(--border-light);
+            border-radius: 3px;
+            font-size: 10px;
+            font-family: var(--font-mono);
+            white-space: nowrap;
+            pointer-events: none;
+            z-index: 1000;
+            box-shadow: var(--shadow);
+        }
+        .ribbon-btn:hover .tooltip { display: block; }
+
+        .ribbon-flyout { position: relative; }
+        .ribbon-flyout-menu {
+            display: none;
+            position: absolute;
+            bottom: 100%;
+            margin-bottom: 6px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--bg-panel);
+            border: 1px solid var(--border-light);
+            border-radius: 4px;
+            box-shadow: var(--shadow);
+            padding: 4px;
+            min-width: 150px;
+            z-index: 1000;
+        }
+        .ribbon-flyout-menu.open { display: block; }
+        .ribbon-flyout-menu button {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            width: 100%;
+            background: transparent;
+            border: none;
+            color: var(--text-primary);
+            padding: 6px 8px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 11.5px;
+            text-align: left;
+            white-space: nowrap;
+        }
+        .ribbon-flyout-menu button:hover { background: var(--bg-hover); }
+        .ribbon-flyout-menu button svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+        .ribbon-flyout-menu button .fk { margin-left: auto; color: var(--text-dim); font-family: var(--font-mono); font-size: 10px; }
+
+        /* ═══════════════════════════════════════════════════════════
+           SECCIÓN: Selector de capa actual (Ribbon)
+           ═══════════════════════════════════════════════════════════ */
+        .layer-combo { position: relative; }
+        #layer-dropdown {
+            flex-direction: row;
+            font-size: 11px;
+            gap: 6px;
+            min-width: 90px;
+        }
+        .layer-combo-swatch {
+            display: inline-block;
+            width: 11px;
+            height: 11px;
+            border-radius: 2px;
+            border: 1px solid rgba(255,255,255,0.4);
+            flex-shrink: 0;
+        }
+        .layer-combo-caret { width: 9px; height: 9px; stroke: currentColor; fill: none; stroke-width: 2; margin-left: 2px; flex-shrink: 0; }
+        .layer-combo-menu {
+            display: none;
+            position: absolute;
+            top: 100%;
+            margin-top: 6px;
+            left: 0;
+            background: var(--bg-panel);
+            border: 1px solid var(--border-light);
+            border-radius: 4px;
+            box-shadow: var(--shadow);
+            padding: 4px;
+            min-width: 170px;
+            max-height: 240px;
+            overflow-y: auto;
+            z-index: 1000;
+        }
+        .layer-combo-menu.open { display: block; }
+        .layer-combo-menu .lcm-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            width: 100%;
+            background: transparent;
+            border: none;
+            color: var(--text-primary);
+            padding: 6px 8px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 11.5px;
+            text-align: left;
+            white-space: nowrap;
+        }
+        .layer-combo-menu .lcm-item:hover { background: var(--bg-hover); }
+        .layer-combo-menu .lcm-item.active { color: var(--accent-blue); font-weight: 600; }
+        .layer-combo-menu .lcm-swatch {
+            width: 11px;
+            height: 11px;
+            border-radius: 2px;
+            flex-shrink: 0;
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+
+        /* ═══════════════════════════════════════════════════════════
+           SECCIÓN: Layout principal
+           ═══════════════════════════════════════════════════════════ */
+        #main-area {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* ═══════════════════════════════════════════════════════════
+           SECCIÓN: Panel de capas
+           ═══════════════════════════════════════════════════════════ */
+        #layer-panel {
+            width: 200px;
+            background: var(--bg-panel);
+            border-right: 1px solid var(--border-color);
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+            overflow: hidden;
+        }
+        #layer-panel h3 {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--text-dim);
+            letter-spacing: 0.7px;
+            margin-bottom: 8px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        #layer-panel h3 button {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 14px;
+            padding: 0 4px;
+        }
+        #layer-panel h3 button:hover { color: var(--text-primary); }
+        #layer-list {
+            list-style: none;
+            flex: 1;
+            overflow-y: auto;
+        }
+        #layer-list li {
+            padding: 4px 6px;
+            cursor: pointer;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            transition: var(--transition);
+            margin-bottom: 1px;
+        }
+        #layer-list li:hover { background: var(--bg-hover); }
+        #layer-list li.active { background: var(--bg-selection); color: white; }
+        #layer-list li .color-swatch {
+            width: 14px;
+            height: 14px;
+            border-radius: 3px;
+            border: 1px solid rgba(255,255,255,0.2);
+            flex-shrink: 0;
+            cursor: pointer;
+        }
+        #layer-list li .color-swatch:hover { transform: scale(1.1); }
+        #layer-list li .layer-name { flex: 1; }
+        #layer-list li .layer-controls { display: flex; gap: 2px; }
+        #layer-list li .layer-controls button {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 12px;
+            padding: 0 2px;
+            transition: var(--transition);
+        }
+        #layer-list li .layer-controls button:hover { color: var(--text-primary); }
+
+        /* ═══════════════════════════════════════════════════════════
+           SECCIÓN: Canvas
+           ═══════════════════════════════════════════════════════════ */
+        #canvas-container {
+            flex: 1;
+            position: relative;
+            background: var(--bg-main);
+            overflow: hidden;
+        }
+        #myCanvas { width: 100%; height: 100%; display: block; cursor: none; background: var(--bg-canvas); }
+
+        /* ═══════════════════════════════════════════════════════════
+           SECCIÓN: Menú contextual
+           ═══════════════════════════════════════════════════════════ */
+        #context-menu {
+            position: fixed;
+            display: none;
+            z-index: 2000;
+            background: #232323;
+            border: 1px solid var(--border-light);
+            border-radius: 4px;
+            box-shadow: var(--shadow);
+            padding: 4px;
+            min-width: 190px;
+            font-size: 12px;
+        }
+        #context-menu .cm-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 6px 10px;
+            border-radius: 3px;
+            color: var(--text-primary);
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        #context-menu .cm-item:hover { background: var(--bg-selection); color: #fff; }
+        #context-menu .cm-item.disabled { color: var(--text-dim); cursor: default; }
+        #context-menu .cm-item.disabled:hover { background: transparent; color: var(--text-dim); }
+        #context-menu .cm-key { color: var(--text-dim); font-family: var(--font-mono); font-size: 10.5px; }
+        #context-menu .cm-item:hover .cm-key { color: rgba(255,255,255,0.75); }
+        #context-menu .cm-sep { height: 1px; background: var(--border-color); margin: 4px 2px; }
+
+        /* ═══════════════════════════════════════════════════════════
+           SECCIÓN: Modal genérico
+           ═══════════════════════════════════════════════════════════ */
+        #app-modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.55);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 3000;
+        }
+        #app-modal-overlay.open { display: flex; }
+        #app-modal-box {
+            background: var(--bg-panel);
+            border: 1px solid var(--border-light);
+            border-radius: 6px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+            width: 380px;
+            max-width: 90vw;
+            padding: 18px 20px;
+        }
+        #app-modal-box h3 {
+            font-size: 14px;
+            color: var(--text-primary);
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+        #app-modal-box #app-modal-body {
+            font-size: 12.5px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            margin-bottom: 16px;
+        }
+        #app-modal-box #app-modal-body code {
+            background: var(--bg-main);
+            border: 1px solid var(--border-color);
+            border-radius: 3px;
+            padding: 1px 5px;
+            font-family: var(--font-mono);
+            color: var(--accent-amber);
+        }
+        #app-modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        #app-modal-actions button {
+            background: var(--bg-button);
+            border: 1px solid var(--border-light);
+            color: var(--text-primary);
+            padding: 7px 14px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            transition: var(--transition);
+        }
+        #app-modal-actions button:hover { background: var(--bg-hover); }
+        #app-modal-actions button.primary { background: var(--accent-blue); border-color: var(--accent-blue); color: #06283d; }
+        #app-modal-actions button.primary:hover { filter: brightness(1.1); }
+
+        /* ═══════════════════════════════════════════════════════════
+           SECCIÓN: Panel de propiedades
+           ═══════════════════════════════════════════════════════════ */
+        #properties-panel {
+            width: 280px;
+            background: var(--bg-panel);
+            border-left: 1px solid var(--border-color);
+            padding: 10px 12px;
+            flex-shrink: 0;
+            overflow-y: auto;
+            display: none;
+        }
+        #properties-panel.visible {
+            display: block;
+            animation: slideIn 0.2s ease;
+        }
+        #properties-panel h3 {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 8px;
+        }
+        .prop-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 4px 0;
+            font-size: 12px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            align-items: center;
+        }
+        .prop-label { color: var(--text-secondary); flex: 0 0 80px; }
+        .prop-value {
+            flex: 1;
+            text-align: right;
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+        .prop-value select,
+        .prop-value input {
+            background: var(--bg-main);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 3px;
+            padding: 2px 4px;
+            font-size: 12px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .prop-value input[type="color"] {
+            padding: 0;
+            height: 24px;
+            width: 40px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+        }
+        .prop-value input[type="number"] { width: 80px; text-align: right; }
+        .prop-value .coord-group { display: flex; gap: 4px; justify-content: flex-end; }
+        .prop-value .coord-group input { width: 60px; }
+
+        /* ═══════════════════════════════════════════════════════════
+           SECCIÓN: Barra inferior de estado
+           ═══════════════════════════════════════════════════════════ */
+        #status-bar {
+            height: 28px;
+            background: var(--bg-ribbon);
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            padding: 0 8px;
+            gap: 2px;
+            font-size: 11px;
+            color: var(--text-secondary);
+            flex-shrink: 0;
+        }
+        #status-bar .status-group { display: flex; align-items: center; gap: 2px; }
+        #status-bar .status-group .label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.3px; }
+        #status-bar .status-group button {
+            background: transparent;
+            border: 1px solid transparent;
+            color: var(--text-secondary);
+            padding: 3px 9px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 10.5px;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+            transition: var(--transition);
+        }
+        #status-bar .status-group button:hover { background: var(--bg-hover); color: var(--text-primary); }
+        #status-bar .status-group button.active { background: rgba(79,195,247,0.15); border-color: var(--accent-blue); color: var(--accent-blue); }
+        #status-bar .status-group button svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; vertical-align: -2px; margin-right: 4px; }
+        #status-bar .status-sep { width: 1px; height: 16px; background: var(--border-color); margin: 0 6px; flex-shrink: 0; }
+        #status-bar .coords {
+            font-family: var(--font-mono);
+            font-size: 12px;
+            color: var(--text-primary);
+            background: var(--bg-main);
+            border: 1px solid var(--border-color);
+            border-radius: 3px;
+            padding: 3px 10px;
+            flex-shrink: 0;
+        }
+        #status-bar .status-scroll {
+            display: flex;
+            align-items: center;
+            gap: 2px;
+            margin-left: auto;
+            overflow: hidden;
+        }
+        #status-bar .zoom-indicator { font-size: 11px; color: var(--text-secondary); margin-left: 10px; font-family: var(--font-mono); flex-shrink: 0; }
+        #cmd-history-toggle {
+            background: transparent;
+            border: 1px solid transparent;
+            color: var(--text-secondary);
+            padding: 3px 7px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.3px;
+        }
+        #cmd-history-toggle:hover { background: var(--bg-hover); color: var(--text-primary); }
+        #cmd-history-toggle.active { color: var(--accent-blue); border-color: var(--accent-blue); }
+
+        /* ═══════════════════════════════════════════════════════════
+           SECCIÓN: Ventana de texto F2
+           ═══════════════════════════════════════════════════════════ */
+        #cmd-history-panel {
+            position: fixed;
+            left: 0; right: 0;
+            bottom: 54px;
+            height: 240px;
+            background: #0c0c0c;
+            border-top: 1px solid var(--border-light);
+            box-shadow: 0 -6px 18px rgba(0,0,0,0.5);
+            z-index: 900;
+            display: none;
+            flex-direction: column;
+        }
+        #cmd-history-panel.open { display: flex; }
+        #cmd-history-panel .cmh-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 5px 10px;
+            background: var(--bg-ribbon);
+            border-bottom: 1px solid var(--border-color);
+            font-size: 10.5px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-dim);
+            flex-shrink: 0;
+        }
+        #cmd-history-panel .cmh-head button { background: transparent; border: none; color: var(--text-dim); cursor: pointer; font-size: 14px; line-height: 1; padding: 0 4px; }
+        #cmd-history-panel .cmh-head button:hover { color: var(--text-primary); }
+        #cmd-history-panel .cmh-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px 12px;
+            font-family: var(--font-mono);
+            font-size: 12px;
+            color: #b9b9b9;
+            line-height: 1.6;
+        }
+        #cmd-history-panel .cmh-body div:last-child { color: var(--accent-blue); }
+
+        /* ═══════════════════════════════════════════════════════════
+           SECCIÓN: Línea de comandos
+           ═══════════════════════════════════════════════════════════ */
+        #command-line {
+            height: 26px;
+            background: #101010;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            padding: 0 12px;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+        #cmd-prompt {
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-size: 12.5px;
+            font-family: var(--font-mono);
+            min-width: 66px;
+        }
+        #cmd-input {
+            flex: 1;
+            background: transparent;
+            color: var(--text-primary);
+            border: none;
+            outline: none;
+            font-size: 12.5px;
+            font-family: var(--font-mono);
+            padding: 2px 0;
+            letter-spacing: 0.2px;
+        }
+        #cmd-input::placeholder { color: var(--text-dim); }
+        #cmd-status {
+            color: var(--text-dim);
+            font-size: 11px;
+            font-family: var(--font-mono);
+            min-width: 100px;
+            text-align: right;
+        }
+
+        /* ═══════════════════════════════════════════════════════════
+           SECCIÓN: Mini mapa (navigator)
+           ═══════════════════════════════════════════════════════════ */
+        #navigator {
+            position: absolute;
+            bottom: 40px;
+            right: 16px;
+            width: 150px;
+            height: 120px;
+            background: rgba(30,30,30,0.85);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            overflow: hidden;
+            z-index: 100;
+            box-shadow: var(--shadow);
+            display: none;
+        }
+        #navigator canvas { width: 100%; height: 100%; display: block; }
+        #navigator.visible { display: block; animation: fadeIn 0.2s ease; }
+
+        /* ═══════════════════════════════════════════════════════════
+           SECCIÓN: Crosshair estilo AutoCAD
+           ═══════════════════════════════════════════════════════════ */
+        .crosshair {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            pointer-events: none;
+            z-index: 50;
+            display: none;
+        }
+        .crosshair-line { position: absolute; background: rgba(217,217,217,0.45); }
+        .crosshair-line.h { width: 100vw; height: 1px; left: 0; }
+        .crosshair-line.v { width: 1px; height: 100vh; top: 0; }
+        .crosshair-box {
+            position: absolute;
+            width: 9px;
+            height: 9px;
+            margin: -5px 0 0 -5px;
+            border: 1px solid var(--accent-blue);
+            background: rgba(79,195,247,0.10);
+        }
+
+        /* ═══════════════════════════════════════════════════════════
+           SECCIÓN: Color picker oculto + animaciones + responsive
+           ═══════════════════════════════════════════════════════════ */
+        #color-picker-hidden { display: none; position: fixed; z-index: 9999; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-10px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        .fade-in { animation: fadeIn 0.15s ease; }
+        .slide-in { animation: slideIn 0.2s ease; }
+
+        @media (max-width: 1024px) {
+            #layer-panel { width: 160px; }
+            #properties-panel { width: 220px; }
+            #ribbon-content { gap: 4px 10px; padding: 4px 6px; }
+            .ribbon-btn { min-width: 34px; padding: 2px 4px; }
+            .ribbon-btn svg { width: 16px; height: 16px; }
+        }
+        @media (max-width: 768px) {
+            #layer-panel, #properties-panel { display: none; }
+            #ribbon-tabs button { font-size: 10px; padding: 2px 8px; }
+            .ribbon-group label { display: none; }
+        }
+    </style>
+</head>
+<body>
+
     <!-- ═══════════════════════════════════════════════════════════
+         SECCIÓN: Barra de acceso rápido
+         ═══════════════════════════════════════════════════════════ -->
+    <div id="quick-access">
+        <span class="brand">
+            <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 15V9l4 6V9l4 6"/></svg>
+            CAD&nbsp;Pro
+        </span>
+        <div class="separator"></div>
+        <button id="qa-new" title="Nuevo (Ctrl+N)"><svg viewBox="0 0 24 24"><path d="M13 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V9z"/><path d="M13 3v6h6"/></svg></button>
+        <button id="qa-open" title="Importar DXF (Ctrl+O)"><svg viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></button>
+        <button id="qa-save" title="Exportar DXF (Ctrl+S)"><svg viewBox="0 0 24 24"><path d="M5 3h11l3 3v15H5z"/><path d="M8 3v6h8V3M8 21v-7h8v7"/></svg></button>
+        <div class="separator"></div>
+        <button id="qa-undo" title="Deshacer (Ctrl+Z)"><svg viewBox="0 0 24 24"><path d="M3 11h11a5 5 0 0 1 0 10h-3"/><path d="M8 6 3 11l5 5"/></svg></button>
+        <button id="qa-redo" title="Rehacer (Ctrl+Y)"><svg viewBox="0 0 24 24"><path d="M21 11H10a5 5 0 0 0 0 10h3"/><path d="M16 6l5 5-5 5"/></svg></button>
+        <div class="separator"></div>
+        <button id="qa-print" title="Imprimir"><svg viewBox="0 0 24 24"><path d="M6 9V3h12v6"/><rect x="4" y="9" width="16" height="8" rx="1"/><path d="M6 17v4h12v-4"/></svg></button>
+        <button id="qa-navigator" title="Mini mapa"><svg viewBox="0 0 24 24"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2z"/><path d="M9 4v14M15 6v14"/></svg></button>
+        <input type="file" id="file-input-import" class="file-input-hidden" accept=".dxf,.dwg">
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         SECCIÓN: Ribbon (pestañas + contenido)
+         ═══════════════════════════════════════════════════════════ -->
+    <div id="ribbon">
+        <div id="ribbon-tabs">
+            <button class="active" data-tab="home">Inicio</button>
+            <button data-tab="insert">Insertar</button>
+            <button data-tab="view">Vista</button>
+        </div>
+        <div id="ribbon-content">
+            <!-- ─── Pestaña INICIO: grupo Dibujar ─── -->
+            <div class="ribbon-group" data-tab="home">
+                <label>Dibujar</label>
+                <div class="ribbon-group-btns">
+                <button class="ribbon-btn" data-cmd="LINE" title="Línea">
+                    <svg viewBox="0 0 24 24"><circle cx="4" cy="20" r="1.4" fill="currentColor" stroke="none"/><line x1="4" y1="20" x2="20" y2="4"/><circle cx="20" cy="4" r="1.4" fill="currentColor" stroke="none"/></svg>
+                    <span>Línea</span>
+                    <span class="tooltip">LINE (L)</span>
+                </button>
+                <button class="ribbon-btn" data-cmd="CIRCLE" title="Círculo">
+                    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="0.8" fill="currentColor" stroke="none"/><line x1="12" y1="3.5" x2="12" y2="5.5" stroke-width="1.2"/></svg>
+                    <span>Círculo</span>
+                    <span class="tooltip">CIRCLE (C)</span>
+                </button>
+                <button class="ribbon-btn" data-cmd="RECTANG" title="Rectángulo">
+                    <svg viewBox="0 0 24 24"><rect x="3.5" y="5.5" width="17" height="13" rx="0.5"/></svg>
+                    <span>Rectángulo</span>
+                    <span class="tooltip">RECTANG (REC)</span>
+                </button>
+                <button class="ribbon-btn" data-cmd="ARC" title="Arco">
+                    <svg viewBox="0 0 24 24"><path d="M4 17 A 13 13 0 0 1 20 17" fill="none"/><circle cx="4" cy="17" r="1.2" fill="currentColor" stroke="none"/><circle cx="20" cy="17" r="1.2" fill="currentColor" stroke="none"/></svg>
+                    <span>Arco</span>
+                    <span class="tooltip">ARC (A)</span>
+                </button>
+                </div>
+            </div>
+
+            <!-- ─── Pestaña INICIO: grupo Modificar ─── -->
+            <div class="ribbon-group" data-tab="home">
+                <label>Modificar</label>
+                <div class="ribbon-group-btns">
+                <button class="ribbon-btn" data-cmd="MOVE" title="Mover">
+                    <svg viewBox="0 0 24 24"><line x1="12" y1="2.5" x2="12" y2="21.5"/><line x1="2.5" y1="12" x2="21.5" y2="12"/><path d="M12 2.5 9 6M12 2.5 15 6M12 21.5 9 18M12 21.5 15 18M2.5 12 6 9M2.5 12 6 15M21.5 12 18 9M21.5 12 18 15"/></svg>
+                    <span>Mover</span>
+                    <span class="tooltip">MOVE (M)</span>
+                </button>
+                <button class="ribbon-btn" data-cmd="COPY" title="Copiar">
+                    <svg viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="0.5"/><path d="M5.5 15.5H4.5A0.5 0.5 0 0 1 4 15V4.5A0.5 0.5 0 0 1 4.5 4H15a0.5 0.5 0 0 1 0.5 0.5V5.5" fill="none"/></svg>
+                    <span>Copiar</span>
+                    <span class="tooltip">COPY (CO)</span>
+                </button>
+                <button class="ribbon-btn" data-cmd="ROTATE" title="Rotar">
+                    <svg viewBox="0 0 24 24"><path d="M18.4 8A7.5 7.5 0 1 0 20 12"/><path d="M20 4v5h-5"/></svg>
+                    <span>Rotar</span>
+                    <span class="tooltip">ROTATE (RO)</span>
+                </button>
+                <button class="ribbon-btn" data-cmd="TRIM" title="Recortar">
+                    <svg viewBox="0 0 24 24"><line x1="4" y1="4" x2="20" y2="20"/><line x1="20" y1="4" x2="14.3" y2="9.7"/><line x1="9.7" y1="14.3" x2="4" y2="20"/><circle cx="14.3" cy="9.7" r="1" fill="currentColor" stroke="none"/><circle cx="9.7" cy="14.3" r="1" fill="currentColor" stroke="none"/></svg>
+                    <span>Recortar</span>
+                    <span class="tooltip">TRIM (TR)</span>
+                </button>
+                <button class="ribbon-btn" data-cmd="OFFSET" title="Offset">
+                    <svg viewBox="0 0 24 24"><path d="M3 16c4-9 14-9 18 0" fill="none"/><path d="M6.3 16c3-6.2 8.4-6.2 11.4 0" fill="none" stroke-dasharray="2.2 2.2"/></svg>
+                    <span>Offset</span>
+                    <span class="tooltip">OFFSET (O)</span>
+                </button>
+                <button class="ribbon-btn" data-cmd="ERASE" title="Borrar">
+                    <svg viewBox="0 0 24 24"><path d="M15.5 3.5 5 14l3 6.5h5L21 12z"/><line x1="9" y1="9.5" x2="16" y2="16.5" stroke-width="1.2"/><line x1="3" y1="20.5" x2="10" y2="20.5"/></svg>
+                    <span>Borrar</span>
+                    <span class="tooltip">ERASE (E)</span>
+                </button>
+                <button class="ribbon-btn" data-cmd="MIRROR" title="Simetría">
+                    <svg viewBox="0 0 24 24">
+                        <line x1="12" y1="3" x2="12" y2="21" stroke-dasharray="2 2"/>
+                        <polygon points="3,7 8,12 3,17"/>
+                        <polygon points="21,7 16,12 21,17"/>
+                    </svg>
+                    <span>Simetría</span>
+                    <span class="tooltip">MIRROR (MI)</span>
+                </button>
+                <div class="ribbon-flyout">
+                    <button class="ribbon-btn" id="ribbon-more-modify" title="Más comandos">
+                        <svg viewBox="0 0 24 24"><circle cx="6" cy="12" r="1.3" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.3" fill="currentColor" stroke="none"/><circle cx="18" cy="12" r="1.3" fill="currentColor" stroke="none"/></svg>
+                        <span>Más <svg class="flyout-caret" viewBox="0 0 24 24" style="width:8px;height:8px;display:inline-block;vertical-align:1px;"><path d="M6 9l6 6 6-6"/></svg></span>
+                    </button>
+                    <div class="ribbon-flyout-menu" id="ribbon-more-modify-menu">
+                        <button data-cmd="SCALE"><svg viewBox="0 0 24 24"><polygon points="3,3 21,3 21,21 3,21"/><line x1="3" y1="12" x2="21" y2="12" stroke-dasharray="2 2"/><line x1="12" y1="3" x2="12" y2="21" stroke-dasharray="2 2"/></svg>Escala <span class="fk">SC</span></button>
+                        <button data-cmd="EXTEND"><svg viewBox="0 0 24 24"><line x1="4" y1="18" x2="20" y2="18"/><line x1="12" y1="6" x2="12" y2="18"/><path d="M9 9l3-3 3 3"/></svg>Alargar <span class="fk">EX</span></button>
+                        <button data-cmd="JOIN"><svg viewBox="0 0 24 24"><path d="M4 8h7"/><path d="M13 16h7"/><path d="M11 8a4 4 0 0 1 4 4v0a4 4 0 0 1-4 4"/></svg>Unir <span class="fk">J</span></button>
+                    </div>
+                </div>
+                </div>
+            </div>
+
+            <!-- ─── Pestaña INICIO: grupo Capas ─── -->
+            <div class="ribbon-group" data-tab="home">
+                <label>Capas</label>
+                <div class="layer-combo" id="layer-combo">
+                    <button class="ribbon-btn" id="layer-dropdown" title="Capa actual">
+                        <span class="layer-combo-swatch" id="current-layer-swatch"></span>
+                        <span id="current-layer-name">0</span>
+                        <svg class="layer-combo-caret" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+                        <span class="tooltip">Capa actual — clic para cambiar</span>
+                    </button>
+                    <div class="layer-combo-menu" id="layer-combo-menu"></div>
+                </div>
+            </div>
+
+            <!-- ─── Pestaña INSERTAR ─── -->
+            <div class="ribbon-group" data-tab="insert" style="display:none;">
+                <label>Archivo</label>
+                <div class="ribbon-group-btns">
+                <button class="ribbon-btn" id="ribbon-import" title="Importar DXF">
+                    <svg viewBox="0 0 24 24"><polygon points="3,3 21,3 21,21 3,21"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+                    <span>Importar</span>
+                    <span class="tooltip">Importar DXF</span>
+                </button>
+                <button class="ribbon-btn" id="ribbon-export" title="Exportar DXF">
+                    <svg viewBox="0 0 24 24"><polygon points="3,3 21,3 21,21 3,21"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/><polygon points="8,16 16,16 14,19 10,19" fill="currentColor" stroke="none"/></svg>
+                    <span>Exportar</span>
+                    <span class="tooltip">Exportar DXF</span>
+                </button>
+                </div>
+            </div>
+
+            <!-- ─── Pestaña VISTA: navegación ─── -->
+            <div class="ribbon-group" data-tab="view" style="display:none;">
+                <label>Navegación</label>
+                <div class="ribbon-group-btns">
+                <button class="ribbon-btn" id="btn-zoom-extents" title="Zoom Extents">
+                    <svg viewBox="0 0 24 24"><polygon points="3,3 21,3 21,21 3,21"/><polygon points="6,6 18,6 18,18 6,18" fill="currentColor" stroke="none" opacity="0.3"/></svg>
+                    <span>Extents</span>
+                    <span class="tooltip">Zoom Extents (Ctrl+0)</span>
+                </button>
+                <button class="ribbon-btn" id="btn-zoom-in" title="Zoom In">
+                    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><line x1="12" y1="6" x2="12" y2="18"/><line x1="6" y1="12" x2="18" y2="12"/></svg>
+                    <span>Acercar</span>
+                    <span class="tooltip">Zoom In</span>
+                </button>
+                <button class="ribbon-btn" id="btn-zoom-out" title="Zoom Out">
+                    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><line x1="6" y1="12" x2="18" y2="12"/></svg>
+                    <span>Alejar</span>
+                    <span class="tooltip">Zoom Out</span>
+                </button>
+                </div>
+            </div>
+
+            <!-- ─── Pestaña VISTA: ayudas de dibujo ─── -->
+            <div class="ribbon-group" data-tab="view" style="display:none;">
+                <label>Ayudas de dibujo</label>
+                <div class="ribbon-group-btns">
+                <button class="ribbon-btn" id="btn-grid-toggle" title="Grid">
+                    <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" fill="none" stroke="currentColor"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/></svg>
+                    <span>Grid</span>
+                    <span class="tooltip">Mostrar/Ocultar Grid (F7)</span>
+                </button>
+                <button class="ribbon-btn" id="btn-navigator-toggle" title="Mini mapa">
+                    <svg viewBox="0 0 24 24"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2z"/><path d="M9 4v14M15 6v14"/></svg>
+                    <span>Mini mapa</span>
+                    <span class="tooltip">Mostrar/Ocultar mini mapa</span>
+                </button>
+                </div>
+            </div>
+
+            <!-- ─── Pestaña VISTA: paletas ─── -->
+            <div class="ribbon-group" data-tab="view" style="display:none;">
+                <label>Paletas</label>
+                <div class="ribbon-group-btns">
+                <button class="ribbon-btn active" id="btn-layers-panel-toggle" title="Panel de capas">
+                    <svg viewBox="0 0 24 24"><path d="M12 3 3 8l9 5 9-5-9-5z"/><path d="M3 12l9 5 9-5"/><path d="M3 16l9 5 9-5"/></svg>
+                    <span>Capas</span>
+                    <span class="tooltip">Mostrar/Ocultar panel de capas (Ctrl+2)</span>
+                </button>
+                <button class="ribbon-btn active" id="btn-properties-panel-toggle" title="Panel de propiedades">
+                    <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="1"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="9" x2="9" y2="20"/></svg>
+                    <span>Propiedades</span>
+                    <span class="tooltip">Mostrar/Ocultar panel de propiedades (Ctrl+1)</span>
+                </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         SECCIÓN: Área principal (capas + canvas + propiedades)
+         ═══════════════════════════════════════════════════════════ -->
+    <div id="main-area">
+        <div id="layer-panel">
+            <h3>Capas <button id="add-layer-btn">+</button></h3>
+            <ul id="layer-list"></ul>
+        </div>
+
+        <div id="canvas-container">
+            <canvas id="myCanvas"></canvas>
+            <div id="navigator">
+                <canvas id="navCanvas"></canvas>
+            </div>
+            <div id="context-menu"></div>
+        </div>
+
+        <div id="app-modal-overlay">
+            <div id="app-modal-box">
+                <h3 id="app-modal-title">Título</h3>
+                <div id="app-modal-body">Cuerpo</div>
+                <div id="app-modal-actions"></div>
+            </div>
+        </div>
+
+        <div id="properties-panel">
+            <h3>Propiedades</h3>
+            <div id="props-content"></div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         SECCIÓN: Línea de comandos
+         ═══════════════════════════════════════════════════════════ -->
+    <div id="command-line">
+        <span id="cmd-prompt">Comando:</span>
+        <input type="text" id="cmd-input" placeholder="Comando, o X,Y / @dX,dY / @dist<áng / distancia..." autocomplete="off">
+        <span id="cmd-status">Listo</span>
+        <button id="cmd-history-toggle" title="Histórico de comandos (F2)">F2</button>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         SECCIÓN: Histórico de texto (F2)
+         ═══════════════════════════════════════════════════════════ -->
+    <div id="cmd-history-panel">
+        <div class="cmh-head">
+            <span>Histórico de texto de AutoCAD</span>
+            <button id="cmd-history-close" title="Cerrar (F2)">✕</button>
+        </div>
+        <div class="cmh-body" id="cmd-history-body"></div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         SECCIÓN: Barra de estado inferior
+         ═══════════════════════════════════════════════════════════ -->
+    <div id="status-bar">
+        <div class="coords" id="coords-display">X: 0.000, Y: 0.000</div>
+        <div class="status-sep"></div>
+        <div class="status-scroll">
+            <div class="status-group">
+                <button id="grid-toggle" class="active" title="Grid (F7)">
+                    <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/></svg>Grid
+                </button>
+                <button id="snap-toggle" class="active" title="Snap a cuadrícula (F9)">
+                    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="2" fill="currentColor" stroke="none"/><circle cx="5" cy="5" r="1.4" fill="currentColor" stroke="none"/><circle cx="19" cy="5" r="1.4" fill="currentColor" stroke="none"/><circle cx="5" cy="19" r="1.4" fill="currentColor" stroke="none"/><circle cx="19" cy="19" r="1.4" fill="currentColor" stroke="none"/></svg>Snap
+                </button>
+                <button id="ortho-toggle" title="Ortho (F8)">
+                    <svg viewBox="0 0 24 24"><path d="M5 3v18M5 21h16"/></svg>Ortho
+                </button>
+                <button id="polar-toggle" title="Rastreo polar (F10)">
+                    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><line x1="12" y1="12" x2="18" y2="7"/><circle cx="12" cy="12" r="1.1" fill="currentColor" stroke="none"/></svg>Polar
+                </button>
+                <button id="osnap-toggle" class="active" title="Referencia a objetos (F3)">
+                    <svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="1"/><path d="M12 8v8M8 12h8"/></svg>OSnap
+                </button>
+                <button id="lwt-toggle" title="Mostrar grosor de línea (F6)">
+                    <svg viewBox="0 0 24 24"><line x1="4" y1="8" x2="20" y2="8" stroke-width="1"/><line x1="4" y1="13" x2="20" y2="13" stroke-width="2.5"/><line x1="4" y1="18" x2="20" y2="18" stroke-width="4"/></svg>LWT
+                </button>
+            </div>
+        </div>
+        <div class="zoom-indicator" id="zoom-display">Zoom: 1.00</div>
+    </div>
+
+    <input type="color" id="color-picker-hidden" value="#FFFFFF">
+        <!-- ═══════════════════════════════════════════════════════════
          SECCIÓN: Librería Paper.js
          ═══════════════════════════════════════════════════════════ -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/paper.js/0.12.17/paper-full.min.js"></script>
