@@ -235,10 +235,10 @@ canvas{display:block;position:absolute;top:0;left:0}
 
 const STORAGE_KEY = 'cncdxf_project_v2';
 const PROJECT_VERSION = 2;
-const CLIPPER_SCALE = 1000;          // 1 mm = 1000 uds enteras
-const CLIPPER_ARC_TOLERANCE = 0.1;   // mm (tolerancia de aplanado de arcos)
-const MAX_GCODE_LINES = 40000;       // aviso + limitación de render
-const MAX_POCKET_RINGS = 300;        // tope duro por cajeado
+const CLIPPER_SCALE = 1000;
+const CLIPPER_ARC_TOLERANCE = 0.1;
+const MAX_GCODE_LINES = 40000;
+const MAX_POCKET_RINGS = 300;
 
 // ================= PARSER DXF =================
 function parseDXF(text){
@@ -377,7 +377,6 @@ const simSpeedEl = $('simSpeed'), simSpeedVal = $('simSpeedVal');
 const simProgressEl = $('simProgress'), simPctEl = $('simPct'), simOpInfoEl = $('simOpInfo');
 const simTotalLabel = $('simTotalLabel'), tabsInfoEl = $('tabsInfo');
 
-// ================= Clipper =================
 window.addEventListener('clipper-ready', async () => {
   try {
     const lib = window.jsAngusjClipper;
@@ -516,7 +515,6 @@ function pathPointsBetween(path, cumLens, s1, s2){
   return result;
 }
 
-// --- Utilidades para el cajeado ---
 function pointInPolygon(px, py, verts){
   let inside = false;
   const n = verts.length;
@@ -588,6 +586,63 @@ function entityToPointsDense(e){
   }
   return pts;
 }
+
+// Devuelve extremos significativos de la entidad para agrupar por proximidad.
+// Devuelve null para entidades cerradas (CIRCLE, LWPOLYLINE cerrada, POINT).
+function getEntityEndpoints(e){
+  if (e.type === 'LINE') return [{x:e.x1,y:e.y1}, {x:e.x2,y:e.y2}];
+  if (e.type === 'ARC'){
+    return [
+      { x: e.cx + e.r * Math.cos(e.sa), y: e.cy + e.r * Math.sin(e.sa) },
+      { x: e.cx + e.r * Math.cos(e.ea), y: e.cy + e.r * Math.sin(e.ea) }
+    ];
+  }
+  if (e.type === 'LWPOLYLINE' && !e.closed && e.vertices.length >= 2){
+    return [ e.vertices[0], e.vertices[e.vertices.length - 1] ];
+  }
+  return null;
+}
+
+// Agrupa entidades en cadenas disjuntas por proximidad de extremos.
+// - Cada entidad cerrada (CIRCLE, LWPOLYLINE cerrada) es su propio grupo.
+// - Las líneas / arcos / polilíneas abiertas se agrupan si comparten extremos.
+function groupEntitiesIntoChains(entityList, tol){
+  tol = tol || 0.15;
+  const n = entityList.length;
+  const used = new Array(n).fill(false);
+  const groups = [];
+  for (let i = 0; i < n; i++){
+    if (used[i]) continue;
+    const group = [entityList[i]];
+    used[i] = true;
+    let changed = true;
+    while (changed){
+      changed = false;
+      const groupEndpoints = [];
+      for (const ge of group){
+        const eps = getEntityEndpoints(ge);
+        if (eps) groupEndpoints.push(...eps);
+      }
+      if (!groupEndpoints.length) break;   // el grupo es una entidad cerrada → no se extiende
+      for (let j = 0; j < n; j++){
+        if (used[j]) continue;
+        const eps = getEntityEndpoints(entityList[j]);
+        if (!eps) continue;
+        let connected = false;
+        for (const ep of eps){
+          for (const gEp of groupEndpoints){
+            if (Math.hypot(ep.x - gEp.x, ep.y - gEp.y) < tol){ connected = true; break; }
+          }
+          if (connected) break;
+        }
+        if (connected){ group.push(entityList[j]); used[j] = true; changed = true; }
+      }
+    }
+    groups.push(group);
+  }
+  return groups;
+}
+
 function chainPointsFromEntities(entityList, tol){
   tol = tol || 0.15;
   const parts = [];
@@ -644,6 +699,7 @@ function chainPointsFromEntities(entityList, tol){
   if (isClosed && result.length > 2) result = result.slice(0, -1);
   return { points: result, closed: isClosed };
 }
+
 function rotatePointsToStart(pts, ox, oy){
   if (!pts || pts.length < 2) return pts;
   let bestIdx = 0, bestDist = Infinity;
@@ -655,13 +711,7 @@ function rotatePointsToStart(pts, ox, oy){
   return pts.slice(bestIdx).concat(pts.slice(0, bestIdx));
 }
 
-// =================================================================
-//  OFFSET CON CLIPPER
-//  Convención: delta > 0 → expande (hacia fuera);
-//               delta < 0 → contrae (hacia dentro).
-//  Solo se usan polígonos cerrados y se asume orientación CCW para
-//  que la elección de signo sea coherente.
-// =================================================================
+// ================= OFFSET CON CLIPPER =================
 function offsetPointsWithClipper(pts, delta, joinTypeName){
   pts = dedupePolygon(pts, 1e-4);
   if (pts.length < 3) return [];
@@ -673,7 +723,6 @@ function offsetPointsWithClipper(pts, delta, joinTypeName){
   const clipper = S.clipperInstance;
 
   const intPath = pts.map(p => ({ x: Math.round(p.x * CLIPPER_SCALE), y: Math.round(p.y * CLIPPER_SCALE) }));
-
   let co = null;
   try {
     co = new clipper.ClipperOffset(2.0, CLIPPER_ARC_TOLERANCE * CLIPPER_SCALE);
@@ -684,7 +733,6 @@ function offsetPointsWithClipper(pts, delta, joinTypeName){
 
     const deltaInt = Math.round(delta * CLIPPER_SCALE);
 
-    // Compatibilidad con distintas versiones de la API
     let solution = null;
     if (typeof co.executeToPaths === 'function'){
       solution = co.executeToPaths(deltaInt, 0.5);
@@ -693,7 +741,6 @@ function offsetPointsWithClipper(pts, delta, joinTypeName){
     }
     if (!solution || solution.length === 0) return [];
 
-    // Elegir el path con MAYOR área (contorno principal)
     let bestIdx = -1, bestArea = -Infinity;
     for (let i = 0; i < solution.length; i++){
       const path = solution[i];
@@ -718,8 +765,6 @@ function offsetPointsWithClipper(pts, delta, joinTypeName){
   }
 }
 
-// Fallback: usa la MISMA convención que Clipper (delta<0 contrae, delta>0 expande).
-// Se asume polígono CCW. La normal OUTWARD de un CCW es (dy, -dx)/len.
 function offsetPointsSimpleFallback(pts, delta){
   if (!pts || pts.length < 3) return [];
   const n = pts.length;
@@ -732,7 +777,6 @@ function offsetPointsSimpleFallback(pts, delta){
     const v2x = next.x - curr.x, v2y = next.y - curr.y;
     const l1 = Math.hypot(v1x, v1y), l2 = Math.hypot(v2x, v2y);
     if (l1 < 1e-9 || l2 < 1e-9){ out.push({ x: curr.x, y: curr.y }); continue; }
-    // Outward normal para CCW: (dy, -dx)/len
     const n1x =  v1y / l1, n1y = -v1x / l1;
     const n2x =  v2y / l2, n2y = -v2x / l2;
     const mx = (n1x + n2x) / 2, my = (n1y + n2y) / 2;
@@ -744,43 +788,48 @@ function offsetPointsSimpleFallback(pts, delta){
 }
 
 // =================================================================
-//  RESOLUCIÓN DEL CONTORNO DE CORTE
+//  RESOLUCIÓN DE CONTORNOS DE CORTE  (MULTI-CONTORNO)
 // =================================================================
-function resolveCutContour(op, tool){
+function resolveCutContours(op, tool){
   const entityList = op.ids.map(i => S.entities[i]).filter(Boolean);
-  if (!entityList.length) return null;
+  if (!entityList.length) return [];
 
-  const chainRes = chainPointsFromEntities(entityList, 0.15);
-  let pts = chainRes.points;
-  const closed = chainRes.closed;
-  if (pts.length < 2) return null;
+  const groups = groupEntitiesIntoChains(entityList, 0.15);
+  const results = [];
 
-  if (closed && pts.length >= 3){
-    const wantCCW = (tool.cutDir !== 'cw');
-    const isCCW = signedArea(pts) > 0;
-    if (isCCW !== wantCCW) pts = pts.slice().reverse();
-  }
+  for (const group of groups){
+    const chainRes = chainPointsFromEntities(group, 0.15);
+    let pts = chainRes.points;
+    const closed = chainRes.closed;
+    if (pts.length < 2) continue;
 
-  const off = op.offset || 'center';
-  if ((off === 'inside' || off === 'outside') && closed && pts.length >= 3){
-    const ccw = signedArea(pts) > 0;
-    const toolRadius = tool.diam / 2;
-    let delta;
-    // Clipper: delta>0 expande, delta<0 contrae
-    if (off === 'inside') delta = ccw ? -toolRadius : +toolRadius;
-    else                 delta = ccw ? +toolRadius : -toolRadius;
-    try {
-      const result = offsetPointsWithClipper(pts, delta, 'round');
-      if (result && result.length >= 3) pts = result;
-    } catch (err){
-      console.warn('Error en Clipper offset, fallback:', err);
-      pts = offsetPointsSimpleFallback(pts, delta);
+    if (closed && pts.length >= 3){
+      const wantCCW = (tool.cutDir !== 'cw');
+      const isCCW = signedArea(pts) > 0;
+      if (isCCW !== wantCCW) pts = pts.slice().reverse();
     }
+
+    const off = op.offset || 'center';
+    if ((off === 'inside' || off === 'outside') && closed && pts.length >= 3){
+      const ccw = signedArea(pts) > 0;
+      const toolRadius = tool.diam / 2;
+      let delta;
+      if (off === 'inside') delta = ccw ? -toolRadius : +toolRadius;
+      else                 delta = ccw ? +toolRadius : -toolRadius;
+      try {
+        const result = offsetPointsWithClipper(pts, delta, 'round');
+        if (result && result.length >= 3) pts = result;
+      } catch (err){
+        console.warn('Error en Clipper offset, fallback:', err);
+        pts = offsetPointsSimpleFallback(pts, delta);
+      }
+    }
+
+    if (closed && pts.length >= 3) pts = rotatePointsToStart(pts, 0, 0);
+
+    results.push({ points: pts, closed });
   }
-
-  if (closed && pts.length >= 3) pts = rotatePointsToStart(pts, 0, 0);
-
-  return { points: pts, primitives: null, closed };
+  return results;
 }
 
 function rebuildAllContours(){
@@ -790,13 +839,21 @@ function rebuildAllContours(){
     if (op.type !== 'cut') continue;
     const tool = getToolById(op.toolId) || S.tools[0];
     if (!tool) continue;
-    const c = resolveCutContour(op, tool);
-    if (c){
-      S.cutContours[i] = c;
-      if (S.tabs.enabled && c.closed && c.points.length >= 3){
-        const tabs = computeTabSegments(c.points, true, S.tabs.count, S.tabs.width, S.tabs.seed + i * 137, tool.diam);
-        if (tabs.length) S.cutTabs[i] = tabs;
+    const contours = resolveCutContours(op, tool);
+    if (!contours.length) continue;
+    S.cutContours[i] = contours;
+    if (S.tabs.enabled){
+      const tabsPerContour = [];
+      for (let ci = 0; ci < contours.length; ci++){
+        const c = contours[ci];
+        if (c.closed && c.points.length >= 3){
+          const seed = S.tabs.seed + i * 137 + ci * 9973;
+          tabsPerContour.push(computeTabSegments(c.points, true, S.tabs.count, S.tabs.width, seed, tool.diam));
+        } else {
+          tabsPerContour.push([]);
+        }
       }
+      S.cutTabs[i] = tabsPerContour;
     }
   }
   updateTabsInfo();
@@ -841,9 +898,11 @@ function updateTabsInfo(){
   if (!keys.length){ tabsInfoEl.textContent = 'Ninguna operacion con patillas'; return; }
   let total = 0, lines = [];
   for (const k of keys){
-    const tabs = S.cutTabs[k];
-    lines.push(`Contorno ${parseInt(k)+1}: ${tabs.length}x - patilla ${S.tabs.width}mm`);
-    total += tabs.length;
+    const perContour = S.cutTabs[k] || [];
+    let opTotal = 0;
+    for (const t of perContour) opTotal += t.length;
+    lines.push(`Op ${parseInt(k)+1}: ${opTotal} patillas en ${perContour.length} contornos`);
+    total += opTotal;
   }
   tabsInfoEl.textContent = lines.join('\n') + `\nTotal: ${total}`;
 }
@@ -1047,12 +1106,27 @@ function addCut(idx){
   op.ids.push(idx);
   updateOpsList(); rebuildAllContours(); buildProgram(); render(); scheduleSave();
 }
+// Añade varias entidades en lote (una sola reconstrucción)
+function addCutBatch(indices){
+  if (!indices || !indices.length) return 0;
+  if (!S.tools.length){ showToast('Anade primero una herramienta','warn'); return 0; }
+  let op = S.operations.find(o => o.type === 'cut');
+  if (!op){ op = { type:'cut', ids:[], offset:'center', toolId: S.activeToolId }; S.operations.push(op); }
+  let added = 0;
+  for (const idx of indices){
+    if (idx >= 0 && !op.ids.includes(idx)){ op.ids.push(idx); added++; }
+  }
+  if (added > 0){
+    updateOpsList(); rebuildAllContours(); buildProgram(); render(); scheduleSave();
+  }
+  return added;
+}
 
 function addPocketBoundary(boundary){
   if (!S.tools.length){ showToast('Anade primero una herramienta','warn'); return; }
   boundary = dedupePolygon(boundary, 1e-3);
   if (boundary.length < 3){ showToast('Contorno invalido','warn'); return; }
-  if (signedArea(boundary) < 0) boundary = boundary.slice().reverse();  // CCW
+  if (signedArea(boundary) < 0) boundary = boundary.slice().reverse();
   let op = S.operations.find(o => o.type === 'pocket');
   if (!op){ op = { type:'pocket', pockets:[], toolId: S.activeToolId }; S.operations.push(op); }
   op.pockets.push({ boundary });
@@ -1091,7 +1165,10 @@ function updateOpsList(){
   opsEl.innerHTML = S.operations.map((op,i) => {
     let det = '';
     if (op.type==='drill') det = `${op.points.length} pts`;
-    else if (op.type==='cut') det = `${op.ids.length} ent`;
+    else if (op.type==='cut'){
+      const nCont = (S.cutContours[i] && S.cutContours[i].length) || 0;
+      det = `${op.ids.length} ent · ${nCont} cont`;
+    }
     else if (op.type==='pocket') det = `${(op.pockets||[]).length} cajeados`;
     let offSel = '';
     if (op.type === 'cut'){ const off = op.offset || 'center';
@@ -1113,7 +1190,7 @@ function updateOpsList(){
       const i = parseInt(s.dataset.i), k = s.dataset.k;
       if (k === 'toolId') S.operations[i].toolId = s.value;
       else if (k === 'offset') S.operations[i].offset = s.value;
-      rebuildAllContours(); buildProgram(); render(); scheduleSave(); });
+      rebuildAllContours(); buildProgram(); updateOpsList(); render(); scheduleSave(); });
     s.addEventListener('click', e => e.stopPropagation()); });
 }
 
@@ -1139,11 +1216,9 @@ function updateLayerList(){
     const layer = b.dataset.l;
     const ids = S.entities.map((e,i) => e.layer===layer ? i : -1).filter(i => i>=0);
     if (!ids.length){ showToast('Capa vacia','warn'); return; }
-    let cut = S.operations.find(o => o.type === 'cut');
-    if (!cut){ cut = { type:'cut', ids:[], offset:'center', toolId: S.activeToolId }; S.operations.push(cut); }
-    ids.forEach(i => { if (!cut.ids.includes(i)) cut.ids.push(i); });
-    updateOpsList(); rebuildAllContours(); buildProgram(); render(); scheduleSave();
-    showToast(`${ids.length} anadidas`,'success'); }));
+    const added = addCutBatch(ids);
+    showToast(`${added} entidades de capa añadidas`,'success');
+  }));
 }
 
 // =================================================================
@@ -1171,7 +1246,7 @@ function buildProgram(){
   const blockZ = S.blockZ;
 
   const emit = (txt, block) => {
-    if (lines.length >= MAX_GCODE_LINES * 1.5) return;  // límite duro de seguridad
+    if (lines.length >= MAX_GCODE_LINES * 1.5) return;
     lines.push(txt);
     lineBlocks.push(block === undefined ? -1 : block);
   };
@@ -1279,49 +1354,57 @@ function buildProgram(){
         emit('G80', -1);
         emit(`G0 Z${tool.safe.toFixed(3)}`, -1);
       } else if (op.type === 'cut'){
-        const c = S.cutContours[originalIndex];
-        if (!c || c.points.length < 2){ emit('(sin contorno resuelto)', -1); emit('', -1); continue; }
-        const ptsEff = effectiveContour(c.points);
-        const isClosed = c.closed;
-        const f = ptsEff[0];
-        let tabsEff = [];
-        if (S.tabs.enabled && isClosed){
-          const seed = S.tabs.seed + originalIndex * 137;
-          tabsEff = computeTabSegments(ptsEff, true, S.tabs.count, S.tabs.width, seed, tool.diam);
-        }
+        // ===== CORTE: MULTI-CONTORNO =====
+        const contoursArr = S.cutContours[originalIndex];
+        if (!contoursArr || !contoursArr.length){ emit('(sin contorno resuelto)', -1); emit('', -1); continue; }
         if (Math.abs(lastZ - tool.safe) > 0.01){
           emit(`G0 Z${tool.safe.toFixed(3)}`, -1);
           addMove('rapid', [{x:lastX, y:lastY}], tool.safe, S.rapidZ, -1);
         }
-        emit(`G0 X${f.x.toFixed(3)} Y${f.y.toFixed(3)}`, -1);
-        addMove('rapid', [{x:lastX, y:lastY}, {x:f.x, y:f.y}], tool.safe, S.rapidXY, -1);
+        emit(`(${contoursArr.length} contorno(s) en esta operacion)`, -1);
 
-        for (let k = 0; k < passes; k++){
-          blockId++;
-          const z = -Math.min((k+1)*step, tool.depth);
-          const isLastPass = (k === passes - 1);
-          emit(`G1 Z${z.toFixed(3)} F${tool.feedZ}`, blockId);
-          addMove('cut', [{x:f.x, y:f.y}], z, tool.feedZ, blockId);
-          if (S.tabs.enabled && isLastPass && isClosed && tabsEff.length > 0){
-            emit(`(--- pasada con ${tabsEff.length} patillas - patilla final ${S.tabs.width}mm ---)`, blockId);
-            emitCutWithTabsUnified(lines, lineBlocks, blockId, ptsEff, isClosed, tool, z, tabsEff, S.tabs.height);
-            emitSimWithTabs(ptsEff, isClosed, z, tool.feed, S.tabs.height, tabsEff, blockId, addMove);
-          } else {
-            for (let i = 1; i < ptsEff.length; i++){
-              emit(`G1 X${ptsEff[i].x.toFixed(3)} Y${ptsEff[i].y.toFixed(3)} F${tool.feed}`, blockId);
-            }
-            if (isClosed){
-              const lastPt = ptsEff[ptsEff.length - 1];
-              if (Math.hypot(lastPt.x - f.x, lastPt.y - f.y) > 1e-3){
-                emit(`G1 X${f.x.toFixed(3)} Y${f.y.toFixed(3)} F${tool.feed}`, blockId);
-              }
-            }
-            const contourPts = isClosed ? ptsEff.concat([ptsEff[0]]) : ptsEff;
-            addMove('cut', contourPts, z, tool.feed, blockId);
+        for (let ci = 0; ci < contoursArr.length; ci++){
+          const c = contoursArr[ci];
+          const ptsEff = effectiveContour(c.points);
+          if (ptsEff.length < 2) continue;
+          const isClosed = c.closed;
+          const f = ptsEff[0];
+          let tabsEff = [];
+          if (S.tabs.enabled && isClosed){
+            const seed = S.tabs.seed + originalIndex * 137 + ci * 9973;
+            tabsEff = computeTabSegments(ptsEff, true, S.tabs.count, S.tabs.width, seed, tool.diam);
           }
+          emit(`(Contorno ${ci+1}/${contoursArr.length}: ${isClosed?'cerrado':'abierto'}, ${ptsEff.length} pts)`, -1);
+          emit(`G0 X${f.x.toFixed(3)} Y${f.y.toFixed(3)}`, -1);
+          addMove('rapid', [{x:lastX, y:lastY}, {x:f.x, y:f.y}], tool.safe, S.rapidXY, -1);
+
+          for (let k = 0; k < passes; k++){
+            blockId++;
+            const z = -Math.min((k+1)*step, tool.depth);
+            const isLastPass = (k === passes - 1);
+            emit(`G1 Z${z.toFixed(3)} F${tool.feedZ}`, blockId);
+            addMove('cut', [{x:f.x, y:f.y}], z, tool.feedZ, blockId);
+            if (S.tabs.enabled && isLastPass && isClosed && tabsEff.length > 0){
+              emit(`(--- pasada con ${tabsEff.length} patillas ---)`, blockId);
+              emitCutWithTabsUnified(lines, lineBlocks, blockId, ptsEff, isClosed, tool, z, tabsEff, S.tabs.height);
+              emitSimWithTabs(ptsEff, isClosed, z, tool.feed, S.tabs.height, tabsEff, blockId, addMove);
+            } else {
+              for (let i = 1; i < ptsEff.length; i++){
+                emit(`G1 X${ptsEff[i].x.toFixed(3)} Y${ptsEff[i].y.toFixed(3)} F${tool.feed}`, blockId);
+              }
+              if (isClosed){
+                const lastPt = ptsEff[ptsEff.length - 1];
+                if (Math.hypot(lastPt.x - f.x, lastPt.y - f.y) > 1e-3){
+                  emit(`G1 X${f.x.toFixed(3)} Y${f.y.toFixed(3)} F${tool.feed}`, blockId);
+                }
+              }
+              const contourPts = isClosed ? ptsEff.concat([ptsEff[0]]) : ptsEff;
+              addMove('cut', contourPts, z, tool.feed, blockId);
+            }
+          }
+          emit(`G0 Z${tool.retract.toFixed(3)}`, -1);
+          addMove('rapid', [{x:lastX, y:lastY}], tool.retract, S.rapidZ, -1);
         }
-        emit(`G0 Z${tool.retract.toFixed(3)}`, -1);
-        addMove('rapid', [{x:lastX, y:lastY}], tool.retract, S.rapidZ, -1);
       } else if (op.type === 'pocket'){
         const pockets = op.pockets || [];
         if (!pockets.length){ emit('(cajeado sin contornos)', -1); emit('', -1); continue; }
@@ -1337,16 +1420,14 @@ function buildProgram(){
           let boundary = pockets[pki].boundary.map(p => ({ x:p.x + S.offsetX, y:p.y + S.offsetY }));
           boundary = dedupePolygon(boundary, 1e-3);
           if (boundary.length < 3){ emit('(cajeado invalido)', -1); emit('', -1); continue; }
-          if (signedArea(boundary) < 0) boundary = boundary.slice().reverse();  // CCW
+          if (signedArea(boundary) < 0) boundary = boundary.slice().reverse();
 
-          // --- Generar anillos concéntricos (de fuera hacia dentro) ---
           const offsets = [];
           const bbBoundary = bboxFromPoints(boundary);
           const maxRingsBySize = Math.ceil(Math.max(bbBoundary.w, bbBoundary.h) / stepOver) + 5;
           const maxRings = Math.min(MAX_POCKET_RINGS, Math.max(1, maxRingsBySize));
           let d = -toolR;
           let prevArea = Infinity;
-          let ok = true;
           for (let iter = 0; iter < maxRings; iter++){
             let off = null;
             try { off = offsetPointsWithClipper(boundary, d, 'round'); }
@@ -1354,9 +1435,8 @@ function buildProgram(){
             if (!off || off.length < 3) break;
             const area = Math.abs(signedArea(off));
             if (area < minArea) break;
-            // Si el área no decrece, Clipper está devolviendo algo raro → parar
             if (iter > 0 && area >= prevArea * 0.9999){
-              console.warn('Offset detenido: area no decrece en iter', iter, 'area=', area, 'prev=', prevArea);
+              console.warn('Offset detenido: area no decrece en iter', iter);
               break;
             }
             prevArea = area;
@@ -1371,7 +1451,6 @@ function buildProgram(){
           for (let zPass = 0; zPass < passes; zPass++){
             const zLevel = -Math.min((zPass+1)*step, tool.depth);
             emit(`(Pasada Z ${zLevel.toFixed(3)}mm)`, -1);
-            // De dentro hacia fuera: el ÚLTIMO anillo de cada Z es el perímetro
             for (let ri = offsets.length - 1; ri >= 0; ri--){
               const ring = offsets[ri];
               if (ring.length < 3) continue;
@@ -1480,7 +1559,7 @@ function emitSimWithTabs(pts, closed, fullZ, feed, tabHeight, tabs, blockId, add
   }
 }
 
-// ================= UI G-CODE (con delegación, render limitado) =================
+// ================= UI G-CODE =================
 function renderGcodeDisplay(){
   if (!S.gcodeLines.length){
     gcodeEl.innerHTML = '<div class="empty-hint">(Sin generar)</div>';
@@ -1558,7 +1637,6 @@ function onGlineClick(idx){
   }
   render();
 }
-// Delegación de eventos (se registra UNA vez)
 gcodeEl.addEventListener('click', e => {
   const el = e.target.closest('.gline');
   if (!el) return;
@@ -1643,46 +1721,52 @@ function render(){
     drawEnt(e, col, lw, r);
   }
   let contourIdx = 0;
+  // ==== DIBUJAR TODOS LOS CONTORNOS DE CORTE (multi) ====
   for (const oiStr in S.cutContours){
-    contourIdx++;
-    const c = S.cutContours[oiStr];
-    if (!c) continue;
-    const ptsEff = effectiveContour(c.points);
-    if (ptsEff.length < 2) continue;
-    ctx.strokeStyle = '#ffb347'; ctx.lineWidth = 2; ctx.setLineDash([]);
-    ctx.beginPath();
-    const s0 = w2s(ptsEff[0].x, ptsEff[0].y);
-    ctx.moveTo(s0.x-r.left, s0.y-r.top);
-    for (let i=1;i<ptsEff.length;i++){ const s = w2s(ptsEff[i].x, ptsEff[i].y); ctx.lineTo(s.x-r.left, s.y-r.top); }
-    if (c.closed) ctx.closePath();
-    ctx.stroke();
-    if (S.tabs.enabled && S.cutTabs[oiStr]){
-      const tabs = S.cutTabs[oiStr];
-      const op = S.operations[parseInt(oiStr)];
-      const tool = op ? (getToolById(op.toolId) || S.tools[0]) : null;
-      const D = tool ? tool.diam : 0;
-      const R = D / 2;
-      const path = buildPath(ptsEff, true);
-      const cumLens = computeCumLens(path);
-      ctx.lineCap = 'round';
-      for (const tab of tabs){
-        const matA = getPointAtArcLength(path, cumLens, tab.sStart + R);
-        const matB = getPointAtArcLength(path, cumLens, tab.sEnd - R);
-        const mA = w2s(matA.x, matA.y), mB = w2s(matB.x, matB.y);
-        ctx.strokeStyle = '#ff44aa'; ctx.lineWidth = 7;
-        ctx.beginPath(); ctx.moveTo(mA.x-r.left, mA.y-r.top); ctx.lineTo(mB.x-r.left, mB.y-r.top); ctx.stroke();
+    const contoursArr = S.cutContours[oiStr];
+    if (!contoursArr || !contoursArr.length) continue;
+    for (let ci = 0; ci < contoursArr.length; ci++){
+      const c = contoursArr[ci];
+      if (!c) continue;
+      const ptsEff = effectiveContour(c.points);
+      if (ptsEff.length < 2) continue;
+      contourIdx++;
+      ctx.strokeStyle = '#ffb347'; ctx.lineWidth = 2; ctx.setLineDash([]);
+      ctx.beginPath();
+      const s0 = w2s(ptsEff[0].x, ptsEff[0].y);
+      ctx.moveTo(s0.x-r.left, s0.y-r.top);
+      for (let i=1;i<ptsEff.length;i++){ const s = w2s(ptsEff[i].x, ptsEff[i].y); ctx.lineTo(s.x-r.left, s.y-r.top); }
+      if (c.closed) ctx.closePath();
+      ctx.stroke();
+      // Tabs (por contorno)
+      if (S.tabs.enabled && S.cutTabs[oiStr] && S.cutTabs[oiStr][ci] && S.cutTabs[oiStr][ci].length){
+        const tabs = S.cutTabs[oiStr][ci];
+        const op = S.operations[parseInt(oiStr)];
+        const tool = op ? (getToolById(op.toolId) || S.tools[0]) : null;
+        const D = tool ? tool.diam : 0;
+        const R = D / 2;
+        const path = buildPath(ptsEff, true);
+        const cumLens = computeCumLens(path);
+        ctx.lineCap = 'round';
+        for (const tab of tabs){
+          const matA = getPointAtArcLength(path, cumLens, tab.sStart + R);
+          const matB = getPointAtArcLength(path, cumLens, tab.sEnd - R);
+          const mA = w2s(matA.x, matA.y), mB = w2s(matB.x, matB.y);
+          ctx.strokeStyle = '#ff44aa'; ctx.lineWidth = 7;
+          ctx.beginPath(); ctx.moveTo(mA.x-r.left, mA.y-r.top); ctx.lineTo(mB.x-r.left, mB.y-r.top); ctx.stroke();
+        }
+        ctx.lineCap = 'butt';
       }
-      ctx.lineCap = 'butt';
+      const sStart = w2s(ptsEff[0].x, ptsEff[0].y);
+      ctx.beginPath();
+      ctx.arc(sStart.x-r.left, sStart.y-r.top, 7, 0, Math.PI*2);
+      ctx.fillStyle = '#00ff88'; ctx.fill();
+      ctx.strokeStyle = '#0d1014'; ctx.lineWidth = 2; ctx.stroke();
+      ctx.fillStyle = '#0d1014'; ctx.font = 'bold 10px sans-serif';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(contourIdx, sStart.x-r.left, sStart.y-r.top);
+      ctx.textAlign = 'start'; ctx.textBaseline = 'alphabetic';
     }
-    const sStart = w2s(ptsEff[0].x, ptsEff[0].y);
-    ctx.beginPath();
-    ctx.arc(sStart.x-r.left, sStart.y-r.top, 7, 0, Math.PI*2);
-    ctx.fillStyle = '#00ff88'; ctx.fill();
-    ctx.strokeStyle = '#0d1014'; ctx.lineWidth = 2; ctx.stroke();
-    ctx.fillStyle = '#0d1014'; ctx.font = 'bold 10px sans-serif';
-    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText(contourIdx, sStart.x-r.left, sStart.y-r.top);
-    ctx.textAlign = 'start'; ctx.textBaseline = 'alphabetic';
   }
   if (S.selectedGlineIdx >= 0){
     const block = S.gcodeBlock[S.selectedGlineIdx];
@@ -1707,7 +1791,6 @@ function render(){
     ctx.fillStyle = 'rgba(255,107,107,0.3)'; ctx.strokeStyle = '#ff6b6b'; ctx.lineWidth = 1.5;
     ctx.beginPath(); ctx.arc(s.x-r.left, s.y-r.top, 5, 0, Math.PI*2); ctx.fill(); ctx.stroke(); }
 
-  // Cajeado: contornos seleccionados
   for (const op of S.operations){
     if (op.type !== 'pocket' || !op.pockets) continue;
     for (const pk of op.pockets){
@@ -2042,7 +2125,6 @@ simSpeedEl.addEventListener('input', () => {
 S.simSpeedMult = parseInt(simSpeedEl.value) / 10;
 simSpeedVal.textContent = S.simSpeedMult.toFixed(1) + 'x';
 
-// Zoom centrado en el cursor
 canvasContainer.addEventListener('wheel', e => {
   e.preventDefault();
   const rect = canvasContainer.getBoundingClientRect();
@@ -2112,7 +2194,7 @@ canvasContainer.addEventListener('mousemove', e => {
   }
   const nh = closestEnt(w.x, w.y, 5);
   if (nh !== S.hover){ S.hover = nh; render(); }
-  else coordEl.textContent = `X: ${w.x.toFixed(2)} mm | Y: ${w.y.toFixed(2)} mm`;
+  else coordEl.textContent = `X: ${w.x.toFixed(2)} mm | Y: ${w.mwy ? w.y.toFixed(2) : w.y.toFixed(2)} mm`;
 });
 
 window.addEventListener('mouseup', () => {
@@ -2126,11 +2208,17 @@ window.addEventListener('mouseup', () => {
     const d = Math.hypot(S.selStart.x - S.selEnd.x, S.selStart.y - S.selEnd.y);
     if (d < 0.5){
       const i = closestEnt(S.selStart.x, S.selStart.y, 6);
-      if (i >= 0) addCut(i);
+      if (i >= 0){
+        addCut(i);
+        const op = S.operations.find(o => o.type === 'cut');
+        const opIdx = S.operations.indexOf(op);
+        const nc = S.cutContours[opIdx] ? S.cutContours[opIdx].length : 0;
+        showToast(`1 entidad → ${nc} contornos`,'success');
+      }
     } else if (S.selRect){
       const list = effective(); const r = S.selRect;
       const ptIn = (x,y) => x>=r.x1 && x<=r.x2 && y>=r.y1 && y<=r.y2;
-      let count = 0;
+      const toAdd = [];
       for (let i=0;i<list.length;i++){
         const en = list[i];
         if (!S.layerVis[en.layer]) continue;
@@ -2139,9 +2227,13 @@ window.addEventListener('mouseup', () => {
         else if (en.type === 'CIRCLE' || en.type === 'ARC') inside = ptIn(en.cx,en.cy);
         else if (en.type === 'LWPOLYLINE') inside = en.vertices.some(v => ptIn(v.x,v.y));
         else if (en.type === 'POINT') inside = ptIn(en.x,en.y);
-        if (inside){ addCut(i); count++; }
+        if (inside) toAdd.push(i);
       }
-      showToast(`${count} seleccionadas`,'success');
+      const added = addCutBatch(toAdd);
+      const op = S.operations.find(o => o.type === 'cut');
+      const opIdx = S.operations.indexOf(op);
+      const nc = (opIdx >= 0 && S.cutContours[opIdx]) ? S.cutContours[opIdx].length : 0;
+      showToast(`${added} entidades seleccionadas → ${nc} contornos`,'success');
     }
     S.selRect = null; render();
   }
@@ -2201,7 +2293,7 @@ function init(){
   } else {
     showToast('Proyecto restaurado','success');
   }
-  console.log('CNC DXF a G-Code - Clipper offset + cajeado por figura (v2 corregida)');
+  console.log('CNC DXF a G-Code - multi-contorno en corte, cajeado por figura');
   if (S.clipperReady){
     console.log('  ✅ Clipper activo');
   } else {
