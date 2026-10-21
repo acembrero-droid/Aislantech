@@ -5,473 +5,199 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CAD Pro – Exportación DXF R12 (AutoCAD compatible)</title>
     <style>
-        /* ═══════════════════════════════════════════════════════════
-           SECCIÓN: Variables y reset
-           ═══════════════════════════════════════════════════════════ */
+        /* ═══════════ Variables y reset ═══════════ */
         :root {
-            --bg-main: #1A1A1A;
-            --bg-canvas: #16181A;
-            --bg-ribbon: #232323;
-            --bg-ribbon-2: #2A2A2A;
-            --bg-panel: #262626;
-            --bg-button: #333333;
-            --bg-hover: #3E3E3E;
-            --bg-pressed: #1567C4;
-            --bg-selection: #1567C4;
-            --text-primary: #D9D9D9;
-            --text-secondary: #8C8C8C;
-            --text-dim: #6B6B6B;
-            --border-color: #383838;
-            --border-light: #454545;
-            --accent-blue: #4FC3F7;
-            --accent-amber: #E8A33D;
-            --accent-green: #57C46B;
-            --shadow: 0 3px 10px rgba(0,0,0,0.5);
-            --transition: all 0.12s ease;
+            --bg-main: #1A1A1A; --bg-canvas: #16181A; --bg-ribbon: #232323;
+            --bg-panel: #262626; --bg-button: #333333; --bg-hover: #3E3E3E;
+            --bg-pressed: #1567C4; --bg-selection: #1567C4;
+            --text-primary: #D9D9D9; --text-secondary: #8C8C8C; --text-dim: #6B6B6B;
+            --border-color: #383838; --border-light: #454545;
+            --accent-blue: #4FC3F7; --accent-amber: #E8A33D; --accent-green: #57C46B;
+            --shadow: 0 3px 10px rgba(0,0,0,0.5); --transition: all 0.12s ease;
             --font-ui: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
             --font-mono: 'Cascadia Mono', 'Consolas', 'SF Mono', monospace;
         }
-
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
-            background: var(--bg-main);
-            color: var(--text-primary);
-            font-family: var(--font-ui);
-            overflow: hidden;
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            user-select: none;
-            font-size: 13px;
+            background: var(--bg-main); color: var(--text-primary); font-family: var(--font-ui);
+            overflow: hidden; height: 100vh; display: flex; flex-direction: column;
+            user-select: none; font-size: 13px;
         }
-
         ::-webkit-scrollbar { width: 8px; height: 8px; }
         ::-webkit-scrollbar-track { background: var(--bg-panel); }
         ::-webkit-scrollbar-thumb { background: #555; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #777; }
 
-        /* ═══════════════════════════════════════════════════════════
-           SECCIÓN: Barra de acceso rápido
-           ═══════════════════════════════════════════════════════════ */
+        /* ═══════════ Barra de acceso rápido ═══════════ */
         #quick-access {
             background: linear-gradient(to bottom, #2C2C2C, #202020);
             border-bottom: 1px solid var(--border-color);
-            padding: 0 10px;
-            display: flex;
-            align-items: center;
-            gap: 2px;
-            height: 30px;
+            padding: 0 10px; display: flex; align-items: center; gap: 2px; height: 30px;
         }
         #quick-access .brand {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            margin-right: 10px;
-            color: var(--accent-blue);
-            font-weight: 600;
-            font-size: 12px;
-            letter-spacing: 0.4px;
+            display: flex; align-items: center; gap: 6px; margin-right: 10px;
+            color: var(--accent-blue); font-weight: 600; font-size: 12px; letter-spacing: 0.4px;
         }
         #quick-access .brand svg { width: 16px; height: 16px; }
         #quick-access button {
-            background: transparent;
-            border: 1px solid transparent;
-            color: var(--text-secondary);
-            cursor: pointer;
-            width: 28px;
-            height: 26px;
-            border-radius: 6px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            background: transparent; border: 1px solid transparent; color: var(--text-secondary);
+            cursor: pointer; width: 28px; height: 26px; border-radius: 6px;
+            display: flex; align-items: center; justify-content: center;
             transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
         }
         #quick-access button svg { width: 15px; height: 15px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
         #quick-access button:hover {
-            background: rgba(79,195,247,0.12);
-            color: var(--accent-blue);
-            border-color: rgba(79,195,247,0.3);
-            transform: translateY(-1px);
+            background: rgba(79,195,247,0.12); color: var(--accent-blue);
+            border-color: rgba(79,195,247,0.3); transform: translateY(-1px);
             box-shadow: 0 3px 8px rgba(79,195,247,0.15);
         }
-        #quick-access button:active {
-            transform: translateY(0) scale(0.94);
-            background: var(--accent-blue);
-            color: #0a2336;
-        }
+        #quick-access button:active { transform: translateY(0) scale(0.94); background: var(--accent-blue); color: #0a2336; }
         #quick-access .separator { width: 1px; height: 18px; background: var(--border-color); margin: 0 6px; }
         #quick-access .file-input-hidden { display: none; }
 
-        /* ═══════════════════════════════════════════════════════════
-           SECCIÓN: Ribbon
-           ═══════════════════════════════════════════════════════════ */
-        #ribbon {
-            background: var(--bg-ribbon);
-            border-bottom: 1px solid var(--border-color);
-            padding: 0 8px;
-            display: flex;
-            flex-direction: column;
-        }
-        #ribbon-tabs {
-            display: flex;
-            gap: 2px;
-            padding: 5px 0 0 2px;
-            height: 26px;
-            align-items: flex-end;
-        }
+        /* ═══════════ Ribbon ═══════════ */
+        #ribbon { background: var(--bg-ribbon); border-bottom: 1px solid var(--border-color); padding: 0 8px; display: flex; flex-direction: column; }
+        #ribbon-tabs { display: flex; gap: 2px; padding: 5px 0 0 2px; height: 26px; align-items: flex-end; }
         #ribbon-tabs button {
-            background: transparent;
-            border: none;
-            color: var(--text-secondary);
-            padding: 6px 16px;
-            font-size: 11px;
-            cursor: pointer;
-            border-radius: 8px 8px 0 0;
+            background: transparent; border: none; color: var(--text-secondary); padding: 6px 16px;
+            font-size: 11px; cursor: pointer; border-radius: 8px 8px 0 0;
             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-            font-weight: 600;
-            letter-spacing: 0.4px;
-            text-transform: uppercase;
-            position: relative;
+            font-weight: 600; letter-spacing: 0.4px; text-transform: uppercase; position: relative;
         }
-        #ribbon-tabs button:hover {
-            background: rgba(79,195,247,0.1);
-            color: var(--accent-blue);
-            transform: translateY(-1px);
-        }
+        #ribbon-tabs button:hover { background: rgba(79,195,247,0.1); color: var(--accent-blue); transform: translateY(-1px); }
         #ribbon-tabs button.active {
-            background: var(--bg-panel);
-            color: var(--accent-blue);
+            background: var(--bg-panel); color: var(--accent-blue);
             box-shadow: 0 -3px 12px rgba(79,195,247,0.15), inset 0 -2px 0 var(--accent-blue);
         }
         #ribbon-content {
-            background: var(--bg-panel);
-            padding: 5px 10px;
-            border-top: 1px solid var(--border-light);
-            display: flex;
-            flex-wrap: wrap;
-            gap: 2px 8px;
-            min-height: 50px;
-            align-items: stretch;
+            background: var(--bg-panel); padding: 5px 10px; border-top: 1px solid var(--border-light);
+            display: flex; flex-wrap: wrap; gap: 2px 8px; min-height: 50px; align-items: stretch;
         }
         .ribbon-group {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 3px;
-            padding: 2px 10px 0;
-            border-right: 1px solid var(--border-color);
+            display: flex; flex-direction: column; align-items: center; gap: 3px;
+            padding: 2px 10px 0; border-right: 1px solid var(--border-color);
         }
         .ribbon-group:last-child { border-right: none; }
         .ribbon-group .ribbon-group-btns { display: flex; align-items: flex-start; gap: 1px; }
         .ribbon-group label {
-            font-size: 9px;
-            text-transform: uppercase;
-            color: var(--text-dim);
-            letter-spacing: 0.6px;
-            font-weight: 600;
-            order: 2;
-            width: 100%;
-            text-align: center;
+            font-size: 9px; text-transform: uppercase; color: var(--text-dim);
+            letter-spacing: 0.6px; font-weight: 600; order: 2; width: 100%; text-align: center;
         }
-
-        /* ═══════════════════════════════════════════════════════════
-           SECCIÓN: Botones de la cinta — estilo "desenfadado"
-           ═══════════════════════════════════════════════════════════ */
         .ribbon-btn {
-            background: transparent;
-            border: 1px solid transparent;
-            color: var(--text-primary);
-            padding: 5px 10px;
-            border-radius: 7px;
-            cursor: pointer;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            font-size: 9.5px;
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-            min-width: 44px;
-            gap: 3px;
-            position: relative;
+            background: transparent; border: 1px solid transparent; color: var(--text-primary);
+            padding: 5px 10px; border-radius: 7px; cursor: pointer;
+            display: flex; flex-direction: column; align-items: center;
+            font-size: 9.5px; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            min-width: 44px; gap: 3px; position: relative;
         }
-        .ribbon-btn svg {
-            width: 20px;
-            height: 20px;
-            fill: none;
-            stroke: currentColor;
-            stroke-width: 1.7;
-            stroke-linecap: round;
-            stroke-linejoin: round;
-            transition: transform 0.2s ease;
-        }
+        .ribbon-btn svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; transition: transform 0.2s ease; }
         .ribbon-btn svg.fill { fill: currentColor; stroke: none; }
         .ribbon-btn:hover {
             background: linear-gradient(180deg, rgba(79,195,247,0.14) 0%, rgba(79,195,247,0.04) 100%);
-            border-color: rgba(79,195,247,0.4);
-            color: var(--accent-blue);
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(79,195,247,0.18);
+            border-color: rgba(79,195,247,0.4); color: var(--accent-blue);
+            transform: translateY(-1px); box-shadow: 0 4px 12px rgba(79,195,247,0.18);
         }
         .ribbon-btn:hover svg { transform: scale(1.12) rotate(-2deg); }
-        .ribbon-btn:active {
-            transform: translateY(0) scale(0.96);
-            transition: all 0.06s ease;
-        }
+        .ribbon-btn:active { transform: translateY(0) scale(0.96); transition: all 0.06s ease; }
         .ribbon-btn.active {
             background: linear-gradient(180deg, var(--accent-blue) 0%, #3AA8D8 100%);
-            border-color: var(--accent-blue);
-            color: #0a2336;
+            border-color: var(--accent-blue); color: #0a2336;
             box-shadow: 0 3px 12px rgba(79,195,247,0.35), inset 0 1px 0 rgba(255,255,255,0.2);
         }
         .ribbon-btn.active svg { stroke: #0a2336; stroke-width: 1.9; }
         .ribbon-btn .tooltip {
-            display: none;
-            position: absolute;
-            top: 100%;
-            margin-top: 6px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: #111;
-            color: #eee;
-            padding: 3px 8px;
-            border: 1px solid var(--border-light);
-            border-radius: 5px;
-            font-size: 10px;
-            font-family: var(--font-mono);
-            white-space: nowrap;
-            pointer-events: none;
-            z-index: 1000;
-            box-shadow: var(--shadow);
+            display: none; position: absolute; top: 100%; margin-top: 6px; left: 50%;
+            transform: translateX(-50%); background: #111; color: #eee; padding: 3px 8px;
+            border: 1px solid var(--border-light); border-radius: 5px; font-size: 10px;
+            font-family: var(--font-mono); white-space: nowrap; pointer-events: none;
+            z-index: 1000; box-shadow: var(--shadow);
         }
         .ribbon-btn:hover .tooltip { display: block; }
 
-        /* ═══════════════════════════════════════════════════════════
-           SECCIÓN: Menú desplegable de la cinta (flyout)
-           ═══════════════════════════════════════════════════════════ */
         .ribbon-flyout { position: relative; }
         .ribbon-flyout-menu {
-            display: none;
-            position: absolute;
-            bottom: 100%;
-            margin-bottom: 6px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: var(--bg-panel);
-            border: 1px solid var(--border-light);
-            border-radius: 8px;
-            box-shadow: var(--shadow);
-            padding: 5px;
-            min-width: 160px;
-            z-index: 1000;
+            display: none; position: absolute; bottom: 100%; margin-bottom: 6px;
+            left: 50%; transform: translateX(-50%); background: var(--bg-panel);
+            border: 1px solid var(--border-light); border-radius: 8px;
+            box-shadow: var(--shadow); padding: 5px; min-width: 160px; z-index: 1000;
         }
         .ribbon-flyout-menu.open { display: block; }
         .ribbon-flyout-menu button {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            width: 100%;
-            background: transparent;
-            border: none;
-            border-radius: 5px;
-            color: var(--text-primary);
-            padding: 7px 10px;
-            cursor: pointer;
-            font-size: 11.5px;
-            text-align: left;
-            white-space: nowrap;
-            transition: all 0.15s ease;
+            display: flex; align-items: center; gap: 10px; width: 100%;
+            background: transparent; border: none; border-radius: 5px;
+            color: var(--text-primary); padding: 7px 10px; cursor: pointer;
+            font-size: 11.5px; text-align: left; white-space: nowrap; transition: all 0.15s ease;
         }
         .ribbon-flyout-menu button:hover {
             background: linear-gradient(90deg, rgba(79,195,247,0.18), rgba(79,195,247,0.06));
-            color: var(--accent-blue);
-            transform: translateX(2px);
+            color: var(--accent-blue); transform: translateX(2px);
         }
         .ribbon-flyout-menu button svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
         .ribbon-flyout-menu button .fk { margin-left: auto; color: var(--text-dim); font-family: var(--font-mono); font-size: 10px; }
 
-        /* ═══════════════════════════════════════════════════════════
-           SECCIÓN: Selector de capa actual (Ribbon)
-           ═══════════════════════════════════════════════════════════ */
         .layer-combo { position: relative; }
-        #layer-dropdown {
-            flex-direction: row;
-            font-size: 11px;
-            gap: 6px;
-            min-width: 90px;
-        }
-        .layer-combo-swatch {
-            display: inline-block;
-            width: 11px;
-            height: 11px;
-            border-radius: 2px;
-            border: 1px solid rgba(255,255,255,0.4);
-            flex-shrink: 0;
-        }
+        #layer-dropdown { flex-direction: row; font-size: 11px; gap: 6px; min-width: 90px; }
+        .layer-combo-swatch { display: inline-block; width: 11px; height: 11px; border-radius: 2px; border: 1px solid rgba(255,255,255,0.4); flex-shrink: 0; }
         .layer-combo-caret { width: 9px; height: 9px; stroke: currentColor; fill: none; stroke-width: 2; margin-left: 2px; flex-shrink: 0; }
         .layer-combo-menu {
-            display: none;
-            position: absolute;
-            top: 100%;
-            margin-top: 6px;
-            left: 0;
-            background: var(--bg-panel);
-            border: 1px solid var(--border-light);
-            border-radius: 6px;
-            box-shadow: var(--shadow);
-            padding: 4px;
-            min-width: 170px;
-            max-height: 240px;
-            overflow-y: auto;
-            z-index: 1000;
+            display: none; position: absolute; top: 100%; margin-top: 6px; left: 0;
+            background: var(--bg-panel); border: 1px solid var(--border-light);
+            border-radius: 6px; box-shadow: var(--shadow); padding: 4px;
+            min-width: 170px; max-height: 240px; overflow-y: auto; z-index: 1000;
         }
         .layer-combo-menu.open { display: block; }
         .layer-combo-menu .lcm-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            width: 100%;
-            background: transparent;
-            border: none;
-            color: var(--text-primary);
-            padding: 6px 8px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 11.5px;
-            text-align: left;
-            white-space: nowrap;
+            display: flex; align-items: center; gap: 8px; width: 100%;
+            background: transparent; border: none; color: var(--text-primary);
+            padding: 6px 8px; border-radius: 5px; cursor: pointer;
+            font-size: 11.5px; text-align: left; white-space: nowrap;
             transition: background 0.12s ease;
         }
         .layer-combo-menu .lcm-item:hover { background: var(--bg-hover); }
         .layer-combo-menu .lcm-item.active { color: var(--accent-blue); font-weight: 600; }
-        .layer-combo-menu .lcm-swatch {
-            width: 11px;
-            height: 11px;
-            border-radius: 2px;
-            flex-shrink: 0;
-            border: 1px solid rgba(255,255,255,0.3);
-        }
+        .layer-combo-menu .lcm-swatch { width: 11px; height: 11px; border-radius: 2px; flex-shrink: 0; border: 1px solid rgba(255,255,255,0.3); }
 
-        /* ═══════════════════════════════════════════════════════════
-           SECCIÓN: Layout principal
-           ═══════════════════════════════════════════════════════════ */
-        #main-area {
-            flex: 1;
-            display: flex;
-            overflow: hidden;
-            position: relative;
-        }
-
-        /* ═══════════════════════════════════════════════════════════
-           SECCIÓN: Panel de capas
-           ═══════════════════════════════════════════════════════════ */
+        /* ═══════════ Layout principal ═══════════ */
+        #main-area { flex: 1; display: flex; overflow: hidden; position: relative; }
         #layer-panel {
-            width: 200px;
-            background: var(--bg-panel);
-            border-right: 1px solid var(--border-color);
-            padding: 10px;
-            display: flex;
-            flex-direction: column;
-            flex-shrink: 0;
-            overflow: hidden;
+            width: 200px; background: var(--bg-panel); border-right: 1px solid var(--border-color);
+            padding: 10px; display: flex; flex-direction: column; flex-shrink: 0; overflow: hidden;
         }
         #layer-panel h3 {
-            font-size: 10px;
-            font-weight: 700;
-            text-transform: uppercase;
-            color: var(--text-dim);
-            letter-spacing: 0.7px;
-            margin-bottom: 8px;
-            padding-bottom: 8px;
-            border-bottom: 1px solid var(--border-color);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            font-size: 10px; font-weight: 700; text-transform: uppercase; color: var(--text-dim);
+            letter-spacing: 0.7px; margin-bottom: 8px; padding-bottom: 8px;
+            border-bottom: 1px solid var(--border-color); display: flex;
+            justify-content: space-between; align-items: center;
         }
-        #layer-panel h3 button {
-            background: transparent;
-            border: none;
-            color: var(--text-secondary);
-            cursor: pointer;
-            font-size: 14px;
-            padding: 0 4px;
-        }
+        #layer-panel h3 button { background: transparent; border: none; color: var(--text-secondary); cursor: pointer; font-size: 14px; padding: 0 4px; }
         #layer-panel h3 button:hover { color: var(--text-primary); }
-        #layer-list {
-            list-style: none;
-            flex: 1;
-            overflow-y: auto;
-        }
+        #layer-list { list-style: none; flex: 1; overflow-y: auto; }
         #layer-list li {
-            padding: 4px 6px;
-            cursor: pointer;
-            border-radius: 4px;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            font-size: 12px;
-            transition: var(--transition);
-            margin-bottom: 1px;
+            padding: 4px 6px; cursor: pointer; border-radius: 4px;
+            display: flex; align-items: center; gap: 6px; font-size: 12px;
+            transition: var(--transition); margin-bottom: 1px;
         }
         #layer-list li:hover { background: var(--bg-hover); }
         #layer-list li.active { background: var(--bg-selection); color: white; }
-        #layer-list li .color-swatch {
-            width: 14px;
-            height: 14px;
-            border-radius: 3px;
-            border: 1px solid rgba(255,255,255,0.2);
-            flex-shrink: 0;
-            cursor: pointer;
-        }
+        #layer-list li .color-swatch { width: 14px; height: 14px; border-radius: 3px; border: 1px solid rgba(255,255,255,0.2); flex-shrink: 0; cursor: pointer; }
         #layer-list li .color-swatch:hover { transform: scale(1.1); }
         #layer-list li .layer-name { flex: 1; }
         #layer-list li .layer-controls { display: flex; gap: 2px; }
-        #layer-list li .layer-controls button {
-            background: transparent;
-            border: none;
-            color: var(--text-secondary);
-            cursor: pointer;
-            font-size: 12px;
-            padding: 0 2px;
-            transition: var(--transition);
-        }
+        #layer-list li .layer-controls button { background: transparent; border: none; color: var(--text-secondary); cursor: pointer; font-size: 12px; padding: 0 2px; transition: var(--transition); }
         #layer-list li .layer-controls button:hover { color: var(--text-primary); }
 
-        /* ═══════════════════════════════════════════════════════════
-           SECCIÓN: Canvas
-           ═══════════════════════════════════════════════════════════ */
-        #canvas-container {
-            flex: 1;
-            position: relative;
-            background: var(--bg-main);
-            overflow: hidden;
-        }
+        #canvas-container { flex: 1; position: relative; background: var(--bg-main); overflow: hidden; }
         #myCanvas { width: 100%; height: 100%; display: block; cursor: none; background: var(--bg-canvas); }
 
-        /* ═══════════════════════════════════════════════════════════
-           SECCIÓN: Menú contextual
-           ═══════════════════════════════════════════════════════════ */
         #context-menu {
-            position: fixed;
-            display: none;
-            z-index: 2000;
-            background: #232323;
-            border: 1px solid var(--border-light);
-            border-radius: 6px;
-            box-shadow: var(--shadow);
-            padding: 4px;
-            min-width: 190px;
-            font-size: 12px;
+            position: fixed; display: none; z-index: 2000; background: #232323;
+            border: 1px solid var(--border-light); border-radius: 6px;
+            box-shadow: var(--shadow); padding: 4px; min-width: 190px; font-size: 12px;
         }
         #context-menu .cm-item {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 12px;
-            padding: 6px 10px;
-            border-radius: 4px;
-            color: var(--text-primary);
-            cursor: pointer;
-            white-space: nowrap;
-            transition: background 0.1s ease;
+            display: flex; align-items: center; justify-content: space-between;
+            gap: 12px; padding: 6px 10px; border-radius: 4px; color: var(--text-primary);
+            cursor: pointer; white-space: nowrap; transition: background 0.1s ease;
         }
         #context-menu .cm-item:hover { background: var(--bg-selection); color: #fff; }
         #context-menu .cm-item.disabled { color: var(--text-dim); cursor: default; }
@@ -480,358 +206,112 @@
         #context-menu .cm-item:hover .cm-key { color: rgba(255,255,255,0.75); }
         #context-menu .cm-sep { height: 1px; background: var(--border-color); margin: 4px 2px; }
 
-        /* ═══════════════════════════════════════════════════════════
-           SECCIÓN: Modal genérico
-           ═══════════════════════════════════════════════════════════ */
         #app-modal-overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.55);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 3000;
+            position: fixed; inset: 0; background: rgba(0,0,0,0.55);
+            display: none; align-items: center; justify-content: center; z-index: 3000;
         }
         #app-modal-overlay.open { display: flex; }
         #app-modal-box {
-            background: var(--bg-panel);
-            border: 1px solid var(--border-light);
-            border-radius: 8px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.6);
-            width: 380px;
-            max-width: 90vw;
-            padding: 18px 20px;
+            background: var(--bg-panel); border: 1px solid var(--border-light);
+            border-radius: 8px; box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+            width: 380px; max-width: 90vw; padding: 18px 20px;
         }
-        #app-modal-box h3 {
-            font-size: 14px;
-            color: var(--text-primary);
-            margin-bottom: 10px;
-            font-weight: 600;
-        }
-        #app-modal-box #app-modal-body {
-            font-size: 12.5px;
-            color: var(--text-secondary);
-            line-height: 1.6;
-            margin-bottom: 16px;
-        }
-        #app-modal-box #app-modal-body code {
-            background: var(--bg-main);
-            border: 1px solid var(--border-color);
-            border-radius: 3px;
-            padding: 1px 5px;
-            font-family: var(--font-mono);
-            color: var(--accent-amber);
-        }
-        #app-modal-actions {
-            display: flex;
-            justify-content: flex-end;
-            gap: 8px;
-            flex-wrap: wrap;
-        }
+        #app-modal-box h3 { font-size: 14px; color: var(--text-primary); margin-bottom: 10px; font-weight: 600; }
+        #app-modal-box #app-modal-body { font-size: 12.5px; color: var(--text-secondary); line-height: 1.6; margin-bottom: 16px; }
+        #app-modal-box #app-modal-body code { background: var(--bg-main); border: 1px solid var(--border-color); border-radius: 3px; padding: 1px 5px; font-family: var(--font-mono); color: var(--accent-amber); }
+        #app-modal-actions { display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
         #app-modal-actions button {
-            background: var(--bg-button);
-            border: 1px solid var(--border-light);
-            color: var(--text-primary);
-            padding: 7px 14px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 12px;
-            font-weight: 600;
-            transition: all 0.15s ease;
+            background: var(--bg-button); border: 1px solid var(--border-light);
+            color: var(--text-primary); padding: 7px 14px; border-radius: 5px;
+            cursor: pointer; font-size: 12px; font-weight: 600; transition: all 0.15s ease;
         }
-        #app-modal-actions button:hover {
-            background: var(--bg-hover);
-            transform: translateY(-1px);
-        }
-        #app-modal-actions button.primary {
-            background: linear-gradient(180deg, var(--accent-blue), #3AA8D8);
-            border-color: var(--accent-blue);
-            color: #06283d;
-        }
+        #app-modal-actions button:hover { background: var(--bg-hover); transform: translateY(-1px); }
+        #app-modal-actions button.primary { background: linear-gradient(180deg, var(--accent-blue), #3AA8D8); border-color: var(--accent-blue); color: #06283d; }
         #app-modal-actions button.primary:hover { filter: brightness(1.08); }
 
-        /* ═══════════════════════════════════════════════════════════
-           SECCIÓN: Panel de propiedades
-           ═══════════════════════════════════════════════════════════ */
         #properties-panel {
-            width: 280px;
-            background: var(--bg-panel);
-            border-left: 1px solid var(--border-color);
-            padding: 10px 12px;
-            flex-shrink: 0;
-            overflow-y: auto;
-            display: none;
+            width: 280px; background: var(--bg-panel); border-left: 1px solid var(--border-color);
+            padding: 10px 12px; flex-shrink: 0; overflow-y: auto; display: none;
         }
-        #properties-panel.visible {
-            display: block;
-            animation: slideIn 0.2s ease;
-        }
+        #properties-panel.visible { display: block; animation: slideIn 0.2s ease; }
         #properties-panel h3 {
-            font-size: 11px;
-            font-weight: 600;
-            text-transform: uppercase;
-            color: var(--text-secondary);
-            letter-spacing: 0.5px;
-            margin-bottom: 12px;
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 8px;
+            font-size: 11px; font-weight: 600; text-transform: uppercase;
+            color: var(--text-secondary); letter-spacing: 0.5px; margin-bottom: 12px;
+            border-bottom: 1px solid var(--border-color); padding-bottom: 8px;
         }
-        .prop-row {
-            display: flex;
-            justify-content: space-between;
-            padding: 4px 0;
-            font-size: 12px;
-            border-bottom: 1px solid rgba(255,255,255,0.05);
-            align-items: center;
-        }
+        .prop-row { display: flex; justify-content: space-between; padding: 4px 0; font-size: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); align-items: center; }
         .prop-label { color: var(--text-secondary); flex: 0 0 80px; }
-        .prop-value {
-            flex: 1;
-            text-align: right;
-            color: var(--text-primary);
-            font-weight: 500;
-        }
-        .prop-value select,
-        .prop-value input {
-            background: var(--bg-main);
-            color: var(--text-primary);
-            border: 1px solid var(--border-color);
-            border-radius: 4px;
-            padding: 3px 5px;
-            font-size: 12px;
-            width: 100%;
-            box-sizing: border-box;
-        }
-        .prop-value input[type="color"] {
-            padding: 0;
-            height: 24px;
-            width: 40px;
-            border: none;
-            background: transparent;
-            cursor: pointer;
-        }
+        .prop-value { flex: 1; text-align: right; color: var(--text-primary); font-weight: 500; }
+        .prop-value select, .prop-value input { background: var(--bg-main); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: 4px; padding: 3px 5px; font-size: 12px; width: 100%; box-sizing: border-box; }
+        .prop-value input[type="color"] { padding: 0; height: 24px; width: 40px; border: none; background: transparent; cursor: pointer; }
         .prop-value input[type="number"] { width: 80px; text-align: right; }
         .prop-value .coord-group { display: flex; gap: 4px; justify-content: flex-end; }
         .prop-value .coord-group input { width: 60px; }
 
-        /* ═══════════════════════════════════════════════════════════
-           SECCIÓN: Barra inferior de estado (toggles tipo píldora)
-           ═══════════════════════════════════════════════════════════ */
         #status-bar {
-            height: 28px;
-            background: var(--bg-ribbon);
-            border-top: 1px solid var(--border-color);
-            display: flex;
-            align-items: center;
-            padding: 0 8px;
-            gap: 2px;
-            font-size: 11px;
-            color: var(--text-secondary);
-            flex-shrink: 0;
+            height: 28px; background: var(--bg-ribbon); border-top: 1px solid var(--border-color);
+            display: flex; align-items: center; padding: 0 8px; gap: 2px;
+            font-size: 11px; color: var(--text-secondary); flex-shrink: 0;
         }
         #status-bar .status-group { display: flex; align-items: center; gap: 2px; }
-        #status-bar .status-group .label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.3px; }
         #status-bar .status-group button {
-            background: transparent;
-            border: 1px solid transparent;
-            color: var(--text-secondary);
-            padding: 3px 11px;
-            border-radius: 12px;
-            cursor: pointer;
-            font-size: 10.5px;
-            font-weight: 600;
-            letter-spacing: 0.3px;
-            transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+            background: transparent; border: 1px solid transparent; color: var(--text-secondary);
+            padding: 3px 11px; border-radius: 12px; cursor: pointer; font-size: 10.5px;
+            font-weight: 600; letter-spacing: 0.3px; transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
         }
-        #status-bar .status-group button:hover {
-            background: rgba(79,195,247,0.1);
-            color: var(--text-primary);
-        }
+        #status-bar .status-group button:hover { background: rgba(79,195,247,0.1); color: var(--text-primary); }
         #status-bar .status-group button.active {
             background: linear-gradient(180deg, rgba(79,195,247,0.24), rgba(79,195,247,0.12));
-            border-color: rgba(79,195,247,0.5);
-            color: var(--accent-blue);
+            border-color: rgba(79,195,247,0.5); color: var(--accent-blue);
             box-shadow: 0 0 10px rgba(79,195,247,0.2), inset 0 1px 0 rgba(255,255,255,0.08);
         }
         #status-bar .status-group button svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; vertical-align: -2px; margin-right: 4px; }
         #status-bar .status-sep { width: 1px; height: 16px; background: var(--border-color); margin: 0 6px; flex-shrink: 0; }
-        #status-bar .coords {
-            font-family: var(--font-mono);
-            font-size: 12px;
-            color: var(--text-primary);
-            background: var(--bg-main);
-            border: 1px solid var(--border-color);
-            border-radius: 4px;
-            padding: 3px 10px;
-            flex-shrink: 0;
-        }
-        #status-bar .status-scroll {
-            display: flex;
-            align-items: center;
-            gap: 2px;
-            margin-left: auto;
-            overflow: hidden;
-        }
+        #status-bar .coords { font-family: var(--font-mono); font-size: 12px; color: var(--text-primary); background: var(--bg-main); border: 1px solid var(--border-color); border-radius: 4px; padding: 3px 10px; flex-shrink: 0; }
+        #status-bar .status-scroll { display: flex; align-items: center; gap: 2px; margin-left: auto; overflow: hidden; }
         #status-bar .zoom-indicator { font-size: 11px; color: var(--text-secondary); margin-left: 10px; font-family: var(--font-mono); flex-shrink: 0; }
-        #cmd-history-toggle {
-            background: transparent;
-            border: 1px solid transparent;
-            color: var(--text-secondary);
-            padding: 3px 10px;
-            border-radius: 12px;
-            cursor: pointer;
-            font-size: 10px;
-            font-weight: 700;
-            letter-spacing: 0.3px;
-            transition: all 0.15s ease;
-        }
+        #cmd-history-toggle { background: transparent; border: 1px solid transparent; color: var(--text-secondary); padding: 3px 10px; border-radius: 12px; cursor: pointer; font-size: 10px; font-weight: 700; letter-spacing: 0.3px; transition: all 0.15s ease; }
         #cmd-history-toggle:hover { background: rgba(79,195,247,0.1); color: var(--text-primary); }
-        #cmd-history-toggle.active {
-            color: var(--accent-blue);
-            border-color: rgba(79,195,247,0.5);
-            background: rgba(79,195,247,0.15);
-        }
+        #cmd-history-toggle.active { color: var(--accent-blue); border-color: rgba(79,195,247,0.5); background: rgba(79,195,247,0.15); }
 
-        /* ═══════════════════════════════════════════════════════════
-           SECCIÓN: Ventana de texto F2
-           ═══════════════════════════════════════════════════════════ */
         #cmd-history-panel {
-            position: fixed;
-            left: 0; right: 0;
-            bottom: 54px;
-            height: 240px;
-            background: #0c0c0c;
-            border-top: 1px solid var(--border-light);
-            box-shadow: 0 -6px 18px rgba(0,0,0,0.5);
-            z-index: 900;
-            display: none;
-            flex-direction: column;
+            position: fixed; left: 0; right: 0; bottom: 54px; height: 240px;
+            background: #0c0c0c; border-top: 1px solid var(--border-light);
+            box-shadow: 0 -6px 18px rgba(0,0,0,0.5); z-index: 900;
+            display: none; flex-direction: column;
         }
         #cmd-history-panel.open { display: flex; }
         #cmd-history-panel .cmh-head {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 5px 10px;
-            background: var(--bg-ribbon);
-            border-bottom: 1px solid var(--border-color);
-            font-size: 10.5px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            color: var(--text-dim);
-            flex-shrink: 0;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 5px 10px; background: var(--bg-ribbon);
+            border-bottom: 1px solid var(--border-color); font-size: 10.5px;
+            text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-dim); flex-shrink: 0;
         }
         #cmd-history-panel .cmh-head button { background: transparent; border: none; color: var(--text-dim); cursor: pointer; font-size: 14px; line-height: 1; padding: 0 4px; }
         #cmd-history-panel .cmh-head button:hover { color: var(--text-primary); }
-        #cmd-history-panel .cmh-body {
-            flex: 1;
-            overflow-y: auto;
-            padding: 8px 12px;
-            font-family: var(--font-mono);
-            font-size: 12px;
-            color: #b9b9b9;
-            line-height: 1.6;
-        }
+        #cmd-history-panel .cmh-body { flex: 1; overflow-y: auto; padding: 8px 12px; font-family: var(--font-mono); font-size: 12px; color: #b9b9b9; line-height: 1.6; }
         #cmd-history-panel .cmh-body div:last-child { color: var(--accent-blue); }
 
-        /* ═══════════════════════════════════════════════════════════
-           SECCIÓN: Línea de comandos
-           ═══════════════════════════════════════════════════════════ */
-        #command-line {
-            height: 26px;
-            background: #101010;
-            border-top: 1px solid var(--border-color);
-            display: flex;
-            align-items: center;
-            padding: 0 12px;
-            gap: 8px;
-            flex-shrink: 0;
-        }
-        #cmd-prompt {
-            color: var(--accent-blue);
-            font-weight: 600;
-            font-size: 12.5px;
-            font-family: var(--font-mono);
-            min-width: 66px;
-        }
-        #cmd-input {
-            flex: 1;
-            background: transparent;
-            color: var(--text-primary);
-            border: none;
-            outline: none;
-            font-size: 12.5px;
-            font-family: var(--font-mono);
-            padding: 2px 0;
-            letter-spacing: 0.2px;
-        }
+        #command-line { height: 26px; background: #101010; border-top: 1px solid var(--border-color); display: flex; align-items: center; padding: 0 12px; gap: 8px; flex-shrink: 0; }
+        #cmd-prompt { color: var(--accent-blue); font-weight: 600; font-size: 12.5px; font-family: var(--font-mono); min-width: 66px; }
+        #cmd-input { flex: 1; background: transparent; color: var(--text-primary); border: none; outline: none; font-size: 12.5px; font-family: var(--font-mono); padding: 2px 0; letter-spacing: 0.2px; }
         #cmd-input::placeholder { color: var(--text-dim); }
-        #cmd-status {
-            color: var(--text-dim);
-            font-size: 11px;
-            font-family: var(--font-mono);
-            min-width: 100px;
-            text-align: right;
-        }
+        #cmd-status { color: var(--text-dim); font-size: 11px; font-family: var(--font-mono); min-width: 100px; text-align: right; }
 
-        /* ═══════════════════════════════════════════════════════════
-           SECCIÓN: Mini mapa (navigator)
-           ═══════════════════════════════════════════════════════════ */
-        #navigator {
-            position: absolute;
-            bottom: 40px;
-            right: 16px;
-            width: 150px;
-            height: 120px;
-            background: rgba(30,30,30,0.85);
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            overflow: hidden;
-            z-index: 100;
-            box-shadow: var(--shadow);
-            display: none;
-        }
+        #navigator { position: absolute; bottom: 40px; right: 16px; width: 150px; height: 120px; background: rgba(30,30,30,0.85); border: 1px solid var(--border-color); border-radius: 6px; overflow: hidden; z-index: 100; box-shadow: var(--shadow); display: none; }
         #navigator canvas { width: 100%; height: 100%; display: block; }
         #navigator.visible { display: block; animation: fadeIn 0.2s ease; }
 
-        /* ═══════════════════════════════════════════════════════════
-           SECCIÓN: Crosshair estilo AutoCAD
-           ═══════════════════════════════════════════════════════════ */
-        .crosshair {
-            position: fixed;
-            top: 0; left: 0;
-            width: 100vw; height: 100vh;
-            pointer-events: none;
-            z-index: 50;
-            display: none;
-        }
+        .crosshair { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 50; display: none; }
         .crosshair-line { position: absolute; background: rgba(217,217,217,0.45); }
         .crosshair-line.h { width: 100vw; height: 1px; left: 0; }
         .crosshair-line.v { width: 1px; height: 100vh; top: 0; }
-        .crosshair-box {
-            position: absolute;
-            width: 9px;
-            height: 9px;
-            margin: -5px 0 0 -5px;
-            border: 1px solid var(--accent-blue);
-            background: rgba(79,195,247,0.10);
-        }
+        .crosshair-box { position: absolute; width: 9px; height: 9px; margin: -5px 0 0 -5px; border: 1px solid var(--accent-blue); background: rgba(79,195,247,0.10); }
 
-        /* ═══════════════════════════════════════════════════════════
-           SECCIÓN: Color picker oculto + animaciones + responsive
-           ═══════════════════════════════════════════════════════════ */
         #color-picker-hidden { display: none; position: fixed; z-index: 9999; }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-4px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes slideIn {
-            from { opacity: 0; transform: translateX(-10px); }
-            to { opacity: 1; transform: translateX(0); }
-        }
-        .fade-in { animation: fadeIn 0.15s ease; }
-        .slide-in { animation: slideIn 0.2s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes slideIn { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: translateX(0); } }
 
         @media (max-width: 1024px) {
             #layer-panel { width: 160px; }
@@ -849,9 +329,7 @@
 </head>
 <body>
 
-    <!-- ═══════════════════════════════════════════════════════════
-         Barra de acceso rápido
-         ═══════════════════════════════════════════════════════════ -->
+    <!-- ═══════════ Barra de acceso rápido ═══════════ -->
     <div id="quick-access">
         <span class="brand">
             <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 15V9l4 6V9l4 6"/></svg>
@@ -870,9 +348,7 @@
         <input type="file" id="file-input-import" class="file-input-hidden" accept=".dxf,.dwg">
     </div>
 
-    <!-- ═══════════════════════════════════════════════════════════
-         Ribbon
-         ═══════════════════════════════════════════════════════════ -->
+    <!-- ═══════════ Ribbon ═══════════ -->
     <div id="ribbon">
         <div id="ribbon-tabs">
             <button class="active" data-tab="home">Inicio</button>
@@ -880,75 +356,60 @@
             <button data-tab="view">Vista</button>
         </div>
         <div id="ribbon-content">
-            <!-- ─── Pestaña INICIO: grupo Dibujar ─── -->
+            <!-- Dibujar -->
             <div class="ribbon-group" data-tab="home">
                 <label>Dibujar</label>
                 <div class="ribbon-group-btns">
                 <button class="ribbon-btn" data-cmd="LINE" title="Línea">
                     <svg viewBox="0 0 24 24"><circle cx="4" cy="20" r="1.4" fill="currentColor" stroke="none"/><line x1="4" y1="20" x2="20" y2="4"/><circle cx="20" cy="4" r="1.4" fill="currentColor" stroke="none"/></svg>
-                    <span>Línea</span>
-                    <span class="tooltip">LINE (L)</span>
+                    <span>Línea</span><span class="tooltip">LINE (L)</span>
                 </button>
                 <button class="ribbon-btn" data-cmd="CIRCLE" title="Círculo">
                     <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="0.8" fill="currentColor" stroke="none"/><line x1="12" y1="3.5" x2="12" y2="5.5" stroke-width="1.2"/></svg>
-                    <span>Círculo</span>
-                    <span class="tooltip">CIRCLE (C)</span>
+                    <span>Círculo</span><span class="tooltip">CIRCLE (C)</span>
                 </button>
                 <button class="ribbon-btn" data-cmd="RECTANG" title="Rectángulo">
                     <svg viewBox="0 0 24 24"><rect x="3.5" y="5.5" width="17" height="13" rx="0.5"/></svg>
-                    <span>Rectángulo</span>
-                    <span class="tooltip">RECTANG (REC)</span>
+                    <span>Rectángulo</span><span class="tooltip">RECTANG (REC)</span>
                 </button>
                 <button class="ribbon-btn" data-cmd="ARC" title="Arco">
                     <svg viewBox="0 0 24 24"><path d="M4 17 A 13 13 0 0 1 20 17" fill="none"/><circle cx="4" cy="17" r="1.2" fill="currentColor" stroke="none"/><circle cx="20" cy="17" r="1.2" fill="currentColor" stroke="none"/></svg>
-                    <span>Arco</span>
-                    <span class="tooltip">ARC (A)</span>
+                    <span>Arco</span><span class="tooltip">ARC (A)</span>
                 </button>
                 </div>
             </div>
 
-            <!-- ─── Pestaña INICIO: grupo Modificar ─── -->
+            <!-- Modificar -->
             <div class="ribbon-group" data-tab="home">
                 <label>Modificar</label>
                 <div class="ribbon-group-btns">
                 <button class="ribbon-btn" data-cmd="MOVE" title="Mover">
                     <svg viewBox="0 0 24 24"><line x1="12" y1="2.5" x2="12" y2="21.5"/><line x1="2.5" y1="12" x2="21.5" y2="12"/><path d="M12 2.5 9 6M12 2.5 15 6M12 21.5 9 18M12 21.5 15 18M2.5 12 6 9M2.5 12 6 15M21.5 12 18 9M21.5 12 18 15"/></svg>
-                    <span>Mover</span>
-                    <span class="tooltip">MOVE (M)</span>
+                    <span>Mover</span><span class="tooltip">MOVE (M)</span>
                 </button>
                 <button class="ribbon-btn" data-cmd="COPY" title="Copiar">
                     <svg viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="0.5"/><path d="M5.5 15.5H4.5A0.5 0.5 0 0 1 4 15V4.5A0.5 0.5 0 0 1 4.5 4H15a0.5 0.5 0 0 1 0.5 0.5V5.5" fill="none"/></svg>
-                    <span>Copiar</span>
-                    <span class="tooltip">COPY (CO)</span>
+                    <span>Copiar</span><span class="tooltip">COPY (CO)</span>
                 </button>
                 <button class="ribbon-btn" data-cmd="ROTATE" title="Rotar">
                     <svg viewBox="0 0 24 24"><path d="M18.4 8A7.5 7.5 0 1 0 20 12"/><path d="M20 4v5h-5"/></svg>
-                    <span>Rotar</span>
-                    <span class="tooltip">ROTATE (RO)</span>
+                    <span>Rotar</span><span class="tooltip">ROTATE (RO)</span>
                 </button>
                 <button class="ribbon-btn" data-cmd="TRIM" title="Recortar">
                     <svg viewBox="0 0 24 24"><line x1="4" y1="4" x2="20" y2="20"/><line x1="20" y1="4" x2="14.3" y2="9.7"/><line x1="9.7" y1="14.3" x2="4" y2="20"/><circle cx="14.3" cy="9.7" r="1" fill="currentColor" stroke="none"/><circle cx="9.7" cy="14.3" r="1" fill="currentColor" stroke="none"/></svg>
-                    <span>Recortar</span>
-                    <span class="tooltip">TRIM (TR)</span>
+                    <span>Recortar</span><span class="tooltip">TRIM (TR)</span>
                 </button>
                 <button class="ribbon-btn" data-cmd="OFFSET" title="Offset">
                     <svg viewBox="0 0 24 24"><path d="M3 16c4-9 14-9 18 0" fill="none"/><path d="M6.3 16c3-6.2 8.4-6.2 11.4 0" fill="none" stroke-dasharray="2.2 2.2"/></svg>
-                    <span>Offset</span>
-                    <span class="tooltip">OFFSET (O)</span>
+                    <span>Offset</span><span class="tooltip">OFFSET (O)</span>
                 </button>
                 <button class="ribbon-btn" data-cmd="ERASE" title="Borrar">
                     <svg viewBox="0 0 24 24"><path d="M15.5 3.5 5 14l3 6.5h5L21 12z"/><line x1="9" y1="9.5" x2="16" y2="16.5" stroke-width="1.2"/><line x1="3" y1="20.5" x2="10" y2="20.5"/></svg>
-                    <span>Borrar</span>
-                    <span class="tooltip">ERASE (E)</span>
+                    <span>Borrar</span><span class="tooltip">ERASE (E)</span>
                 </button>
                 <button class="ribbon-btn" data-cmd="MIRROR" title="Simetría">
-                    <svg viewBox="0 0 24 24">
-                        <line x1="12" y1="3" x2="12" y2="21" stroke-dasharray="2 2"/>
-                        <polygon points="3,7 8,12 3,17"/>
-                        <polygon points="21,7 16,12 21,17"/>
-                    </svg>
-                    <span>Simetría</span>
-                    <span class="tooltip">MIRROR (MI)</span>
+                    <svg viewBox="0 0 24 24"><line x1="12" y1="3" x2="12" y2="21" stroke-dasharray="2 2"/><polygon points="3,7 8,12 3,17"/><polygon points="21,7 16,12 21,17"/></svg>
+                    <span>Simetría</span><span class="tooltip">MIRROR (MI)</span>
                 </button>
                 <div class="ribbon-flyout">
                     <button class="ribbon-btn" id="ribbon-more-modify" title="Más comandos">
@@ -972,7 +433,7 @@
                 </div>
             </div>
 
-            <!-- ─── Pestaña INICIO: grupo Capas ─── -->
+            <!-- Capas -->
             <div class="ribbon-group" data-tab="home">
                 <label>Capas</label>
                 <div class="layer-combo" id="layer-combo">
@@ -986,84 +447,73 @@
                 </div>
             </div>
 
-            <!-- ─── Pestaña INSERTAR ─── -->
+            <!-- Insertar -->
             <div class="ribbon-group" data-tab="insert" style="display:none;">
                 <label>Archivo</label>
                 <div class="ribbon-group-btns">
                 <button class="ribbon-btn" id="ribbon-import" title="Importar DXF">
                     <svg viewBox="0 0 24 24"><polygon points="3,3 21,3 21,21 3,21"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
-                    <span>Importar</span>
-                    <span class="tooltip">Importar DXF</span>
+                    <span>Importar</span><span class="tooltip">Importar DXF</span>
                 </button>
                 <button class="ribbon-btn" id="ribbon-export" title="Exportar DXF">
                     <svg viewBox="0 0 24 24"><polygon points="3,3 21,3 21,21 3,21"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/><polygon points="8,16 16,16 14,19 10,19" fill="currentColor" stroke="none"/></svg>
-                    <span>Exportar</span>
-                    <span class="tooltip">Exportar DXF</span>
+                    <span>Exportar</span><span class="tooltip">Exportar DXF</span>
                 </button>
                 </div>
             </div>
 
-            <!-- ─── Pestaña VISTA: navegación ─── -->
+            <!-- Vista: Navegación -->
             <div class="ribbon-group" data-tab="view" style="display:none;">
                 <label>Navegación</label>
                 <div class="ribbon-group-btns">
                 <button class="ribbon-btn" id="btn-zoom-extents" title="Zoom Extents">
                     <svg viewBox="0 0 24 24"><polygon points="3,3 21,3 21,21 3,21"/><polygon points="6,6 18,6 18,18 6,18" fill="currentColor" stroke="none" opacity="0.3"/></svg>
-                    <span>Extents</span>
-                    <span class="tooltip">Zoom Extents (Ctrl+0)</span>
+                    <span>Extents</span><span class="tooltip">Zoom Extents (Ctrl+0)</span>
                 </button>
                 <button class="ribbon-btn" id="btn-zoom-in" title="Zoom In">
                     <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><line x1="12" y1="6" x2="12" y2="18"/><line x1="6" y1="12" x2="18" y2="12"/></svg>
-                    <span>Acercar</span>
-                    <span class="tooltip">Zoom In</span>
+                    <span>Acercar</span><span class="tooltip">Zoom In</span>
                 </button>
                 <button class="ribbon-btn" id="btn-zoom-out" title="Zoom Out">
                     <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><line x1="6" y1="12" x2="18" y2="12"/></svg>
-                    <span>Alejar</span>
-                    <span class="tooltip">Zoom Out</span>
+                    <span>Alejar</span><span class="tooltip">Zoom Out</span>
                 </button>
                 </div>
             </div>
 
-            <!-- ─── Pestaña VISTA: ayudas de dibujo ─── -->
+            <!-- Vista: Ayudas -->
             <div class="ribbon-group" data-tab="view" style="display:none;">
                 <label>Ayudas de dibujo</label>
                 <div class="ribbon-group-btns">
                 <button class="ribbon-btn" id="btn-grid-toggle" title="Grid">
                     <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" fill="none" stroke="currentColor"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/></svg>
-                    <span>Grid</span>
-                    <span class="tooltip">Mostrar/Ocultar Grid (F7)</span>
+                    <span>Grid</span><span class="tooltip">Mostrar/Ocultar Grid (F7)</span>
                 </button>
                 <button class="ribbon-btn" id="btn-navigator-toggle" title="Mini mapa">
                     <svg viewBox="0 0 24 24"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2z"/><path d="M9 4v14M15 6v14"/></svg>
-                    <span>Mini mapa</span>
-                    <span class="tooltip">Mostrar/Ocultar mini mapa</span>
+                    <span>Mini mapa</span><span class="tooltip">Mostrar/Ocultar mini mapa</span>
                 </button>
                 </div>
             </div>
 
-            <!-- ─── Pestaña VISTA: paletas ─── -->
+            <!-- Vista: Paletas -->
             <div class="ribbon-group" data-tab="view" style="display:none;">
                 <label>Paletas</label>
                 <div class="ribbon-group-btns">
                 <button class="ribbon-btn active" id="btn-layers-panel-toggle" title="Panel de capas">
                     <svg viewBox="0 0 24 24"><path d="M12 3 3 8l9 5 9-5-9-5z"/><path d="M3 12l9 5 9-5"/><path d="M3 16l9 5 9-5"/></svg>
-                    <span>Capas</span>
-                    <span class="tooltip">Mostrar/Ocultar panel de capas (Ctrl+2)</span>
+                    <span>Capas</span><span class="tooltip">Mostrar/Ocultar panel de capas (Ctrl+2)</span>
                 </button>
                 <button class="ribbon-btn active" id="btn-properties-panel-toggle" title="Panel de propiedades">
                     <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="1"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="9" x2="9" y2="20"/></svg>
-                    <span>Propiedades</span>
-                    <span class="tooltip">Mostrar/Ocultar panel de propiedades (Ctrl+1)</span>
+                    <span>Propiedades</span><span class="tooltip">Mostrar/Ocultar panel de propiedades (Ctrl+1)</span>
                 </button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- ═══════════════════════════════════════════════════════════
-         Área principal
-         ═══════════════════════════════════════════════════════════ -->
+    <!-- ═══════════ Área principal ═══════════ -->
     <div id="main-area">
         <div id="layer-panel">
             <h3>Capas <button id="add-layer-btn">+</button></h3>
@@ -1072,9 +522,7 @@
 
         <div id="canvas-container">
             <canvas id="myCanvas"></canvas>
-            <div id="navigator">
-                <canvas id="navCanvas"></canvas>
-            </div>
+            <div id="navigator"><canvas id="navCanvas"></canvas></div>
             <div id="context-menu"></div>
         </div>
 
@@ -1092,9 +540,7 @@
         </div>
     </div>
 
-    <!-- ═══════════════════════════════════════════════════════════
-         Línea de comandos
-         ═══════════════════════════════════════════════════════════ -->
+    <!-- ═══════════ Línea de comandos ═══════════ -->
     <div id="command-line">
         <span id="cmd-prompt">Comando:</span>
         <input type="text" id="cmd-input" placeholder="Comando, o X,Y / @dX,dY / @dist<áng / distancia..." autocomplete="off">
@@ -1102,9 +548,6 @@
         <button id="cmd-history-toggle" title="Histórico de comandos (F2)">F2</button>
     </div>
 
-    <!-- ═══════════════════════════════════════════════════════════
-         Histórico de texto (F2)
-         ═══════════════════════════════════════════════════════════ -->
     <div id="cmd-history-panel">
         <div class="cmh-head">
             <span>Histórico de texto de AutoCAD</span>
@@ -1113,9 +556,7 @@
         <div class="cmh-body" id="cmd-history-body"></div>
     </div>
 
-    <!-- ═══════════════════════════════════════════════════════════
-         Barra de estado inferior
-         ═══════════════════════════════════════════════════════════ -->
+    <!-- ═══════════ Barra de estado inferior ═══════════ -->
     <div id="status-bar">
         <div class="coords" id="coords-display">X: 0.000, Y: 0.000</div>
         <div class="status-sep"></div>
@@ -1145,40 +586,29 @@
     </div>
 
     <input type="color" id="color-picker-hidden" value="#FFFFFF">
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/paper.js/0.12.17/paper-full.min.js"></script>
-    <script>
-    /* ================================================================
-       CAD Pro – Script principal
-       Convenio de ejes:
-         · Internamente paper.js usa Y hacia ABAJO.
-         · De cara al usuario, Y+ = ARRIBA (convenio AutoCAD / matemático).
-         · Todo lo que se MUESTRA o se INTRODUCE al usuario pasa por ±.
-         · Snaps, grips, geometría interna y DXF no cambian.
-       Comandos soportados:
-         · Dibujo:   LINE, CIRCLE, RECTANG, ARC
-         · Edición:  MOVE, COPY, ROTATE, SCALE, ERASE, MIRROR,
-                     TRIM, EXTEND, OFFSET, JOIN, CHAMFER, FILLET
-       ================================================================ */
 
-    // ═══════════════════════════════════════════════════════════════
-    // [1] SETUP PAPER.JS
-    // ═══════════════════════════════════════════════════════════════
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/paper.js/0.12.17/paper-full.min.js"></script>
+    <script>
+    /* ═══════════════════════════════════════════════════════════════
+       CAD Pro – Script principal
+       Y+ = arriba (convenio usuario); internamente paper.js usa Y-.
+       Comandos: LINE, CIRCLE, RECTANG, ARC, MOVE, COPY, ROTATE, SCALE,
+                 ERASE, MIRROR, TRIM, EXTEND, OFFSET, JOIN, CHAMFER, FILLET
+       ═══════════════════════════════════════════════════════════════ */
+
+    /* ── [1] Setup paper.js ── */
     paper.setup('myCanvas');
     paper.settings.handleSize = 7;
     const { project, view, Path, Point, Group, Layer, Rectangle, Color, PointText, Size } = paper;
     project.selectedColor = new Color(0.31, 0.76, 0.97);
 
-    // ═══════════════════════════════════════════════════════════════
-    // [2] CAPAS (usuario + utilidades)
-    // ═══════════════════════════════════════════════════════════════
+    /* ── [2] Capas ── */
     const layers = {};
-
     function safeName(original) {
         let name = original.replace(/[^a-zA-Z0-9_\-]/g, '_');
         if (/^\d/.test(name)) name = 'L_' + name;
         return name;
     }
-
     function createLayer(originalName, color = '#FFFFFF') {
         const internal = safeName(originalName);
         if (layers[internal]) return layers[internal];
@@ -1190,20 +620,16 @@
         return layer;
     }
     const defaultLayer = createLayer('0', '#FFFFFF');
-
-    const gridLayer      = new Layer(); gridLayer.name = 'grid';        project.addLayer(gridLayer); gridLayer.sendToBack();
-    const guideLayer     = new Layer(); guideLayer.name = 'guides';     project.addLayer(guideLayer);
-    const snapLayer      = new Layer(); snapLayer.name = 'snaps';       project.addLayer(snapLayer);
+    const gridLayer = new Layer(); gridLayer.name = 'grid'; project.addLayer(gridLayer); gridLayer.sendToBack();
+    const guideLayer = new Layer(); guideLayer.name = 'guides'; project.addLayer(guideLayer);
+    const snapLayer = new Layer(); snapLayer.name = 'snaps'; project.addLayer(snapLayer);
     const selectionLayer = new Layer(); selectionLayer.name = 'selection'; project.addLayer(selectionLayer);
-    const previewLayer   = new Layer(); previewLayer.name = 'preview';  project.addLayer(previewLayer);
-    const gripLayer      = new Layer(); gripLayer.name = 'grips';       project.addLayer(gripLayer);
-
+    const previewLayer = new Layer(); previewLayer.name = 'preview'; project.addLayer(previewLayer);
+    const gripLayer = new Layer(); gripLayer.name = 'grips'; project.addLayer(gripLayer);
     let activeLayer = defaultLayer;
     project.activeLayer = activeLayer;
 
-    // ═══════════════════════════════════════════════════════════════
-    // [3] TIPOS DE ENTIDAD Y HELPERS DE GEOMETRÍA
-    // ═══════════════════════════════════════════════════════════════
+    /* ── [3] Tipos de entidad ── */
     function isLineItem(item)     { return !!(item && item.data && item.data.shapeType === 'line'); }
     function isCircleItem(item)   { return !!(item && item.data && item.data.shapeType === 'circle'); }
     function isPolylineItem(item) { return !!(item && item.data && item.data.shapeType === 'polyline'); }
@@ -1213,7 +639,6 @@
         item.data.shapeType = shapeType;
         return item;
     }
-
     function getCircleRadius(item) {
         if (item && item.data && typeof item.data.radius === 'number') return item.data.radius;
         return item && item.bounds ? item.bounds.width / 2 : 0;
@@ -1237,15 +662,12 @@
         }
         return newCircle;
     }
-
     function reflectMatrix(p1, p2) {
-        const dx = p2.x - p1.x;
-        const dy = p2.y - p1.y;
+        const dx = p2.x - p1.x, dy = p2.y - p1.y;
         const len2 = dx * dx + dy * dy;
         if (len2 < 1e-12) return new paper.Matrix(1, 0, 0, 1, 0, 0);
         const inv = 1 / Math.sqrt(len2);
-        const ux = dx * inv;
-        const uy = dy * inv;
+        const ux = dx * inv, uy = dy * inv;
         const a = 2 * ux * ux - 1;
         const b = 2 * ux * uy;
         const c = 2 * ux * uy;
@@ -1255,9 +677,7 @@
         return new paper.Matrix(a, b, c, d, tx, ty);
     }
 
-    // ═══════════════════════════════════════════════════════════════
-    // [4] ESTADO GLOBAL
-    // ═══════════════════════════════════════════════════════════════
+    /* ── [4] Estado global ── */
     const state = {
         currentCommand: null, step: 0, collectedPoints: [], selectedItems: [],
         basePoint: null, originalPositions: [], dragStartPoint: null,
@@ -1281,9 +701,7 @@
     let trackHoverTimer = null;
     const TRACK_ACQUIRE_DELAY = 650;
 
-    // ═══════════════════════════════════════════════════════════════
-    // [5] GROSOR DE LÍNEA CONSTANTE EN PANTALLA
-    // ═══════════════════════════════════════════════════════════════
+    /* ── [5] Grosor de línea ── */
     const LINE_WEIGHT_PX = 1.3;
     const LWT_WEIGHT_MULTIPLIER = 2.4;
     function currentStrokeWidth() {
@@ -1299,9 +717,7 @@
         }
     }
 
-    // ═══════════════════════════════════════════════════════════════
-    // [6] UI – RIBBON, FLYOUT, COMBO DE CAPAS
-    // ═══════════════════════════════════════════════════════════════
+    /* ── [6] UI Ribbon ── */
     document.querySelectorAll('#ribbon-tabs button').forEach(tab => {
         tab.addEventListener('click', () => {
             document.querySelectorAll('#ribbon-tabs button').forEach(t => t.classList.remove('active'));
@@ -1316,7 +732,6 @@
     document.querySelectorAll('.ribbon-btn[data-cmd]').forEach(btn => {
         btn.addEventListener('click', () => {
             const cmd = btn.dataset.cmd;
-            // EXTEND necesita límites; TRIM ya no (usa todos los objetos si no hay selección)
             if (cmd === 'EXTEND' && !state.selectedItems.length) {
                 setPrompt('Selecciona un objeto como límite'); return;
             }
@@ -1361,9 +776,7 @@
     layerComboMenu.addEventListener('click', (e) => e.stopPropagation());
     document.addEventListener('click', () => { layerComboMenu.classList.remove('open'); });
 
-    // ═══════════════════════════════════════════════════════════════
-    // [7] PANEL DE CAPAS
-    // ═══════════════════════════════════════════════════════════════
+    /* ── [7] Panel de capas ── */
     function renderLayerList() {
         const list = document.getElementById('layer-list');
         list.innerHTML = '';
@@ -1381,8 +794,7 @@
                 <span class="layer-controls">
                     <button class="vis-toggle" title="Visibilidad">${layer.data.visible ? '👁' : '🚫'}</button>
                     <button class="lock-toggle" title="Bloquear">${layer.data.locked ? '🔒' : '🔓'}</button>
-                </span>
-            `;
+                </span>`;
             li.addEventListener('click', (e) => {
                 if (e.target.closest('button') || e.target.closest('.color-swatch')) return;
                 setActiveLayer(internal);
@@ -1392,27 +804,16 @@
                 e.stopPropagation();
                 const picker = document.getElementById('color-picker-hidden');
                 picker.value = layer.data.color || '#FFFFFF';
-                picker.style.display = 'block';
-                picker.focus();
-                picker.click();
+                picker.style.display = 'block'; picker.focus(); picker.click();
                 picker.oninput = () => {
                     layer.data.color = picker.value;
                     swatch.style.background = picker.value;
                     renderLayerList();
                 };
-                picker.onblur = () => {
-                    picker.style.display = 'none';
-                    picker.oninput = null;
-                };
+                picker.onblur = () => { picker.style.display = 'none'; picker.oninput = null; };
             });
-            li.querySelector('.vis-toggle').addEventListener('click', (e) => {
-                e.stopPropagation();
-                toggleLayerVisibility(internal);
-            });
-            li.querySelector('.lock-toggle').addEventListener('click', (e) => {
-                e.stopPropagation();
-                toggleLayerLock(internal);
-            });
+            li.querySelector('.vis-toggle').addEventListener('click', (e) => { e.stopPropagation(); toggleLayerVisibility(internal); });
+            li.querySelector('.lock-toggle').addEventListener('click', (e) => { e.stopPropagation(); toggleLayerLock(internal); });
             list.appendChild(li);
         }
         document.getElementById('current-layer-name').textContent = activeLayer.data.originalName;
@@ -1420,7 +821,6 @@
         renderLayerCombo();
         updateLayerSelect();
     }
-
     function renderLayerCombo() {
         const menu = document.getElementById('layer-combo-menu');
         menu.innerHTML = '';
@@ -1439,7 +839,6 @@
             menu.appendChild(btn);
         }
     }
-
     function setActiveLayer(internal) {
         if (layers[internal]) {
             activeLayer = layers[internal];
@@ -1461,7 +860,6 @@
         invalidateSnapCache();
         renderLayerList();
     }
-
     document.getElementById('add-layer-btn').addEventListener('click', () => {
         const name = prompt('Nombre de la nueva capa:');
         if (name) {
@@ -1476,9 +874,7 @@
         }
     });
 
-    // ═══════════════════════════════════════════════════════════════
-    // [8] PANEL DE PROPIEDADES
-    // ═══════════════════════════════════════════════════════════════
+    /* ── [8] Panel de propiedades ── */
     function updateProperties() {
         const panel = document.getElementById('properties-panel');
         const sel = state.selectedItems;
@@ -1512,9 +908,7 @@
                 return;
             }
             saveState();
-            state.selectedItems.forEach(it => {
-                if (it.layer !== newLayer) newLayer.addChild(it);
-            });
+            state.selectedItems.forEach(it => { if (it.layer !== newLayer) newLayer.addChild(it); });
             invalidateSnapCache();
             renderLayerList();
             updateProperties();
@@ -1552,24 +946,24 @@
         typeRow.innerHTML = `<span class="prop-label">Tipo</span><span class="prop-value">${type}</span>`;
         container.appendChild(typeRow);
 
-        // Coordenadas (Y en convenio usuario)
+        // Coordenadas
+        const makeInput = (label, getter, setter) => {
+            const row = document.createElement('div');
+            row.className = 'prop-row';
+            row.innerHTML = `<span class="prop-label">${label}</span>`;
+            const inp = document.createElement('input');
+            inp.type = 'number'; inp.step = 0.001; inp.className = 'prop-value';
+            inp.value = getter();
+            inp.addEventListener('change', () => {
+                const v = parseFloat(inp.value);
+                if (!isNaN(v)) { saveState(); setter(v); updateProperties(); }
+            });
+            row.appendChild(inp);
+            container.appendChild(row);
+        };
         if (isLineItem(item)) {
             const p1 = item.segments[0].point;
             const p2 = item.segments[1].point;
-            const makeInput = (label, getter, setter) => {
-                const row = document.createElement('div');
-                row.className = 'prop-row';
-                row.innerHTML = `<span class="prop-label">${label}</span>`;
-                const inp = document.createElement('input');
-                inp.type = 'number'; inp.step = 0.001; inp.className = 'prop-value';
-                inp.value = getter();
-                inp.addEventListener('change', () => {
-                    const v = parseFloat(inp.value);
-                    if (!isNaN(v)) { saveState(); setter(v); updateProperties(); }
-                });
-                row.appendChild(inp);
-                container.appendChild(row);
-            };
             makeInput('Inicio X', () => p1.x, v => item.segments[0].point.x = v);
             makeInput('Inicio Y', () => -p1.y, v => item.segments[0].point.y = -v);
             makeInput('Fin X',    () => p2.x, v => item.segments[1].point.x = v);
@@ -1581,20 +975,6 @@
             container.appendChild(lenRow);
         } else if (isCircleItem(item)) {
             const c = item.position;
-            const makeInput = (label, getter, setter) => {
-                const row = document.createElement('div');
-                row.className = 'prop-row';
-                row.innerHTML = `<span class="prop-label">${label}</span>`;
-                const inp = document.createElement('input');
-                inp.type = 'number'; inp.step = 0.001; inp.className = 'prop-value';
-                inp.value = getter();
-                inp.addEventListener('change', () => {
-                    const v = parseFloat(inp.value);
-                    if (!isNaN(v)) { saveState(); setter(v); updateProperties(); }
-                });
-                row.appendChild(inp);
-                container.appendChild(row);
-            };
             makeInput('Centro X', () => c.x, v => item.position.x = v);
             makeInput('Centro Y', () => -c.y, v => item.position.y = -v);
             const radRow = document.createElement('div');
@@ -1611,7 +991,6 @@
             container.appendChild(radRow);
         }
     }
-
     function updateLayerSelect() {
         const selects = document.querySelectorAll('#props-content select');
         selects.forEach(sel => {
@@ -1624,12 +1003,9 @@
         });
     }
 
-    // ═══════════════════════════════════════════════════════════════
-    // [9] PROMPT Y LOG DE COMANDOS
-    // ═══════════════════════════════════════════════════════════════
+    /* ── [9] Prompt ── */
     const promptEl = document.getElementById('cmd-prompt');
     const statusEl = document.getElementById('cmd-status');
-
     function setPrompt(text) {
         if (promptEl) promptEl.textContent = text + ' ';
         if (statusEl) statusEl.textContent = text;
@@ -1644,7 +1020,6 @@
         body.innerHTML = state.cmdLog.map(l => `<div>${l.replace(/</g, '&lt;')}</div>`).join('');
         body.scrollTop = body.scrollHeight;
     }
-
     function resetStateCmd() {
         state.currentCommand = null;
         state.step = 0;
@@ -1666,7 +1041,6 @@
         state.copySourceItems = [];
         state.lineSegmentPaths = [];
         state.circleDiameterMode = false;
-        // Limpiar estado de CHAMFER / FILLET
         state.chamferDist1 = 0;
         state.chamferDist2 = 0;
         state.chamferLine1 = null;
@@ -1687,9 +1061,7 @@
         renderGrips();
     }
 
-    // ═══════════════════════════════════════════════════════════════
-    // [10] SELECCIÓN
-    // ═══════════════════════════════════════════════════════════════
+    /* ── [10] Selección ── */
     function clearSelection() {
         state.selectedItems.forEach(i => { i.selected = false; i.shadowColor = null; });
         state.selectedItems = [];
@@ -1723,9 +1095,7 @@
         renderGrips();
     }
 
-    // ═══════════════════════════════════════════════════════════════
-    // [11] GRIPS (pinzamientos)
-    // ═══════════════════════════════════════════════════════════════
+    /* ── [11] Grips ── */
     function addGripMarker(point, data) {
         const r = 4.5 / view.zoom;
         const marker = new Path.Rectangle(new paper.Rectangle(point.x - r, point.y - r, r * 2, r * 2));
@@ -1762,9 +1132,7 @@
         });
     }
 
-    // ═══════════════════════════════════════════════════════════════
-    // [12] FLUJO VERBO-SUSTANTIVO
-    // ═══════════════════════════════════════════════════════════════
+    /* ── [12] Verbo-sustantivo ── */
     function beginModifyCommand(cmd, promptText) {
         if (state.selectedItems.length) {
             proceedModifyCommand(cmd);
@@ -1794,7 +1162,7 @@
             case 'COPY':   startCommand('COPY',   'COPY: Punto base');   break;
             case 'ROTATE': startCommand('ROTATE', 'ROTATE: Punto base'); break;
             case 'SCALE':  startCommand('SCALE',  'SCALE: Punto base');  break;
-            case 'MIRROR': startCommand('MIRROR', 'MIRROR: Primer punto del eje de simetría'); break;
+            case 'MIRROR': startCommand('MIRROR', 'MIRROR: Primer punto del eje'); break;
             case 'ERASE':
                 saveState();
                 state.selectedItems.forEach(i => i.remove());
@@ -1821,14 +1189,12 @@
                 state.currentCommand = 'EXTEND';
                 state.step = 1;
                 state.expectingPoint = false;
-                setPrompt('EXTEND: Haz clic en el extremo a extender (Enter/ESC para salir)');
+                setPrompt('EXTEND: haz clic en el extremo a extender');
                 break;
         }
     }
 
-    // ═══════════════════════════════════════════════════════════════
-    // [13] HIT TEST
-    // ═══════════════════════════════════════════════════════════════
+    /* ── [13] Hit test ── */
     function hitTestContent(pt, extraOptions) {
         const options = Object.assign({
             tolerance: 8 / view.zoom,
@@ -1842,12 +1208,9 @@
         return project.hitTest(pt, options);
     }
 
-    // ═══════════════════════════════════════════════════════════════
-    // [14] CACHÉ DE SNAP Y OTRACK
-    // ═══════════════════════════════════════════════════════════════
+    /* ── [14] Caché snap y OTRACK ── */
     let _snapCandidatesCache = null;
     let _snapCandidatesCacheExclude = undefined;
-
     function sameExcludeSet(a, b) {
         if (a === b) return true;
         if (!a || !b) return false;
@@ -1900,12 +1263,11 @@
     function collectKeyPoints(excludeItems) {
         return collectSnapCandidates(excludeItems).map(c => c.point);
     }
-
     function acquireTrackPoint(pt) {
         if (state.acquiredPoints.some(p => p.getDistance(pt) < 1e-6)) return;
         state.acquiredPoints.push(pt.clone());
         if (state.acquiredPoints.length > 2) state.acquiredPoints.shift();
-        setPrompt('Referencia adquirida — mueve el ratón para rastrear, o teclea una distancia (ESC para soltar)');
+        setPrompt('Referencia adquirida — mueve el ratón o teclea distancia (ESC suelta)');
     }
     function releaseTrackPoints() {
         state.acquiredPoints = [];
@@ -1924,10 +1286,7 @@
         state.trackHoverPoint = snap ? snap.point : null;
         if (snap) {
             const target = snap.point.clone();
-            trackHoverTimer = setTimeout(() => {
-                acquireTrackPoint(target);
-                trackHoverTimer = null;
-            }, TRACK_ACQUIRE_DELAY);
+            trackHoverTimer = setTimeout(() => { acquireTrackPoint(target); trackHoverTimer = null; }, TRACK_ACQUIRE_DELAY);
         }
     }
     function computeAlignmentGuides(cursor, base, excludeItems) {
@@ -1962,9 +1321,7 @@
             const m1 = new Path.Line(p.add(new Point(-r, 0)), p.add(new Point(r, 0)));
             const m2 = new Path.Line(p.add(new Point(0, -r)), p.add(new Point(0, r)));
             [m1, m2].forEach(m => {
-                m.strokeColor = c;
-                m.strokeWidth = 1.8 / view.zoom;
-                guideLayer.addChild(m);
+                m.strokeColor = c; m.strokeWidth = 1.8 / view.zoom; guideLayer.addChild(m);
             });
         });
     }
@@ -1976,49 +1333,36 @@
         const guideColor = new Color(0.91, 0.64, 0.24);
         if (guides.v) {
             const line = new Path.Line(new Point(guides.v.x, b.top), new Point(guides.v.x, b.bottom));
-            line.strokeColor = guideColor;
-            line.strokeWidth = 1 / view.zoom;
+            line.strokeColor = guideColor; line.strokeWidth = 1 / view.zoom;
             line.dashArray = [6 / view.zoom, 5 / view.zoom];
             guideLayer.addChild(line);
             const mark = new Path.Circle(guides.v, r * 0.6);
-            mark.strokeColor = guideColor;
-            mark.strokeWidth = 1.4 / view.zoom;
-            mark.fillColor = null;
+            mark.strokeColor = guideColor; mark.strokeWidth = 1.4 / view.zoom; mark.fillColor = null;
             guideLayer.addChild(mark);
         }
         if (guides.h) {
             const line = new Path.Line(new Point(b.left, guides.h.y), new Point(b.right, guides.h.y));
-            line.strokeColor = guideColor;
-            line.strokeWidth = 1 / view.zoom;
+            line.strokeColor = guideColor; line.strokeWidth = 1 / view.zoom;
             line.dashArray = [6 / view.zoom, 5 / view.zoom];
             guideLayer.addChild(line);
             const mark = new Path.Circle(guides.h, r * 0.6);
-            mark.strokeColor = guideColor;
-            mark.strokeWidth = 1.4 / view.zoom;
-            mark.fillColor = null;
+            mark.strokeColor = guideColor; mark.strokeWidth = 1.4 / view.zoom; mark.fillColor = null;
             guideLayer.addChild(mark);
         }
         if (guides.v && guides.h) {
             const cross = new Path([resolvedPoint.add(new Point(-r, -r)), resolvedPoint.add(new Point(r, r))]);
             const cross2 = new Path([resolvedPoint.add(new Point(-r, r)), resolvedPoint.add(new Point(r, -r))]);
             [cross, cross2].forEach(c => {
-                c.strokeColor = guideColor;
-                c.strokeWidth = 1.6 / view.zoom;
-                guideLayer.addChild(c);
+                c.strokeColor = guideColor; c.strokeWidth = 1.6 / view.zoom; guideLayer.addChild(c);
             });
         }
     }
 
-    // ═══════════════════════════════════════════════════════════════
-    // [15] RESOLUCIÓN DE PUNTO
-    // ═══════════════════════════════════════════════════════════════
+    /* ── [15] Resolución de punto ── */
     function resolvePoint(raw, base, cmd, excludeItems) {
         let pt = raw;
         const snap = getSnapPoint(pt, excludeItems);
-        if (snap) {
-            state.trackGuides = null;
-            return snap.point;
-        }
+        if (snap) { state.trackGuides = null; return snap.point; }
         const trackingCmds = ['LINE', 'CIRCLE', 'RECTANG', 'ARC', 'MOVE', 'COPY', 'ROTATE', 'SCALE', 'MIRROR'];
         let guides = null;
         if (base && trackingCmds.includes(cmd)) {
@@ -2053,31 +1397,24 @@
         return Math.abs(d.x) > Math.abs(d.y) ? new Point(target.x, base.y) : new Point(base.x, target.y);
     }
 
-    // ═══════════════════════════════════════════════════════════════
-    // [16] PARSEO DE ENTRADA (Y+ arriba)
-    // ═══════════════════════════════════════════════════════════════
+    /* ── [16] Parseo entrada ── */
     function parseDynamicInput(input, lastPoint) {
         input = input.trim();
         if (!input) return null;
         const relative = input.startsWith('@');
         const body = relative ? input.slice(1).trim() : input;
-
         const cartMatch = body.match(/^(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)$/);
         if (cartMatch) {
             const a = parseFloat(cartMatch[1]);
             const b = parseFloat(cartMatch[2]);
-            if (relative) {
-                if (!lastPoint) return null;
-                return lastPoint.add(new Point(a, -b));
-            }
+            if (relative) { if (!lastPoint) return null; return lastPoint.add(new Point(a, -b)); }
             return new Point(a, -b);
         }
         const polarMatch = body.match(/^(-?\d+(?:\.\d+)?)\s*<\s*(-?\d+(?:\.\d+)?)$/);
         if (polarMatch) {
             if (!lastPoint) return null;
             const dist = parseFloat(polarMatch[1]);
-            const angleDeg = parseFloat(polarMatch[2]);
-            const rad = angleDeg * Math.PI / 180;
+            const rad = parseFloat(polarMatch[2]) * Math.PI / 180;
             return lastPoint.add(new Point(dist * Math.cos(rad), -dist * Math.sin(rad)));
         }
         if (/^-?\d+(\.\d+)?$/.test(body)) {
@@ -2101,8 +1438,7 @@
                 else angleRad = dir.y >= 0 ? Math.PI / 2 : -Math.PI / 2;
             } else if (state.polar && dir.length > 0) {
                 const step = state.polarIncrement || 15;
-                const angleDeg = Math.round(dir.angle / step) * step;
-                angleRad = angleDeg * Math.PI / 180;
+                angleRad = Math.round(dir.angle / step) * step * Math.PI / 180;
             } else {
                 angleRad = dir.length === 0 ? 0 : dir.angle * Math.PI / 180;
             }
@@ -2111,9 +1447,7 @@
         return null;
     }
 
-    // ═══════════════════════════════════════════════════════════════
-    // [17] EJECUTAR COMANDOS
-    // ═══════════════════════════════════════════════════════════════
+    /* ── [17] Ejecutar comandos ── */
     function executeCommand(cmd) {
         if (state.currentCommand) resetStateCmd();
         const cmdMap = {
@@ -2133,15 +1467,15 @@
         if (repeatableCmds.includes(fullCmd)) state.lastCommand = fullCmd;
 
         switch (fullCmd) {
-            case 'LINE':    startCommand('LINE',    'LINE: Primer punto');         break;
-            case 'CIRCLE':  startCommand('CIRCLE',  'CIRCLE: Centro');             break;
-            case 'RECTANG': startCommand('RECTANG', 'RECTANG: Primera esquina');   break;
-            case 'ARC':     startCommand('ARC',     'ARC: Punto inicial');         break;
-            case 'MOVE':    beginModifyCommand('MOVE', 'MOVE');                    break;
-            case 'COPY':    beginModifyCommand('COPY', 'COPY');                    break;
-            case 'ROTATE':  beginModifyCommand('ROTATE', 'ROTATE');                break;
-            case 'SCALE':   beginModifyCommand('SCALE', 'SCALE');                  break;
-            case 'MIRROR':  beginModifyCommand('MIRROR', 'MIRROR');                break;
+            case 'LINE':    startCommand('LINE',    'LINE: Primer punto'); break;
+            case 'CIRCLE':  startCommand('CIRCLE',  'CIRCLE: Centro'); break;
+            case 'RECTANG': startCommand('RECTANG', 'RECTANG: Primera esquina'); break;
+            case 'ARC':     startCommand('ARC',     'ARC: Punto inicial'); break;
+            case 'MOVE':    beginModifyCommand('MOVE', 'MOVE'); break;
+            case 'COPY':    beginModifyCommand('COPY', 'COPY'); break;
+            case 'ROTATE':  beginModifyCommand('ROTATE', 'ROTATE'); break;
+            case 'SCALE':   beginModifyCommand('SCALE', 'SCALE'); break;
+            case 'MIRROR':  beginModifyCommand('MIRROR', 'MIRROR'); break;
             case 'OFFSET':
                 clearSelection();
                 state.currentCommand = 'OFFSET';
@@ -2158,12 +1492,12 @@
                 state.step = 1;
                 state.expectingPoint = false;
                 setPrompt(state.trimBoundary
-                    ? 'TRIM: haz clic en la parte a recortar (Enter/ESC para salir)'
-                    : 'TRIM: haz clic en la parte a recortar — todos los objetos son límites (Enter/ESC para salir)');
+                    ? 'TRIM: haz clic en la parte a recortar'
+                    : 'TRIM: haz clic en la parte a recortar — todos los objetos son límites');
                 break;
             case 'EXTEND':  beginModifyCommand('EXTEND', 'EXTEND: Selecciona los límites'); break;
             case 'JOIN':    beginModifyCommand('JOIN', 'JOIN: Selecciona los objetos a unir'); break;
-            case 'ERASE':   beginModifyCommand('ERASE', 'ERASE');                            break;
+            case 'ERASE':   beginModifyCommand('ERASE', 'ERASE'); break;
             case 'CHAMFER':
                 resetStateCmd();
                 clearSelection();
@@ -2183,12 +1517,11 @@
                 setPrompt('FILLET: radio de redondeo (Enter = 0)');
                 document.getElementById('cmd-input').focus();
                 break;
-            case 'UNDO':    undo(); break;
-            case 'REDO':    redo(); break;
+            case 'UNDO': undo(); break;
+            case 'REDO': redo(); break;
             default: setPrompt('Comando desconocido');
         }
     }
-
     function startCommand(cmd, prompt) {
         state.currentCommand = cmd;
         state.step = 1;
@@ -2200,9 +1533,7 @@
         releaseTrackPoints();
     }
 
-    // ═══════════════════════════════════════════════════════════════
-    // [18] HISTORIAL (deshacer / rehacer)
-    // ═══════════════════════════════════════════════════════════════
+    /* ── [18] Historial ── */
     function snapshotCurrent() {
         const snap = { activeLayerName: activeLayer.name, layers: {} };
         for (let internal in layers) {
@@ -2285,9 +1616,7 @@
         view.update(); updateProperties(); renderLayerList();
     }
 
-    // ═══════════════════════════════════════════════════════════════
-    // [19] HANDLER DE PUNTOS (dibujo y comandos de modificación)
-    // ═══════════════════════════════════════════════════════════════
+    /* ── [19] Handler de puntos ── */
     function handlePointInput(point) {
         if (!state.currentCommand) return;
         const cmd = state.currentCommand;
@@ -2307,7 +1636,7 @@
                 state.lineSegmentPaths.push(line);
                 state.expectingPoint = true;
                 state.dynamicLastPoint = point;
-                setPrompt('LINE: Siguiente punto (Enter/ESC terminar · C cerrar · U deshacer tramo)');
+                setPrompt('LINE: Siguiente punto (Enter/ESC terminar · C cerrar · U deshacer)');
             } else {
                 state.expectingPoint = true;
                 state.dynamicLastPoint = point;
@@ -2319,7 +1648,7 @@
                 state.step = 2;
                 state.expectingPoint = true;
                 state.dynamicLastPoint = point;
-                setPrompt('CIRCLE: Radio (o escribe D para indicar el diámetro)');
+                setPrompt('CIRCLE: Radio (o D para diámetro)');
             } else {
                 saveState();
                 const c = state.collectedPoints[0];
@@ -2351,14 +1680,10 @@
         } else if (cmd === 'ARC') {
             state.collectedPoints.push(point);
             if (state.collectedPoints.length === 1) {
-                state.step = 2;
-                state.expectingPoint = true;
-                state.dynamicLastPoint = point;
-                setPrompt('ARC: Punto de paso (segundo punto)');
+                state.step = 2; state.expectingPoint = true; state.dynamicLastPoint = point;
+                setPrompt('ARC: Punto de paso');
             } else if (state.collectedPoints.length === 2) {
-                state.step = 3;
-                state.expectingPoint = true;
-                state.dynamicLastPoint = point;
+                state.step = 3; state.expectingPoint = true; state.dynamicLastPoint = point;
                 setPrompt('ARC: Punto final');
             } else {
                 saveState();
@@ -2369,9 +1694,7 @@
                     tagShape(arc, 'arc');
                     activeLayer.addChild(arc);
                     setPrompt('Arco creado');
-                } catch (err) {
-                    setPrompt('Puntos no válidos para un arco (colineales). Inténtalo de nuevo.');
-                }
+                } catch (err) { setPrompt('Puntos no válidos para arco'); }
                 resetStateCmd();
             }
         } else if (cmd === 'MOVE') {
@@ -2381,7 +1704,7 @@
                 state.originalPositions = state.selectedItems.map(it => it.position.clone());
                 state.expectingPoint = true;
                 state.dynamicLastPoint = point;
-                setPrompt('MOVE: Arrastra, haz clic o escribe distancia');
+                setPrompt('MOVE: Punto destino o distancia');
             } else {
                 saveState();
                 const delta = point.subtract(state.basePoint);
@@ -2395,7 +1718,7 @@
                 state.step = 2;
                 state.expectingPoint = true;
                 state.dynamicLastPoint = point;
-                setPrompt('COPY: Punto de destino (Enter/ESC para terminar)');
+                setPrompt('COPY: Punto destino (Enter/ESC terminar)');
             } else {
                 saveState();
                 const delta = point.subtract(state.basePoint);
@@ -2412,7 +1735,7 @@
                 clearSelection();
                 newClones.forEach(c => addToSelection(c));
                 state.dynamicLastPoint = state.basePoint;
-                setPrompt('COPY: Otro punto de destino (Enter/ESC para terminar)');
+                setPrompt('COPY: Otro punto destino (Enter/ESC terminar)');
             }
         } else if (cmd === 'ROTATE') {
             if (state.step === 1) {
@@ -2421,11 +1744,10 @@
                 state.expectingPoint = true;
                 state.dynamicLastPoint = point;
                 state.startAngle = state.lastMousePoint.subtract(state.basePoint).angle;
-                setPrompt('ROTATE: Mueve y haz clic para girar, o escribe el ángulo en grados (CCW)');
+                setPrompt('ROTATE: Mueve y clic, o escribe ángulo (CCW)');
             } else {
                 saveState();
-                const currentAngle = point.subtract(state.basePoint).angle;
-                const delta = currentAngle - state.startAngle;
+                const delta = point.subtract(state.basePoint).angle - state.startAngle;
                 state.selectedItems.forEach(i => i.rotate(delta, state.basePoint));
                 resetStateCmd();
                 let angleDeg = (-delta) % 360;
@@ -2439,7 +1761,7 @@
                 state.expectingPoint = true;
                 state.dynamicLastPoint = point;
                 state.referencePoint = state.lastMousePoint;
-                setPrompt('SCALE: Mueve y haz clic para escalar, o escribe el factor');
+                setPrompt('SCALE: Mueve y clic, o escribe factor');
             } else {
                 saveState();
                 const refDist = state.referencePoint.subtract(state.basePoint).length || 1;
@@ -2455,16 +1777,13 @@
                 state.step = 2;
                 state.expectingPoint = true;
                 state.dynamicLastPoint = point;
-                setPrompt('MIRROR: Segundo punto del eje de simetría');
+                setPrompt('MIRROR: Segundo punto del eje');
             } else if (state.step === 2) {
-                const axisStart = state.basePoint;
-                const axisEnd = point;
-                if (axisStart.getDistance(axisEnd) < 1e-6) {
-                    setPrompt('Eje inválido: los dos puntos coinciden.');
-                    return;
+                if (state.basePoint.getDistance(point) < 1e-6) {
+                    setPrompt('Eje inválido: coinciden los puntos'); return;
                 }
                 saveState();
-                const matrix = reflectMatrix(axisStart, axisEnd);
+                const matrix = reflectMatrix(state.basePoint, point);
                 const mirrored = [];
                 state.selectedItems.forEach(item => {
                     const clone = item.clone();
@@ -2482,16 +1801,14 @@
                 updateProperties();
                 renderGrips();
                 resetStateCmd();
-                setPrompt(`${mirrored.length} objeto(s) reflejado(s) por simetría (originales conservados)`);
+                setPrompt(`${mirrored.length} objeto(s) reflejado(s)`);
                 invalidateSnapCache();
                 view.update();
             }
         }
     }
 
-    // ═══════════════════════════════════════════════════════════════
-    // [20] JOIN
-    // ═══════════════════════════════════════════════════════════════
+    /* ── [20] JOIN ── */
     function joinSelected() {
         const items = state.selectedItems.filter(i => i instanceof Path && i.segments.length > 0);
         if (items.length < 2) { setPrompt('Selecciona al menos dos líneas/polilíneas/arcos'); return; }
@@ -2530,12 +1847,10 @@
         });
         clearSelection();
         chains.forEach(p => addToSelection(p));
-        setPrompt(`${chains.length} trazado(s) unido(s) (curvas preservadas)`);
+        setPrompt(`${chains.length} trazado(s) unido(s)`);
     }
 
-    // ═══════════════════════════════════════════════════════════════
-    // [21] TRIM / EXTEND / CHAMFER / FILLET
-    // ═══════════════════════════════════════════════════════════════
+    /* ── [21] TRIM / EXTEND / CHAMFER / FILLET ── */
     function getAllDrawableItems() {
         const out = [];
         for (let internal in layers) {
@@ -2546,6 +1861,49 @@
             layer.children.forEach(item => out.push(item));
         }
         return out;
+    }
+    function lineLineIntersection(p1, p2, p3, p4) {
+        const d1 = p2.subtract(p1), d2 = p4.subtract(p3);
+        const denom = d1.cross(d2);
+        if (Math.abs(denom) < 1e-9) return null;
+        const t = p3.subtract(p1).cross(d2) / denom;
+        return p1.add(d1.multiply(t));
+    }
+
+    /* Segmento representativo para CHAMFER/FILLET */
+    function getSegmentForFillet(entity, clickPoint) {
+        if (isLineItem(entity)) {
+            return {
+                p1: entity.segments[0].point.clone(),
+                p2: entity.segments[1].point.clone(),
+                setP1: (pt) => { entity.segments[0].point = pt; },
+                setP2: (pt) => { entity.segments[1].point = pt; },
+                isEndpoint1: true, isEndpoint2: true,
+            };
+        }
+        if (entity instanceof Path && entity.segments && entity.segments.length >= 2 && !entity.closed) {
+            const n = entity.segments.length;
+            let bestSeg = 0, bestDist = Infinity;
+            for (let i = 0; i < n - 1; i++) {
+                const a = entity.segments[i].point;
+                const b = entity.segments[i + 1].point;
+                const ab = b.subtract(a);
+                const len2 = ab.dot(ab) || 1;
+                const t = Math.max(0, Math.min(1, clickPoint.subtract(a).dot(ab) / len2));
+                const proj = a.add(ab.multiply(t));
+                const d = proj.getDistance(clickPoint);
+                if (d < bestDist) { bestDist = d; bestSeg = i; }
+            }
+            return {
+                p1: entity.segments[bestSeg].point.clone(),
+                p2: entity.segments[bestSeg + 1].point.clone(),
+                setP1: (pt) => { entity.segments[bestSeg].point = pt; },
+                setP2: (pt) => { entity.segments[bestSeg + 1].point = pt; },
+                isEndpoint1: bestSeg === 0,
+                isEndpoint2: bestSeg === n - 2,
+            };
+        }
+        return null;
     }
 
     function handleTrimExtendClick(event) {
@@ -2562,12 +1920,11 @@
         }
     }
 
-    /* ── TRIM — Recorta contra CUALQUIER otro objeto del dibujo ── */
+    /* TRIM — recorta contra CUALQUIER objeto */
     function trimObject(item, boundaries, clickPoint) {
         const searchTargets = (boundaries && boundaries.length)
             ? boundaries.filter(b => b && b !== item)
             : getAllDrawableItems().filter(b => b !== item);
-
         if (!searchTargets.length) { setPrompt('TRIM: no hay otros objetos como límites'); return; }
 
         const inters = [];
@@ -2576,7 +1933,7 @@
                 item.getIntersections(boundary).forEach(it => {
                     if (it && it.point) inters.push(it.point.clone());
                 });
-            } catch (e) { /* ignorar */ }
+            } catch (e) {}
         });
         if (!inters.length) { setPrompt('TRIM: no hay intersección con ningún objeto'); return; }
 
@@ -2599,27 +1956,18 @@
         if (!bestInters) { setPrompt('TRIM: no se encontró intersección válida'); return; }
 
         saveState();
-
-        // Línea simple: mover extremo del lado del clic
+        // Línea simple: mover extremo
         if (item.segments && item.segments.length === 2 && !item.closed) {
-            const p0 = item.segments[0].point;
-            const p1 = item.segments[1].point;
-            const d0 = p0.getDistance(clickOnPath);
-            const d1 = p1.getDistance(clickOnPath);
-            if (d0 < d1) item.segments[0].point = bestInters;
-            else         item.segments[1].point = bestInters;
+            const p0 = item.segments[0].point, p1 = item.segments[1].point;
+            if (p0.getDistance(clickOnPath) < p1.getDistance(clickOnPath)) item.segments[0].point = bestInters;
+            else item.segments[1].point = bestInters;
             invalidateSnapCache();
             setPrompt('TRIM: línea recortada');
             return;
         }
-
-        // Objeto cerrado
-        if (item.closed) {
-            setPrompt('TRIM: no se puede recortar un objeto cerrado (conviértelo a arco)');
-            return;
-        }
-
-        // Polilínea / arco abierto: dividir y eliminar tramo del clic
+        // Círculo u otro cerrado
+        if (item.closed) { setPrompt('TRIM: no se puede recortar un objeto cerrado'); return; }
+        // Polilínea/arco: split
         try {
             const clickOffset = clickLoc.offset;
             const secondPart = item.split(bestOffset);
@@ -2645,217 +1993,166 @@
         if (!isLineItem(item)) { setPrompt('Solo se pueden alargar líneas'); return; }
         const bList = (Array.isArray(boundaries) ? boundaries : [boundaries]).filter(b => b && b !== item);
         if (!bList.length) { setPrompt('No hay límites válidos'); return; }
-        const p1 = item.segments[0].point;
-        const p2 = item.segments[1].point;
-        const d1 = p1.getDistance(clickPoint);
-        const d2 = p2.getDistance(clickPoint);
+        const p1 = item.segments[0].point, p2 = item.segments[1].point;
+        const d1 = p1.getDistance(clickPoint), d2 = p2.getDistance(clickPoint);
         let start, dir;
         if (d1 < d2) { start = p1; dir = p1.subtract(p2).normalize(); }
         else { start = p2; dir = p2.subtract(p1).normalize(); }
-        const rayStart = start.add(dir.multiply(-10000));
-        const rayEnd = start.add(dir.multiply(10000));
-        const ray = new Path.Line(rayStart, rayEnd);
+        const ray = new Path.Line(start.add(dir.multiply(-10000)), start.add(dir.multiply(10000)));
         let best = null, bestDist = Infinity;
         bList.forEach(boundary => {
-            const inters = ray.getIntersections(boundary);
-            inters.forEach(inter => {
+            ray.getIntersections(boundary).forEach(inter => {
                 const d = inter.point.getDistance(start);
                 if (d < bestDist && d > 0.01) { bestDist = d; best = inter.point; }
             });
         });
         ray.remove();
-        if (!best) { setPrompt('No se encontró punto de extensión válido'); return; }
+        if (!best) { setPrompt('No se encontró punto de extensión'); return; }
         saveState();
         if (d1 < d2) item.segments[0].point = best;
         else item.segments[1].point = best;
         setPrompt('Línea extendida');
     }
 
-    /* ── CHAMFER — Chaflán entre dos líneas ── */
+    /* CHAMFER — con líneas y polilíneas */
     function handleChamferClick(event) {
         const hit = hitTestContent(event.point);
         if (!hit || !hit.item) { setPrompt('CHAMFER: no se encontró objeto'); return; }
         const item = hit.item;
-        if (!isLineItem(item)) { setPrompt('CHAMFER: sólo funciona con líneas rectas'); return; }
+        const s = getSegmentForFillet(item, event.point);
+        if (!s) { setPrompt('CHAMFER: usa líneas o polilíneas abiertas'); return; }
 
         if (state.step === 3) {
-            state.chamferLine1 = item;
+            state.chamferLine1 = { entity: item, seg: s };
             state.chamferClick1 = event.point.clone();
             state.step = 4;
-            setPrompt('CHAMFER: haz clic en la segunda línea');
+            setPrompt('CHAMFER: haz clic en el segundo objeto');
             return;
         }
         if (state.step === 4) {
-            if (item === state.chamferLine1) { setPrompt('CHAMFER: selecciona una línea diferente'); return; }
-            const line1 = state.chamferLine1;
-            const line2 = item;
-            const click1 = state.chamferClick1;
-            const click2 = event.point;
+            if (item === state.chamferLine1.entity) { setPrompt('CHAMFER: selecciona un objeto diferente'); return; }
+            const s1 = state.chamferLine1.seg;
+            const s2 = s;
+            const int = lineLineIntersection(s1.p1, s1.p2, s2.p1, s2.p2);
+            if (!int) { setPrompt('CHAMFER: los objetos son paralelos'); return; }
 
-            const p1 = line1.segments[0].point;
-            const p2 = line1.segments[1].point;
-            const p3 = line2.segments[0].point;
-            const p4 = line2.segments[1].point;
-            const int = lineLineIntersection(p1, p2, p3, p4);
-            if (!int) { setPrompt('CHAMFER: las líneas son paralelas, no se puede aplicar'); return; }
+            const s1_nearIsP1 = s1.p1.getDistance(int) < s1.p2.getDistance(int);
+            const s2_nearIsP1 = s2.p1.getDistance(int) < s2.p2.getDistance(int);
 
-            const line1Dir = p2.subtract(p1).normalize();
-            const line2Dir = p4.subtract(p3).normalize();
-            const side1 = click1.subtract(int).dot(line1Dir);
-            const side2 = click2.subtract(int).dot(line2Dir);
-            const keepEnd1 = side1 > 0 ? p2 : p1;
-            const keepEnd2 = side2 > 0 ? p4 : p3;
+            if (s1_nearIsP1 && !s1.isEndpoint1) { setPrompt('CHAMFER: haz clic en un extremo de la polilínea'); return; }
+            if (!s1_nearIsP1 && !s1.isEndpoint2) { setPrompt('CHAMFER: haz clic en un extremo de la polilínea'); return; }
+            if (s2_nearIsP1 && !s2.isEndpoint1) { setPrompt('CHAMFER: haz clic en un extremo de la polilínea'); return; }
+            if (!s2_nearIsP1 && !s2.isEndpoint2) { setPrompt('CHAMFER: haz clic en un extremo de la polilínea'); return; }
 
-            const dir1 = keepEnd1.subtract(int);
-            const dir2 = keepEnd2.subtract(int);
-            if (dir1.length < 0.001 || dir2.length < 0.001) {
-                setPrompt('CHAMFER: las líneas deben tener longitud');
-                return;
+            const keep1 = s1_nearIsP1 ? s1.p2 : s1.p1;
+            const keep2 = s2_nearIsP1 ? s2.p2 : s2.p1;
+            if (keep1.getDistance(int) < 0.001 || keep2.getDistance(int) < 0.001) {
+                setPrompt('CHAMFER: los objetos deben tener longitud'); return;
             }
-            const unit1 = dir1.normalize();
-            const unit2 = dir2.normalize();
-
+            const unit1 = keep1.subtract(int).normalize();
+            const unit2 = keep2.subtract(int).normalize();
             const d1 = state.chamferDist1 || 0;
             const d2 = state.chamferDist2 || 0;
             const ch1 = int.add(unit1.multiply(d1));
             const ch2 = int.add(unit2.multiply(d2));
 
             saveState();
-
-            if (side1 > 0) line1.segments[0].point = ch1;
-            else           line1.segments[1].point = ch1;
-            if (side2 > 0) line2.segments[0].point = ch2;
-            else           line2.segments[1].point = ch2;
-
+            if (s1_nearIsP1) s1.setP1(ch1); else s1.setP2(ch1);
+            if (s2_nearIsP1) s2.setP1(ch2); else s2.setP2(ch2);
             if (d1 > 0.001 || d2 > 0.001) {
                 const chamferLine = new Path.Line(ch1, ch2);
-                chamferLine.strokeColor = line1.strokeColor || 'white';
+                chamferLine.strokeColor = state.chamferLine1.entity.strokeColor || 'white';
                 chamferLine.strokeWidth = currentStrokeWidth();
                 tagShape(chamferLine, 'line');
-                (line1.layer || activeLayer).addChild(chamferLine);
+                (state.chamferLine1.entity.layer || activeLayer).addChild(chamferLine);
             }
-
             invalidateSnapCache();
             resetStateCmd();
-            setPrompt(`Chaflán aplicado (d1 = ${d1}, d2 = ${d2})`);
+            setPrompt(`Chaflán aplicado (d1=${d1}, d2=${d2})`);
         }
     }
 
-    /* ── FILLET — Redondeo entre dos líneas ── */
+    /* FILLET — con líneas y polilíneas */
     function handleFilletClick(event) {
         const hit = hitTestContent(event.point);
         if (!hit || !hit.item) { setPrompt('FILLET: no se encontró objeto'); return; }
         const item = hit.item;
-        if (!isLineItem(item)) { setPrompt('FILLET: sólo funciona con líneas rectas (por ahora)'); return; }
+        const s = getSegmentForFillet(item, event.point);
+        if (!s) { setPrompt('FILLET: usa líneas o polilíneas abiertas'); return; }
 
         if (state.step === 2) {
-            state.filletLine1 = item;
+            state.filletLine1 = { entity: item, seg: s };
             state.filletClick1 = event.point.clone();
             state.step = 3;
-            setPrompt('FILLET: haz clic en la segunda línea');
+            setPrompt('FILLET: haz clic en el segundo objeto');
             return;
         }
         if (state.step === 3) {
-            if (item === state.filletLine1) { setPrompt('FILLET: selecciona una línea diferente'); return; }
-            const line1 = state.filletLine1;
-            const line2 = item;
-            const click1 = state.filletClick1;
-            const click2 = event.point;
+            if (item === state.filletLine1.entity) { setPrompt('FILLET: selecciona un objeto diferente'); return; }
+            const s1 = state.filletLine1.seg;
+            const s2 = s;
             const radius = state.filletRadius || 0;
+            const int = lineLineIntersection(s1.p1, s1.p2, s2.p1, s2.p2);
+            if (!int) { setPrompt('FILLET: los objetos son paralelos'); return; }
 
-            const p1 = line1.segments[0].point;
-            const p2 = line1.segments[1].point;
-            const p3 = line2.segments[0].point;
-            const p4 = line2.segments[1].point;
-            const int = lineLineIntersection(p1, p2, p3, p4);
-            if (!int) { setPrompt('FILLET: las líneas son paralelas'); return; }
+            const s1_nearIsP1 = s1.p1.getDistance(int) < s1.p2.getDistance(int);
+            const s2_nearIsP1 = s2.p1.getDistance(int) < s2.p2.getDistance(int);
+            if (s1_nearIsP1 && !s1.isEndpoint1) { setPrompt('FILLET: haz clic en un extremo de la polilínea'); return; }
+            if (!s1_nearIsP1 && !s1.isEndpoint2) { setPrompt('FILLET: haz clic en un extremo de la polilínea'); return; }
+            if (s2_nearIsP1 && !s2.isEndpoint1) { setPrompt('FILLET: haz clic en un extremo de la polilínea'); return; }
+            if (!s2_nearIsP1 && !s2.isEndpoint2) { setPrompt('FILLET: haz clic en un extremo de la polilínea'); return; }
 
-            const line1Dir = p2.subtract(p1).normalize();
-            const line2Dir = p4.subtract(p3).normalize();
-            const side1 = click1.subtract(int).dot(line1Dir);
-            const side2 = click2.subtract(int).dot(line2Dir);
-            const keepEnd1 = side1 > 0 ? p2 : p1;
-            const keepEnd2 = side2 > 0 ? p4 : p3;
+            const keep1 = s1_nearIsP1 ? s1.p2 : s1.p1;
+            const keep2 = s2_nearIsP1 ? s2.p2 : s2.p1;
 
-            // Radio 0: unir en esquina viva
             if (radius <= 0.001) {
                 saveState();
-                if (side1 > 0) line1.segments[0].point = int;
-                else           line1.segments[1].point = int;
-                if (side2 > 0) line2.segments[0].point = int;
-                else           line2.segments[1].point = int;
+                if (s1_nearIsP1) s1.setP1(int); else s1.setP2(int);
+                if (s2_nearIsP1) s2.setP1(int); else s2.setP2(int);
                 invalidateSnapCache();
                 resetStateCmd();
                 setPrompt('Esquina unida (radio 0)');
                 return;
             }
-
-            const dir1 = keepEnd1.subtract(int);
-            const dir2 = keepEnd2.subtract(int);
-            if (dir1.length < 0.001 || dir2.length < 0.001) {
-                setPrompt('FILLET: las líneas deben tener longitud');
-                return;
+            if (keep1.getDistance(int) < 0.001 || keep2.getDistance(int) < 0.001) {
+                setPrompt('FILLET: los objetos deben tener longitud'); return;
             }
-            const unit1 = dir1.normalize();
-            const unit2 = dir2.normalize();
-
+            const unit1 = keep1.subtract(int).normalize();
+            const unit2 = keep2.subtract(int).normalize();
             const angle = Math.acos(Math.max(-1, Math.min(1, unit1.dot(unit2))));
-            if (angle < 0.001 || angle > Math.PI - 0.001) {
-                setPrompt('FILLET: las líneas son casi paralelas o colineales');
-                return;
-            }
+            if (angle < 0.001 || angle > Math.PI - 0.001) { setPrompt('FILLET: los objetos son casi paralelos'); return; }
 
             const tanDist = radius / Math.tan(angle / 2);
-            const keepLen1 = keepEnd1.getDistance(int);
-            const keepLen2 = keepEnd2.getDistance(int);
-            if (tanDist > keepLen1 || tanDist > keepLen2) {
-                setPrompt('FILLET: el radio es demasiado grande para estas líneas');
-                return;
+            if (tanDist > keep1.getDistance(int) || tanDist > keep2.getDistance(int)) {
+                setPrompt('FILLET: radio demasiado grande'); return;
             }
-
             const tan1 = int.add(unit1.multiply(tanDist));
             const tan2 = int.add(unit2.multiply(tanDist));
-
             const bisector = unit1.add(unit2).normalize();
             const centerDist = radius / Math.sin(angle / 2);
             const center = int.add(bisector.multiply(centerDist));
             const mid = center.add(int.subtract(center).normalize().multiply(radius));
 
             saveState();
-
-            if (side1 > 0) line1.segments[0].point = tan1;
-            else           line1.segments[1].point = tan1;
-            if (side2 > 0) line2.segments[0].point = tan2;
-            else           line2.segments[1].point = tan2;
-
+            if (s1_nearIsP1) s1.setP1(tan1); else s1.setP2(tan1);
+            if (s2_nearIsP1) s2.setP1(tan2); else s2.setP2(tan2);
             try {
                 const arc = new Path.Arc(tan1, mid, tan2);
-                arc.strokeColor = line1.strokeColor || 'white';
+                arc.strokeColor = state.filletLine1.entity.strokeColor || 'white';
                 arc.strokeWidth = currentStrokeWidth();
                 tagShape(arc, 'arc');
-                (line1.layer || activeLayer).addChild(arc);
+                (state.filletLine1.entity.layer || activeLayer).addChild(arc);
             } catch (e) {
-                console.warn('FILLET arc error:', e);
                 setPrompt('FILLET: no se pudo crear el arco (' + e.message + ')');
                 return;
             }
-
             invalidateSnapCache();
             resetStateCmd();
-            setPrompt(`Redondeado aplicado (R = ${radius})`);
+            setPrompt(`Redondeado aplicado (R=${radius})`);
         }
     }
 
-    // ═══════════════════════════════════════════════════════════════
-    // [22] OFFSET
-    // ═══════════════════════════════════════════════════════════════
-    function lineLineIntersection(p1, p2, p3, p4) {
-        const d1 = p2.subtract(p1), d2 = p4.subtract(p3);
-        const denom = d1.cross(d2);
-        if (Math.abs(denom) < 1e-9) return null;
-        const t = p3.subtract(p1).cross(d2) / denom;
-        return p1.add(d1.multiply(t));
-    }
+    /* ── [22] OFFSET ── */
     function circumcenter(p1, p2, p3) {
         const ax = p1.x, ay = p1.y, bx = p2.x, by = p2.y, cx = p3.x, cy = p3.y;
         const d = 2 * (ax * (by - cy) + bx * (cy - ay) + cx * (ay - by));
@@ -2886,8 +2183,7 @@
         const edgeCount = closed ? n : n - 1;
         const offsetEdges = [];
         for (let i = 0; i < edgeCount; i++) {
-            const a = pts[i];
-            const b = pts[(i + 1) % n];
+            const a = pts[i], b = pts[(i + 1) % n];
             const dir = b.subtract(a).normalize();
             const normal = dir.rotate(90).multiply(dist * side);
             offsetEdges.push({ a: a.add(normal), b: b.add(normal) });
@@ -2918,16 +2214,15 @@
     }
     function handleOffsetSelectClick(event) {
         const hit = hitTestContent(event.point);
-        if (!hit || !hit.item) { setPrompt('No se encontró ningún objeto (Enter/ESC para salir)'); return; }
+        if (!hit || !hit.item) { setPrompt('No se encontró objeto (Enter/ESC salir)'); return; }
         const item = hit.item;
         if (!isLineItem(item) && !isCircleItem(item) && !isPolylineItem(item)) {
-            setPrompt('Offset solo funciona con líneas, círculos, rectángulos o polilíneas');
-            return;
+            setPrompt('Offset: líneas, círculos, rectángulos o polilíneas'); return;
         }
         state.offsetTarget = item;
         highlightOffsetTarget(item, true);
         state.step = 3;
-        setPrompt(`OFFSET: Distancia ${state.offsetDistance}. Especifica el lado del offset (Enter/ESC para salir)`);
+        setPrompt(`OFFSET: Distancia ${state.offsetDistance}. Especifica el lado`);
     }
     function handleOffsetSideClick(event) {
         const item = state.offsetTarget;
@@ -2936,15 +2231,13 @@
         if (!item || dist <= 0) { resetOffsetToSelect(); return; }
         saveState();
         if (isLineItem(item)) {
-            const p1 = item.segments[0].point;
-            const p2 = item.segments[1].point;
+            const p1 = item.segments[0].point, p2 = item.segments[1].point;
             const dir = p2.subtract(p1).normalize();
             const normal = dir.rotate(90).multiply(dist);
             const mid = p1.add(p2).divide(2);
-            const toClick = pt.subtract(mid);
-            const side = toClick.dot(normal) > 0 ? 1 : -1;
-            const offsetNormal = normal.multiply(side);
-            const newLine = new Path.Line(p1.add(offsetNormal), p2.add(offsetNormal));
+            const side = pt.subtract(mid).dot(normal) > 0 ? 1 : -1;
+            const off = normal.multiply(side);
+            const newLine = new Path.Line(p1.add(off), p2.add(off));
             newLine.strokeColor = item.strokeColor || 'white';
             newLine.strokeWidth = currentStrokeWidth();
             tagShape(newLine, 'line');
@@ -2953,7 +2246,7 @@
             const r0 = getCircleRadius(item);
             const inside = pt.getDistance(item.position) < r0;
             const newRadius = inside ? r0 - dist : r0 + dist;
-            if (newRadius <= 0) { setPrompt('El offset elimina el círculo (radio ≤ 0).'); return; }
+            if (newRadius <= 0) { setPrompt('Radio ≤ 0'); return; }
             const newCircle = new Path.Circle(item.position, newRadius);
             newCircle.strokeColor = item.strokeColor || 'white';
             newCircle.strokeWidth = currentStrokeWidth();
@@ -2962,28 +2255,25 @@
             activeLayer.addChild(newCircle);
         } else if (isPolylineItem(item)) {
             const newPoly = offsetPolyline(item, dist, pt);
-            if (!newPoly) { setPrompt('No se pudo calcular el offset de esta polilínea'); return; }
+            if (!newPoly) { setPrompt('No se pudo calcular offset'); return; }
             newPoly.strokeColor = item.strokeColor || 'white';
             newPoly.strokeWidth = currentStrokeWidth();
             tagShape(newPoly, 'polyline');
             activeLayer.addChild(newPoly);
         }
-        resetOffsetToSelect(`Offset creado (dist ${dist}). Selecciona otro objeto o Enter/ESC para salir`);
+        resetOffsetToSelect(`Offset creado (${dist}). Selecciona otro o Enter/ESC`);
     }
     function resetOffsetToSelect(message) {
         highlightOffsetTarget(state.offsetTarget, false);
         state.offsetTarget = null;
         state.step = 2;
         previewLayer.removeChildren();
-        setPrompt(message || `OFFSET: Distancia ${state.offsetDistance}. Selecciona objeto a desplazar (Enter/ESC para salir)`);
+        setPrompt(message || `OFFSET: Distancia ${state.offsetDistance}. Selecciona objeto`);
     }
 
-    // ═══════════════════════════════════════════════════════════════
-    // [23] EVENTOS DE RATÓN
-    // ═══════════════════════════════════════════════════════════════
+    /* ── [23] Eventos de ratón ── */
     let snapMarker = null;
     let middleClickTimer = null;
-
     function onMouseDown(event) {
         state.lastMousePoint = event.point;
         if (state.pickingPrintWindow) {
@@ -3021,9 +2311,7 @@
                 saveState();
                 state.gripDrag = grip;
                 state.gripDragStart = event.point;
-                if (grip.type === 'move') {
-                    state.gripOriginalSegments = grip.item.segments.map(s => s.point.clone());
-                }
+                if (grip.type === 'move') state.gripOriginalSegments = grip.item.segments.map(s => s.point.clone());
                 renderGrips();
                 return;
             }
@@ -3038,16 +2326,13 @@
         }
 
         if ((state.currentCommand === 'TRIM' || state.currentCommand === 'EXTEND') && !state.pendingCommand) {
-            handleTrimExtendClick(event);
-            return;
+            handleTrimExtendClick(event); return;
         }
         if (state.currentCommand === 'CHAMFER' && (state.step === 3 || state.step === 4)) {
-            handleChamferClick(event);
-            return;
+            handleChamferClick(event); return;
         }
         if (state.currentCommand === 'FILLET' && (state.step === 2 || state.step === 3)) {
-            handleFilletClick(event);
-            return;
+            handleFilletClick(event); return;
         }
         if (state.currentCommand === 'OFFSET' && state.step === 2) { handleOffsetSelectClick(event); return; }
         if (state.currentCommand === 'OFFSET' && state.step === 3) { handleOffsetSideClick(event); return; }
@@ -3063,7 +2348,7 @@
                 } else {
                     addToSelection(item);
                 }
-                setPrompt(`${state.pendingCommand}: Selecciona objetos — ${state.selectedItems.length} encontrado(s) (Enter para terminar)`);
+                setPrompt(`${state.pendingCommand}: ${state.selectedItems.length} encontrado(s) (Enter terminar)`);
                 return;
             }
             if (state.selectedItems.includes(item)) {
@@ -3128,13 +2413,13 @@
                 item.segments[grip.index].point = resolved;
                 renderTrackingGuides(state.trackGuides, resolved);
                 const text = base ?
-                    `Distancia: ${base.getDistance(resolved).toFixed(3)}  ∠: ${(-(resolved.subtract(base).angle)).toFixed(1)}°` :
+                    `Dist: ${base.getDistance(resolved).toFixed(3)}  ∠: ${(-(resolved.subtract(base).angle)).toFixed(1)}°` :
                     `X: ${resolved.x.toFixed(3)}, Y: ${(-resolved.y).toFixed(3)}`;
                 showTooltipAt(event.event.clientX, event.event.clientY, text);
             } else if (grip.type === 'move') {
                 const delta = event.point.subtract(state.gripDragStart);
                 item.segments.forEach((s, i) => { s.point = state.gripOriginalSegments[i].add(delta); });
-                showTooltipAt(event.event.clientX, event.event.clientY, `Distancia: ${delta.length.toFixed(3)}  ∠: ${delta.length > 0 ? (-delta.angle).toFixed(1) : 0}°`);
+                showTooltipAt(event.event.clientX, event.event.clientY, `Dist: ${delta.length.toFixed(3)}  ∠: ${delta.length > 0 ? (-delta.angle).toFixed(1) : 0}°`);
             } else if (grip.type === 'circle-center') {
                 const resolved = resolvePoint(event.point, null, 'MOVE', [item]);
                 item.position = resolved;
@@ -3142,10 +2427,7 @@
             } else if (grip.type === 'circle-radius') {
                 const resolved = resolvePoint(event.point, item.position, 'LINE', [item]);
                 const newR = item.position.getDistance(resolved);
-                if (newR > 0.001) {
-                    const newItem = resizeCircle(item, newR);
-                    state.gripDrag.item = newItem;
-                }
+                if (newR > 0.001) { const ni = resizeCircle(item, newR); state.gripDrag.item = ni; }
                 showTooltipAt(event.event.clientX, event.event.clientY, `Radio: ${newR.toFixed(3)}`);
             }
             renderGrips();
@@ -3158,17 +2440,15 @@
             const moveDelta = resolved.subtract(state.dragStartPoint);
             state.selectedItems.forEach((item, idx) => item.position = state.originalPositions[idx].add(moveDelta));
             state.hasMoved = true;
-            const dist = moveDelta.length;
             const ang = moveDelta.length > 0 ? (-moveDelta.angle) : 0;
-            showTooltipAt(event.event.clientX, event.event.clientY, `Distancia: ${dist.toFixed(3)}  ∠: ${ang.toFixed(1)}°`);
+            showTooltipAt(event.event.clientX, event.event.clientY, `Dist: ${moveDelta.length.toFixed(3)}  ∠: ${ang.toFixed(1)}°`);
             renderTrackingGuides(state.trackGuides, resolved, state.dragStartPoint);
             return;
         }
 
         if (state.selecting) {
             state.selectionRect = new Rectangle(state.selectStartPoint, event.point);
-            if (event.point.x > state.selectStartPoint.x) state.selectMode = 'window';
-            else state.selectMode = 'crossing';
+            state.selectMode = (event.point.x > state.selectStartPoint.x) ? 'window' : 'crossing';
             drawSelectionRect();
         }
     }
@@ -3181,10 +2461,10 @@
             state.printPickStart = null;
             state.printPickRect = null;
             if (rect && rect.width > 1 && rect.height > 1) {
-                setPrompt('Generando vista de impresión…');
+                setPrompt('Generando impresión…');
                 generatePrintView(rect);
             } else {
-                setPrompt('Ventana de impresión no válida (demasiado pequeña)');
+                setPrompt('Ventana no válida');
             }
             return;
         }
@@ -3228,11 +2508,8 @@
                         layer === selectionLayer || layer === previewLayer || layer === gripLayer) continue;
                     layer.children.forEach(item => {
                         if (item.bounds) {
-                            if (isWindow) {
-                                if (rect.contains(item.bounds)) addToSelection(item, true);
-                            } else {
-                                if (rect.intersects(item.bounds)) addToSelection(item, true);
-                            }
+                            if (isWindow) { if (rect.contains(item.bounds)) addToSelection(item, true); }
+                            else { if (rect.intersects(item.bounds)) addToSelection(item, true); }
                         }
                     });
                 }
@@ -3240,7 +2517,7 @@
                 state.selectionRect = null;
                 state.selectStartPoint = null;
                 if (state.pendingCommand) {
-                    setPrompt(`${state.pendingCommand}: Selecciona objetos — ${state.selectedItems.length} encontrado(s) (Enter para terminar)`);
+                    setPrompt(`${state.pendingCommand}: ${state.selectedItems.length} encontrado(s) (Enter terminar)`);
                 } else {
                     setPrompt(`Seleccionados: ${state.selectedItems.length}`);
                 }
@@ -3319,9 +2596,7 @@
         }
     }
 
-    // ═══════════════════════════════════════════════════════════════
-    // [24] VISTA PREVIA DINÁMICA
-    // ═══════════════════════════════════════════════════════════════
+    /* ── [24] Vista previa dinámica ── */
     function updateDynamicPreview(event) {
         previewLayer.removeChildren();
         const pt = event.point;
@@ -3331,14 +2606,13 @@
             const dist = state.offsetDistance;
             let preview = null;
             if (isLineItem(item)) {
-                const p1 = item.segments[0].point;
-                const p2 = item.segments[1].point;
+                const p1 = item.segments[0].point, p2 = item.segments[1].point;
                 const dir = p2.subtract(p1).normalize();
                 const normal = dir.rotate(90).multiply(dist);
                 const mid = p1.add(p2).divide(2);
                 const side = pt.subtract(mid).dot(normal) > 0 ? 1 : -1;
-                const offsetNormal = normal.multiply(side);
-                preview = new Path.Line(p1.add(offsetNormal), p2.add(offsetNormal));
+                const off = normal.multiply(side);
+                preview = new Path.Line(p1.add(off), p2.add(off));
             } else if (isCircleItem(item)) {
                 const r0 = getCircleRadius(item);
                 const inside = pt.getDistance(item.position) < r0;
@@ -3363,8 +2637,7 @@
             const moveExclude = ((state.currentCommand === 'MOVE' || state.currentCommand === 'COPY') && state.step >= 2) ?
                 state.selectedItems : null;
             const cursor = resolvePoint(pt, base, state.currentCommand, moveExclude);
-            const dx = cursor.x - base.x;
-            const dy = cursor.y - base.y;
+            const dx = cursor.x - base.x, dy = cursor.y - base.y;
             const dist = Math.sqrt(dx * dx + dy * dy);
             const angle = Math.atan2(dy, dx) * 180 / Math.PI;
 
@@ -3383,7 +2656,7 @@
                 circle.strokeWidth = 1 / view.zoom;
                 circle.dashArray = [4, 4];
                 previewLayer.addChild(circle);
-                const text = state.circleDiameterMode ? `Diámetro: ${dist.toFixed(2)}  (Radio: ${r.toFixed(2)})` : `Radio: ${dist.toFixed(2)}`;
+                const text = state.circleDiameterMode ? `Diámetro: ${dist.toFixed(2)} (R: ${r.toFixed(2)})` : `Radio: ${dist.toFixed(2)}`;
                 showTooltipAt(event.event.clientX, event.event.clientY - 30, text);
             } else if (state.currentCommand === 'RECTANG') {
                 const rect = new Path.Rectangle(base, cursor);
@@ -3429,7 +2702,7 @@
                     previewLayer.addChild(clone);
                 });
                 showTooltipAt(event.event.clientX, event.event.clientY - 30,
-                    `Distancia: ${dist.toFixed(2)}  ∠: ${(-angle).toFixed(1)}°`);
+                    `Dist: ${dist.toFixed(2)}  ∠: ${(-angle).toFixed(1)}°`);
             } else if (state.currentCommand === 'ROTATE') {
                 const guideLine = new Path.Line(state.basePoint, cursor);
                 guideLine.strokeColor = new Color(0, 0.75, 1, 0.4);
@@ -3493,7 +2766,6 @@
             }
         }
     }
-
     function showTooltipAt(clientX, clientY, text) {
         const el = document.getElementById('dynamic-tooltip');
         if (!el) return;
@@ -3503,19 +2775,15 @@
         el.style.display = 'block';
     }
 
-    // ═══════════════════════════════════════════════════════════════
-    // [25] COORDENADAS Y CAJA DE SELECCIÓN
-    // ═══════════════════════════════════════════════════════════════
+    /* ── [25] Coordenadas y selección ── */
     function updateCoords(pt) {
-        document.getElementById('coords-display').textContent =
-            `X: ${pt.x.toFixed(3)}, Y: ${(-pt.y).toFixed(3)}`;
+        document.getElementById('coords-display').textContent = `X: ${pt.x.toFixed(3)}, Y: ${(-pt.y).toFixed(3)}`;
         document.getElementById('zoom-display').textContent = `Zoom: ${view.zoom.toFixed(2)}x`;
     }
     function drawSelectionRect() {
         selectionLayer.removeChildren();
         if (state.selectionRect && state.selecting) {
-            const rect = state.selectionRect;
-            const path = new Path.Rectangle(rect);
+            const path = new Path.Rectangle(state.selectionRect);
             const isWindow = state.selectMode === 'window';
             path.fillColor = isWindow ? new Color(0, 0, 1, 0.1) : new Color(0, 1, 0, 0.1);
             path.strokeColor = isWindow ? 'blue' : 'green';
@@ -3524,9 +2792,7 @@
         }
     }
 
-    // ═══════════════════════════════════════════════════════════════
-    // [26] CUADRÍCULA (flecha Y+ arriba)
-    // ═══════════════════════════════════════════════════════════════
+    /* ── [26] Cuadrícula ── */
     function drawGrid() {
         gridLayer.removeChildren();
         if (!state.gridVisible) return;
@@ -3546,15 +2812,12 @@
 
         const left   = Math.floor(bounds.left / gridSpacing) * gridSpacing - gridSpacing;
         const right  = Math.ceil(bounds.right / gridSpacing) * gridSpacing + gridSpacing;
-        const yMin   = Math.min(bounds.top, bounds.bottom);
-        const yMax   = Math.max(bounds.top, bounds.bottom);
-        const bottom = Math.floor(yMin / gridSpacing) * gridSpacing - gridSpacing;
-        const top    = Math.ceil(yMax / gridSpacing) * gridSpacing + gridSpacing;
+        const bottom = Math.floor(Math.min(bounds.top, bounds.bottom) / gridSpacing) * gridSpacing - gridSpacing;
+        const top    = Math.ceil(Math.max(bounds.top, bounds.bottom) / gridSpacing) * gridSpacing + gridSpacing;
 
-        const pixelThin = 0.5, pixelThick = 0.8, pixelAxis = 1.2;
-        const thinWidth  = Math.min(pixelThin  / zoom, 2);
-        const thickWidth = Math.min(pixelThick / zoom, 2);
-        const axisWidth  = Math.min(pixelAxis  / zoom, 2.5);
+        const thinWidth  = Math.min(0.5 / zoom, 2);
+        const thickWidth = Math.min(0.8 / zoom, 2);
+        const axisWidth  = Math.min(1.2 / zoom, 2.5);
         const thinColor  = new Color(0.25, 0.25, 0.25);
         const thickColor = new Color(0.35, 0.35, 0.35);
         const majorSpacing = gridSpacing * 5;
@@ -3582,29 +2845,16 @@
         if (zoom > 0.3) {
             const size = 20 / zoom;
             const origin = new Point(bounds.left + size * 1.5, bounds.bottom - size * 1.5);
-
             const xArrow = new Path.Line(origin, new Point(origin.x + size, origin.y));
-            xArrow.strokeColor = new Color(0.8, 0.2, 0.2);
-            xArrow.strokeWidth = axisWidth;
-            gridLayer.addChild(xArrow);
-
-            // Y+ usuario = hacia arriba = -y interno
+            xArrow.strokeColor = new Color(0.8, 0.2, 0.2); xArrow.strokeWidth = axisWidth; gridLayer.addChild(xArrow);
             const yArrow = new Path.Line(origin, new Point(origin.x, origin.y - size));
-            yArrow.strokeColor = new Color(0.2, 0.8, 0.2);
-            yArrow.strokeWidth = axisWidth;
-            gridLayer.addChild(yArrow);
-
+            yArrow.strokeColor = new Color(0.2, 0.8, 0.2); yArrow.strokeWidth = axisWidth; gridLayer.addChild(yArrow);
             const labelX = new PointText(new Point(origin.x + size + 4, origin.y - 2));
-            labelX.content = 'X';
-            labelX.fillColor = new Color(0.8, 0.2, 0.2);
-            labelX.fontSize = Math.max(8, 10 / zoom);
-            gridLayer.addChild(labelX);
-
+            labelX.content = 'X'; labelX.fillColor = new Color(0.8, 0.2, 0.2);
+            labelX.fontSize = Math.max(8, 10 / zoom); gridLayer.addChild(labelX);
             const labelY = new PointText(new Point(origin.x - 2, origin.y - size - 6));
-            labelY.content = 'Y';
-            labelY.fillColor = new Color(0.2, 0.8, 0.2);
-            labelY.fontSize = Math.max(8, 10 / zoom);
-            gridLayer.addChild(labelY);
+            labelY.content = 'Y'; labelY.fillColor = new Color(0.2, 0.8, 0.2);
+            labelY.fontSize = Math.max(8, 10 / zoom); gridLayer.addChild(labelY);
         }
     }
     let _lastGridDrawTime = 0;
@@ -3615,9 +2865,7 @@
         drawGrid();
     }
 
-    // ═══════════════════════════════════════════════════════════════
-    // [27] ZOOM
-    // ═══════════════════════════════════════════════════════════════
+    /* ── [27] Zoom ── */
     function zoomExtents() {
         let allBounds = null;
         for (let internal in layers) {
@@ -3653,9 +2901,7 @@
         drawGrid(); refreshStrokeWidths(); renderGrips(); view.update();
     }
 
-    // ═══════════════════════════════════════════════════════════════
-    // [28] IMPORTAR DXF
-    // ═══════════════════════════════════════════════════════════════
+    /* ── [28] Importar DXF ── */
     function getCurrentDrawingBounds() {
         let allBounds = null;
         for (let internal in layers) {
@@ -3678,9 +2924,7 @@
                     invalidateSnapCache();
                     setPrompt(`DXF importado: ${result.length} entidades`);
                     zoomExtents();
-                } else {
-                    setPrompt('No se encontraron entidades válidas');
-                }
+                } else setPrompt('No se encontraron entidades válidas');
             } catch (err) {
                 console.error(err);
                 setPrompt('Error al importar: ' + err.message);
@@ -3714,8 +2958,7 @@
                         const x1 = get(10), y1 = get(20), x2 = get(11), y2 = get(21);
                         if (!isNaN(x1) && !isNaN(y1) && !isNaN(x2) && !isNaN(y2)) {
                             const line = new Path.Line(new Point(x1, -y1), new Point(x2, -y2));
-                            line.strokeColor = 'white';
-                            line.strokeWidth = currentStrokeWidth();
+                            line.strokeColor = 'white'; line.strokeWidth = currentStrokeWidth();
                             tagShape(line, 'line');
                             itemsToAdd.push({ item: line, layer: originalLayerName });
                         }
@@ -3723,37 +2966,32 @@
                         const cx = get(10), cy = get(20), r = get(40);
                         if (!isNaN(cx) && !isNaN(cy) && !isNaN(r) && r > 0) {
                             const circle = new Path.Circle(new Point(cx, -cy), r);
-                            circle.strokeColor = 'white';
-                            circle.strokeWidth = currentStrokeWidth();
-                            tagShape(circle, 'circle');
-                            circle.data.radius = r;
+                            circle.strokeColor = 'white'; circle.strokeWidth = currentStrokeWidth();
+                            tagShape(circle, 'circle'); circle.data.radius = r;
                             itemsToAdd.push({ item: circle, layer: originalLayerName });
                         }
                     } else if (type === 'ARC') {
                         const cx = get(10), cy = get(20), r = get(40);
                         const sa = get(50), ea = get(51);
                         if (!isNaN(cx) && !isNaN(cy) && !isNaN(r) && r > 0 && !isNaN(sa) && !isNaN(ea)) {
-                            const aRad = sa * Math.PI / 180;
-                            const bRad = ea * Math.PI / 180;
+                            const aRad = sa * Math.PI / 180, bRad = ea * Math.PI / 180;
                             let sweep = bRad - aRad;
                             if (sweep < 0) sweep += 2 * Math.PI;
                             const midRad = aRad + sweep / 2;
                             const fromDxf = new Point(cx + r * Math.cos(aRad), cy + r * Math.sin(aRad));
-                            const toDxf   = new Point(cx + r * Math.cos(bRad), cy + r * Math.sin(bRad));
-                            const midDxf  = new Point(cx + r * Math.cos(midRad), cy + r * Math.sin(midRad));
+                            const toDxf = new Point(cx + r * Math.cos(bRad), cy + r * Math.sin(bRad));
+                            const midDxf = new Point(cx + r * Math.cos(midRad), cy + r * Math.sin(midRad));
                             const arc = new Path.Arc(
                                 new Point(fromDxf.x, -fromDxf.y),
-                                new Point(midDxf.x,  -midDxf.y),
-                                new Point(toDxf.x,   -toDxf.y)
+                                new Point(midDxf.x, -midDxf.y),
+                                new Point(toDxf.x, -toDxf.y)
                             );
-                            arc.strokeColor = 'white';
-                            arc.strokeWidth = currentStrokeWidth();
+                            arc.strokeColor = 'white'; arc.strokeWidth = currentStrokeWidth();
                             tagShape(arc, 'arc');
                             itemsToAdd.push({ item: arc, layer: originalLayerName });
                         }
                     } else if (type === 'LWPOLYLINE') {
-                        const vertsDxf = [];
-                        const bulges = [];
+                        const vertsDxf = [], bulges = [];
                         for (let j = 0; j < codes.length; j++) {
                             const c = codes[j];
                             if (c.code === 10) {
@@ -3769,15 +3007,13 @@
                         if (vertsDxf.length > 1) {
                             const poly = buildPolyline(vertsDxf, bulges, closed);
                             if (poly) {
-                                poly.strokeColor = 'white';
-                                poly.strokeWidth = currentStrokeWidth();
+                                poly.strokeColor = 'white'; poly.strokeWidth = currentStrokeWidth();
                                 itemsToAdd.push({ item: poly, layer: originalLayerName });
                             }
                         }
                     } else if (type === 'POLYLINE') {
                         const closed = (parseInt(codes.find(p => p.code === 70)?.value || '0', 10) & 1) === 1;
-                        const vertsDxf = [];
-                        const bulges = [];
+                        const vertsDxf = [], bulges = [];
                         while (i < lines.length && lines[i] === '0') {
                             const subType = lines[i + 1] ? lines[i + 1].toUpperCase() : '';
                             if (subType === 'SEQEND') {
@@ -3805,13 +3041,12 @@
                         if (vertsDxf.length > 1) {
                             const poly = buildPolyline(vertsDxf, bulges, closed);
                             if (poly) {
-                                poly.strokeColor = 'white';
-                                poly.strokeWidth = currentStrokeWidth();
+                                poly.strokeColor = 'white'; poly.strokeWidth = currentStrokeWidth();
                                 itemsToAdd.push({ item: poly, layer: originalLayerName });
                             }
                         }
                     }
-                } catch (err) { console.warn('Error al procesar entidad DXF:', err); }
+                } catch (err) { console.warn('Error al procesar DXF:', err); }
             } else { i++; }
         }
         if (itemsToAdd.length === 0) return [];
@@ -3824,8 +3059,7 @@
         let offsetX = 0;
         if (currentBounds && newBounds && newBounds.width > 0) {
             const gap = 20;
-            const targetLeft = currentBounds.right + gap;
-            offsetX = targetLeft - newBounds.left;
+            offsetX = currentBounds.right + gap - newBounds.left;
         }
         if (offsetX !== 0) itemsToAdd.forEach(({ item }) => item.translate(new Point(offsetX, 0)));
         saveState();
@@ -3875,9 +3109,7 @@
         return path;
     }
 
-    // ═══════════════════════════════════════════════════════════════
-    // [29] IMPRIMIR / PDF
-    // ═══════════════════════════════════════════════════════════════
+    /* ── [29] Imprimir ── */
     function getContentBounds() {
         let bounds = null;
         for (let internal in layers) {
@@ -3888,9 +3120,8 @@
                 bounds = bounds ? bounds.unite(item.bounds) : item.bounds.clone();
             });
         }
-        if (!bounds || bounds.width === 0 || bounds.height === 0) {
+        if (!bounds || bounds.width === 0 || bounds.height === 0)
             bounds = new paper.Rectangle(-100, -100, 200, 200);
-        }
         const pad = Math.max(bounds.width, bounds.height) * 0.06 + 5;
         return new paper.Rectangle(bounds.x - pad, bounds.y - pad, bounds.width + pad * 2, bounds.height + pad * 2);
     }
@@ -3925,9 +3156,9 @@
     }
     function openPrintWindow(svgString) {
         const win = window.open('', '_blank');
-        if (!win) { setPrompt('El navegador bloqueó la ventana de impresión.'); return; }
+        if (!win) { setPrompt('Bloqueado. Permite ventanas emergentes.'); return; }
         win.document.write(
-            '<!DOCTYPE html><html><head><title>Imprimir dibujo</title><style>' +
+            '<!DOCTYPE html><html><head><title>Imprimir</title><style>' +
             'html,body{margin:0;padding:0;background:#fff;}' +
             '.sheet{padding:24px;display:flex;align-items:center;justify-content:center;min-height:100vh;box-sizing:border-box;}' +
             'svg{max-width:100%;height:auto;}' +
@@ -3942,12 +3173,12 @@
         state.pickingPrintWindow = true;
         state.printPickStart = null;
         state.printPickRect = null;
-        setPrompt('Impresión: arrastra una ventana sobre el dibujo (ESC para cancelar)');
+        setPrompt('Impresión: arrastra una ventana (ESC para cancelar)');
     }
     document.getElementById('qa-print').addEventListener('click', () => {
         showModal({
             title: 'Imprimir / Exportar a PDF',
-            body: 'Elige qué parte del dibujo quieres imprimir. Se abrirá el diálogo de impresión del navegador, donde puedes elegir <b>Guardar como PDF</b>.',
+            body: 'Elige qué parte del dibujo quieres imprimir. Se abrirá el diálogo del navegador donde puedes elegir <b>Guardar como PDF</b>.',
             buttons: [
                 { label: 'Cancelar' },
                 { label: 'Ventana de selección', onClick: startPrintWindowPick },
@@ -3956,9 +3187,7 @@
         });
     });
 
-    // ═══════════════════════════════════════════════════════════════
-    // [30] EXPORTAR DXF
-    // ═══════════════════════════════════════════════════════════════
+    /* ── [30] Exportar DXF ── */
     function exportDXF() {
         const dxf = generateDXF();
         if (!dxf) { setPrompt('No hay entidades para exportar'); return; }
@@ -3973,7 +3202,7 @@
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
-        setPrompt('DXF exportado correctamente (AutoCAD R12+)');
+        setPrompt('DXF exportado correctamente');
     }
     function writePolylineEntity(item, layerName) {
         const isCurved = item.curves.some(c => !c.isStraight());
@@ -3998,8 +3227,7 @@
             dxf += '8\n' + layerName + '\n';
             dxf += '10\n' + p.x.toFixed(6) + '\n';
             dxf += '20\n' + (-p.y).toFixed(6) + '\n';
-            dxf += '30\n0.0\n';
-            dxf += '70\n0\n';
+            dxf += '30\n0.0\n70\n0\n';
         });
         dxf += '0\nSEQEND\n';
         dxf += '8\n' + layerName + '\n';
@@ -4026,33 +3254,14 @@
         }
         dxf += '0\nTABLE\n2\nLAYER\n70\n' + layerNames.length + '\n';
         layerNames.forEach(name => {
-            dxf += '0\nLAYER\n';
-            dxf += '2\n' + name + '\n';
-            dxf += '70\n0\n';
-            dxf += '62\n7\n';
-            dxf += '6\nCONTINUOUS\n';
+            dxf += '0\nLAYER\n2\n' + name + '\n70\n0\n62\n7\n6\nCONTINUOUS\n';
         });
         dxf += '0\nENDTAB\n';
         dxf += '0\nTABLE\n2\nLTYPE\n70\n1\n';
-        dxf += '0\nLTYPE\n';
-        dxf += '2\nCONTINUOUS\n';
-        dxf += '70\n0\n';
-        dxf += '3\nLínea continua\n';
-        dxf += '72\n65\n';
-        dxf += '73\n0\n';
-        dxf += '40\n0.0\n';
+        dxf += '0\nLTYPE\n2\nCONTINUOUS\n70\n0\n3\nLínea continua\n72\n65\n73\n0\n40\n0.0\n';
         dxf += '0\nENDTAB\n';
         dxf += '0\nTABLE\n2\nSTYLE\n70\n1\n';
-        dxf += '0\nSTYLE\n';
-        dxf += '2\nSTANDARD\n';
-        dxf += '70\n0\n';
-        dxf += '40\n0.0\n';
-        dxf += '41\n1.0\n';
-        dxf += '50\n0.0\n';
-        dxf += '71\n0\n';
-        dxf += '42\n2.5\n';
-        dxf += '3\narial.ttf\n';
-        dxf += '4\n\n';
+        dxf += '0\nSTYLE\n2\nSTANDARD\n70\n0\n40\n0.0\n41\n1.0\n50\n0.0\n71\n0\n42\n2.5\n3\narial.ttf\n4\n\n';
         dxf += '0\nENDTAB\n';
         dxf += '0\nENDSEC\n';
         dxf += '0\nSECTION\n2\nBLOCKS\n';
@@ -4066,24 +3275,15 @@
             const layerName = layer.data.originalName || '0';
             layer.children.forEach(item => {
                 if (isLineItem(item)) {
-                    const p1 = item.segments[0].point;
-                    const p2 = item.segments[1].point;
-                    dxf += '0\nLINE\n';
-                    dxf += '8\n' + layerName + '\n';
-                    dxf += '10\n' + p1.x.toFixed(6) + '\n';
-                    dxf += '20\n' + (-p1.y).toFixed(6) + '\n';
-                    dxf += '30\n0.0\n';
-                    dxf += '11\n' + p2.x.toFixed(6) + '\n';
-                    dxf += '21\n' + (-p2.y).toFixed(6) + '\n';
-                    dxf += '31\n0.0\n';
+                    const p1 = item.segments[0].point, p2 = item.segments[1].point;
+                    dxf += '0\nLINE\n8\n' + layerName + '\n';
+                    dxf += '10\n' + p1.x.toFixed(6) + '\n20\n' + (-p1.y).toFixed(6) + '\n30\n0.0\n';
+                    dxf += '11\n' + p2.x.toFixed(6) + '\n21\n' + (-p2.y).toFixed(6) + '\n31\n0.0\n';
                     hasEntities = true;
                 } else if (isCircleItem(item)) {
                     const c = item.position;
-                    dxf += '0\nCIRCLE\n';
-                    dxf += '8\n' + layerName + '\n';
-                    dxf += '10\n' + c.x.toFixed(6) + '\n';
-                    dxf += '20\n' + (-c.y).toFixed(6) + '\n';
-                    dxf += '30\n0.0\n';
+                    dxf += '0\nCIRCLE\n8\n' + layerName + '\n';
+                    dxf += '10\n' + c.x.toFixed(6) + '\n20\n' + (-c.y).toFixed(6) + '\n30\n0.0\n';
                     dxf += '40\n' + getCircleRadius(item).toFixed(6) + '\n';
                     hasEntities = true;
                 } else if (isArcItem(item) && item.segments.length > 1) {
@@ -4099,32 +3299,21 @@
                     }
                     if (validArc) {
                         const toDxfAngle = (p) => {
-                            const dx = p.x - center.x;
-                            const dy = -(p.y - center.y);
-                            let a = Math.atan2(dy, dx) * 180 / Math.PI;
+                            const dx2 = p.x - center.x, dy2 = -(p.y - center.y);
+                            let a = Math.atan2(dy2, dx2) * 180 / Math.PI;
                             if (a < 0) a += 360;
                             return a;
                         };
-                        let sa = toDxfAngle(p0);
-                        let ea = toDxfAngle(p1);
+                        let sa = toDxfAngle(p0), ea = toDxfAngle(p1);
                         const ma = toDxfAngle(mid);
                         let sweep = ea - sa;
                         if (sweep < 0) sweep += 360;
                         let midOffset = ma - sa;
                         if (midOffset < 0) midOffset += 360;
-                        if (midOffset > sweep) {
-                            const tmp = sa;
-                            sa = ea; ea = tmp;
-                            sweep = 360 - sweep;
-                        }
-                        dxf += '0\nARC\n';
-                        dxf += '8\n' + layerName + '\n';
-                        dxf += '10\n' + center.x.toFixed(6) + '\n';
-                        dxf += '20\n' + (-center.y).toFixed(6) + '\n';
-                        dxf += '30\n0.0\n';
-                        dxf += '40\n' + radius.toFixed(6) + '\n';
-                        dxf += '50\n' + sa.toFixed(6) + '\n';
-                        dxf += '51\n' + ea.toFixed(6) + '\n';
+                        if (midOffset > sweep) { const tmp = sa; sa = ea; ea = tmp; }
+                        dxf += '0\nARC\n8\n' + layerName + '\n';
+                        dxf += '10\n' + center.x.toFixed(6) + '\n20\n' + (-center.y).toFixed(6) + '\n30\n0.0\n';
+                        dxf += '40\n' + radius.toFixed(6) + '\n50\n' + sa.toFixed(6) + '\n51\n' + ea.toFixed(6) + '\n';
                         hasEntities = true;
                     } else {
                         dxf += writePolylineEntity(item, layerName);
@@ -4136,27 +3325,21 @@
                 }
             });
         }
-        dxf += '0\nENDSEC\n';
-        dxf += '0\nEOF\n';
+        dxf += '0\nENDSEC\n0\nEOF\n';
         return hasEntities ? dxf : null;
     }
 
-    // ═══════════════════════════════════════════════════════════════
-    // [31] ACTIVACIÓN DE EVENTOS DEL RATÓN
-    // ═══════════════════════════════════════════════════════════════
+    /* ── [31] Mouse tool ── */
     const mouseTool = new paper.Tool();
     mouseTool.onMouseDown = onMouseDown;
     mouseTool.onMouseDrag = onMouseDrag;
     mouseTool.onMouseUp = onMouseUp;
     mouseTool.onMouseMove = onMouseMove;
     mouseTool.activate();
-
     view.element.addEventListener('wheel', onMouseWheel, { passive: false });
     view.on('change', () => drawGrid());
 
-    // ═══════════════════════════════════════════════════════════════
-    // [32] TOGGLES (Ortho / Polar / Osnap / LWT / Grid / Zoom)
-    // ═══════════════════════════════════════════════════════════════
+    /* ── [32] Toggles ── */
     function setOrtho(on) {
         state.ortho = on;
         document.getElementById('ortho-toggle').classList.toggle('active', state.ortho);
@@ -4173,58 +3356,40 @@
         document.getElementById('osnap-toggle').classList.toggle('active', on);
         if (!on && snapMarker) { snapMarker.remove(); snapMarker = null; }
     }
-    document.getElementById('ortho-toggle').addEventListener('click', function() { setOrtho(!state.ortho); });
-    document.getElementById('polar-toggle').addEventListener('click', function() { setPolar(!state.polar); });
-    document.getElementById('snap-toggle').addEventListener('click',  function() { setOsnap(!state.snapEnabled); });
-    document.getElementById('osnap-toggle').addEventListener('click', function() { setOsnap(!state.snapEnabled); });
+    document.getElementById('ortho-toggle').addEventListener('click', () => setOrtho(!state.ortho));
+    document.getElementById('polar-toggle').addEventListener('click', () => setPolar(!state.polar));
+    document.getElementById('snap-toggle').addEventListener('click', () => setOsnap(!state.snapEnabled));
+    document.getElementById('osnap-toggle').addEventListener('click', () => setOsnap(!state.snapEnabled));
     document.getElementById('lwt-toggle').addEventListener('click', function() {
         state.lwt = !state.lwt;
         this.classList.toggle('active', state.lwt);
-        refreshStrokeWidths();
-        renderGrips();
-        view.update();
+        refreshStrokeWidths(); renderGrips(); view.update();
     });
     document.getElementById('grid-toggle').addEventListener('click', function() {
         state.gridVisible = !state.gridVisible;
         this.classList.toggle('active', state.gridVisible);
         gridLayer.visible = state.gridVisible;
-        if (state.gridVisible) drawGrid();
-        else gridLayer.removeChildren();
+        if (state.gridVisible) drawGrid(); else gridLayer.removeChildren();
         document.getElementById('btn-grid-toggle').classList.toggle('active', state.gridVisible);
     });
     document.getElementById('btn-grid-toggle').classList.add('active');
-
     document.getElementById('btn-zoom-extents').addEventListener('click', zoomExtents);
-    document.getElementById('btn-zoom-in').addEventListener('click', () => {
-        view.zoom *= 1.2;
-        refreshStrokeWidths(); renderGrips(); view.update(); drawGrid();
-    });
-    document.getElementById('btn-zoom-out').addEventListener('click', () => {
-        view.zoom /= 1.2;
-        refreshStrokeWidths(); renderGrips(); view.update(); drawGrid();
-    });
+    document.getElementById('btn-zoom-in').addEventListener('click', () => { view.zoom *= 1.2; refreshStrokeWidths(); renderGrips(); view.update(); drawGrid(); });
+    document.getElementById('btn-zoom-out').addEventListener('click', () => { view.zoom /= 1.2; refreshStrokeWidths(); renderGrips(); view.update(); drawGrid(); });
 
-    // ═══════════════════════════════════════════════════════════════
-    // [33] BOTONES DE ARCHIVO
-    // ═══════════════════════════════════════════════════════════════
-    document.getElementById('ribbon-import').addEventListener('click', () => {
-        document.getElementById('file-input-import').click();
-    });
-    document.getElementById('qa-open').addEventListener('click', () => {
-        document.getElementById('file-input-import').click();
-    });
+    /* ── [33] Archivos ── */
+    document.getElementById('ribbon-import').addEventListener('click', () => document.getElementById('file-input-import').click());
+    document.getElementById('qa-open').addEventListener('click', () => document.getElementById('file-input-import').click());
     document.getElementById('file-input-import').addEventListener('change', (e) => {
         const file = e.target.files[0];
         if (file) {
             if (/\.dwg$/i.test(file.name)) {
                 showModal({
-                    title: 'Los archivos DWG no se pueden abrir directamente',
-                    body: `DWG es el formato binario propietario de Autodesk y no puede leerse desde el navegador sin las librerías oficiales de Autodesk.<br><br>Para importar <b>${file.name}</b>, expórtalo primero como <code>.dxf</code> desde AutoCAD (o con una herramienta gratuita como <code>ODA File Converter</code>) y vuelve a importarlo aquí.`,
+                    title: 'DWG no soportado',
+                    body: 'DWG es binario propietario. Expórtalo primero a <code>.dxf</code> desde AutoCAD (o con ODA File Converter).',
                     buttons: [{ label: 'Entendido', primary: true }]
                 });
-            } else {
-                importDXF(file);
-            }
+            } else importDXF(file);
         }
         e.target.value = '';
     });
@@ -4233,11 +3398,8 @@
     document.getElementById('qa-undo').addEventListener('click', undo);
     document.getElementById('qa-redo').addEventListener('click', redo);
 
-    // ═══════════════════════════════════════════════════════════════
-    // [34] LÍNEA DE COMANDOS + HISTÓRICO F2
-    // ═══════════════════════════════════════════════════════════════
+    /* ── [34] Línea de comandos ── */
     const cmdInputEl = document.getElementById('cmd-input');
-
     function toggleCmdHistory() {
         const panel = document.getElementById('cmd-history-panel');
         const btn = document.getElementById('cmd-history-toggle');
@@ -4247,7 +3409,6 @@
     }
     document.getElementById('cmd-history-toggle').addEventListener('click', toggleCmdHistory);
     document.getElementById('cmd-history-close').addEventListener('click', toggleCmdHistory);
-
     function togglePanel(panelId, btnId) {
         const panel = document.getElementById(panelId);
         const btn = document.getElementById(btnId);
@@ -4255,16 +3416,13 @@
         panel.style.display = hidden ? '' : 'none';
         btn.classList.toggle('active', hidden);
     }
-    document.getElementById('btn-layers-panel-toggle').addEventListener('click', () => {
-        togglePanel('layer-panel', 'btn-layers-panel-toggle');
-    });
-    document.getElementById('btn-properties-panel-toggle').addEventListener('click', () => {
-        togglePanel('properties-panel', 'btn-properties-panel-toggle');
-    });
+    document.getElementById('btn-layers-panel-toggle').addEventListener('click', () => togglePanel('layer-panel', 'btn-layers-panel-toggle'));
+    document.getElementById('btn-properties-panel-toggle').addEventListener('click', () => togglePanel('properties-panel', 'btn-properties-panel-toggle'));
 
     cmdInputEl.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
             const input = cmdInputEl.value.trim();
+
             if (!input && state.pendingCommand) { finalizePendingSelection(); cmdInputEl.value = ''; e.preventDefault(); return; }
             if (!input && state.currentCommand === 'LINE' && state.expectingPoint && state.collectedPoints.length >= 2) {
                 setPrompt('LINE finalizado'); resetStateCmd(); cmdInputEl.value = ''; e.preventDefault(); return;
@@ -4274,12 +3432,10 @@
                 const last = state.collectedPoints[state.collectedPoints.length - 1];
                 const first = state.collectedPoints[0];
                 const closeLine = new Path.Line(last, first);
-                closeLine.strokeColor = 'white';
-                closeLine.strokeWidth = currentStrokeWidth();
+                closeLine.strokeColor = 'white'; closeLine.strokeWidth = currentStrokeWidth();
                 tagShape(closeLine, 'line');
                 activeLayer.addChild(closeLine);
-                setPrompt('LINE cerrado');
-                resetStateCmd(); cmdInputEl.value = ''; e.preventDefault(); return;
+                setPrompt('LINE cerrado'); resetStateCmd(); cmdInputEl.value = ''; e.preventDefault(); return;
             }
             if (input.toUpperCase() === 'U' && state.currentCommand === 'LINE' && state.expectingPoint && state.lineSegmentPaths.length > 0) {
                 const lastPath = state.lineSegmentPaths.pop();
@@ -4288,18 +3444,14 @@
                 invalidateSnapCache();
                 state.history.pop();
                 state.dynamicLastPoint = state.collectedPoints[state.collectedPoints.length - 1];
-                setPrompt('LINE: Último tramo deshecho. Siguiente punto (U para seguir deshaciendo)');
-                cmdInputEl.value = ''; e.preventDefault(); return;
+                setPrompt('LINE: último tramo deshecho'); cmdInputEl.value = ''; e.preventDefault(); return;
             }
             if (input.toUpperCase() === 'D' && state.currentCommand === 'CIRCLE' && state.step === 2) {
-                state.circleDiameterMode = true;
-                setPrompt('CIRCLE: Diámetro');
-                cmdInputEl.value = ''; e.preventDefault(); return;
+                state.circleDiameterMode = true; setPrompt('CIRCLE: Diámetro'); cmdInputEl.value = ''; e.preventDefault(); return;
             }
             if (!input && state.currentCommand && !state.expectingPoint &&
                 (state.currentCommand === 'TRIM' || state.currentCommand === 'EXTEND')) {
-                setPrompt(`${state.currentCommand} finalizado`);
-                resetStateCmd(); cmdInputEl.value = ''; e.preventDefault(); return;
+                setPrompt(`${state.currentCommand} finalizado`); resetStateCmd(); cmdInputEl.value = ''; e.preventDefault(); return;
             }
             if (!input && state.currentCommand === 'COPY' && state.step === 2) {
                 setPrompt('COPY finalizado'); resetStateCmd(); cmdInputEl.value = ''; e.preventDefault(); return;
@@ -4308,30 +3460,25 @@
                 setPrompt('OFFSET finalizado'); resetStateCmd(); cmdInputEl.value = ''; e.preventDefault(); return;
             }
             if (!input && state.currentCommand === 'CHAMFER' && state.step === 1) {
-                state.chamferDist1 = 0;
-                state.step = 2;
-                setPrompt('CHAMFER: distancia 2 (Enter = 0)');
-                cmdInputEl.value = ''; e.preventDefault(); return;
+                state.chamferDist1 = 0; state.step = 2;
+                setPrompt('CHAMFER: distancia 2 (Enter = 0)'); cmdInputEl.value = ''; e.preventDefault(); return;
             }
             if (!input && state.currentCommand === 'CHAMFER' && state.step === 2) {
-                state.chamferDist2 = state.chamferDist1;
-                state.step = 3;
-                setPrompt('CHAMFER: haz clic en la primera línea');
-                cmdInputEl.value = ''; e.preventDefault(); return;
+                state.chamferDist2 = state.chamferDist1; state.step = 3;
+                setPrompt('CHAMFER: haz clic en el primer objeto'); cmdInputEl.value = ''; e.preventDefault(); return;
             }
             if (!input && state.currentCommand === 'FILLET' && state.step === 1) {
-                state.filletRadius = 0;
-                state.step = 2;
-                setPrompt('FILLET: haz clic en la primera línea');
-                cmdInputEl.value = ''; e.preventDefault(); return;
+                state.filletRadius = 0; state.step = 2;
+                setPrompt('FILLET: haz clic en el primer objeto'); cmdInputEl.value = ''; e.preventDefault(); return;
             }
             if (!input && (state.currentCommand === 'CHAMFER' || state.currentCommand === 'FILLET') && state.step > 2) {
-                setPrompt(`${state.currentCommand} finalizado`);
-                resetStateCmd(); cmdInputEl.value = ''; e.preventDefault(); return;
+                setPrompt(`${state.currentCommand} finalizado`); resetStateCmd(); cmdInputEl.value = ''; e.preventDefault(); return;
             }
+
             if (input) {
                 state.commandHistory.push(input);
                 state.historyIdx = state.commandHistory.length;
+
                 if (state.currentCommand === 'CHAMFER' && state.step <= 2) {
                     const d = parseFloat(input);
                     if (state.step === 1) {
@@ -4341,7 +3488,7 @@
                     } else {
                         state.chamferDist2 = isNaN(d) ? state.chamferDist1 : Math.max(0, d);
                         state.step = 3;
-                        setPrompt('CHAMFER: haz clic en la primera línea');
+                        setPrompt('CHAMFER: haz clic en el primer objeto');
                     }
                     cmdInputEl.value = ''; e.preventDefault(); return;
                 }
@@ -4349,7 +3496,7 @@
                     const d = parseFloat(input);
                     state.filletRadius = isNaN(d) ? 0 : Math.max(0, d);
                     state.step = 2;
-                    setPrompt('FILLET: haz clic en la primera línea');
+                    setPrompt('FILLET: haz clic en el primer objeto');
                     cmdInputEl.value = ''; e.preventDefault(); return;
                 }
                 if (state.waitingForNumber) {
@@ -4358,11 +3505,9 @@
                         state.offsetDistance = dist;
                         state.waitingForNumber = false;
                         state.step = 2;
-                        setPrompt(`OFFSET: Distancia ${dist}. Selecciona objeto a desplazar (Enter/ESC para salir)`);
+                        setPrompt(`OFFSET: Distancia ${dist}. Selecciona objeto`);
                         state.expectingPoint = false;
-                    } else {
-                        setPrompt('Distancia inválida. Introduce un número positivo.');
-                    }
+                    } else setPrompt('Distancia inválida');
                     cmdInputEl.value = ''; e.preventDefault(); return;
                 }
                 if (state.currentCommand === 'ROTATE' && state.step === 2) {
@@ -4371,11 +3516,8 @@
                         saveState();
                         state.selectedItems.forEach(i => i.rotate(-ang, state.basePoint));
                         resetStateCmd();
-                        previewLayer.removeChildren();
-                        const dt = document.getElementById('dynamic-tooltip');
-                        if (dt) dt.style.display = 'none';
                         setPrompt(`Rotado ${ang}° (CCW)`);
-                    } else setPrompt('Ángulo inválido. Introduce un número en grados.');
+                    } else setPrompt('Ángulo inválido');
                     cmdInputEl.value = ''; e.preventDefault(); return;
                 }
                 if (state.currentCommand === 'SCALE' && state.step === 2) {
@@ -4384,17 +3526,14 @@
                         saveState();
                         state.selectedItems.forEach(i => i.scale(sf, state.basePoint));
                         resetStateCmd();
-                        previewLayer.removeChildren();
-                        const dt = document.getElementById('dynamic-tooltip');
-                        if (dt) dt.style.display = 'none';
                         setPrompt(`Escalado x${sf}`);
-                    } else setPrompt('Factor de escala inválido. Introduce un número positivo.');
+                    } else setPrompt('Factor inválido');
                     cmdInputEl.value = ''; e.preventDefault(); return;
                 }
                 if (state.currentCommand && state.expectingPoint) {
                     const pt = parseDynamicInput(input, state.dynamicLastPoint);
                     if (pt) handlePointInput(pt);
-                    else setPrompt('Entrada no válida. Usa: X,Y  |  @dX,dY  |  @dist<ángulo  |  distancia');
+                    else setPrompt('Entrada no válida. Usa: X,Y | @dX,dY | @dist<áng | distancia');
                 } else {
                     executeCommand(input);
                 }
@@ -4414,19 +3553,24 @@
                 cmdInputEl.value = state.commandHistory[state.historyIdx] || '';
             }
         } else if (e.key === 'Escape') {
-            const wasGathering = !!state.pendingCommand;
-            resetStateCmd();
-            if (wasGathering) clearSelection();
-            previewLayer.removeChildren();
-            const dt = document.getElementById('dynamic-tooltip');
-            if (dt) dt.style.display = 'none';
-            setPrompt('Comando cancelado');
+            /* ── ESC: cancela comando Y/O deselecciona ── */
+            const hadCmd = !!state.currentCommand;
+            const hadSel = state.selectedItems.length > 0;
+            if (hadCmd) {
+                resetStateCmd();
+                previewLayer.removeChildren();
+                const dt = document.getElementById('dynamic-tooltip');
+                if (dt) dt.style.display = 'none';
+            }
+            if (hadSel) clearSelection();
+            cmdInputEl.value = '';
+            if (hadCmd) setPrompt('Comando cancelado');
+            else if (hadSel) setPrompt('Selección deseleccionada');
+            e.preventDefault();
         }
     });
 
-    // ═══════════════════════════════════════════════════════════════
-    // [35] ATAJOS DE TECLADO GLOBALES
-    // ═══════════════════════════════════════════════════════════════
+    /* ── [35] Atajos globales ── */
     window.addEventListener('keydown', (e) => {
         if (e.ctrlKey && e.key === 'z') { e.preventDefault(); undo(); }
         if (e.ctrlKey && e.key === 'y') { e.preventDefault(); redo(); }
@@ -4446,21 +3590,30 @@
             updateProperties();
             if (document.activeElement === cmdInputEl) e.preventDefault();
         }
-        if (e.key === 'Escape' && state.pickingPrintWindow) {
-            state.pickingPrintWindow = false;
-            state.printPickStart = null;
-            state.printPickRect = null;
-            selectionLayer.removeChildren();
-            setPrompt('Impresión cancelada');
-        }
-        if (e.key === 'Escape' && state.currentCommand) {
-            const wasGathering = !!state.pendingCommand;
-            resetStateCmd();
-            if (wasGathering) clearSelection();
-            previewLayer.removeChildren();
-            const dt = document.getElementById('dynamic-tooltip');
-            if (dt) dt.style.display = 'none';
-            setPrompt('Comando cancelado');
+
+        /* ── ESC global: cancela comando / impresión / selección ── */
+        if (e.key === 'Escape') {
+            if (state.pickingPrintWindow) {
+                state.pickingPrintWindow = false;
+                state.printPickStart = null;
+                state.printPickRect = null;
+                selectionLayer.removeChildren();
+                setPrompt('Impresión cancelada');
+            } else {
+                const hadCmd = !!state.currentCommand;
+                const hadSel = state.selectedItems.length > 0;
+                if (hadCmd) {
+                    resetStateCmd();
+                    previewLayer.removeChildren();
+                    const dt = document.getElementById('dynamic-tooltip');
+                    if (dt) dt.style.display = 'none';
+                    setPrompt('Comando cancelado');
+                }
+                if (hadSel) {
+                    clearSelection();
+                    if (!hadCmd) setPrompt('Selección deseleccionada');
+                }
+            }
         }
 
         const active = document.activeElement;
@@ -4501,10 +3654,7 @@
         }
     });
     window.addEventListener('keyup', (e) => {
-        if (e.key === 'Shift') {
-            state.shiftKeyDown = false;
-            refreshActivePreview();
-        }
+        if (e.key === 'Shift') { state.shiftKeyDown = false; refreshActivePreview(); }
     });
     function refreshActivePreview() {
         if (!state.currentCommand && !state.isDragging) return;
@@ -4513,9 +3663,7 @@
         else onMouseMove(fakeEvent);
     }
 
-    // ═══════════════════════════════════════════════════════════════
-    // [36] MENÚ CONTEXTUAL
-    // ═══════════════════════════════════════════════════════════════
+    /* ── [36] Menú contextual ── */
     document.getElementById('canvas-container').addEventListener('contextmenu', (e) => {
         e.preventDefault();
         openContextMenu(e.clientX, e.clientY);
@@ -4539,13 +3687,13 @@
             items.push({ sep: true });
         }
         if (hasSelection && !inCommand) {
-            items.push({ label: 'Mover',      key: 'M',   action: () => executeCommand('MOVE') });
-            items.push({ label: 'Copiar',     key: 'CO',  action: () => executeCommand('COPY') });
-            items.push({ label: 'Rotar',      key: 'RO',  action: () => executeCommand('ROTATE') });
-            items.push({ label: 'Simetría',   key: 'MI',  action: () => executeCommand('MIRROR') });
-            items.push({ label: 'Chaflán',    key: 'CHA', action: () => executeCommand('CHAMFER') });
-            items.push({ label: 'Redondear',  key: 'F',   action: () => executeCommand('FILLET') });
-            items.push({ label: 'Borrar',     key: 'Supr', action: () => { saveState(); state.selectedItems.forEach(i => i.remove()); clearSelection(); setPrompt('Objetos eliminados'); } });
+            items.push({ label: 'Mover', key: 'M', action: () => executeCommand('MOVE') });
+            items.push({ label: 'Copiar', key: 'CO', action: () => executeCommand('COPY') });
+            items.push({ label: 'Rotar', key: 'RO', action: () => executeCommand('ROTATE') });
+            items.push({ label: 'Simetría', key: 'MI', action: () => executeCommand('MIRROR') });
+            items.push({ label: 'Chaflán', key: 'CHA', action: () => executeCommand('CHAMFER') });
+            items.push({ label: 'Redondear', key: 'F', action: () => executeCommand('FILLET') });
+            items.push({ label: 'Borrar', key: 'Supr', action: () => { saveState(); state.selectedItems.forEach(i => i.remove()); clearSelection(); setPrompt('Objetos eliminados'); } });
             items.push({ sep: true });
             items.push({ label: 'Propiedades', action: () => document.getElementById('properties-panel').scrollIntoView({ block: 'nearest' }) });
             items.push({ label: 'Deseleccionar todo', key: 'Esc', action: clearSelection });
@@ -4568,18 +3716,12 @@
         });
         menu.style.display = 'block';
         const rect = menu.getBoundingClientRect();
-        const maxX = window.innerWidth - rect.width - 6;
-        const maxY = window.innerHeight - rect.height - 6;
-        menu.style.left = Math.min(x, maxX) + 'px';
-        menu.style.top = Math.min(y, maxY) + 'px';
+        menu.style.left = Math.min(x, window.innerWidth - rect.width - 6) + 'px';
+        menu.style.top = Math.min(y, window.innerHeight - rect.height - 6) + 'px';
     }
-    function closeContextMenu() {
-        document.getElementById('context-menu').style.display = 'none';
-    }
+    function closeContextMenu() { document.getElementById('context-menu').style.display = 'none'; }
 
-    // ═══════════════════════════════════════════════════════════════
-    // [37] NUEVO DIBUJO Y MODAL GENÉRICO
-    // ═══════════════════════════════════════════════════════════════
+    /* ── [37] Nuevo / Modal ── */
     function newDrawing() {
         resetStateCmd();
         clearSelection();
@@ -4600,13 +3742,13 @@
         view.zoom = 1;
         view.center = new Point(0, 0);
         drawGrid(); refreshStrokeWidths(); renderLayerList(); renderGrips(); updateProperties();
-        setPrompt('Dibujo nuevo. Listo.');
+        setPrompt('Dibujo nuevo');
         view.update();
     }
     document.getElementById('qa-new').addEventListener('click', () => {
         showModal({
             title: 'Nuevo dibujo',
-            body: 'Se borrará todo el dibujo actual y no se podrá deshacer. ¿Quieres continuar?',
+            body: 'Se borrará todo el dibujo actual y no se podrá deshacer. ¿Continuar?',
             buttons: [
                 { label: 'Cancelar' },
                 { label: 'Crear nuevo', primary: true, onClick: newDrawing }
@@ -4627,13 +3769,10 @@
         });
         document.getElementById('app-modal-overlay').classList.add('open');
     }
-    function closeModal() {
-        document.getElementById('app-modal-overlay').classList.remove('open');
-    }
+    function closeModal() { document.getElementById('app-modal-overlay').classList.remove('open'); }
     document.getElementById('app-modal-overlay').addEventListener('click', (e) => {
         if (e.target.id === 'app-modal-overlay') closeModal();
     });
-
     function cancelCurrentCommand() {
         resetStateCmd();
         previewLayer.removeChildren();
@@ -4650,20 +3789,13 @@
             if (!layer.data.visible || layer.data.locked) continue;
             layer.children.forEach(item => addToSelection(item, true));
         }
-        updateProperties();
-        renderGrips();
-        refreshSelectionHighlight();
+        updateProperties(); renderGrips(); refreshSelectionHighlight();
         setPrompt(`${state.selectedItems.length} objeto(s) seleccionados`);
     }
-
-    window.addEventListener('click', (e) => {
-        if (!e.target.closest('#context-menu')) closeContextMenu();
-    });
+    window.addEventListener('click', (e) => { if (!e.target.closest('#context-menu')) closeContextMenu(); });
     window.addEventListener('blur', closeContextMenu);
 
-    // ═══════════════════════════════════════════════════════════════
-    // [38] CROSSHAIR
-    // ═══════════════════════════════════════════════════════════════
+    /* ── [38] Crosshair ── */
     const crosshair = document.createElement('div');
     crosshair.className = 'crosshair';
     crosshair.style.display = 'none';
@@ -4685,9 +3817,7 @@
         chBox.style.left = e.clientX + 'px';
     });
 
-    // ═══════════════════════════════════════════════════════════════
-    // [39] MINI MAPA
-    // ═══════════════════════════════════════════════════════════════
+    /* ── [39] Mini mapa ── */
     const navBtn = document.getElementById('qa-navigator');
     const navContainer = document.getElementById('navigator');
     const navCanvas = document.getElementById('navCanvas');
@@ -4703,20 +3833,13 @@
         navCanvas.width = 150; navCanvas.height = 120;
         ctx.clearRect(0, 0, 150, 120);
         const bounds = getCurrentDrawingBounds();
-        if (!bounds) {
-            ctx.fillStyle = '#333';
-            ctx.fillRect(0, 0, 150, 120);
-            return;
-        }
-        const scaleX = 150 / bounds.width;
-        const scaleY = 120 / bounds.height;
+        if (!bounds) { ctx.fillStyle = '#333'; ctx.fillRect(0, 0, 150, 120); return; }
+        const scaleX = 150 / bounds.width, scaleY = 120 / bounds.height;
         const scale = Math.min(scaleX, scaleY);
         const offsetX = (150 - bounds.width * scale) / 2 - bounds.left * scale;
         const offsetY = (120 - bounds.height * scale) / 2 - bounds.top * scale;
-        ctx.fillStyle = '#1E1E1E';
-        ctx.fillRect(0, 0, 150, 120);
-        ctx.strokeStyle = '#888';
-        ctx.lineWidth = 1;
+        ctx.fillStyle = '#1E1E1E'; ctx.fillRect(0, 0, 150, 120);
+        ctx.strokeStyle = '#888'; ctx.lineWidth = 1;
         for (let internal in layers) {
             const layer = layers[internal];
             if (layer === gridLayer || layer === guideLayer || layer === snapLayer || layer === selectionLayer ||
@@ -4736,10 +3859,8 @@
                 } else if (item instanceof Path && item.segments && item.segments.length > 1) {
                     ctx.beginPath();
                     item.segments.forEach((s, idx) => {
-                        const x = s.point.x * scale + offsetX;
-                        const y = s.point.y * scale + offsetY;
-                        if (idx === 0) ctx.moveTo(x, y);
-                        else ctx.lineTo(x, y);
+                        const x = s.point.x * scale + offsetX, y = s.point.y * scale + offsetY;
+                        if (idx === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
                     });
                     if (item.closed) ctx.closePath();
                     ctx.stroke();
@@ -4750,17 +3871,12 @@
         const vy = view.center.y - view.size.height / 2 / view.zoom;
         const vw = view.size.width / view.zoom;
         const vh = view.size.height / view.zoom;
-        ctx.strokeStyle = '#00BFFF';
-        ctx.lineWidth = 1.5;
+        ctx.strokeStyle = '#00BFFF'; ctx.lineWidth = 1.5;
         ctx.strokeRect(vx * scale + offsetX, vy * scale + offsetY, vw * scale, vh * scale);
     }
-    view.on('change', () => {
-        if (navContainer.classList.contains('visible')) updateNavigator();
-    });
+    view.on('change', () => { if (navContainer.classList.contains('visible')) updateNavigator(); });
 
-    // ═══════════════════════════════════════════════════════════════
-    // [40] TOOLTIP DINÁMICO
-    // ═══════════════════════════════════════════════════════════════
+    /* ── [40] Tooltip dinámico ── */
     if (!document.getElementById('dynamic-tooltip')) {
         const dt = document.createElement('div');
         dt.id = 'dynamic-tooltip';
@@ -4772,7 +3888,6 @@
         dt.style.borderRadius = '5px';
         dt.style.fontFamily = "'Cascadia Mono', Consolas, monospace";
         dt.style.fontSize = '11.5px';
-        dt.style.letterSpacing = '0.2px';
         dt.style.border = '1px solid #4FC3F7';
         dt.style.boxShadow = '0 2px 8px rgba(0,0,0,0.5)';
         dt.style.display = 'none';
@@ -4780,51 +3895,42 @@
         document.body.appendChild(dt);
     }
 
-    // ═══════════════════════════════════════════════════════════════
-    // [41] REDIMENSIONADO
-    // ═══════════════════════════════════════════════════════════════
+    /* ── [41] Redimensionado ── */
     let resizeRAF = null;
     function syncViewSize() {
         const container = document.getElementById('canvas-container');
-        const w = container.clientWidth;
-        const h = container.clientHeight;
+        const w = container.clientWidth, h = container.clientHeight;
         if (w <= 0 || h <= 0) return;
         if (view.viewSize.width === w && view.viewSize.height === h) return;
-        const center = view.center;
-        const zoom = view.zoom;
+        const center = view.center, zoom = view.zoom;
         view.viewSize = new paper.Size(w, h);
         view.center = center;
         view.zoom = zoom;
-        drawGrid();
-        view.update();
+        drawGrid(); view.update();
     }
-    const canvasContainerEl = document.getElementById('canvas-container');
     if (window.ResizeObserver) {
         const ro = new ResizeObserver(() => {
             if (resizeRAF) cancelAnimationFrame(resizeRAF);
             resizeRAF = requestAnimationFrame(syncViewSize);
         });
-        ro.observe(canvasContainerEl);
+        ro.observe(document.getElementById('canvas-container'));
     }
     window.addEventListener('resize', syncViewSize);
-    const propertiesPanelEl = document.getElementById('properties-panel');
     if (window.MutationObserver) {
-        const mo = new MutationObserver(() => { requestAnimationFrame(syncViewSize); });
-        mo.observe(propertiesPanelEl, { attributes: true, attributeFilter: ['class'] });
+        const mo = new MutationObserver(() => requestAnimationFrame(syncViewSize));
+        mo.observe(document.getElementById('properties-panel'), { attributes: true, attributeFilter: ['class'] });
     }
 
-    // ═══════════════════════════════════════════════════════════════
-    // [42] INICIALIZACIÓN FINAL
-    // ═══════════════════════════════════════════════════════════════
+    /* ── [42] Init ── */
     syncViewSize();
     renderLayerList();
     drawGrid();
     refreshStrokeWidths();
     renderGrips();
     view.update();
-    setPrompt('Listo · Y+ arriba · F8 Ortho · F10 Polar · F3 OSnap · F7 Grid · MI Simetría · CHA Chaflán · F Redondear · TR Recortar');
+    setPrompt('Listo · Y+ arriba · F8 Ortho · F10 Polar · F3 OSnap · F7 Grid · MI Simetría · CHA Chaflán · F Redondear · TR Recortar · ESC deselecciona');
 
-    console.log('CAD Pro cargado. Botones rediseñados. TRIM corregido. CHAMFER + FILLET activos.');
+    console.log('CAD Pro cargado · CHAMFER y FILLET con líneas y polilíneas · ESC deselecciona');
     </script>
 </body>
 </html>
