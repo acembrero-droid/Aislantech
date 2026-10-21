@@ -78,17 +78,27 @@
             border: 1px solid transparent;
             color: var(--text-secondary);
             cursor: pointer;
-            width: 26px;
-            height: 24px;
-            border-radius: 3px;
+            width: 28px;
+            height: 26px;
+            border-radius: 6px;
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: var(--transition);
+            transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
         }
         #quick-access button svg { width: 15px; height: 15px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
-        #quick-access button:hover { background: var(--bg-hover); color: var(--text-primary); border-color: var(--border-light); }
-        #quick-access button:active { background: var(--bg-pressed); color: #fff; }
+        #quick-access button:hover {
+            background: rgba(79,195,247,0.12);
+            color: var(--accent-blue);
+            border-color: rgba(79,195,247,0.3);
+            transform: translateY(-1px);
+            box-shadow: 0 3px 8px rgba(79,195,247,0.15);
+        }
+        #quick-access button:active {
+            transform: translateY(0) scale(0.94);
+            background: var(--accent-blue);
+            color: #0a2336;
+        }
         #quick-access .separator { width: 1px; height: 18px; background: var(--border-color); margin: 0 6px; }
         #quick-access .file-input-hidden { display: none; }
 
@@ -113,17 +123,26 @@
             background: transparent;
             border: none;
             color: var(--text-secondary);
-            padding: 5px 14px;
+            padding: 6px 16px;
             font-size: 11px;
             cursor: pointer;
-            border-radius: 3px 3px 0 0;
-            transition: var(--transition);
+            border-radius: 8px 8px 0 0;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
             font-weight: 600;
             letter-spacing: 0.4px;
             text-transform: uppercase;
+            position: relative;
         }
-        #ribbon-tabs button:hover { background: var(--bg-hover); color: var(--text-primary); }
-        #ribbon-tabs button.active { background: var(--bg-panel); color: var(--accent-blue); box-shadow: inset 0 -2px 0 var(--accent-blue); }
+        #ribbon-tabs button:hover {
+            background: rgba(79,195,247,0.1);
+            color: var(--accent-blue);
+            transform: translateY(-1px);
+        }
+        #ribbon-tabs button.active {
+            background: var(--bg-panel);
+            color: var(--accent-blue);
+            box-shadow: 0 -3px 12px rgba(79,195,247,0.15), inset 0 -2px 0 var(--accent-blue);
+        }
         #ribbon-content {
             background: var(--bg-panel);
             padding: 5px 10px;
@@ -154,34 +173,56 @@
             width: 100%;
             text-align: center;
         }
+
+        /* ═══════════════════════════════════════════════════════════
+           SECCIÓN: Botones de la cinta — estilo "desenfadado"
+           ═══════════════════════════════════════════════════════════ */
         .ribbon-btn {
             background: transparent;
             border: 1px solid transparent;
             color: var(--text-primary);
-            padding: 4px 9px;
-            border-radius: 3px;
+            padding: 5px 10px;
+            border-radius: 7px;
             cursor: pointer;
             display: flex;
             flex-direction: column;
             align-items: center;
             font-size: 9.5px;
-            transition: var(--transition);
-            min-width: 42px;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            min-width: 44px;
             gap: 3px;
             position: relative;
         }
         .ribbon-btn svg {
-            width: 19px;
-            height: 19px;
+            width: 20px;
+            height: 20px;
             fill: none;
             stroke: currentColor;
-            stroke-width: 1.6;
+            stroke-width: 1.7;
             stroke-linecap: round;
             stroke-linejoin: round;
+            transition: transform 0.2s ease;
         }
         .ribbon-btn svg.fill { fill: currentColor; stroke: none; }
-        .ribbon-btn:hover { background: var(--bg-hover); border-color: var(--border-light); }
-        .ribbon-btn.active { background: var(--bg-selection); color: white; border-color: var(--bg-selection); }
+        .ribbon-btn:hover {
+            background: linear-gradient(180deg, rgba(79,195,247,0.14) 0%, rgba(79,195,247,0.04) 100%);
+            border-color: rgba(79,195,247,0.4);
+            color: var(--accent-blue);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(79,195,247,0.18);
+        }
+        .ribbon-btn:hover svg { transform: scale(1.12) rotate(-2deg); }
+        .ribbon-btn:active {
+            transform: translateY(0) scale(0.96);
+            transition: all 0.06s ease;
+        }
+        .ribbon-btn.active {
+            background: linear-gradient(180deg, var(--accent-blue) 0%, #3AA8D8 100%);
+            border-color: var(--accent-blue);
+            color: #0a2336;
+            box-shadow: 0 3px 12px rgba(79,195,247,0.35), inset 0 1px 0 rgba(255,255,255,0.2);
+        }
+        .ribbon-btn.active svg { stroke: #0a2336; stroke-width: 1.9; }
         .ribbon-btn .tooltip {
             display: none;
             position: absolute;
@@ -193,7 +234,7 @@
             color: #eee;
             padding: 3px 8px;
             border: 1px solid var(--border-light);
-            border-radius: 3px;
+            border-radius: 5px;
             font-size: 10px;
             font-family: var(--font-mono);
             white-space: nowrap;
@@ -203,6 +244,9 @@
         }
         .ribbon-btn:hover .tooltip { display: block; }
 
+        /* ═══════════════════════════════════════════════════════════
+           SECCIÓN: Menú desplegable de la cinta (flyout)
+           ═══════════════════════════════════════════════════════════ */
         .ribbon-flyout { position: relative; }
         .ribbon-flyout-menu {
             display: none;
@@ -213,29 +257,34 @@
             transform: translateX(-50%);
             background: var(--bg-panel);
             border: 1px solid var(--border-light);
-            border-radius: 4px;
+            border-radius: 8px;
             box-shadow: var(--shadow);
-            padding: 4px;
-            min-width: 150px;
+            padding: 5px;
+            min-width: 160px;
             z-index: 1000;
         }
         .ribbon-flyout-menu.open { display: block; }
         .ribbon-flyout-menu button {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 10px;
             width: 100%;
             background: transparent;
             border: none;
+            border-radius: 5px;
             color: var(--text-primary);
-            padding: 6px 8px;
-            border-radius: 3px;
+            padding: 7px 10px;
             cursor: pointer;
             font-size: 11.5px;
             text-align: left;
             white-space: nowrap;
+            transition: all 0.15s ease;
         }
-        .ribbon-flyout-menu button:hover { background: var(--bg-hover); }
+        .ribbon-flyout-menu button:hover {
+            background: linear-gradient(90deg, rgba(79,195,247,0.18), rgba(79,195,247,0.06));
+            color: var(--accent-blue);
+            transform: translateX(2px);
+        }
         .ribbon-flyout-menu button svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
         .ribbon-flyout-menu button .fk { margin-left: auto; color: var(--text-dim); font-family: var(--font-mono); font-size: 10px; }
 
@@ -266,7 +315,7 @@
             left: 0;
             background: var(--bg-panel);
             border: 1px solid var(--border-light);
-            border-radius: 4px;
+            border-radius: 6px;
             box-shadow: var(--shadow);
             padding: 4px;
             min-width: 170px;
@@ -284,11 +333,12 @@
             border: none;
             color: var(--text-primary);
             padding: 6px 8px;
-            border-radius: 3px;
+            border-radius: 5px;
             cursor: pointer;
             font-size: 11.5px;
             text-align: left;
             white-space: nowrap;
+            transition: background 0.12s ease;
         }
         .layer-combo-menu .lcm-item:hover { background: var(--bg-hover); }
         .layer-combo-menu .lcm-item.active { color: var(--accent-blue); font-weight: 600; }
@@ -405,7 +455,7 @@
             z-index: 2000;
             background: #232323;
             border: 1px solid var(--border-light);
-            border-radius: 4px;
+            border-radius: 6px;
             box-shadow: var(--shadow);
             padding: 4px;
             min-width: 190px;
@@ -417,10 +467,11 @@
             justify-content: space-between;
             gap: 12px;
             padding: 6px 10px;
-            border-radius: 3px;
+            border-radius: 4px;
             color: var(--text-primary);
             cursor: pointer;
             white-space: nowrap;
+            transition: background 0.1s ease;
         }
         #context-menu .cm-item:hover { background: var(--bg-selection); color: #fff; }
         #context-menu .cm-item.disabled { color: var(--text-dim); cursor: default; }
@@ -445,7 +496,7 @@
         #app-modal-box {
             background: var(--bg-panel);
             border: 1px solid var(--border-light);
-            border-radius: 6px;
+            border-radius: 8px;
             box-shadow: 0 10px 40px rgba(0,0,0,0.6);
             width: 380px;
             max-width: 90vw;
@@ -482,15 +533,22 @@
             border: 1px solid var(--border-light);
             color: var(--text-primary);
             padding: 7px 14px;
-            border-radius: 4px;
+            border-radius: 5px;
             cursor: pointer;
             font-size: 12px;
             font-weight: 600;
-            transition: var(--transition);
+            transition: all 0.15s ease;
         }
-        #app-modal-actions button:hover { background: var(--bg-hover); }
-        #app-modal-actions button.primary { background: var(--accent-blue); border-color: var(--accent-blue); color: #06283d; }
-        #app-modal-actions button.primary:hover { filter: brightness(1.1); }
+        #app-modal-actions button:hover {
+            background: var(--bg-hover);
+            transform: translateY(-1px);
+        }
+        #app-modal-actions button.primary {
+            background: linear-gradient(180deg, var(--accent-blue), #3AA8D8);
+            border-color: var(--accent-blue);
+            color: #06283d;
+        }
+        #app-modal-actions button.primary:hover { filter: brightness(1.08); }
 
         /* ═══════════════════════════════════════════════════════════
            SECCIÓN: Panel de propiedades
@@ -538,8 +596,8 @@
             background: var(--bg-main);
             color: var(--text-primary);
             border: 1px solid var(--border-color);
-            border-radius: 3px;
-            padding: 2px 4px;
+            border-radius: 4px;
+            padding: 3px 5px;
             font-size: 12px;
             width: 100%;
             box-sizing: border-box;
@@ -557,7 +615,7 @@
         .prop-value .coord-group input { width: 60px; }
 
         /* ═══════════════════════════════════════════════════════════
-           SECCIÓN: Barra inferior de estado
+           SECCIÓN: Barra inferior de estado (toggles tipo píldora)
            ═══════════════════════════════════════════════════════════ */
         #status-bar {
             height: 28px;
@@ -577,16 +635,24 @@
             background: transparent;
             border: 1px solid transparent;
             color: var(--text-secondary);
-            padding: 3px 9px;
-            border-radius: 3px;
+            padding: 3px 11px;
+            border-radius: 12px;
             cursor: pointer;
             font-size: 10.5px;
             font-weight: 600;
             letter-spacing: 0.3px;
-            transition: var(--transition);
+            transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
         }
-        #status-bar .status-group button:hover { background: var(--bg-hover); color: var(--text-primary); }
-        #status-bar .status-group button.active { background: rgba(79,195,247,0.15); border-color: var(--accent-blue); color: var(--accent-blue); }
+        #status-bar .status-group button:hover {
+            background: rgba(79,195,247,0.1);
+            color: var(--text-primary);
+        }
+        #status-bar .status-group button.active {
+            background: linear-gradient(180deg, rgba(79,195,247,0.24), rgba(79,195,247,0.12));
+            border-color: rgba(79,195,247,0.5);
+            color: var(--accent-blue);
+            box-shadow: 0 0 10px rgba(79,195,247,0.2), inset 0 1px 0 rgba(255,255,255,0.08);
+        }
         #status-bar .status-group button svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; vertical-align: -2px; margin-right: 4px; }
         #status-bar .status-sep { width: 1px; height: 16px; background: var(--border-color); margin: 0 6px; flex-shrink: 0; }
         #status-bar .coords {
@@ -595,7 +661,7 @@
             color: var(--text-primary);
             background: var(--bg-main);
             border: 1px solid var(--border-color);
-            border-radius: 3px;
+            border-radius: 4px;
             padding: 3px 10px;
             flex-shrink: 0;
         }
@@ -611,15 +677,20 @@
             background: transparent;
             border: 1px solid transparent;
             color: var(--text-secondary);
-            padding: 3px 7px;
-            border-radius: 3px;
+            padding: 3px 10px;
+            border-radius: 12px;
             cursor: pointer;
             font-size: 10px;
             font-weight: 700;
             letter-spacing: 0.3px;
+            transition: all 0.15s ease;
         }
-        #cmd-history-toggle:hover { background: var(--bg-hover); color: var(--text-primary); }
-        #cmd-history-toggle.active { color: var(--accent-blue); border-color: var(--accent-blue); }
+        #cmd-history-toggle:hover { background: rgba(79,195,247,0.1); color: var(--text-primary); }
+        #cmd-history-toggle.active {
+            color: var(--accent-blue);
+            border-color: rgba(79,195,247,0.5);
+            background: rgba(79,195,247,0.15);
+        }
 
         /* ═══════════════════════════════════════════════════════════
            SECCIÓN: Ventana de texto F2
@@ -766,12 +837,12 @@
             #layer-panel { width: 160px; }
             #properties-panel { width: 220px; }
             #ribbon-content { gap: 4px 10px; padding: 4px 6px; }
-            .ribbon-btn { min-width: 34px; padding: 2px 4px; }
-            .ribbon-btn svg { width: 16px; height: 16px; }
+            .ribbon-btn { min-width: 34px; padding: 3px 6px; }
+            .ribbon-btn svg { width: 17px; height: 17px; }
         }
         @media (max-width: 768px) {
             #layer-panel, #properties-panel { display: none; }
-            #ribbon-tabs button { font-size: 10px; padding: 2px 8px; }
+            #ribbon-tabs button { font-size: 10px; padding: 3px 10px; }
             .ribbon-group label { display: none; }
         }
     </style>
@@ -779,7 +850,7 @@
 <body>
 
     <!-- ═══════════════════════════════════════════════════════════
-         SECCIÓN: Barra de acceso rápido
+         Barra de acceso rápido
          ═══════════════════════════════════════════════════════════ -->
     <div id="quick-access">
         <span class="brand">
@@ -800,7 +871,7 @@
     </div>
 
     <!-- ═══════════════════════════════════════════════════════════
-         SECCIÓN: Ribbon (pestañas + contenido)
+         Ribbon
          ═══════════════════════════════════════════════════════════ -->
     <div id="ribbon">
         <div id="ribbon-tabs">
@@ -888,6 +959,14 @@
                         <button data-cmd="SCALE"><svg viewBox="0 0 24 24"><polygon points="3,3 21,3 21,21 3,21"/><line x1="3" y1="12" x2="21" y2="12" stroke-dasharray="2 2"/><line x1="12" y1="3" x2="12" y2="21" stroke-dasharray="2 2"/></svg>Escala <span class="fk">SC</span></button>
                         <button data-cmd="EXTEND"><svg viewBox="0 0 24 24"><line x1="4" y1="18" x2="20" y2="18"/><line x1="12" y1="6" x2="12" y2="18"/><path d="M9 9l3-3 3 3"/></svg>Alargar <span class="fk">EX</span></button>
                         <button data-cmd="JOIN"><svg viewBox="0 0 24 24"><path d="M4 8h7"/><path d="M13 16h7"/><path d="M11 8a4 4 0 0 1 4 4v0a4 4 0 0 1-4 4"/></svg>Unir <span class="fk">J</span></button>
+                        <button data-cmd="CHAMFER">
+                            <svg viewBox="0 0 24 24"><polyline points="3,18 3,3 18,3"/><line x1="3" y1="3" x2="8.5" y2="8.5" stroke-dasharray="2 2"/></svg>
+                            Chaflán <span class="fk">CHA</span>
+                        </button>
+                        <button data-cmd="FILLET">
+                            <svg viewBox="0 0 24 24"><path d="M3 18 L3 12 Q3 3 12 3 L18 3"/></svg>
+                            Redondear <span class="fk">F</span>
+                        </button>
                     </div>
                 </div>
                 </div>
@@ -983,7 +1062,7 @@
     </div>
 
     <!-- ═══════════════════════════════════════════════════════════
-         SECCIÓN: Área principal (capas + canvas + propiedades)
+         Área principal
          ═══════════════════════════════════════════════════════════ -->
     <div id="main-area">
         <div id="layer-panel">
@@ -1014,7 +1093,7 @@
     </div>
 
     <!-- ═══════════════════════════════════════════════════════════
-         SECCIÓN: Línea de comandos
+         Línea de comandos
          ═══════════════════════════════════════════════════════════ -->
     <div id="command-line">
         <span id="cmd-prompt">Comando:</span>
@@ -1024,7 +1103,7 @@
     </div>
 
     <!-- ═══════════════════════════════════════════════════════════
-         SECCIÓN: Histórico de texto (F2)
+         Histórico de texto (F2)
          ═══════════════════════════════════════════════════════════ -->
     <div id="cmd-history-panel">
         <div class="cmh-head">
@@ -1035,7 +1114,7 @@
     </div>
 
     <!-- ═══════════════════════════════════════════════════════════
-         SECCIÓN: Barra de estado inferior
+         Barra de estado inferior
          ═══════════════════════════════════════════════════════════ -->
     <div id="status-bar">
         <div class="coords" id="coords-display">X: 0.000, Y: 0.000</div>
@@ -1066,10 +1145,7 @@
     </div>
 
     <input type="color" id="color-picker-hidden" value="#FFFFFF">
-        <!-- ═══════════════════════════════════════════════════════════
-         SECCIÓN: Librería Paper.js
-         ═══════════════════════════════════════════════════════════ -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/paper.js/0.12.17/paper-full.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/paper.js/0.12.17/paper-full.min.js"></script>
     <script>
     /* ================================================================
        CAD Pro – Script principal
@@ -1078,6 +1154,10 @@
          · De cara al usuario, Y+ = ARRIBA (convenio AutoCAD / matemático).
          · Todo lo que se MUESTRA o se INTRODUCE al usuario pasa por ±.
          · Snaps, grips, geometría interna y DXF no cambian.
+       Comandos soportados:
+         · Dibujo:   LINE, CIRCLE, RECTANG, ARC
+         · Edición:  MOVE, COPY, ROTATE, SCALE, ERASE, MIRROR,
+                     TRIM, EXTEND, OFFSET, JOIN, CHAMFER, FILLET
        ================================================================ */
 
     // ═══════════════════════════════════════════════════════════════
@@ -1158,7 +1238,6 @@
         return newCircle;
     }
 
-    // Matriz de reflexión respecto a la recta p1→p2 (para MIRROR)
     function reflectMatrix(p1, p2) {
         const dx = p2.x - p1.x;
         const dy = p2.y - p1.y;
@@ -1196,6 +1275,8 @@
         pickingPrintWindow: false, printPickStart: null, printPickRect: null,
         circleDiameterMode: false, lineSegmentPaths: [],
         lastClientX: 0, lastClientY: 0,
+        chamferDist1: 0, chamferDist2: 0, chamferLine1: null, chamferClick1: null,
+        filletRadius: 0, filletLine1: null, filletClick1: null,
     };
     let trackHoverTimer = null;
     const TRACK_ACQUIRE_DELAY = 650;
@@ -1235,8 +1316,9 @@
     document.querySelectorAll('.ribbon-btn[data-cmd]').forEach(btn => {
         btn.addEventListener('click', () => {
             const cmd = btn.dataset.cmd;
-            if (cmd === 'TRIM' || cmd === 'EXTEND') {
-                if (!state.selectedItems.length) { setPrompt('Selecciona un objeto como límite'); return; }
+            // EXTEND necesita límites; TRIM ya no (usa todos los objetos si no hay selección)
+            if (cmd === 'EXTEND' && !state.selectedItems.length) {
+                setPrompt('Selecciona un objeto como límite'); return;
             }
             if (cmd === 'JOIN') {
                 if (!state.selectedItems.length || state.selectedItems.length < 2) {
@@ -1396,8 +1478,6 @@
 
     // ═══════════════════════════════════════════════════════════════
     // [8] PANEL DE PROPIEDADES
-    //     · Cambio de capa FUNCIONA (usa newLayer.addChild).
-    //     · Coordenadas Y mostradas/aceptadas en Y-usuario (Y+ = arriba).
     // ═══════════════════════════════════════════════════════════════
     function updateProperties() {
         const panel = document.getElementById('properties-panel');
@@ -1408,7 +1488,7 @@
         const container = document.getElementById('props-content');
         container.innerHTML = '';
 
-        // ── Capa ──
+        // Capa
         const layerRow = document.createElement('div');
         layerRow.className = 'prop-row';
         layerRow.innerHTML = `<span class="prop-label">Capa</span>`;
@@ -1432,7 +1512,6 @@
                 return;
             }
             saveState();
-            // En paper.js, item.layer es de SOLO LECTURA. Hay que usar addChild().
             state.selectedItems.forEach(it => {
                 if (it.layer !== newLayer) newLayer.addChild(it);
             });
@@ -1446,7 +1525,7 @@
         layerRow.appendChild(layerSelect);
         container.appendChild(layerRow);
 
-        // ── Color ──
+        // Color
         const colorRow = document.createElement('div');
         colorRow.className = 'prop-row';
         colorRow.innerHTML = `<span class="prop-label">Color</span>`;
@@ -1462,7 +1541,7 @@
         colorRow.appendChild(colorInput);
         container.appendChild(colorRow);
 
-        // ── Tipo ──
+        // Tipo
         let type = 'Desconocido';
         if (isLineItem(item)) type = 'Línea';
         else if (isCircleItem(item)) type = 'Círculo';
@@ -1473,7 +1552,7 @@
         typeRow.innerHTML = `<span class="prop-label">Tipo</span><span class="prop-value">${type}</span>`;
         container.appendChild(typeRow);
 
-        // ── Coordenadas ──
+        // Coordenadas (Y en convenio usuario)
         if (isLineItem(item)) {
             const p1 = item.segments[0].point;
             const p2 = item.segments[1].point;
@@ -1587,6 +1666,14 @@
         state.copySourceItems = [];
         state.lineSegmentPaths = [];
         state.circleDiameterMode = false;
+        // Limpiar estado de CHAMFER / FILLET
+        state.chamferDist1 = 0;
+        state.chamferDist2 = 0;
+        state.chamferLine1 = null;
+        state.chamferClick1 = null;
+        state.filletRadius = 0;
+        state.filletLine1 = null;
+        state.filletClick1 = null;
         releaseTrackPoints();
         if (state.selectionRect) { state.selectionRect.remove(); state.selectionRect = null; }
         guideLayer.removeChildren();
@@ -1676,7 +1763,7 @@
     }
 
     // ═══════════════════════════════════════════════════════════════
-    // [12] FLUJO VERBO-SUSTANTIVO (modificar con/sin selección previa)
+    // [12] FLUJO VERBO-SUSTANTIVO
     // ═══════════════════════════════════════════════════════════════
     function beginModifyCommand(cmd, promptText) {
         if (state.selectedItems.length) {
@@ -1721,12 +1808,12 @@
                 renderGrips();
                 break;
             case 'TRIM':
-                state.trimBoundary = state.selectedItems.slice();
+                state.trimBoundary = state.selectedItems.length ? state.selectedItems.slice() : null;
                 clearSelection();
                 state.currentCommand = 'TRIM';
                 state.step = 1;
                 state.expectingPoint = false;
-                setPrompt('TRIM: Haz clic en la parte a recortar (Enter/ESC para salir)');
+                setPrompt('TRIM: haz clic en la parte a recortar');
                 break;
             case 'EXTEND':
                 state.extendBoundary = state.selectedItems.slice();
@@ -1923,7 +2010,7 @@
     }
 
     // ═══════════════════════════════════════════════════════════════
-    // [15] RESOLUCIÓN DE PUNTO (snap + tracking + ortho/polar)
+    // [15] RESOLUCIÓN DE PUNTO
     // ═══════════════════════════════════════════════════════════════
     function resolvePoint(raw, base, cmd, excludeItems) {
         let pt = raw;
@@ -1967,11 +2054,7 @@
     }
 
     // ═══════════════════════════════════════════════════════════════
-    // [16] PARSEO DE ENTRADA ESTILO AUTOCAD (Y+ arriba)
-    //     · "X,Y"      → Y usuario (positiva = arriba)
-    //     · "@dX,dY"   → desplazamiento en Y usuario
-    //     · "@d<áng"   → ángulo CCW desde X+ (antihorario)
-    //     · "d"        → distancia sobre dirección del ratón
+    // [16] PARSEO DE ENTRADA (Y+ arriba)
     // ═══════════════════════════════════════════════════════════════
     function parseDynamicInput(input, lastPoint) {
         input = input.trim();
@@ -2041,10 +2124,12 @@
             'E': 'ERASE', 'ERASE': 'ERASE', 'O': 'OFFSET', 'OFFSET': 'OFFSET',
             'TR': 'TRIM', 'TRIM': 'TRIM', 'EX': 'EXTEND', 'EXTEND': 'EXTEND',
             'J': 'JOIN', 'JOIN': 'JOIN', 'MI': 'MIRROR', 'MIRROR': 'MIRROR',
+            'CHA': 'CHAMFER', 'CHAMFER': 'CHAMFER',
+            'F': 'FILLET', 'FILLET': 'FILLET',
             'UNDO': 'UNDO', 'REDO': 'REDO'
         };
         const fullCmd = cmdMap[cmd.toUpperCase()] || cmd.toUpperCase();
-        const repeatableCmds = ['LINE', 'CIRCLE', 'RECTANG', 'ARC', 'MOVE', 'COPY', 'ROTATE', 'SCALE', 'OFFSET', 'TRIM', 'EXTEND', 'JOIN', 'ERASE', 'MIRROR'];
+        const repeatableCmds = ['LINE', 'CIRCLE', 'RECTANG', 'ARC', 'MOVE', 'COPY', 'ROTATE', 'SCALE', 'OFFSET', 'TRIM', 'EXTEND', 'JOIN', 'ERASE', 'MIRROR', 'CHAMFER', 'FILLET'];
         if (repeatableCmds.includes(fullCmd)) state.lastCommand = fullCmd;
 
         switch (fullCmd) {
@@ -2066,10 +2151,38 @@
                 setPrompt('OFFSET: Distancia (número+Enter)');
                 document.getElementById('cmd-input').focus();
                 break;
-            case 'TRIM':    beginModifyCommand('TRIM', 'TRIM: Selecciona los límites');     break;
+            case 'TRIM':
+                state.trimBoundary = state.selectedItems.length > 0 ? state.selectedItems.slice() : null;
+                clearSelection();
+                state.currentCommand = 'TRIM';
+                state.step = 1;
+                state.expectingPoint = false;
+                setPrompt(state.trimBoundary
+                    ? 'TRIM: haz clic en la parte a recortar (Enter/ESC para salir)'
+                    : 'TRIM: haz clic en la parte a recortar — todos los objetos son límites (Enter/ESC para salir)');
+                break;
             case 'EXTEND':  beginModifyCommand('EXTEND', 'EXTEND: Selecciona los límites'); break;
             case 'JOIN':    beginModifyCommand('JOIN', 'JOIN: Selecciona los objetos a unir'); break;
             case 'ERASE':   beginModifyCommand('ERASE', 'ERASE');                            break;
+            case 'CHAMFER':
+                resetStateCmd();
+                clearSelection();
+                state.currentCommand = 'CHAMFER';
+                state.step = 1;
+                state.chamferDist1 = 0;
+                state.chamferDist2 = 0;
+                setPrompt('CHAMFER: distancia 1 (Enter = 0)');
+                document.getElementById('cmd-input').focus();
+                break;
+            case 'FILLET':
+                resetStateCmd();
+                clearSelection();
+                state.currentCommand = 'FILLET';
+                state.step = 1;
+                state.filletRadius = 0;
+                setPrompt('FILLET: radio de redondeo (Enter = 0)');
+                document.getElementById('cmd-input').focus();
+                break;
             case 'UNDO':    undo(); break;
             case 'REDO':    redo(); break;
             default: setPrompt('Comando desconocido');
@@ -2347,7 +2460,7 @@
                 const axisStart = state.basePoint;
                 const axisEnd = point;
                 if (axisStart.getDistance(axisEnd) < 1e-6) {
-                    setPrompt('Eje inválido: los dos puntos coinciden. Vuelve a indicar el segundo punto.');
+                    setPrompt('Eje inválido: los dos puntos coinciden.');
                     return;
                 }
                 saveState();
@@ -2421,8 +2534,20 @@
     }
 
     // ═══════════════════════════════════════════════════════════════
-    // [21] TRIM / EXTEND
+    // [21] TRIM / EXTEND / CHAMFER / FILLET
     // ═══════════════════════════════════════════════════════════════
+    function getAllDrawableItems() {
+        const out = [];
+        for (let internal in layers) {
+            const layer = layers[internal];
+            if (!layer.data.visible || layer.data.locked) continue;
+            if (layer === gridLayer || layer === guideLayer || layer === snapLayer ||
+                layer === selectionLayer || layer === previewLayer || layer === gripLayer) continue;
+            layer.children.forEach(item => out.push(item));
+        }
+        return out;
+    }
+
     function handleTrimExtendClick(event) {
         const pt = event.point;
         const hit = hitTestContent(pt);
@@ -2436,28 +2561,86 @@
             setPrompt('EXTEND: Selecciona otro objeto o ESC para salir');
         }
     }
+
+    /* ── TRIM — Recorta contra CUALQUIER otro objeto del dibujo ── */
     function trimObject(item, boundaries, clickPoint) {
-        if (!isLineItem(item)) { setPrompt('Solo se pueden recortar líneas'); return; }
-        const bList = (Array.isArray(boundaries) ? boundaries : [boundaries]).filter(b => b && b !== item);
-        if (!bList.length) { setPrompt('No hay límites válidos'); return; }
-        let cutPt = null, bestD = Infinity;
-        bList.forEach(boundary => {
-            const inters = item.getIntersections(boundary);
-            inters.forEach(it => {
-                const d = it.point.getDistance(clickPoint);
-                if (d < bestD) { bestD = d; cutPt = it.point; }
-            });
+        const searchTargets = (boundaries && boundaries.length)
+            ? boundaries.filter(b => b && b !== item)
+            : getAllDrawableItems().filter(b => b !== item);
+
+        if (!searchTargets.length) { setPrompt('TRIM: no hay otros objetos como límites'); return; }
+
+        const inters = [];
+        searchTargets.forEach(boundary => {
+            try {
+                item.getIntersections(boundary).forEach(it => {
+                    if (it && it.point) inters.push(it.point.clone());
+                });
+            } catch (e) { /* ignorar */ }
         });
-        if (!cutPt) { setPrompt('No hay intersección con los límites'); return; }
-        const p1 = item.segments[0].point;
-        const p2 = item.segments[1].point;
-        const d1 = p1.getDistance(clickPoint);
-        const d2 = p2.getDistance(clickPoint);
+        if (!inters.length) { setPrompt('TRIM: no hay intersección con ningún objeto'); return; }
+
+        let clickLoc = null;
+        try { clickLoc = item.getLocationOf(clickPoint); } catch (e) { clickLoc = null; }
+        if (!clickLoc) {
+            const nearest = item.getNearestPoint(clickPoint) || clickPoint;
+            clickLoc = { offset: item.length / 2, point: nearest };
+        }
+        const clickOnPath = clickLoc.point || clickPoint;
+
+        let bestInters = null, bestDist = Infinity, bestOffset = 0;
+        inters.forEach(p => {
+            let pLoc = null;
+            try { pLoc = item.getLocationOf(p); } catch (e) { pLoc = null; }
+            if (!pLoc) return;
+            const d = pLoc.point.getDistance(clickOnPath);
+            if (d < bestDist) { bestDist = d; bestInters = p; bestOffset = pLoc.offset; }
+        });
+        if (!bestInters) { setPrompt('TRIM: no se encontró intersección válida'); return; }
+
         saveState();
-        if (d1 < d2) item.segments[0].point = cutPt;
-        else item.segments[1].point = cutPt;
-        setPrompt('Línea recortada');
+
+        // Línea simple: mover extremo del lado del clic
+        if (item.segments && item.segments.length === 2 && !item.closed) {
+            const p0 = item.segments[0].point;
+            const p1 = item.segments[1].point;
+            const d0 = p0.getDistance(clickOnPath);
+            const d1 = p1.getDistance(clickOnPath);
+            if (d0 < d1) item.segments[0].point = bestInters;
+            else         item.segments[1].point = bestInters;
+            invalidateSnapCache();
+            setPrompt('TRIM: línea recortada');
+            return;
+        }
+
+        // Objeto cerrado
+        if (item.closed) {
+            setPrompt('TRIM: no se puede recortar un objeto cerrado (conviértelo a arco)');
+            return;
+        }
+
+        // Polilínea / arco abierto: dividir y eliminar tramo del clic
+        try {
+            const clickOffset = clickLoc.offset;
+            const secondPart = item.split(bestOffset);
+            if (clickOffset < bestOffset) {
+                if (secondPart) {
+                    secondPart.data = Object.assign({}, item.data);
+                    secondPart.strokeColor = item.strokeColor || 'white';
+                    secondPart.strokeWidth = currentStrokeWidth();
+                }
+                item.remove();
+            } else {
+                if (secondPart) secondPart.remove();
+            }
+            invalidateSnapCache();
+            setPrompt('TRIM: objeto recortado');
+        } catch (e) {
+            console.warn('TRIM error:', e);
+            setPrompt('TRIM: no se pudo recortar (' + e.message + ')');
+        }
     }
+
     function extendObject(item, boundaries, clickPoint) {
         if (!isLineItem(item)) { setPrompt('Solo se pueden alargar líneas'); return; }
         const bList = (Array.isArray(boundaries) ? boundaries : [boundaries]).filter(b => b && b !== item);
@@ -2486,6 +2669,181 @@
         if (d1 < d2) item.segments[0].point = best;
         else item.segments[1].point = best;
         setPrompt('Línea extendida');
+    }
+
+    /* ── CHAMFER — Chaflán entre dos líneas ── */
+    function handleChamferClick(event) {
+        const hit = hitTestContent(event.point);
+        if (!hit || !hit.item) { setPrompt('CHAMFER: no se encontró objeto'); return; }
+        const item = hit.item;
+        if (!isLineItem(item)) { setPrompt('CHAMFER: sólo funciona con líneas rectas'); return; }
+
+        if (state.step === 3) {
+            state.chamferLine1 = item;
+            state.chamferClick1 = event.point.clone();
+            state.step = 4;
+            setPrompt('CHAMFER: haz clic en la segunda línea');
+            return;
+        }
+        if (state.step === 4) {
+            if (item === state.chamferLine1) { setPrompt('CHAMFER: selecciona una línea diferente'); return; }
+            const line1 = state.chamferLine1;
+            const line2 = item;
+            const click1 = state.chamferClick1;
+            const click2 = event.point;
+
+            const p1 = line1.segments[0].point;
+            const p2 = line1.segments[1].point;
+            const p3 = line2.segments[0].point;
+            const p4 = line2.segments[1].point;
+            const int = lineLineIntersection(p1, p2, p3, p4);
+            if (!int) { setPrompt('CHAMFER: las líneas son paralelas, no se puede aplicar'); return; }
+
+            const line1Dir = p2.subtract(p1).normalize();
+            const line2Dir = p4.subtract(p3).normalize();
+            const side1 = click1.subtract(int).dot(line1Dir);
+            const side2 = click2.subtract(int).dot(line2Dir);
+            const keepEnd1 = side1 > 0 ? p2 : p1;
+            const keepEnd2 = side2 > 0 ? p4 : p3;
+
+            const dir1 = keepEnd1.subtract(int);
+            const dir2 = keepEnd2.subtract(int);
+            if (dir1.length < 0.001 || dir2.length < 0.001) {
+                setPrompt('CHAMFER: las líneas deben tener longitud');
+                return;
+            }
+            const unit1 = dir1.normalize();
+            const unit2 = dir2.normalize();
+
+            const d1 = state.chamferDist1 || 0;
+            const d2 = state.chamferDist2 || 0;
+            const ch1 = int.add(unit1.multiply(d1));
+            const ch2 = int.add(unit2.multiply(d2));
+
+            saveState();
+
+            if (side1 > 0) line1.segments[0].point = ch1;
+            else           line1.segments[1].point = ch1;
+            if (side2 > 0) line2.segments[0].point = ch2;
+            else           line2.segments[1].point = ch2;
+
+            if (d1 > 0.001 || d2 > 0.001) {
+                const chamferLine = new Path.Line(ch1, ch2);
+                chamferLine.strokeColor = line1.strokeColor || 'white';
+                chamferLine.strokeWidth = currentStrokeWidth();
+                tagShape(chamferLine, 'line');
+                (line1.layer || activeLayer).addChild(chamferLine);
+            }
+
+            invalidateSnapCache();
+            resetStateCmd();
+            setPrompt(`Chaflán aplicado (d1 = ${d1}, d2 = ${d2})`);
+        }
+    }
+
+    /* ── FILLET — Redondeo entre dos líneas ── */
+    function handleFilletClick(event) {
+        const hit = hitTestContent(event.point);
+        if (!hit || !hit.item) { setPrompt('FILLET: no se encontró objeto'); return; }
+        const item = hit.item;
+        if (!isLineItem(item)) { setPrompt('FILLET: sólo funciona con líneas rectas (por ahora)'); return; }
+
+        if (state.step === 2) {
+            state.filletLine1 = item;
+            state.filletClick1 = event.point.clone();
+            state.step = 3;
+            setPrompt('FILLET: haz clic en la segunda línea');
+            return;
+        }
+        if (state.step === 3) {
+            if (item === state.filletLine1) { setPrompt('FILLET: selecciona una línea diferente'); return; }
+            const line1 = state.filletLine1;
+            const line2 = item;
+            const click1 = state.filletClick1;
+            const click2 = event.point;
+            const radius = state.filletRadius || 0;
+
+            const p1 = line1.segments[0].point;
+            const p2 = line1.segments[1].point;
+            const p3 = line2.segments[0].point;
+            const p4 = line2.segments[1].point;
+            const int = lineLineIntersection(p1, p2, p3, p4);
+            if (!int) { setPrompt('FILLET: las líneas son paralelas'); return; }
+
+            const line1Dir = p2.subtract(p1).normalize();
+            const line2Dir = p4.subtract(p3).normalize();
+            const side1 = click1.subtract(int).dot(line1Dir);
+            const side2 = click2.subtract(int).dot(line2Dir);
+            const keepEnd1 = side1 > 0 ? p2 : p1;
+            const keepEnd2 = side2 > 0 ? p4 : p3;
+
+            // Radio 0: unir en esquina viva
+            if (radius <= 0.001) {
+                saveState();
+                if (side1 > 0) line1.segments[0].point = int;
+                else           line1.segments[1].point = int;
+                if (side2 > 0) line2.segments[0].point = int;
+                else           line2.segments[1].point = int;
+                invalidateSnapCache();
+                resetStateCmd();
+                setPrompt('Esquina unida (radio 0)');
+                return;
+            }
+
+            const dir1 = keepEnd1.subtract(int);
+            const dir2 = keepEnd2.subtract(int);
+            if (dir1.length < 0.001 || dir2.length < 0.001) {
+                setPrompt('FILLET: las líneas deben tener longitud');
+                return;
+            }
+            const unit1 = dir1.normalize();
+            const unit2 = dir2.normalize();
+
+            const angle = Math.acos(Math.max(-1, Math.min(1, unit1.dot(unit2))));
+            if (angle < 0.001 || angle > Math.PI - 0.001) {
+                setPrompt('FILLET: las líneas son casi paralelas o colineales');
+                return;
+            }
+
+            const tanDist = radius / Math.tan(angle / 2);
+            const keepLen1 = keepEnd1.getDistance(int);
+            const keepLen2 = keepEnd2.getDistance(int);
+            if (tanDist > keepLen1 || tanDist > keepLen2) {
+                setPrompt('FILLET: el radio es demasiado grande para estas líneas');
+                return;
+            }
+
+            const tan1 = int.add(unit1.multiply(tanDist));
+            const tan2 = int.add(unit2.multiply(tanDist));
+
+            const bisector = unit1.add(unit2).normalize();
+            const centerDist = radius / Math.sin(angle / 2);
+            const center = int.add(bisector.multiply(centerDist));
+            const mid = center.add(int.subtract(center).normalize().multiply(radius));
+
+            saveState();
+
+            if (side1 > 0) line1.segments[0].point = tan1;
+            else           line1.segments[1].point = tan1;
+            if (side2 > 0) line2.segments[0].point = tan2;
+            else           line2.segments[1].point = tan2;
+
+            try {
+                const arc = new Path.Arc(tan1, mid, tan2);
+                arc.strokeColor = line1.strokeColor || 'white';
+                arc.strokeWidth = currentStrokeWidth();
+                tagShape(arc, 'arc');
+                (line1.layer || activeLayer).addChild(arc);
+            } catch (e) {
+                console.warn('FILLET arc error:', e);
+                setPrompt('FILLET: no se pudo crear el arco (' + e.message + ')');
+                return;
+            }
+
+            invalidateSnapCache();
+            resetStateCmd();
+            setPrompt(`Redondeado aplicado (R = ${radius})`);
+        }
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -2595,7 +2953,7 @@
             const r0 = getCircleRadius(item);
             const inside = pt.getDistance(item.position) < r0;
             const newRadius = inside ? r0 - dist : r0 + dist;
-            if (newRadius <= 0) { setPrompt('El offset elimina el círculo (radio ≤ 0). Elige otro lado o distancia.'); return; }
+            if (newRadius <= 0) { setPrompt('El offset elimina el círculo (radio ≤ 0).'); return; }
             const newCircle = new Path.Circle(item.position, newRadius);
             newCircle.strokeColor = item.strokeColor || 'white';
             newCircle.strokeWidth = currentStrokeWidth();
@@ -2681,6 +3039,14 @@
 
         if ((state.currentCommand === 'TRIM' || state.currentCommand === 'EXTEND') && !state.pendingCommand) {
             handleTrimExtendClick(event);
+            return;
+        }
+        if (state.currentCommand === 'CHAMFER' && (state.step === 3 || state.step === 4)) {
+            handleChamferClick(event);
+            return;
+        }
+        if (state.currentCommand === 'FILLET' && (state.step === 2 || state.step === 3)) {
+            handleFilletClick(event);
             return;
         }
         if (state.currentCommand === 'OFFSET' && state.step === 2) { handleOffsetSelectClick(event); return; }
@@ -2955,7 +3321,6 @@
 
     // ═══════════════════════════════════════════════════════════════
     // [24] VISTA PREVIA DINÁMICA
-    //      Ángulos y ΔY mostrados en convenio usuario (CCW, Y+ arriba)
     // ═══════════════════════════════════════════════════════════════
     function updateDynamicPreview(event) {
         previewLayer.removeChildren();
@@ -3026,7 +3391,8 @@
                 rect.strokeWidth = 1 / view.zoom;
                 rect.dashArray = [4, 4];
                 previewLayer.addChild(rect);
-                showTooltipAt(event.event.clientX, event.event.clientY - 30, `Ancho: ${Math.abs(cursor.x - base.x).toFixed(2)}  Alto: ${Math.abs(cursor.y - base.y).toFixed(2)}`);
+                showTooltipAt(event.event.clientX, event.event.clientY - 30,
+                    `Ancho: ${Math.abs(cursor.x - base.x).toFixed(2)}  Alto: ${Math.abs(cursor.y - base.y).toFixed(2)}`);
             } else if (state.currentCommand === 'ARC') {
                 if (state.step === 2) {
                     const guide = new Path.Line(base, cursor);
@@ -3139,7 +3505,6 @@
 
     // ═══════════════════════════════════════════════════════════════
     // [25] COORDENADAS Y CAJA DE SELECCIÓN
-    //      Barra inferior muestra Y-usuario (Y+ = arriba).
     // ═══════════════════════════════════════════════════════════════
     function updateCoords(pt) {
         document.getElementById('coords-display').textContent =
@@ -3160,8 +3525,7 @@
     }
 
     // ═══════════════════════════════════════════════════════════════
-    // [26] CUADRÍCULA
-    //      La flecha del eje Y apunta hacia ARRIBA (Y+ usuario).
+    // [26] CUADRÍCULA (flecha Y+ arriba)
     // ═══════════════════════════════════════════════════════════════
     function drawGrid() {
         gridLayer.removeChildren();
@@ -3224,7 +3588,7 @@
             xArrow.strokeWidth = axisWidth;
             gridLayer.addChild(xArrow);
 
-            // En coordenadas internas, Y+ usuario = hacia arriba = -y interno
+            // Y+ usuario = hacia arriba = -y interno
             const yArrow = new Path.Line(origin, new Point(origin.x, origin.y - size));
             yArrow.strokeColor = new Color(0.2, 0.8, 0.2);
             yArrow.strokeWidth = axisWidth;
@@ -3561,7 +3925,7 @@
     }
     function openPrintWindow(svgString) {
         const win = window.open('', '_blank');
-        if (!win) { setPrompt('El navegador bloqueó la ventana de impresión. Permite ventanas emergentes.'); return; }
+        if (!win) { setPrompt('El navegador bloqueó la ventana de impresión.'); return; }
         win.document.write(
             '<!DOCTYPE html><html><head><title>Imprimir dibujo</title><style>' +
             'html,body{margin:0;padding:0;background:#fff;}' +
@@ -3594,7 +3958,6 @@
 
     // ═══════════════════════════════════════════════════════════════
     // [30] EXPORTAR DXF
-    //      El DXF ya usa Y+ arriba; se niega la Y interna (que es Y-bajo).
     // ═══════════════════════════════════════════════════════════════
     function exportDXF() {
         const dxf = generateDXF();
@@ -3842,7 +4205,7 @@
     });
 
     // ═══════════════════════════════════════════════════════════════
-    // [33] BOTONES DE ARCHIVO (import/export/undo/redo)
+    // [33] BOTONES DE ARCHIVO
     // ═══════════════════════════════════════════════════════════════
     document.getElementById('ribbon-import').addEventListener('click', () => {
         document.getElementById('file-input-import').click();
@@ -3856,7 +4219,7 @@
             if (/\.dwg$/i.test(file.name)) {
                 showModal({
                     title: 'Los archivos DWG no se pueden abrir directamente',
-                    body: `DWG es el formato binario propietario de Autodesk y no puede leerse desde el navegador sin las librerías oficiales de Autodesk.<br><br>Para importar <b>${file.name}</b>, expórtalo primero como <code>.dxf</code> desde AutoCAD (o con una herramienta gratuita como <code>ODA File Converter</code>) y vuelve a importarlo aquí — DXF sí se abre directamente.`,
+                    body: `DWG es el formato binario propietario de Autodesk y no puede leerse desde el navegador sin las librerías oficiales de Autodesk.<br><br>Para importar <b>${file.name}</b>, expórtalo primero como <code>.dxf</code> desde AutoCAD (o con una herramienta gratuita como <code>ODA File Converter</code>) y vuelve a importarlo aquí.`,
                     buttons: [{ label: 'Entendido', primary: true }]
                 });
             } else {
@@ -3944,9 +4307,51 @@
             if (!input && state.currentCommand === 'OFFSET' && state.step >= 2) {
                 setPrompt('OFFSET finalizado'); resetStateCmd(); cmdInputEl.value = ''; e.preventDefault(); return;
             }
+            if (!input && state.currentCommand === 'CHAMFER' && state.step === 1) {
+                state.chamferDist1 = 0;
+                state.step = 2;
+                setPrompt('CHAMFER: distancia 2 (Enter = 0)');
+                cmdInputEl.value = ''; e.preventDefault(); return;
+            }
+            if (!input && state.currentCommand === 'CHAMFER' && state.step === 2) {
+                state.chamferDist2 = state.chamferDist1;
+                state.step = 3;
+                setPrompt('CHAMFER: haz clic en la primera línea');
+                cmdInputEl.value = ''; e.preventDefault(); return;
+            }
+            if (!input && state.currentCommand === 'FILLET' && state.step === 1) {
+                state.filletRadius = 0;
+                state.step = 2;
+                setPrompt('FILLET: haz clic en la primera línea');
+                cmdInputEl.value = ''; e.preventDefault(); return;
+            }
+            if (!input && (state.currentCommand === 'CHAMFER' || state.currentCommand === 'FILLET') && state.step > 2) {
+                setPrompt(`${state.currentCommand} finalizado`);
+                resetStateCmd(); cmdInputEl.value = ''; e.preventDefault(); return;
+            }
             if (input) {
                 state.commandHistory.push(input);
                 state.historyIdx = state.commandHistory.length;
+                if (state.currentCommand === 'CHAMFER' && state.step <= 2) {
+                    const d = parseFloat(input);
+                    if (state.step === 1) {
+                        state.chamferDist1 = isNaN(d) ? 0 : Math.max(0, d);
+                        state.step = 2;
+                        setPrompt(`CHAMFER: distancia 2 (Enter = ${state.chamferDist1})`);
+                    } else {
+                        state.chamferDist2 = isNaN(d) ? state.chamferDist1 : Math.max(0, d);
+                        state.step = 3;
+                        setPrompt('CHAMFER: haz clic en la primera línea');
+                    }
+                    cmdInputEl.value = ''; e.preventDefault(); return;
+                }
+                if (state.currentCommand === 'FILLET' && state.step === 1) {
+                    const d = parseFloat(input);
+                    state.filletRadius = isNaN(d) ? 0 : Math.max(0, d);
+                    state.step = 2;
+                    setPrompt('FILLET: haz clic en la primera línea');
+                    cmdInputEl.value = ''; e.preventDefault(); return;
+                }
                 if (state.waitingForNumber) {
                     const dist = parseFloat(input);
                     if (!isNaN(dist) && dist > 0) {
@@ -3964,7 +4369,7 @@
                     const ang = parseFloat(input);
                     if (!isNaN(ang)) {
                         saveState();
-                        state.selectedItems.forEach(i => i.rotate(-ang, state.basePoint)); // -ang: CCW positivo
+                        state.selectedItems.forEach(i => i.rotate(-ang, state.basePoint));
                         resetStateCmd();
                         previewLayer.removeChildren();
                         const dt = document.getElementById('dynamic-tooltip');
@@ -4076,6 +4481,14 @@
                 e.preventDefault(); setPrompt('COPY finalizado'); resetStateCmd();
             } else if ((e.key === 'Enter' || e.key === ' ') && state.currentCommand === 'OFFSET' && state.step >= 2) {
                 e.preventDefault(); setPrompt('OFFSET finalizado'); resetStateCmd();
+            } else if ((e.key === 'Enter' || e.key === ' ') && state.currentCommand === 'CHAMFER' && state.step <= 2) {
+                e.preventDefault();
+                cmdInputEl.focus();
+                cmdInputEl.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+            } else if ((e.key === 'Enter' || e.key === ' ') && state.currentCommand === 'FILLET' && state.step === 1) {
+                e.preventDefault();
+                cmdInputEl.focus();
+                cmdInputEl.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
             } else if (/^[a-zA-Z0-9@.,\-<]$/.test(e.key)) {
                 e.preventDefault();
                 cmdInputEl.focus();
@@ -4101,7 +4514,7 @@
     }
 
     // ═══════════════════════════════════════════════════════════════
-    // [36] MENÚ CONTEXTUAL (clic derecho)
+    // [36] MENÚ CONTEXTUAL
     // ═══════════════════════════════════════════════════════════════
     document.getElementById('canvas-container').addEventListener('contextmenu', (e) => {
         e.preventDefault();
@@ -4126,11 +4539,13 @@
             items.push({ sep: true });
         }
         if (hasSelection && !inCommand) {
-            items.push({ label: 'Mover',    key: 'M',  action: () => executeCommand('MOVE') });
-            items.push({ label: 'Copiar',   key: 'CO', action: () => executeCommand('COPY') });
-            items.push({ label: 'Rotar',    key: 'RO', action: () => executeCommand('ROTATE') });
-            items.push({ label: 'Simetría', key: 'MI', action: () => executeCommand('MIRROR') });
-            items.push({ label: 'Borrar',   key: 'Supr', action: () => { saveState(); state.selectedItems.forEach(i => i.remove()); clearSelection(); setPrompt('Objetos eliminados'); } });
+            items.push({ label: 'Mover',      key: 'M',   action: () => executeCommand('MOVE') });
+            items.push({ label: 'Copiar',     key: 'CO',  action: () => executeCommand('COPY') });
+            items.push({ label: 'Rotar',      key: 'RO',  action: () => executeCommand('ROTATE') });
+            items.push({ label: 'Simetría',   key: 'MI',  action: () => executeCommand('MIRROR') });
+            items.push({ label: 'Chaflán',    key: 'CHA', action: () => executeCommand('CHAMFER') });
+            items.push({ label: 'Redondear',  key: 'F',   action: () => executeCommand('FILLET') });
+            items.push({ label: 'Borrar',     key: 'Supr', action: () => { saveState(); state.selectedItems.forEach(i => i.remove()); clearSelection(); setPrompt('Objetos eliminados'); } });
             items.push({ sep: true });
             items.push({ label: 'Propiedades', action: () => document.getElementById('properties-panel').scrollIntoView({ block: 'nearest' }) });
             items.push({ label: 'Deseleccionar todo', key: 'Esc', action: clearSelection });
@@ -4247,7 +4662,7 @@
     window.addEventListener('blur', closeContextMenu);
 
     // ═══════════════════════════════════════════════════════════════
-    // [38] CROSSHAIR estilo AutoCAD
+    // [38] CROSSHAIR
     // ═══════════════════════════════════════════════════════════════
     const crosshair = document.createElement('div');
     crosshair.className = 'crosshair';
@@ -4271,7 +4686,7 @@
     });
 
     // ═══════════════════════════════════════════════════════════════
-    // [39] MINI MAPA (navigator)
+    // [39] MINI MAPA
     // ═══════════════════════════════════════════════════════════════
     const navBtn = document.getElementById('qa-navigator');
     const navContainer = document.getElementById('navigator');
@@ -4344,7 +4759,7 @@
     });
 
     // ═══════════════════════════════════════════════════════════════
-    // [40] TOOLTIP DINÁMICO (elemento flotante)
+    // [40] TOOLTIP DINÁMICO
     // ═══════════════════════════════════════════════════════════════
     if (!document.getElementById('dynamic-tooltip')) {
         const dt = document.createElement('div');
@@ -4354,7 +4769,7 @@
         dt.style.background = '#1c1c1c';
         dt.style.color = '#4FC3F7';
         dt.style.padding = '3px 9px';
-        dt.style.borderRadius = '3px';
+        dt.style.borderRadius = '5px';
         dt.style.fontFamily = "'Cascadia Mono', Consolas, monospace";
         dt.style.fontSize = '11.5px';
         dt.style.letterSpacing = '0.2px';
@@ -4366,7 +4781,7 @@
     }
 
     // ═══════════════════════════════════════════════════════════════
-    // [41] REDIMENSIONADO ROBUSTO
+    // [41] REDIMENSIONADO
     // ═══════════════════════════════════════════════════════════════
     let resizeRAF = null;
     function syncViewSize() {
@@ -4407,9 +4822,9 @@
     refreshStrokeWidths();
     renderGrips();
     view.update();
-    setPrompt('Listo (Y+ arriba). Escribe en cualquier momento · Enter repite el último comando · F8 Ortho · F10 Polar · F3 OSnap · F7 Grid · MI Simetría');
+    setPrompt('Listo · Y+ arriba · F8 Ortho · F10 Polar · F3 OSnap · F7 Grid · MI Simetría · CHA Chaflán · F Redondear · TR Recortar');
 
-    console.log('CAD Pro cargado. Y+ hacia arriba. MIRROR incluido. Cambio de capa corregido.');
+    console.log('CAD Pro cargado. Botones rediseñados. TRIM corregido. CHAMFER + FILLET activos.');
     </script>
 </body>
 </html>
