@@ -48,14 +48,16 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 .tool-item:hover .tact{opacity:1}
 .tool-item .tact button{background:transparent;border:none;color:var(--text2);cursor:pointer;padding:2px 4px;border-radius:3px;font-size:.75rem}
 .tool-item .tact button:hover{background:#3a3f4a;color:#fff}
-.ops{list-style:none;max-height:160px;overflow-y:auto;font-size:.72rem}
-.ops li{padding:5px 6px;border-radius:4px;display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;background:#22262e;gap:4px}
-.op-type{font-weight:600;font-size:.6rem;padding:2px 5px;border-radius:6px;flex-shrink:0}
+.ops{list-style:none;max-height:200px;overflow-y:auto;font-size:.72rem}
+.ops li{padding:5px 6px;border-radius:4px;display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;background:#22262e;gap:3px}
+.op-type{font-weight:600;font-size:.58rem;padding:2px 4px;border-radius:6px;flex-shrink:0}
 .op-type.drill{background:#ff6b6b22;color:#ff6b6b}
 .op-type.cut{background:#ffb34722;color:#ffb347}
 .op-type.pocket{background:#4ec99022;color:#4ec990}
-.op-tool-select{background:#1a1d24;border:1px solid var(--border);color:var(--text2);font-size:.62rem;border-radius:3px;padding:1px 3px;font-family:inherit;max-width:60px;cursor:pointer}
-.del-op{cursor:pointer;opacity:.5;padding:2px 5px;flex-shrink:0}
+.op-tool-select{background:#1a1d24;border:1px solid var(--border);color:var(--text2);font-size:.6rem;border-radius:3px;padding:1px 2px;font-family:inherit;cursor:pointer}
+.op-depth-input{background:#1a1d24;border:1px solid var(--border);color:#ffb347;font-size:.62rem;padding:1px 3px;border-radius:3px;font-family:monospace;text-align:right;font-weight:600}
+.op-depth-input:focus{outline:none;border-color:var(--accent);color:#fff}
+.del-op{cursor:pointer;opacity:.5;padding:2px 4px;flex-shrink:0;font-size:.72rem}
 .del-op:hover{opacity:1;color:var(--danger)}
 .canvas-container{flex:1;position:relative;background:var(--canvas);overflow:hidden;min-width:200px}
 .canvas-container.mode-view{cursor:grab}
@@ -142,6 +144,7 @@ canvas{display:block;position:absolute;top:0;left:0}
     </div>
     <div class="sec"><h3>📋 Operaciones <span class="mini" id="opCount">0</span></h3>
       <ul class="ops" id="opsList"><li class="empty-hint" style="background:transparent;">Sin operaciones</li></ul>
+      <div class="hint">El número naranja es la <b>profundidad</b> de cada operación (mm).</div>
       <button class="btn small" id="btnUndo" style="width:100%;margin-top:5px;">↩ Deshacer</button>
     </div>
     <div class="sec"><h3>🗂 Capas</h3>
@@ -205,7 +208,7 @@ canvas{display:block;position:absolute;top:0;left:0}
       <div class="row"><label>Avance XY</label><input type="number" id="cFeed" value="800" step="50"></div>
       <div class="row"><label>Avance Z</label><input type="number" id="cFeedZ" value="400" step="25"></div>
       <div class="row"><label>Paso Z</label><input type="number" id="cStep" value="1.5" step="0.1"></div>
-      <div class="row"><label>Prof. total</label><input type="number" id="cDepth" value="6" step="0.5"></div>
+      <div class="row"><label title="Profundidad por defecto al crear nuevas operaciones">Prof. nueva op</label><input type="number" id="cDepth" value="6" step="0.5"></div>
       <div class="row"><label>Z seguro</label><input type="number" id="cSafe" value="15" step="1"></div>
       <div class="row"><label>Z retrac.</label><input type="number" id="cRetract" value="5" step="0.5"></div>
       <div class="row"><label>Solape</label><input type="number" id="cOverlap" value="0.35" step="0.05"></div>
@@ -404,6 +407,7 @@ function createDefaultTool(num){
 function getActiveTool(){ return S.tools.find(t => t.id === S.activeToolId) || null; }
 function getToolById(id){ return S.tools.find(t => t.id === id) || null; }
 function nextToolNumber(){ let max = 0; for (const t of S.tools) if (t.toolNumber > max) max = t.toolNumber; return max + 1; }
+function defaultDepthForNewOp(){ const t = getActiveTool() || S.tools[0]; return (t && typeof t.depth === 'number') ? t.depth : 6; }
 
 function addTool(){ const t = createDefaultTool(nextToolNumber()); S.tools.push(t); S.activeToolId = t.id;
   loadToolIntoFields(t); updateToolsList(); updateOpsList(); scheduleSave(); showToast('Herramienta anadida','success'); }
@@ -940,6 +944,11 @@ function migrateOperation(op){
     });
     delete op.areas;
   }
+  // Migración: la profundidad ahora es por operación. Si no existe, tomarla de la herramienta.
+  if (typeof op.depth !== 'number'){
+    const t = S.tools.find(tt => tt.id === op.toolId) || S.tools[0];
+    op.depth = (t && typeof t.depth === 'number') ? t.depth : 6;
+  }
   return op;
 }
 function applyProjectData(data){
@@ -1088,7 +1097,7 @@ function addDrill(wx, wy){
   for (const op of S.operations){
     if (op.type === 'drill' && op.points.some(p => Math.hypot(p.x-px, p.y-py) < 0.3)){ showToast('Ya marcado','warn'); return; } }
   let op = S.operations.find(o => o.type === 'drill');
-  if (!op){ op = { type:'drill', points:[], toolId: S.activeToolId }; S.operations.push(op); }
+  if (!op){ op = { type:'drill', points:[], toolId: S.activeToolId, depth: defaultDepthForNewOp() }; S.operations.push(op); }
   op.points.push({ x:px, y:py });
   updateOpsList(); rebuildAllContours(); buildProgram(); render(); scheduleSave();
 }
@@ -1097,7 +1106,7 @@ function addCut(idx){
   if (!S.tools.length){ showToast('Anade primero una herramienta','warn'); return; }
   for (const op of S.operations) if (op.type === 'cut' && op.ids.includes(idx)) return;
   let op = S.operations.find(o => o.type === 'cut');
-  if (!op){ op = { type:'cut', ids:[], offset:'center', toolId: S.activeToolId }; S.operations.push(op); }
+  if (!op){ op = { type:'cut', ids:[], offset:'center', toolId: S.activeToolId, depth: defaultDepthForNewOp() }; S.operations.push(op); }
   op.ids.push(idx);
   updateOpsList(); rebuildAllContours(); buildProgram(); render(); scheduleSave();
 }
@@ -1105,7 +1114,7 @@ function addCutBatch(indices){
   if (!indices || !indices.length) return 0;
   if (!S.tools.length){ showToast('Anade primero una herramienta','warn'); return 0; }
   let op = S.operations.find(o => o.type === 'cut');
-  if (!op){ op = { type:'cut', ids:[], offset:'center', toolId: S.activeToolId }; S.operations.push(op); }
+  if (!op){ op = { type:'cut', ids:[], offset:'center', toolId: S.activeToolId, depth: defaultDepthForNewOp() }; S.operations.push(op); }
   let added = 0;
   for (const idx of indices){
     if (idx >= 0 && !op.ids.includes(idx)){ op.ids.push(idx); added++; }
@@ -1122,7 +1131,7 @@ function addPocketBoundary(boundary){
   if (boundary.length < 3){ showToast('Contorno invalido','warn'); return; }
   if (signedArea(boundary) < 0) boundary = boundary.slice().reverse();
   let op = S.operations.find(o => o.type === 'pocket');
-  if (!op){ op = { type:'pocket', pockets:[], toolId: S.activeToolId }; S.operations.push(op); }
+  if (!op){ op = { type:'pocket', pockets:[], toolId: S.activeToolId, depth: defaultDepthForNewOp() }; S.operations.push(op); }
   op.pockets.push({ boundary });
   updateOpsList(); buildProgram(); render(); scheduleSave();
   showToast('Cajeado anadido','success');
@@ -1163,22 +1172,40 @@ function updateOpsList(){
       const nCont = (S.cutContours[i] && S.cutContours[i].length) || 0;
       det = `${op.ids.length} ent · ${nCont} cont`;
     }
-    else if (op.type==='pocket') det = `${(op.pockets||[]).length} cajeados`;
+    else if (op.type==='pocket') det = `${(op.pockets||[]).length} caj.`;
     let offSel = '';
     if (op.type === 'cut'){ const off = op.offset || 'center';
-      offSel = `<select class="op-tool-select" data-i="${i}" data-k="offset" style="max-width:34px;">
+      offSel = `<select class="op-tool-select" data-i="${i}" data-k="offset" style="max-width:28px;">
         <option value="center" ${off==='center'?'selected':''}>C</option>
         <option value="inside" ${off==='inside'?'selected':''}>I</option>
         <option value="outside" ${off==='outside'?'selected':''}>E</option>
       </select>`;
     }
-    return `<li><span><span class="op-type ${op.type}">${op.type.toUpperCase()}</span> ${det}</span>
-      <select class="op-tool-select" data-i="${i}" data-k="toolId">${toolOptions}</select>
+    const t = getToolById(op.toolId) || S.tools[0];
+    const opDepth = (typeof op.depth === 'number') ? op.depth : (t ? t.depth : 6);
+    const depthInp = `<input type="number" class="op-depth-input" data-i="${i}" value="${opDepth}" step="0.5" min="0" title="Profundidad total de la operacion (mm)" style="width:42px;">`;
+    return `<li><span style="flex:1;min-width:0;"><span class="op-type ${op.type}">${op.type.toUpperCase()}</span> ${det}</span>
+      <select class="op-tool-select" data-i="${i}" data-k="toolId" style="max-width:48px;">${toolOptions}</select>
       ${offSel}
-      <span class="del-op" data-i="${i}">x</span></li>`;
+      ${depthInp}
+      <span class="del-op" data-i="${i}">×</span></li>`;
   }).join('');
   opsEl.querySelectorAll('select[data-k="toolId"]').forEach(sel => { const i = parseInt(sel.dataset.i); if (S.operations[i].toolId) sel.value = S.operations[i].toolId; });
   opsEl.querySelectorAll('.del-op').forEach(b => b.addEventListener('click', e => { e.stopPropagation(); removeOp(parseInt(b.dataset.i)); }));
+  opsEl.querySelectorAll('.op-depth-input').forEach(inp => {
+    inp.addEventListener('change', () => {
+      const i = parseInt(inp.dataset.i);
+      const v = parseFloat(inp.value);
+      if (isFinite(v) && v >= 0){
+        S.operations[i].depth = v;
+        buildProgram(); render(); scheduleSave();
+      } else {
+        const t = getToolById(S.operations[i].toolId) || S.tools[0];
+        inp.value = (t ? t.depth : 6);
+      }
+    });
+    inp.addEventListener('click', e => e.stopPropagation());
+  });
   opsEl.querySelectorAll('.op-tool-select').forEach(s => {
     s.addEventListener('change', () => {
       const i = parseInt(s.dataset.i), k = s.dataset.k;
@@ -1314,9 +1341,16 @@ function buildProgram(){
 
     for (let oi = 0; oi < entries.length; oi++){
       const { op, originalIndex } = entries[oi];
-      const passes = Math.max(1, Math.min(500, Math.ceil(tool.depth / tool.step)));
-      const step = tool.depth / passes;
-      emit(`(Operacion ${oi+1}/${entries.length}: ${op.type.toUpperCase()})`, -1);
+      // Profundidad por OPERACIÓN (no por herramienta)
+      const opDepth = Math.max(0, (typeof op.depth === 'number') ? op.depth : tool.depth);
+      if (opDepth <= 0){
+        emit(`(Operacion ${oi+1}/${entries.length}: ${op.type.toUpperCase()} - profundidad 0, omitida)`, -1);
+        emit('', -1);
+        continue;
+      }
+      const passes = Math.max(1, Math.min(500, Math.ceil(opDepth / tool.step)));
+      const step = opDepth / passes;
+      emit(`(Operacion ${oi+1}/${entries.length}: ${op.type.toUpperCase()} - prof ${opDepth.toFixed(2)}mm en ${passes} pasada(s))`, -1);
 
       if (op.type === 'drill'){
         if (!op.points.length){ emit('', -1); continue; }
@@ -1332,13 +1366,13 @@ function buildProgram(){
           emit(`G0 Z${tool.retract.toFixed(3)}`, blockId);
           addMove('rapid', [{x:p.x, y:p.y}], tool.retract, S.rapidZ, blockId);
           if (pi === 0){
-            if (usePeck) emit(`G83 X${p.x.toFixed(3)} Y${p.y.toFixed(3)} Z-${tool.depth.toFixed(3)} R${tool.retract.toFixed(3)} Q${step.toFixed(3)} F${tool.feedZ}`, blockId);
-            else emit(`G81 X${p.x.toFixed(3)} Y${p.y.toFixed(3)} Z-${tool.depth.toFixed(3)} R${tool.retract.toFixed(3)} F${tool.feedZ}`, blockId);
+            if (usePeck) emit(`G83 X${p.x.toFixed(3)} Y${p.y.toFixed(3)} Z-${opDepth.toFixed(3)} R${tool.retract.toFixed(3)} Q${step.toFixed(3)} F${tool.feedZ}`, blockId);
+            else emit(`G81 X${p.x.toFixed(3)} Y${p.y.toFixed(3)} Z-${opDepth.toFixed(3)} R${tool.retract.toFixed(3)} F${tool.feedZ}`, blockId);
           } else {
             emit(`X${p.x.toFixed(3)} Y${p.y.toFixed(3)}`, blockId);
           }
           for (let k = 0; k < passes; k++){
-            const z = -Math.min((k+1)*step, tool.depth);
+            const z = -Math.min((k+1)*step, opDepth);
             addMove('cut', [{x:p.x, y:p.y}], z, tool.feedZ, blockId);
             addMove('rapid', [{x:p.x, y:p.y}], tool.retract, S.rapidZ, blockId);
           }
@@ -1374,7 +1408,7 @@ function buildProgram(){
 
           for (let k = 0; k < passes; k++){
             blockId++;
-            const z = -Math.min((k+1)*step, tool.depth);
+            const z = -Math.min((k+1)*step, opDepth);
             const isLastPass = (k === passes - 1);
             emit(`G1 Z${z.toFixed(3)} F${tool.feedZ}`, blockId);
             addMove('cut', [{x:f.x, y:f.y}], z, tool.feedZ, blockId);
@@ -1442,7 +1476,7 @@ function buildProgram(){
           if (!offsets.length){
             emit('(cajeado demasiado pequeno para la herramienta)', -1); emit('', -1); continue;
           }
-          emit(`(Cajeado ${pki+1}/${pockets.length}: ${offsets.length} anillos x ${passes} pasadas Z - ESPIRAL SIN RETRAER)`, -1);
+          emit(`(Cajeado ${pki+1}/${pockets.length}: ${offsets.length} anillos x ${passes} pasadas Z (prof ${opDepth.toFixed(2)}mm) - ESPIRAL SIN RETRAER)`, -1);
 
           // ---- Rapid al punto de inicio del anillo exterior ----
           const startPt = offsets[0][0];
@@ -1451,8 +1485,8 @@ function buildProgram(){
 
           // ---- Bucle de pasadas Z (sin retraer Z) ----
           for (let zPass = 0; zPass < passes; zPass++){
-            const zLevel = -Math.min((zPass+1)*step, tool.depth);
-            const forward = (zPass % 2 === 0); // par: exterior->interior, impar: interior->exterior
+            const zLevel = -Math.min((zPass+1)*step, opDepth);
+            const forward = (zPass % 2 === 0);
 
             const entryBlock = ++blockId;
             if (zPass === 0){
@@ -1463,7 +1497,6 @@ function buildProgram(){
             emit(`G1 Z${zLevel.toFixed(3)} F${tool.feedZ}`, entryBlock);
             addMove('cut', [{x:lastX, y:lastY}], zLevel, tool.feedZ, entryBlock);
 
-            // Orden de anillos segun direccion de la pasada
             const ringOrder = forward
               ? offsets.map((_, i) => i)
               : offsets.map((_, i) => offsets.length - 1 - i);
@@ -1473,7 +1506,6 @@ function buildProgram(){
               let ring = offsets[ri];
               if (ring.length < 3) continue;
 
-              // Rotar el anillo para empezar en el vertice mas cercano a la posicion actual
               if (Math.hypot(ring[0].x - lastX, ring[0].y - lastY) > 0.01){
                 let bestIdx = 0, bestDist = Infinity;
                 for (let i = 0; i < ring.length; i++){
@@ -1487,13 +1519,11 @@ function buildProgram(){
               const ringBlock = ++blockId;
               emit(`(Anillo ${ri+1}/${offsets.length} @ Z=${zLevel.toFixed(3)})`, ringBlock);
 
-              // Puente directo al inicio del anillo (mismo Z, sin levantar)
               if (Math.hypot(lastX - ringStart.x, lastY - ringStart.y) > 0.01){
                 emit(`G1 X${ringStart.x.toFixed(3)} Y${ringStart.y.toFixed(3)} F${tool.feed}`, ringBlock);
                 addMove('cut', [{x:lastX, y:lastY}, {x:ringStart.x, y:ringStart.y}], zLevel, tool.feed, ringBlock);
               }
 
-              // Cortar el anillo completo
               for (let i = 1; i < ring.length; i++){
                 emit(`G1 X${ring[i].x.toFixed(3)} Y${ring[i].y.toFixed(3)} F${tool.feed}`, ringBlock);
               }
@@ -1503,7 +1533,6 @@ function buildProgram(){
             }
           }
 
-          // ---- Retraer SOLO al final del cajeado ----
           emit(`G0 Z${tool.safe.toFixed(3)}`, -1);
           addMove('rapid', [{x:lastX, y:lastY}], tool.safe, S.rapidZ, -1);
         }
@@ -1753,7 +1782,6 @@ function render(){
     drawEnt(e, col, lw, r);
   }
   let contourIdx = 0;
-  // ==== DIBUJAR TODOS LOS CONTORNOS DE CORTE (multi) ====
   for (const oiStr in S.cutContours){
     const contoursArr = S.cutContours[oiStr];
     if (!contoursArr || !contoursArr.length) continue;
@@ -1770,7 +1798,6 @@ function render(){
       for (let i=1;i<ptsEff.length;i++){ const s = w2s(ptsEff[i].x, ptsEff[i].y); ctx.lineTo(s.x-r.left, s.y-r.top); }
       if (c.closed) ctx.closePath();
       ctx.stroke();
-      // Tabs (por contorno)
       if (S.tabs.enabled && S.cutTabs[oiStr] && S.cutTabs[oiStr][ci] && S.cutTabs[oiStr][ci].length){
         const tabs = S.cutTabs[oiStr][ci];
         const op = S.operations[parseInt(oiStr)];
@@ -2325,7 +2352,7 @@ function init(){
   } else {
     showToast('Proyecto restaurado','success');
   }
-  console.log('CNC DXF a G-Code - multi-contorno en corte, cajeado espiral sin retraer Z');
+  console.log('CNC DXF a G-Code - profundidad POR OPERACION, cajeado espiral sin retraer Z');
   if (S.clipperReady){
     console.log('  ✅ Clipper activo');
   } else {
