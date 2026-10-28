@@ -587,8 +587,6 @@ function entityToPointsDense(e){
   return pts;
 }
 
-// Devuelve extremos significativos de la entidad para agrupar por proximidad.
-// Devuelve null para entidades cerradas (CIRCLE, LWPOLYLINE cerrada, POINT).
 function getEntityEndpoints(e){
   if (e.type === 'LINE') return [{x:e.x1,y:e.y1}, {x:e.x2,y:e.y2}];
   if (e.type === 'ARC'){
@@ -603,9 +601,6 @@ function getEntityEndpoints(e){
   return null;
 }
 
-// Agrupa entidades en cadenas disjuntas por proximidad de extremos.
-// - Cada entidad cerrada (CIRCLE, LWPOLYLINE cerrada) es su propio grupo.
-// - Las líneas / arcos / polilíneas abiertas se agrupan si comparten extremos.
 function groupEntitiesIntoChains(entityList, tol){
   tol = tol || 0.15;
   const n = entityList.length;
@@ -623,7 +618,7 @@ function groupEntitiesIntoChains(entityList, tol){
         const eps = getEntityEndpoints(ge);
         if (eps) groupEndpoints.push(...eps);
       }
-      if (!groupEndpoints.length) break;   // el grupo es una entidad cerrada → no se extiende
+      if (!groupEndpoints.length) break;
       for (let j = 0; j < n; j++){
         if (used[j]) continue;
         const eps = getEntityEndpoints(entityList[j]);
@@ -1106,7 +1101,6 @@ function addCut(idx){
   op.ids.push(idx);
   updateOpsList(); rebuildAllContours(); buildProgram(); render(); scheduleSave();
 }
-// Añade varias entidades en lote (una sola reconstrucción)
 function addCutBatch(indices){
   if (!indices || !indices.length) return 0;
   if (!S.tools.length){ showToast('Anade primero una herramienta','warn'); return 0; }
@@ -1406,6 +1400,7 @@ function buildProgram(){
           addMove('rapid', [{x:lastX, y:lastY}], tool.retract, S.rapidZ, -1);
         }
       } else if (op.type === 'pocket'){
+        // ===== CAJEADO EN ESPIRAL CONTINUA (SIN LEVANTAR Z) =====
         const pockets = op.pockets || [];
         if (!pockets.length){ emit('(cajeado sin contornos)', -1); emit('', -1); continue; }
         if (Math.abs(lastZ - tool.safe) > 0.01){
@@ -1422,6 +1417,7 @@ function buildProgram(){
           if (boundary.length < 3){ emit('(cajeado invalido)', -1); emit('', -1); continue; }
           if (signedArea(boundary) < 0) boundary = boundary.slice().reverse();
 
+          // ---- Calcular anillos (indice 0 = exterior, ultimo = interior) ----
           const offsets = [];
           const bbBoundary = bboxFromPoints(boundary);
           const maxRingsBySize = Math.ceil(Math.max(bbBoundary.w, bbBoundary.h) / stepOver) + 5;
@@ -1446,36 +1442,72 @@ function buildProgram(){
           if (!offsets.length){
             emit('(cajeado demasiado pequeno para la herramienta)', -1); emit('', -1); continue;
           }
-          emit(`(Cajeado ${pki+1}/${pockets.length}: ${offsets.length} anillos x ${passes} pasadas Z)`, -1);
+          emit(`(Cajeado ${pki+1}/${pockets.length}: ${offsets.length} anillos x ${passes} pasadas Z - ESPIRAL SIN RETRAER)`, -1);
 
+          // ---- Rapid al punto de inicio del anillo exterior ----
+          const startPt = offsets[0][0];
+          emit(`G0 X${startPt.x.toFixed(3)} Y${startPt.y.toFixed(3)}`, -1);
+          addMove('rapid', [{x:lastX, y:lastY}, {x:startPt.x, y:startPt.y}], tool.safe, S.rapidXY, -1);
+
+          // ---- Bucle de pasadas Z (sin retraer Z) ----
           for (let zPass = 0; zPass < passes; zPass++){
             const zLevel = -Math.min((zPass+1)*step, tool.depth);
-            emit(`(Pasada Z ${zLevel.toFixed(3)}mm)`, -1);
-            for (let ri = offsets.length - 1; ri >= 0; ri--){
-              const ring = offsets[ri];
+            const forward = (zPass % 2 === 0); // par: exterior->interior, impar: interior->exterior
+
+            const entryBlock = ++blockId;
+            if (zPass === 0){
+              emit(`(Entrada en Z=${zLevel.toFixed(3)}mm)`, entryBlock);
+            } else {
+              emit(`(Descenso continuo a Z=${zLevel.toFixed(3)}mm - SIN RETRAER)`, entryBlock);
+            }
+            emit(`G1 Z${zLevel.toFixed(3)} F${tool.feedZ}`, entryBlock);
+            addMove('cut', [{x:lastX, y:lastY}], zLevel, tool.feedZ, entryBlock);
+
+            // Orden de anillos segun direccion de la pasada
+            const ringOrder = forward
+              ? offsets.map((_, i) => i)
+              : offsets.map((_, i) => offsets.length - 1 - i);
+
+            for (let k = 0; k < ringOrder.length; k++){
+              const ri = ringOrder[k];
+              let ring = offsets[ri];
               if (ring.length < 3) continue;
-              blockId++;
-              const f = ring[0];
 
-              emit(`G0 Z${tool.safe.toFixed(3)}`, blockId);
-              addMove('rapid', [{x:lastX, y:lastY}], tool.safe, S.rapidZ, blockId);
-              emit(`G0 X${f.x.toFixed(3)} Y${f.y.toFixed(3)}`, blockId);
-              addMove('rapid', [{x:lastX, y:lastY}, {x:f.x, y:f.y}], tool.safe, S.rapidXY, blockId);
-              emit(`G1 Z${zLevel.toFixed(3)} F${tool.feedZ}`, blockId);
-              addMove('cut', [{x:f.x, y:f.y}], zLevel, tool.feedZ, blockId);
-
-              for (let i = 1; i < ring.length; i++){
-                emit(`G1 X${ring[i].x.toFixed(3)} Y${ring[i].y.toFixed(3)} F${tool.feed}`, blockId);
+              // Rotar el anillo para empezar en el vertice mas cercano a la posicion actual
+              if (Math.hypot(ring[0].x - lastX, ring[0].y - lastY) > 0.01){
+                let bestIdx = 0, bestDist = Infinity;
+                for (let i = 0; i < ring.length; i++){
+                  const dd = Math.hypot(ring[i].x - lastX, ring[i].y - lastY);
+                  if (dd < bestDist){ bestDist = dd; bestIdx = i; }
+                }
+                if (bestIdx > 0) ring = ring.slice(bestIdx).concat(ring.slice(0, bestIdx));
               }
-              emit(`G1 X${f.x.toFixed(3)} Y${f.y.toFixed(3)} F${tool.feed}`, blockId);
-              addMove('cut', ring.concat([{x:f.x, y:f.y}]), zLevel, tool.feed, blockId);
 
-              emit(`G0 Z${tool.retract.toFixed(3)}`, blockId);
-              addMove('rapid', [{x:lastX, y:lastY}], tool.retract, S.rapidZ, blockId);
+              const ringStart = ring[0];
+              const ringBlock = ++blockId;
+              emit(`(Anillo ${ri+1}/${offsets.length} @ Z=${zLevel.toFixed(3)})`, ringBlock);
+
+              // Puente directo al inicio del anillo (mismo Z, sin levantar)
+              if (Math.hypot(lastX - ringStart.x, lastY - ringStart.y) > 0.01){
+                emit(`G1 X${ringStart.x.toFixed(3)} Y${ringStart.y.toFixed(3)} F${tool.feed}`, ringBlock);
+                addMove('cut', [{x:lastX, y:lastY}, {x:ringStart.x, y:ringStart.y}], zLevel, tool.feed, ringBlock);
+              }
+
+              // Cortar el anillo completo
+              for (let i = 1; i < ring.length; i++){
+                emit(`G1 X${ring[i].x.toFixed(3)} Y${ring[i].y.toFixed(3)} F${tool.feed}`, ringBlock);
+              }
+              emit(`G1 X${ringStart.x.toFixed(3)} Y${ringStart.y.toFixed(3)} F${tool.feed}`, ringBlock);
+
+              addMove('cut', ring.concat([ringStart]), zLevel, tool.feed, ringBlock);
             }
           }
+
+          // ---- Retraer SOLO al final del cajeado ----
           emit(`G0 Z${tool.safe.toFixed(3)}`, -1);
+          addMove('rapid', [{x:lastX, y:lastY}], tool.safe, S.rapidZ, -1);
         }
+        emit(`G0 Z${tool.safe.toFixed(3)}`, -1);
       }
       emit('', -1);
     }
@@ -2293,7 +2325,7 @@ function init(){
   } else {
     showToast('Proyecto restaurado','success');
   }
-  console.log('CNC DXF a G-Code - multi-contorno en corte, cajeado por figura');
+  console.log('CNC DXF a G-Code - multi-contorno en corte, cajeado espiral sin retraer Z');
   if (S.clipperReady){
     console.log('  ✅ Clipper activo');
   } else {
