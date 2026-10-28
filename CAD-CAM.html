@@ -462,6 +462,28 @@ function updateToolsList(){
 }
 function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
+// ================= SANITIZADOR DE COMENTARIOS G-CODE =================
+// Convierte cualquier ( anidado en [ y ) anidado en ], preservando los
+// paréntesis del comentario exterior. También elimina caracteres no ASCII
+// en comentarios para evitar rechazos de controladores estrictos.
+function sanitizeComment(txt){
+  let result = '';
+  let inComment = false;
+  let depth = 0;
+  for (let i = 0; i < txt.length; i++){
+    const c = txt[i];
+    if (!inComment && c === '('){ inComment = true; depth = 1; result += c; }
+    else if (inComment){
+      if (c === '('){ depth++; result += '['; }
+      else if (c === ')'){ depth--; if (depth === 0){ inComment = false; result += ')'; } else result += ']'; }
+      else if (c.charCodeAt(0) > 126){ result += '?'; }  // no-ASCII en comentario → '?'
+      else result += c;
+    }
+    else result += c;
+  }
+  return result;
+}
+
 // ================= GEOMETRIA =================
 function signedArea(pts){ let a = 0; const n = pts.length;
   for (let i = 0; i < n; i++){ const p1 = pts[i], p2 = pts[(i + 1) % n]; a += p1.x * p2.y - p2.x * p1.y; }
@@ -944,7 +966,6 @@ function migrateOperation(op){
     });
     delete op.areas;
   }
-  // Migración: la profundidad ahora es por operación. Si no existe, tomarla de la herramienta.
   if (typeof op.depth !== 'number'){
     const t = S.tools.find(tt => tt.id === op.toolId) || S.tools[0];
     op.depth = (t && typeof t.depth === 'number') ? t.depth : 6;
@@ -1266,9 +1287,10 @@ function buildProgram(){
   const blockPoints = S.blockPoints;
   const blockZ = S.blockZ;
 
+  // emit SANITIZADO: evita paréntesis anidados (error L17) y caracteres no ASCII
   const emit = (txt, block) => {
     if (lines.length >= MAX_GCODE_LINES * 1.5) return;
-    lines.push(txt);
+    lines.push(sanitizeComment(txt));
     lineBlocks.push(block === undefined ? -1 : block);
   };
   const addMove = (type, pts, z, feedOverride, block) => {
@@ -1333,6 +1355,9 @@ function buildProgram(){
     emit(`T${tool.toolNumber} M6`, -1);
     emit(`S${tool.rpm} ${spindleDir}`, -1);
     if (S.spindlePause > 0){
+      // OJO: G4 P usa milisegundos en Grbl/Marlin; en Fanuc/LinuxCNC usa segundos.
+      // Si tu controlador es Fanuc/LinuxCNC y experimentas pausas enormes,
+      // cambia a: emit(`G4 P${S.spindlePause}  (pausa ${S.spindlePause}s)`)
       const pauseMs = Math.round(S.spindlePause * 1000);
       emit(`G4 P${pauseMs}  (pausa estabilizacion mandrino ${S.spindlePause}s)`, -1);
       addSpindlePause(-1);
@@ -1350,7 +1375,8 @@ function buildProgram(){
       }
       const passes = Math.max(1, Math.min(500, Math.ceil(opDepth / tool.step)));
       const step = opDepth / passes;
-      emit(`(Operacion ${oi+1}/${entries.length}: ${op.type.toUpperCase()} - prof ${opDepth.toFixed(2)}mm en ${passes} pasada(s))`, -1);
+      // Sin paréntesis anidados: "en N pasadas" en lugar de "pasada(s)"
+      emit(`(Operacion ${oi+1}/${entries.length}: ${op.type.toUpperCase()} - prof ${opDepth.toFixed(2)}mm en ${passes} pasadas)`, -1);
 
       if (op.type === 'drill'){
         if (!op.points.length){ emit('', -1); continue; }
@@ -1389,7 +1415,8 @@ function buildProgram(){
           emit(`G0 Z${tool.safe.toFixed(3)}`, -1);
           addMove('rapid', [{x:lastX, y:lastY}], tool.safe, S.rapidZ, -1);
         }
-        emit(`(${contoursArr.length} contorno(s) en esta operacion)`, -1);
+        // Sin paréntesis anidados: "contornos" en lugar de "contorno(s)"
+        emit(`(${contoursArr.length} contornos en esta operacion)`, -1);
 
         for (let ci = 0; ci < contoursArr.length; ci++){
           const c = contoursArr[ci];
@@ -1402,7 +1429,8 @@ function buildProgram(){
             const seed = S.tabs.seed + originalIndex * 137 + ci * 9973;
             tabsEff = computeTabSegments(ptsEff, true, S.tabs.count, S.tabs.width, seed, tool.diam);
           }
-          emit(`(Contorno ${ci+1}/${contoursArr.length}: ${isClosed?'cerrado':'abierto'}, ${ptsEff.length} pts)`, -1);
+          const shape = isClosed ? 'cerrado' : 'abierto';
+          emit(`(Contorno ${ci+1}/${contoursArr.length}: ${shape}, ${ptsEff.length} pts)`, -1);
           emit(`G0 X${f.x.toFixed(3)} Y${f.y.toFixed(3)}`, -1);
           addMove('rapid', [{x:lastX, y:lastY}, {x:f.x, y:f.y}], tool.safe, S.rapidXY, -1);
 
@@ -1476,7 +1504,8 @@ function buildProgram(){
           if (!offsets.length){
             emit('(cajeado demasiado pequeno para la herramienta)', -1); emit('', -1); continue;
           }
-          emit(`(Cajeado ${pki+1}/${pockets.length}: ${offsets.length} anillos x ${passes} pasadas Z (prof ${opDepth.toFixed(2)}mm) - ESPIRAL SIN RETRAER)`, -1);
+          // SIN paréntesis anidados: "prof Xmm - ESPIRAL..." en lugar de "(prof Xmm) - ESPIRAL..."
+          emit(`(Cajeado ${pki+1}/${pockets.length}: ${offsets.length} anillos x ${passes} pasadas Z - prof ${opDepth.toFixed(2)}mm - ESPIRAL SIN RETRAER)`, -1);
 
           // ---- Rapid al punto de inicio del anillo exterior ----
           const startPt = offsets[0][0];
@@ -1576,18 +1605,18 @@ function emitCutWithTabsUnified(lines, lineBlocks, blockId, pts, closed, tool, f
     if (sStart > s + 1e-6){
       const between = pathPointsBetween(path, cumLens, s, sStart);
       for (let i = 1; i < between.length; i++){
-        lines.push(`G1 X${between[i].x.toFixed(3)} Y${between[i].y.toFixed(3)} F${tool.feed}`); lineBlocks.push(blockId);
+        lines.push(sanitizeComment(`G1 X${between[i].x.toFixed(3)} Y${between[i].y.toFixed(3)} F${tool.feed}`)); lineBlocks.push(blockId);
       }
     }
-    lines.push(`G1 Z${tabZ.toFixed(3)} F${tool.feedZ}  (patilla subir)`); lineBlocks.push(blockId);
+    lines.push(sanitizeComment(`G1 Z${tabZ.toFixed(3)} F${tool.feedZ}  (patilla subir)`)); lineBlocks.push(blockId);
     const tabPts = pathPointsBetween(path, cumLens, sStart, sEnd);
-    for (let i = 1; i < tabPts.length; i++){ lines.push(`G1 X${tabPts[i].x.toFixed(3)} Y${tabPts[i].y.toFixed(3)} F${tool.feed}`); lineBlocks.push(blockId); }
-    lines.push(`G1 Z${fullZ.toFixed(3)} F${tool.feedZ}  (patilla bajar)`); lineBlocks.push(blockId);
+    for (let i = 1; i < tabPts.length; i++){ lines.push(sanitizeComment(`G1 X${tabPts[i].x.toFixed(3)} Y${tabPts[i].y.toFixed(3)} F${tool.feed}`)); lineBlocks.push(blockId); }
+    lines.push(sanitizeComment(`G1 Z${fullZ.toFixed(3)} F${tool.feedZ}  (patilla bajar)`)); lineBlocks.push(blockId);
     s = sEnd;
   }
   if (L > s + 1e-6){
     const rest = pathPointsBetween(path, cumLens, s, L);
-    for (let i = 1; i < rest.length; i++){ lines.push(`G1 X${rest[i].x.toFixed(3)} Y${rest[i].y.toFixed(3)} F${tool.feed}`); lineBlocks.push(blockId); }
+    for (let i = 1; i < rest.length; i++){ lines.push(sanitizeComment(`G1 X${rest[i].x.toFixed(3)} Y${rest[i].y.toFixed(3)} F${tool.feed}`)); lineBlocks.push(blockId); }
   }
 }
 function emitSimWithTabs(pts, closed, fullZ, feed, tabHeight, tabs, blockId, addMove){
@@ -2352,7 +2381,7 @@ function init(){
   } else {
     showToast('Proyecto restaurado','success');
   }
-  console.log('CNC DXF a G-Code - profundidad POR OPERACION, cajeado espiral sin retraer Z');
+  console.log('CNC DXF a G-Code - sanitizacion de comentarios + profundidad por operacion + cajeado espiral');
   if (S.clipperReady){
     console.log('  ✅ Clipper activo');
   } else {
