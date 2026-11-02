@@ -49,7 +49,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 .tool-item .tact button{background:transparent;border:none;color:var(--text2);cursor:pointer;padding:2px 4px;border-radius:3px;font-size:.75rem}
 .tool-item .tact button:hover{background:#3a3f4a;color:#fff}
 .ops{list-style:none;max-height:200px;overflow-y:auto;font-size:.72rem}
-.ops li{padding:5px 6px;border-radius:4px;display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;background:#22262e;gap:3px}
+.ops li{padding:5px 6px;border-radius:4px;display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;background:#22262e;gap:2px}
 .op-type{font-weight:600;font-size:.58rem;padding:2px 4px;border-radius:6px;flex-shrink:0}
 .op-type.drill{background:#ff6b6b22;color:#ff6b6b}
 .op-type.cut{background:#ffb34722;color:#ffb347}
@@ -57,6 +57,8 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 .op-tool-select{background:#1a1d24;border:1px solid var(--border);color:var(--text2);font-size:.6rem;border-radius:3px;padding:1px 2px;font-family:inherit;cursor:pointer}
 .op-depth-input{background:#1a1d24;border:1px solid var(--border);color:#ffb347;font-size:.62rem;padding:1px 3px;border-radius:3px;font-family:monospace;text-align:right;font-weight:600}
 .op-depth-input:focus{outline:none;border-color:var(--accent);color:#fff}
+.op-adjust-input{background:#1a1d24;border:1px solid var(--border);color:#4da6ff;font-size:.62rem;padding:1px 3px;border-radius:3px;font-family:monospace;text-align:right;font-weight:600}
+.op-adjust-input:focus{outline:none;border-color:var(--accent);color:#fff}
 .del-op{cursor:pointer;opacity:.5;padding:2px 4px;flex-shrink:0;font-size:.72rem}
 .del-op:hover{opacity:1;color:var(--danger)}
 .canvas-container{flex:1;position:relative;background:var(--canvas);overflow:hidden;min-width:200px}
@@ -144,7 +146,7 @@ canvas{display:block;position:absolute;top:0;left:0}
     </div>
     <div class="sec"><h3>📋 Operaciones <span class="mini" id="opCount">0</span></h3>
       <ul class="ops" id="opsList"><li class="empty-hint" style="background:transparent;">Sin operaciones</li></ul>
-      <div class="hint">El número naranja es la <b>profundidad</b> de cada operación (mm).</div>
+      <div class="hint">Naranja = <b>profundidad</b> (mm). Azul = <b>ajuste fino</b> (+ expande, − contrae).</div>
       <button class="btn small" id="btnUndo" style="width:100%;margin-top:5px;">↩ Deshacer</button>
     </div>
     <div class="sec"><h3>🗂 Capas</h3>
@@ -279,8 +281,6 @@ function parseDXF(text){
         const e = { type:'LWPOLYLINE', layer:get(8)||'0', vertices: [], closed: false };
         const flag = parseInt(get(70)||'0', 10); e.closed = (flag & 1) === 1;
         // CORRECCIÓN: se acumula cada vértice completo (x, y, bulge) antes de cerrarlo.
-        // Antes se cerraba en cuanto llegaba el código 20 y el 42 (bulge) se perdía,
-        // lo que convertía todos los arcos embebidos en polilíneas en segmentos rectos.
         let currentV = null;
         for (const p of props){
           if (p.code === 10){
@@ -354,7 +354,6 @@ function normalize(parsed){
   for (const e of parsed.entities){
     if (e.type === 'LINE'){ out.push({ type:'LINE', layer:e.layer, x1:e.x1*f, y1:e.y1*f, x2:e.x2*f, y2:e.y2*f }); }
     else if (e.type === 'CIRCLE'){ out.push({ type:'CIRCLE', layer:e.layer, cx:e.cx*f, cy:e.cy*f, r:e.r*f }); }
-    // CORRECCIÓN: si sa == ea se fuerza un arco mínimo (no se convierte en círculo completo).
     else if (e.type === 'ARC'){ let sa = e.sa * Math.PI / 180; let ea = e.ea * Math.PI / 180;
       if (ea < sa) ea += 2 * Math.PI;
       else if (Math.abs(ea - sa) < 1e-9) ea = sa + 1e-6;
@@ -822,6 +821,24 @@ function offsetPointsSimpleFallback(pts, delta){
   return out;
 }
 
+// Offset simple para contornos ABIERTOS: desplaza cada punto perpendicular
+// a la dirección local. +delta = lado derecho de la dirección de avance.
+function offsetOpenPathSimple(pts, delta){
+  if (!pts || pts.length < 2) return pts ? pts.slice() : [];
+  const n = pts.length;
+  const out = [];
+  for (let i = 0; i < n; i++){
+    let tx, ty;
+    if (i === 0){ tx = pts[1].x - pts[0].x; ty = pts[1].y - pts[0].y; }
+    else if (i === n - 1){ tx = pts[i].x - pts[i-1].x; ty = pts[i].y - pts[i-1].y; }
+    else { tx = pts[i+1].x - pts[i-1].x; ty = pts[i+1].y - pts[i-1].y; }
+    const tl = Math.hypot(tx, ty) || 1;
+    const nx = ty / tl, ny = -tx / tl;  // normal derecha
+    out.push({ x: pts[i].x + nx * delta, y: pts[i].y + ny * delta });
+  }
+  return out;
+}
+
 // =================================================================
 //  RESOLUCIÓN DE CONTORNOS DE CORTE  (MULTI-CONTORNO)
 // =================================================================
@@ -845,19 +862,33 @@ function resolveCutContours(op, tool){
     }
 
     const off = op.offset || 'center';
-    if ((off === 'inside' || off === 'outside') && closed && pts.length >= 3){
+    const adjust = (typeof op.adjust === 'number') ? op.adjust : 0;
+
+    if (closed && pts.length >= 3){
+      // Corrección fina por operación: positiva expande trayectoria (más material
+      // en la pared), negativa la contrae (corta más adentro).
       const ccw = signedArea(pts) > 0;
       const toolRadius = tool.diam / 2;
-      let delta;
-      if (off === 'inside') delta = ccw ? -toolRadius : +toolRadius;
-      else                 delta = ccw ? +toolRadius : -toolRadius;
-      try {
-        const result = offsetPointsWithClipper(pts, delta, 'round');
-        if (result && result.length >= 3) pts = result;
-      } catch (err){
-        console.warn('Error en Clipper offset, fallback:', err);
-        pts = offsetPointsSimpleFallback(pts, delta);
+      let delta = 0;
+      if (off === 'inside')       delta = ccw ? -toolRadius : +toolRadius;
+      else if (off === 'outside') delta = ccw ? +toolRadius : -toolRadius;
+      // center: delta = 0
+      // El ajuste se suma con el mismo signo "hacia fuera" independientemente
+      // de si el polígono es CW o CCW.
+      delta += ccw ? adjust : -adjust;
+
+      if (Math.abs(delta) > 1e-6){
+        try {
+          const result = offsetPointsWithClipper(pts, delta, 'round');
+          if (result && result.length >= 3) pts = result;
+        } catch (err){
+          console.warn('Error en Clipper offset, fallback:', err);
+          pts = offsetPointsSimpleFallback(pts, delta);
+        }
       }
+    } else if (!closed && pts.length >= 2 && Math.abs(adjust) > 1e-6){
+      // Contornos abiertos: sólo se aplica el ajuste (offset C/I/E no tiene sentido).
+      pts = offsetOpenPathSimple(pts, adjust);
     }
 
     if (closed && pts.length >= 3) pts = rotatePointsToStart(pts, 0, 0);
@@ -984,6 +1015,7 @@ function migrateOperation(op){
     const t = S.tools.find(tt => tt.id === op.toolId) || S.tools[0];
     op.depth = (t && typeof t.depth === 'number') ? t.depth : 6;
   }
+  if (typeof op.adjust !== 'number') op.adjust = 0;
   return op;
 }
 function applyProjectData(data){
@@ -1141,7 +1173,7 @@ function addCut(idx){
   if (!S.tools.length){ showToast('Anade primero una herramienta','warn'); return; }
   for (const op of S.operations) if (op.type === 'cut' && op.ids.includes(idx)) return;
   let op = S.operations.find(o => o.type === 'cut');
-  if (!op){ op = { type:'cut', ids:[], offset:'center', toolId: S.activeToolId, depth: defaultDepthForNewOp() }; S.operations.push(op); }
+  if (!op){ op = { type:'cut', ids:[], offset:'center', adjust: 0, toolId: S.activeToolId, depth: defaultDepthForNewOp() }; S.operations.push(op); }
   op.ids.push(idx);
   updateOpsList(); rebuildAllContours(); buildProgram(); render(); scheduleSave();
 }
@@ -1149,7 +1181,7 @@ function addCutBatch(indices){
   if (!indices || !indices.length) return 0;
   if (!S.tools.length){ showToast('Anade primero una herramienta','warn'); return 0; }
   let op = S.operations.find(o => o.type === 'cut');
-  if (!op){ op = { type:'cut', ids:[], offset:'center', toolId: S.activeToolId, depth: defaultDepthForNewOp() }; S.operations.push(op); }
+  if (!op){ op = { type:'cut', ids:[], offset:'center', adjust: 0, toolId: S.activeToolId, depth: defaultDepthForNewOp() }; S.operations.push(op); }
   let added = 0;
   for (const idx of indices){
     if (idx >= 0 && !op.ids.includes(idx)){ op.ids.push(idx); added++; }
@@ -1166,7 +1198,7 @@ function addPocketBoundary(boundary){
   if (boundary.length < 3){ showToast('Contorno invalido','warn'); return; }
   if (signedArea(boundary) < 0) boundary = boundary.slice().reverse();
   let op = S.operations.find(o => o.type === 'pocket');
-  if (!op){ op = { type:'pocket', pockets:[], toolId: S.activeToolId, depth: defaultDepthForNewOp() }; S.operations.push(op); }
+  if (!op){ op = { type:'pocket', pockets:[], adjust: 0, toolId: S.activeToolId, depth: defaultDepthForNewOp() }; S.operations.push(op); }
   op.pockets.push({ boundary });
   updateOpsList(); buildProgram(); render(); scheduleSave();
   showToast('Cajeado anadido','success');
@@ -1208,25 +1240,37 @@ function updateOpsList(){
       det = `${op.ids.length} ent · ${nCont} cont`;
     }
     else if (op.type==='pocket') det = `${(op.pockets||[]).length} caj.`;
+
     let offSel = '';
     if (op.type === 'cut'){ const off = op.offset || 'center';
-      offSel = `<select class="op-tool-select" data-i="${i}" data-k="offset" style="max-width:28px;">
+      offSel = `<select class="op-tool-select" data-i="${i}" data-k="offset" style="max-width:26px;" title="Modo offset: C=Centro, I=Dentro, E=Fuera">
         <option value="center" ${off==='center'?'selected':''}>C</option>
         <option value="inside" ${off==='inside'?'selected':''}>I</option>
         <option value="outside" ${off==='outside'?'selected':''}>E</option>
       </select>`;
     }
+
+    let adjustInp = '';
+    if (op.type === 'cut' || op.type === 'pocket'){
+      const av = (typeof op.adjust === 'number') ? op.adjust : 0;
+      adjustInp = `<input type="number" class="op-adjust-input" data-i="${i}" value="${av}" step="0.05" min="-99" max="99" title="Ajuste fino (mm): + expande trayectoria, - contrae. Ej: +0.20 deja 0.20mm mas de material." style="width:38px;">`;
+    }
+
     const t = getToolById(op.toolId) || S.tools[0];
     const opDepth = (typeof op.depth === 'number') ? op.depth : (t ? t.depth : 6);
-    const depthInp = `<input type="number" class="op-depth-input" data-i="${i}" value="${opDepth}" step="0.5" min="0" title="Profundidad total de la operacion (mm)" style="width:42px;">`;
+    const depthInp = `<input type="number" class="op-depth-input" data-i="${i}" value="${opDepth}" step="0.5" min="0" title="Profundidad total de la operacion (mm)" style="width:40px;">`;
+
     return `<li><span style="flex:1;min-width:0;"><span class="op-type ${op.type}">${op.type.toUpperCase()}</span> ${det}</span>
-      <select class="op-tool-select" data-i="${i}" data-k="toolId" style="max-width:48px;">${toolOptions}</select>
+      <select class="op-tool-select" data-i="${i}" data-k="toolId" style="max-width:42px;">${toolOptions}</select>
       ${offSel}
+      ${adjustInp}
       ${depthInp}
       <span class="del-op" data-i="${i}">×</span></li>`;
   }).join('');
+
   opsEl.querySelectorAll('select[data-k="toolId"]').forEach(sel => { const i = parseInt(sel.dataset.i); if (S.operations[i].toolId) sel.value = S.operations[i].toolId; });
   opsEl.querySelectorAll('.del-op').forEach(b => b.addEventListener('click', e => { e.stopPropagation(); removeOp(parseInt(b.dataset.i)); }));
+
   opsEl.querySelectorAll('.op-depth-input').forEach(inp => {
     inp.addEventListener('change', () => {
       const i = parseInt(inp.dataset.i);
@@ -1241,6 +1285,24 @@ function updateOpsList(){
     });
     inp.addEventListener('click', e => e.stopPropagation());
   });
+
+  opsEl.querySelectorAll('.op-adjust-input').forEach(inp => {
+    inp.addEventListener('change', () => {
+      const i = parseInt(inp.dataset.i);
+      const v = parseFloat(inp.value);
+      if (isFinite(v)){
+        S.operations[i].adjust = v;
+        rebuildAllContours(); buildProgram(); render(); scheduleSave();
+      } else {
+        inp.value = 0;
+        S.operations[i].adjust = 0;
+        rebuildAllContours(); buildProgram(); render();
+      }
+    });
+    inp.addEventListener('click', e => e.stopPropagation());
+    inp.addEventListener('keydown', e => { if (e.key === 'Enter') inp.blur(); });
+  });
+
   opsEl.querySelectorAll('.op-tool-select').forEach(s => {
     s.addEventListener('change', () => {
       const i = parseInt(s.dataset.i), k = s.dataset.k;
@@ -1377,6 +1439,7 @@ function buildProgram(){
     for (let oi = 0; oi < entries.length; oi++){
       const { op, originalIndex } = entries[oi];
       const opDepth = Math.max(0, (typeof op.depth === 'number') ? op.depth : tool.depth);
+      const opAdjust = (typeof op.adjust === 'number') ? op.adjust : 0;
       if (opDepth <= 0){
         emit(`(Operacion ${oi+1}/${entries.length}: ${op.type.toUpperCase()} - profundidad 0, omitida)`, -1);
         emit('', -1);
@@ -1384,7 +1447,8 @@ function buildProgram(){
       }
       const passes = Math.max(1, Math.min(500, Math.ceil(opDepth / tool.step)));
       const step = opDepth / passes;
-      emit(`(Operacion ${oi+1}/${entries.length}: ${op.type.toUpperCase()} - prof ${opDepth.toFixed(2)}mm en ${passes} pasadas)`, -1);
+      const adjStr = (Math.abs(opAdjust) > 1e-6) ? ` - ajuste ${opAdjust >= 0 ? '+' : ''}${opAdjust.toFixed(3)}mm` : '';
+      emit(`(Operacion ${oi+1}/${entries.length}: ${op.type.toUpperCase()} - prof ${opDepth.toFixed(2)}mm en ${passes} pasadas${adjStr})`, -1);
 
       if (op.type === 'drill'){
         if (!op.points.length){ emit('', -1); continue; }
@@ -1488,7 +1552,10 @@ function buildProgram(){
           const bbBoundary = bboxFromPoints(boundary);
           const maxRingsBySize = Math.ceil(Math.max(bbBoundary.w, bbBoundary.h) / stepOver) + 5;
           const maxRings = Math.min(MAX_POCKET_RINGS, Math.max(1, maxRingsBySize));
-          let d = -toolR;
+          // AJUSTE FINO: se aplica al radio efectivo de la herramienta.
+          // + adjust → anillo exterior menos adentro → cajeado más grande.
+          // - adjust → anillo exterior más adentro → cajeado más pequeño (más material).
+          let d = -toolR + opAdjust;
           let prevArea = Infinity;
           for (let iter = 0; iter < maxRings; iter++){
             let off = null;
@@ -1508,7 +1575,8 @@ function buildProgram(){
           if (!offsets.length){
             emit('(cajeado demasiado pequeno para la herramienta)', -1); emit('', -1); continue;
           }
-          emit(`(Cajeado ${pki+1}/${pockets.length}: ${offsets.length} anillos x ${passes} pasadas Z - prof ${opDepth.toFixed(2)}mm - ESPIRAL SIN RETRAER)`, -1);
+          const adjPkStr = (Math.abs(opAdjust) > 1e-6) ? ` - ajuste ${opAdjust >= 0 ? '+' : ''}${opAdjust.toFixed(3)}mm` : '';
+          emit(`(Cajeado ${pki+1}/${pockets.length}: ${offsets.length} anillos x ${passes} pasadas Z - prof ${opDepth.toFixed(2)}mm${adjPkStr} - ESPIRAL SIN RETRAER)`, -1);
 
           const startPt = offsets[0][0];
           emit(`G0 X${startPt.x.toFixed(3)} Y${startPt.y.toFixed(3)}`, -1);
@@ -2283,7 +2351,7 @@ canvasContainer.addEventListener('mousemove', e => {
   }
   const nh = closestEnt(w.x, w.y, 5);
   if (nh !== S.hover){ S.hover = nh; render(); }
-  else coordEl.textContent = `X: ${w.x.toFixed(2)} mm | Y: ${w.mwy ? w.y.toFixed(2) : w.y.toFixed(2)} mm`;
+  else coordEl.textContent = `X: ${w.x.toFixed(2)} mm | Y: ${w.y.toFixed(2)} mm`;
 });
 
 window.addEventListener('mouseup', () => {
@@ -2382,7 +2450,7 @@ function init(){
   } else {
     showToast('Proyecto restaurado','success');
   }
-  console.log('CNC DXF a G-Code - sanitizacion de comentarios + profundidad por operacion + cajeado espiral');
+  console.log('CNC DXF a G-Code - +ajuste fino por operacion (+expande / -contrae)');
   if (S.clipperReady){
     console.log('  ✅ Clipper activo');
   } else {
