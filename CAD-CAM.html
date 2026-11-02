@@ -275,14 +275,28 @@ function parseDXF(text){
       if (type === 'CIRCLE'){ const e = { type:'CIRCLE', layer:get(8)||'0', cx:parseFloat(get(10)), cy:parseFloat(get(20)), r:parseFloat(get(40)) }; if (isFinite(e.cx)&&isFinite(e.cy)&&isFinite(e.r)&&e.r>0) target.push(e); continue; }
       if (type === 'ARC'){ const e = { type:'ARC', layer:get(8)||'0', cx:parseFloat(get(10)), cy:parseFloat(get(20)), r:parseFloat(get(40)), sa:parseFloat(get(50)), ea:parseFloat(get(51)) }; if ([e.cx,e.cy,e.r,e.sa,e.ea].every(isFinite)&&e.r>0) target.push(e); continue; }
       if (type === 'POINT'){ const e = { type:'POINT', layer:get(8)||'0', x:parseFloat(get(10)), y:parseFloat(get(20)) }; if (isFinite(e.x)&&isFinite(e.y)) target.push(e); continue; }
-      if (type === 'LWPOLYLINE'){ const e = { type:'LWPOLYLINE', layer:get(8)||'0', vertices: [], closed: false };
+      if (type === 'LWPOLYLINE'){
+        const e = { type:'LWPOLYLINE', layer:get(8)||'0', vertices: [], closed: false };
         const flag = parseInt(get(70)||'0', 10); e.closed = (flag & 1) === 1;
-        let cx=null, cy=null, cb=0;
-        for (const p of props){ if (p.code === 10){ cx = parseFloat(p.value); cb = 0; }
-          else if (p.code === 20){ cy = parseFloat(p.value); }
-          else if (p.code === 42){ cb = parseFloat(p.value); }
-          if (cx !== null && cy !== null){ e.vertices.push({ x:cx, y:cy, bulge: isFinite(cb) ? cb : 0 }); cx=null; cy=null; cb=0; } }
-        if (e.vertices.length >= 2) target.push(e); continue; }
+        // CORRECCIÓN: se acumula cada vértice completo (x, y, bulge) antes de cerrarlo.
+        // Antes se cerraba en cuanto llegaba el código 20 y el 42 (bulge) se perdía,
+        // lo que convertía todos los arcos embebidos en polilíneas en segmentos rectos.
+        let currentV = null;
+        for (const p of props){
+          if (p.code === 10){
+            if (currentV && isFinite(currentV.x) && isFinite(currentV.y)) e.vertices.push(currentV);
+            currentV = { x: parseFloat(p.value), y: NaN, bulge: 0 };
+          } else if (p.code === 20 && currentV){
+            currentV.y = parseFloat(p.value);
+          } else if (p.code === 42 && currentV){
+            const b = parseFloat(p.value);
+            currentV.bulge = isFinite(b) ? b : 0;
+          }
+        }
+        if (currentV && isFinite(currentV.x) && isFinite(currentV.y)) e.vertices.push(currentV);
+        if (e.vertices.length >= 2) target.push(e);
+        continue;
+      }
       if (type === 'POLYLINE'){ const poly = { type:'LWPOLYLINE', layer:get(8)||'0', vertices: [], closed:false };
         const flag = parseInt(get(70)||'0', 10); poly.closed = (flag & 1) === 1;
         while (true){ const t2 = nextCode0(); if (t2 === null) break;
@@ -340,7 +354,11 @@ function normalize(parsed){
   for (const e of parsed.entities){
     if (e.type === 'LINE'){ out.push({ type:'LINE', layer:e.layer, x1:e.x1*f, y1:e.y1*f, x2:e.x2*f, y2:e.y2*f }); }
     else if (e.type === 'CIRCLE'){ out.push({ type:'CIRCLE', layer:e.layer, cx:e.cx*f, cy:e.cy*f, r:e.r*f }); }
-    else if (e.type === 'ARC'){ let sa = e.sa * Math.PI / 180; let ea = e.ea * Math.PI / 180; if (ea <= sa) ea += 2 * Math.PI; out.push({ type:'ARC', layer:e.layer, cx:e.cx*f, cy:e.cy*f, r:e.r*f, sa, ea }); }
+    // CORRECCIÓN: si sa == ea se fuerza un arco mínimo (no se convierte en círculo completo).
+    else if (e.type === 'ARC'){ let sa = e.sa * Math.PI / 180; let ea = e.ea * Math.PI / 180;
+      if (ea < sa) ea += 2 * Math.PI;
+      else if (Math.abs(ea - sa) < 1e-9) ea = sa + 1e-6;
+      out.push({ type:'ARC', layer:e.layer, cx:e.cx*f, cy:e.cy*f, r:e.r*f, sa, ea }); }
     else if (e.type === 'POINT'){ out.push({ type:'POINT', layer:e.layer, x:e.x*f, y:e.y*f }); }
     else if (e.type === 'LWPOLYLINE'){ const verts = expandBulge(e.vertices, e.closed); if (verts.length >= 2){ out.push({ type:'LWPOLYLINE', layer:e.layer, closed:!!e.closed, vertices: verts.map(v => ({ x:v.x*f, y:v.y*f })) }); } }
   }
@@ -463,9 +481,6 @@ function updateToolsList(){
 function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
 // ================= SANITIZADOR DE COMENTARIOS G-CODE =================
-// Convierte cualquier ( anidado en [ y ) anidado en ], preservando los
-// paréntesis del comentario exterior. También elimina caracteres no ASCII
-// en comentarios para evitar rechazos de controladores estrictos.
 function sanitizeComment(txt){
   let result = '';
   let inComment = false;
@@ -476,7 +491,7 @@ function sanitizeComment(txt){
     else if (inComment){
       if (c === '('){ depth++; result += '['; }
       else if (c === ')'){ depth--; if (depth === 0){ inComment = false; result += ')'; } else result += ']'; }
-      else if (c.charCodeAt(0) > 126){ result += '?'; }  // no-ASCII en comentario → '?'
+      else if (c.charCodeAt(0) > 126){ result += '?'; }
       else result += c;
     }
     else result += c;
@@ -487,8 +502,7 @@ function sanitizeComment(txt){
 // ================= GEOMETRIA =================
 function signedArea(pts){ let a = 0; const n = pts.length;
   for (let i = 0; i < n; i++){ const p1 = pts[i], p2 = pts[(i + 1) % n]; a += p1.x * p2.y - p2.x * p1.y; }
-  return a / 2;
-}
+  return a / 2; }
 function dedupePolygon(pts, tol){
   tol = tol || 1e-4;
   if (!pts || pts.length < 2) return pts ? pts.slice() : [];
@@ -1287,7 +1301,6 @@ function buildProgram(){
   const blockPoints = S.blockPoints;
   const blockZ = S.blockZ;
 
-  // emit SANITIZADO: evita paréntesis anidados (error L17) y caracteres no ASCII
   const emit = (txt, block) => {
     if (lines.length >= MAX_GCODE_LINES * 1.5) return;
     lines.push(sanitizeComment(txt));
@@ -1355,9 +1368,6 @@ function buildProgram(){
     emit(`T${tool.toolNumber} M6`, -1);
     emit(`S${tool.rpm} ${spindleDir}`, -1);
     if (S.spindlePause > 0){
-      // OJO: G4 P usa milisegundos en Grbl/Marlin; en Fanuc/LinuxCNC usa segundos.
-      // Si tu controlador es Fanuc/LinuxCNC y experimentas pausas enormes,
-      // cambia a: emit(`G4 P${S.spindlePause}  (pausa ${S.spindlePause}s)`)
       const pauseMs = Math.round(S.spindlePause * 1000);
       emit(`G4 P${pauseMs}  (pausa estabilizacion mandrino ${S.spindlePause}s)`, -1);
       addSpindlePause(-1);
@@ -1366,7 +1376,6 @@ function buildProgram(){
 
     for (let oi = 0; oi < entries.length; oi++){
       const { op, originalIndex } = entries[oi];
-      // Profundidad por OPERACIÓN (no por herramienta)
       const opDepth = Math.max(0, (typeof op.depth === 'number') ? op.depth : tool.depth);
       if (opDepth <= 0){
         emit(`(Operacion ${oi+1}/${entries.length}: ${op.type.toUpperCase()} - profundidad 0, omitida)`, -1);
@@ -1375,7 +1384,6 @@ function buildProgram(){
       }
       const passes = Math.max(1, Math.min(500, Math.ceil(opDepth / tool.step)));
       const step = opDepth / passes;
-      // Sin paréntesis anidados: "en N pasadas" en lugar de "pasada(s)"
       emit(`(Operacion ${oi+1}/${entries.length}: ${op.type.toUpperCase()} - prof ${opDepth.toFixed(2)}mm en ${passes} pasadas)`, -1);
 
       if (op.type === 'drill'){
@@ -1408,14 +1416,12 @@ function buildProgram(){
         emit('G80', -1);
         emit(`G0 Z${tool.safe.toFixed(3)}`, -1);
       } else if (op.type === 'cut'){
-        // ===== CORTE: MULTI-CONTORNO =====
         const contoursArr = S.cutContours[originalIndex];
         if (!contoursArr || !contoursArr.length){ emit('(sin contorno resuelto)', -1); emit('', -1); continue; }
         if (Math.abs(lastZ - tool.safe) > 0.01){
           emit(`G0 Z${tool.safe.toFixed(3)}`, -1);
           addMove('rapid', [{x:lastX, y:lastY}], tool.safe, S.rapidZ, -1);
         }
-        // Sin paréntesis anidados: "contornos" en lugar de "contorno(s)"
         emit(`(${contoursArr.length} contornos en esta operacion)`, -1);
 
         for (let ci = 0; ci < contoursArr.length; ci++){
@@ -1462,7 +1468,6 @@ function buildProgram(){
           addMove('rapid', [{x:lastX, y:lastY}], tool.retract, S.rapidZ, -1);
         }
       } else if (op.type === 'pocket'){
-        // ===== CAJEADO EN ESPIRAL CONTINUA (SIN LEVANTAR Z) =====
         const pockets = op.pockets || [];
         if (!pockets.length){ emit('(cajeado sin contornos)', -1); emit('', -1); continue; }
         if (Math.abs(lastZ - tool.safe) > 0.01){
@@ -1479,7 +1484,6 @@ function buildProgram(){
           if (boundary.length < 3){ emit('(cajeado invalido)', -1); emit('', -1); continue; }
           if (signedArea(boundary) < 0) boundary = boundary.slice().reverse();
 
-          // ---- Calcular anillos (indice 0 = exterior, ultimo = interior) ----
           const offsets = [];
           const bbBoundary = bboxFromPoints(boundary);
           const maxRingsBySize = Math.ceil(Math.max(bbBoundary.w, bbBoundary.h) / stepOver) + 5;
@@ -1504,15 +1508,12 @@ function buildProgram(){
           if (!offsets.length){
             emit('(cajeado demasiado pequeno para la herramienta)', -1); emit('', -1); continue;
           }
-          // SIN paréntesis anidados: "prof Xmm - ESPIRAL..." en lugar de "(prof Xmm) - ESPIRAL..."
           emit(`(Cajeado ${pki+1}/${pockets.length}: ${offsets.length} anillos x ${passes} pasadas Z - prof ${opDepth.toFixed(2)}mm - ESPIRAL SIN RETRAER)`, -1);
 
-          // ---- Rapid al punto de inicio del anillo exterior ----
           const startPt = offsets[0][0];
           emit(`G0 X${startPt.x.toFixed(3)} Y${startPt.y.toFixed(3)}`, -1);
           addMove('rapid', [{x:lastX, y:lastY}, {x:startPt.x, y:startPt.y}], tool.safe, S.rapidXY, -1);
 
-          // ---- Bucle de pasadas Z (sin retraer Z) ----
           for (let zPass = 0; zPass < passes; zPass++){
             const zLevel = -Math.min((zPass+1)*step, opDepth);
             const forward = (zPass % 2 === 0);
