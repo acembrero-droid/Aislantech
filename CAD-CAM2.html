@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>CAD Pro + CNC · DXF → G-Code</title>
 <style>
-/* ═══════════ Variables y reset (CAD Pro + CNC) ═══════════ */
 :root {
     --bg-main:#1A1A1A; --bg-canvas:#16181A; --bg-ribbon:#232323;
     --bg-panel:#262626; --bg-button:#333333; --bg-hover:#3E3E3E;
@@ -26,7 +25,6 @@ body{background:var(--bg-main);color:var(--text-primary);font-family:var(--font-
 ::-webkit-scrollbar-thumb{background:#555;border-radius:4px}
 ::-webkit-scrollbar-thumb:hover{background:#777}
 
-/* ═══════════ Quick access ═══════════ */
 #quick-access{background:linear-gradient(to bottom,#2C2C2C,#202020);
   border-bottom:1px solid var(--border-color);padding:0 10px;display:flex;align-items:center;gap:2px;height:30px}
 #quick-access .brand{display:flex;align-items:center;gap:6px;margin-right:10px;
@@ -42,7 +40,6 @@ body{background:var(--bg-main);color:var(--text-primary);font-family:var(--font-
 #quick-access .separator{width:1px;height:18px;background:var(--border-color);margin:0 6px}
 #quick-access .file-input-hidden{display:none}
 
-/* ═══════════ Ribbon ═══════════ */
 #ribbon{background:var(--bg-ribbon);border-bottom:1px solid var(--border-color);padding:0 8px;display:flex;flex-direction:column}
 #ribbon-tabs{display:flex;gap:2px;padding:5px 0 0 2px;height:26px;align-items:flex-end}
 #ribbon-tabs button{background:transparent;border:none;color:var(--text-secondary);padding:6px 16px;
@@ -77,7 +74,6 @@ body{background:var(--bg-main);color:var(--text-primary);font-family:var(--font-
   border-radius:5px;font-size:10px;font-family:var(--font-mono);white-space:nowrap;pointer-events:none;
   z-index:1000;box-shadow:var(--shadow)}
 .ribbon-btn:hover .tooltip{display:block}
-/* CNC ribbon buttons use amber accent */
 .ribbon-btn.cnc-action{color:var(--accent-amber)}
 .ribbon-btn.cnc-action:hover{background:linear-gradient(180deg,rgba(232,163,61,.14),rgba(232,163,61,.04));
   border-color:rgba(232,163,61,.5);color:var(--accent-amber);box-shadow:0 4px 12px rgba(232,163,61,.18)}
@@ -86,19 +82,6 @@ body{background:var(--bg-main);color:var(--text-primary);font-family:var(--font-
 .ribbon-btn.cnc-mode[data-cnc-mode="drill"].active{background:linear-gradient(180deg,#FF6B6B,#c94f4f);border-color:#FF6B6B;color:#fff}
 .ribbon-btn.cnc-mode[data-cnc-mode="cut"].active{background:linear-gradient(180deg,#FFB347,#d68f1e);border-color:#FFB347;color:#2a1a00}
 .ribbon-btn.cnc-mode[data-cnc-mode="pocket"].active{background:linear-gradient(180deg,#57C46B,#3a9d50);border-color:#57C46B;color:#0a2a15}
-
-.ribbon-flyout{position:relative}
-.ribbon-flyout-menu{display:none;position:absolute;bottom:100%;margin-bottom:6px;left:50%;
-  transform:translateX(-50%);background:var(--bg-panel);border:1px solid var(--border-light);
-  border-radius:8px;box-shadow:var(--shadow);padding:5px;min-width:160px;z-index:1000}
-.ribbon-flyout-menu.open{display:block}
-.ribbon-flyout-menu button{display:flex;align-items:center;gap:10px;width:100%;background:transparent;
-  border:none;border-radius:5px;color:var(--text-primary);padding:7px 10px;cursor:pointer;
-  font-size:11.5px;text-align:left;white-space:nowrap;transition:all .15s ease}
-.ribbon-flyout-menu button:hover{background:linear-gradient(90deg,rgba(79,195,247,.18),rgba(79,195,247,.06));
-  color:var(--accent-blue);transform:translateX(2px)}
-.ribbon-flyout-menu button svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
-.ribbon-flyout-menu button .fk{margin-left:auto;color:var(--text-dim);font-family:var(--font-mono);font-size:10px}
 
 .layer-combo{position:relative}
 #layer-dropdown{flex-direction:row;font-size:11px;gap:6px;min-width:90px}
@@ -115,7 +98,6 @@ body{background:var(--bg-main);color:var(--text-primary);font-family:var(--font-
 .layer-combo-menu .lcm-item.active{color:var(--accent-blue);font-weight:600}
 .layer-combo-menu .lcm-swatch{width:11px;height:11px;border-radius:2px;flex-shrink:0;border:1px solid rgba(255,255,255,.3)}
 
-/* ═══════════ Layout principal ═══════════ */
 #main-area{flex:1;display:flex;overflow:hidden;position:relative}
 #layer-panel{width:200px;background:var(--bg-panel);border-right:1px solid var(--border-color);
   padding:10px;display:flex;flex-direction:column;flex-shrink:0;overflow:hidden}
@@ -181,7 +163,6 @@ body{background:var(--bg-main);color:var(--text-primary);font-family:var(--font-
 .prop-value .coord-group{display:flex;gap:4px;justify-content:flex-end}
 .prop-value .coord-group input{width:60px}
 
-/* ═══════════ CNC PANEL ═══════════ */
 #cnc-panel{width:340px;background:var(--bg-panel);border-left:1px solid var(--border-color);
   flex-shrink:0;overflow-y:auto;display:none;flex-direction:column;padding:8px;gap:6px}
 #cnc-panel.visible{display:flex}
@@ -199,14 +180,7 @@ body{background:var(--bg-main);color:var(--text-primary);font-family:var(--font-
 .cnc-btn.accent{background:linear-gradient(180deg,var(--accent-amber),#c98a2a);
   border-color:var(--accent-amber);color:#2a1a00}
 .cnc-btn.accent:hover{filter:brightness(1.08);transform:translateY(-1px)}
-.cnc-mode-row{display:flex;gap:3px}
-.cnc-mode-row .cnc-btn{flex:1;margin-top:0;padding:7px 4px;font-size:10px}
-.cnc-mode-row .cnc-btn.m-drill.active{background:#FF6B6B;border-color:#FF6B6B;color:#fff}
-.cnc-mode-row .cnc-btn.m-cut.active{background:#FFB347;border-color:#FFB347;color:#2a1a00}
-.cnc-mode-row .cnc-btn.m-pocket.active{background:#57C46B;border-color:#57C46B;color:#0a2a15}
-.cnc-mode-row .cnc-btn.m-off.active{background:var(--accent-blue);border-color:var(--accent-blue);color:#06283d}
 
-/* Tool items */
 .cnc-tool-list{max-height:160px;overflow-y:auto;display:flex;flex-direction:column;gap:3px}
 .cnc-tool-item{display:flex;align-items:center;gap:6px;padding:5px 7px;background:var(--bg-panel);
   border:1px solid transparent;border-radius:5px;cursor:pointer;font-size:11px;transition:all .12s}
@@ -224,7 +198,6 @@ body{background:var(--bg-main);color:var(--text-primary);font-family:var(--font-
 .cnc-tool-item .tact button:hover{background:var(--bg-hover);color:var(--text-primary)}
 .cnc-tool-item .tact button.del:hover{color:var(--accent-red)}
 
-/* Tool editor */
 .cnc-tool-editor{display:flex;flex-direction:column;gap:3px;margin-top:6px}
 .cnc-row{display:flex;align-items:center;justify-content:space-between;gap:5px;font-size:11px}
 .cnc-row label{color:var(--text-secondary);white-space:nowrap;min-width:56px;font-size:10.5px}
@@ -236,7 +209,6 @@ body{background:var(--bg-main);color:var(--text-primary);font-family:var(--font-
 .cnc-row input:focus,.cnc-row select:focus{outline:none;border-color:var(--accent-blue);color:#fff}
 .cnc-row input[type="checkbox"]{width:auto;transform:scale(1.1);accent-color:var(--accent-blue)}
 
-/* Operations */
 .cnc-op-list{max-height:180px;overflow-y:auto;display:flex;flex-direction:column;gap:3px}
 .cnc-op-item{display:flex;align-items:center;gap:3px;padding:4px 5px;background:var(--bg-panel);
   border-radius:4px;font-size:10.5px;flex-wrap:wrap}
@@ -255,7 +227,6 @@ body{background:var(--bg-main);color:var(--text-primary);font-family:var(--font-
 .cnc-op-item .op-del:hover{background:rgba(255,107,107,.15);color:var(--accent-red)}
 .cnc-hint{font-size:9.5px;color:var(--text-dim);font-style:italic;line-height:1.3;margin-top:4px}
 
-/* Simulation */
 .cnc-sim-btn-row{display:flex;gap:4px;margin-bottom:6px}
 .cnc-sim-btn{flex:1;padding:7px 6px;border:1px solid var(--border-light);border-radius:5px;
   cursor:pointer;font-size:11px;background:var(--bg-button);color:var(--text-primary);
@@ -284,7 +255,6 @@ body{background:var(--bg-main);color:var(--text-primary);font-family:var(--font-
 .cnc-legend .cb.tool{width:10px;height:10px;border-radius:50%;background:transparent;border:2px solid #FFD700}
 .cnc-legend .cb.hilite{background:#FF88DD;height:4px}
 
-/* G-code */
 .cnc-gcode{background:#0d0f12;color:#c0d0e0;font-family:var(--font-mono);font-size:9.5px;
   border-radius:4px;padding:6px 4px;min-height:120px;max-height:220px;overflow-y:auto;
   border:1px solid var(--border-color);line-height:1.35;position:relative}
@@ -297,7 +267,6 @@ body{background:var(--bg-main);color:var(--text-primary);font-family:var(--font-
 .cnc-tabs-info{font-size:9px;color:var(--text-secondary);padding:4px 6px;background:var(--bg-main);
   border-radius:3px;margin-top:4px;font-family:var(--font-mono);line-height:1.4;white-space:pre-wrap}
 
-/* Status bar + command line + others (CAD Pro) */
 #status-bar{height:28px;background:var(--bg-ribbon);border-top:1px solid var(--border-color);
   display:flex;align-items:center;padding:0 8px;gap:2px;font-size:11px;color:var(--text-secondary);flex-shrink:0}
 #status-bar .status-group{display:flex;align-items:center;gap:2px}
@@ -358,17 +327,11 @@ body{background:var(--bg-main);color:var(--text-primary);font-family:var(--font-
 @keyframes fadeIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
 @keyframes slideIn{from{opacity:0;transform:translateX(-10px)}to{opacity:1;transform:translateX(0)}}
 
-@media (max-width:1400px){
-  #cnc-panel{width:300px}
-  #properties-panel{width:240px}
-}
+@media (max-width:1400px){ #cnc-panel{width:300px} #properties-panel{width:240px} }
 @media (max-width:1024px){
-  #layer-panel{width:160px}
-  #properties-panel{width:200px}
-  #cnc-panel{width:260px}
+  #layer-panel{width:160px} #properties-panel{width:200px} #cnc-panel{width:260px}
   #ribbon-content{gap:4px 10px;padding:4px 6px}
-  .ribbon-btn{min-width:34px;padding:3px 6px}
-  .ribbon-btn svg{width:17px;height:17px}
+  .ribbon-btn{min-width:34px;padding:3px 6px} .ribbon-btn svg{width:17px;height:17px}
 }
 @media (max-width:768px){
   #layer-panel,#properties-panel{display:none!important}
@@ -380,7 +343,6 @@ body{background:var(--bg-main);color:var(--text-primary);font-family:var(--font-
 </head>
 <body>
 
-<!-- ═══════════ Quick access ═══════════ -->
 <div id="quick-access">
   <span class="brand">
     <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -401,7 +363,6 @@ body{background:var(--bg-main);color:var(--text-primary);font-family:var(--font-
   <input type="file" id="file-input-import" class="file-input-hidden" accept=".dxf,.dwg">
 </div>
 
-<!-- ═══════════ Ribbon ═══════════ -->
 <div id="ribbon">
   <div id="ribbon-tabs">
     <button class="active" data-tab="home">Inicio</button>
@@ -410,7 +371,6 @@ body{background:var(--bg-main);color:var(--text-primary);font-family:var(--font-
     <button data-tab="cnc">CNC</button>
   </div>
   <div id="ribbon-content">
-    <!-- Dibujar -->
     <div class="ribbon-group" data-tab="home">
       <label>Dibujar</label>
       <div class="ribbon-group-btns">
@@ -420,7 +380,6 @@ body{background:var(--bg-main);color:var(--text-primary);font-family:var(--font-
         <button class="ribbon-btn" data-cmd="ARC" title="Arco"><svg viewBox="0 0 24 24"><path d="M4 17 A 13 13 0 0 1 20 17" fill="none"/><circle cx="4" cy="17" r="1.2" fill="currentColor" stroke="none"/><circle cx="20" cy="17" r="1.2" fill="currentColor" stroke="none"/></svg><span>Arco</span><span class="tooltip">ARC (A)</span></button>
       </div>
     </div>
-    <!-- Modificar -->
     <div class="ribbon-group" data-tab="home">
       <label>Modificar</label>
       <div class="ribbon-group-btns">
@@ -433,7 +392,6 @@ body{background:var(--bg-main);color:var(--text-primary);font-family:var(--font-
         <button class="ribbon-btn" data-cmd="MIRROR" title="Simetría"><svg viewBox="0 0 24 24"><line x1="12" y1="3" x2="12" y2="21" stroke-dasharray="2 2"/><polygon points="3,7 8,12 3,17"/><polygon points="21,7 16,12 21,17"/></svg><span>Simetría</span><span class="tooltip">MIRROR (MI)</span></button>
       </div>
     </div>
-    <!-- Capas -->
     <div class="ribbon-group" data-tab="home">
       <label>Capas</label>
       <div class="layer-combo" id="layer-combo">
@@ -446,7 +404,6 @@ body{background:var(--bg-main);color:var(--text-primary);font-family:var(--font-
         <div class="layer-combo-menu" id="layer-combo-menu"></div>
       </div>
     </div>
-    <!-- Insertar -->
     <div class="ribbon-group" data-tab="insert" style="display:none;">
       <label>Archivo</label>
       <div class="ribbon-group-btns">
@@ -454,7 +411,6 @@ body{background:var(--bg-main);color:var(--text-primary);font-family:var(--font-
         <button class="ribbon-btn" id="ribbon-export" title="Exportar DXF"><svg viewBox="0 0 24 24"><polygon points="3,3 21,3 21,21 3,21"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/><polygon points="8,16 16,16 14,19 10,19" fill="currentColor" stroke="none"/></svg><span>Exportar</span><span class="tooltip">Exportar DXF</span></button>
       </div>
     </div>
-    <!-- Vista -->
     <div class="ribbon-group" data-tab="view" style="display:none;">
       <label>Navegación</label>
       <div class="ribbon-group-btns">
@@ -463,7 +419,6 @@ body{background:var(--bg-main);color:var(--text-primary);font-family:var(--font-
         <button class="ribbon-btn" id="btn-zoom-out" title="Zoom Out"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><line x1="6" y1="12" x2="18" y2="12"/></svg><span>Alejar</span><span class="tooltip">Zoom Out</span></button>
       </div>
     </div>
-    <!-- CNC: Modo -->
     <div class="ribbon-group" data-tab="cnc" style="display:none;">
       <label>Modo CNC</label>
       <div class="ribbon-group-btns">
@@ -473,7 +428,6 @@ body{background:var(--bg-main);color:var(--text-primary);font-family:var(--font-
         <button class="ribbon-btn cnc-mode" data-cnc-mode="pocket" id="ribbon-cnc-pocket" title="Cajeados"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="1" fill="none"/><rect x="8" y="8" width="8" height="8" rx="0.5" fill="currentColor" opacity="0.3"/></svg><span>Cajeados</span></button>
       </div>
     </div>
-    <!-- CNC: Acciones -->
     <div class="ribbon-group" data-tab="cnc" style="display:none;">
       <label>Generar</label>
       <div class="ribbon-group-btns">
@@ -482,7 +436,6 @@ body{background:var(--bg-main);color:var(--text-primary);font-family:var(--font-
         <button class="ribbon-btn cnc-action" id="ribbon-cnc-export" title="Descargar .nc"><svg viewBox="0 0 24 24"><path d="M12 3v12M8 11l4 4 4-4M5 21h14"/></svg><span>Exportar</span></button>
       </div>
     </div>
-    <!-- CNC: Panel -->
     <div class="ribbon-group" data-tab="cnc" style="display:none;">
       <label>Panel</label>
       <div class="ribbon-group-btns">
@@ -492,7 +445,6 @@ body{background:var(--bg-main);color:var(--text-primary);font-family:var(--font-
   </div>
 </div>
 
-<!-- ═══════════ Área principal ═══════════ -->
 <div id="main-area">
   <div id="layer-panel">
     <h3>Capas <button id="add-layer-btn">+</button></h3>
@@ -505,9 +457,7 @@ body{background:var(--bg-main);color:var(--text-primary);font-family:var(--font-
     <div id="context-menu"></div>
   </div>
 
-  <!-- CNC Panel -->
   <div id="cnc-panel">
-    <!-- Herramientas -->
     <div class="cnc-section">
       <h3>🔧 Herramientas <span class="mini" id="cnc-tool-count">0</span></h3>
       <div class="cnc-tool-list" id="cnc-tool-list">
@@ -531,7 +481,6 @@ body{background:var(--bg-main);color:var(--text-primary);font-family:var(--font-
       </div>
     </div>
 
-    <!-- Operaciones -->
     <div class="cnc-section">
       <h3>📋 Operaciones <span class="mini" id="cnc-op-count">0</span></h3>
       <div class="cnc-op-list" id="cnc-op-list">
@@ -541,7 +490,6 @@ body{background:var(--bg-main);color:var(--text-primary);font-family:var(--font-
       <button class="cnc-btn" id="cnc-undo-op">↩ Deshacer última</button>
     </div>
 
-    <!-- Patillas -->
     <div class="cnc-section cnc-tabs-panel">
       <h3>🔗 Patillas</h3>
       <div class="cnc-row"><label>Activar</label><input type="checkbox" id="cnc-tabsEnabled"></div>
@@ -552,7 +500,6 @@ body{background:var(--bg-main);color:var(--text-primary);font-family:var(--font-
       <div class="cnc-tabs-info" id="cnc-tabs-info">Sin operaciones de corte</div>
     </div>
 
-    <!-- Máquina -->
     <div class="cnc-section">
       <h3>⚙ Máquina</h3>
       <div class="cnc-row"><label>Pausa mandrino</label><input type="number" id="cnc-spindlePause" step="0.5" min="0" max="120"></div>
@@ -560,7 +507,6 @@ body{background:var(--bg-main);color:var(--text-primary);font-family:var(--font-
       <div class="cnc-row"><label>Rapid Z</label><input type="number" id="cnc-rapidZ" step="100" min="100"></div>
     </div>
 
-    <!-- Simulación -->
     <div class="cnc-section cnc-sim-panel">
       <h3>🎬 Simulación</h3>
       <div class="cnc-sim-btn-row">
@@ -581,7 +527,6 @@ body{background:var(--bg-main);color:var(--text-primary);font-family:var(--font-
       </div>
     </div>
 
-    <!-- G-code -->
     <div class="cnc-section">
       <h3>📄 Código G</h3>
       <button class="cnc-btn accent" id="cnc-generate-btn">⚙ Generar / Actualizar</button>
@@ -594,7 +539,6 @@ body{background:var(--bg-main);color:var(--text-primary);font-family:var(--font-
     </div>
   </div>
 
-  <!-- Propiedades (CAD) -->
   <div id="properties-panel">
     <h3>Propiedades</h3>
     <div id="props-content"></div>
@@ -609,7 +553,6 @@ body{background:var(--bg-main);color:var(--text-primary);font-family:var(--font-
   </div>
 </div>
 
-<!-- ═══════════ Línea de comandos ═══════════ -->
 <div id="command-line">
   <span id="cmd-prompt">Comando:</span>
   <input type="text" id="cmd-input" placeholder="Comando, o X,Y / @dX,dY / @dist<áng / distancia..." autocomplete="off">
@@ -625,7 +568,6 @@ body{background:var(--bg-main);color:var(--text-primary);font-family:var(--font-
   <div class="cmh-body" id="cmd-history-body"></div>
 </div>
 
-<!-- ═══════════ Barra de estado ═══════════ -->
 <div id="status-bar">
   <div class="coords" id="coords-display">X: 0.000, Y: 0.000</div>
   <div class="status-sep"></div>
@@ -646,7 +588,6 @@ body{background:var(--bg-main);color:var(--text-primary);font-family:var(--font-
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/paper.js/0.12.17/paper-full.min.js"></script>
 <script type="module">
-/* ═══════════ Clipper loader (CNC) ═══════════ */
 import * as clipperLib from 'https://esm.sh/js-angusj-clipper@1.3.1';
 window.clipperLib = clipperLib;
 window.jsAngusjClipper = clipperLib;
@@ -654,7 +595,13 @@ window.dispatchEvent(new Event('clipper-ready'));
 </script>
 <script>
 /* ═══════════════════════════════════════════════════════════════════════
-   CAD Pro + CNC — Script principal
+   CAD Pro + CNC — Script principal (VERSIÓN CORREGIDA)
+   Fixes:
+     1. project.getItemById() no existe → findPaperItemById()
+     2. Bug de signo Y en detección de círculos para cajeados
+     3. Área real en cncFindClosedEntityAt (no bbox)
+     4. try/catch en cncRebuildAndRegen
+     5. Fallback de tolerancia en cncHandleClick para cut
    ═══════════════════════════════════════════════════════════════════════ */
 paper.setup('myCanvas');
 paper.settings.handleSize = 7;
@@ -728,6 +675,18 @@ function reflectMatrix(p1, p2){
   return new paper.Matrix(a,b,c,d,tx,ty);
 }
 
+/* ═══════════ FIX #1: Búsqueda segura de items por ID ═══════════ */
+function findPaperItemById(id){
+  if (id === null || id === undefined) return null;
+  for (let lname in layers){
+    const layer = layers[lname];
+    for (const item of layer.children){
+      if (item.id === id) return item;
+    }
+  }
+  return null;
+}
+
 /* ─── Estado CAD ─── */
 const state = {
   currentCommand:null, step:0, collectedPoints:[], selectedItems:[],
@@ -757,7 +716,7 @@ const cncState = {
   mode: 'off',
   activeToolId: null,
   tools: [],
-  operations: [],     // {type:'drill'|'cut'|'pocket', toolId, depth, adjust, points?, itemIds?, pockets?}
+  operations: [],
   spindlePause: 12,
   rapidXY: 5000,
   rapidZ: 3000,
@@ -775,9 +734,7 @@ const CLIPPER_ARC_TOLERANCE = 0.1;
 const MAX_GCODE_LINES = 40000;
 const MAX_POCKET_RINGS = 300;
 
-/* ═══════════════════════════════════════════════════════════════════════
-   GROSOR DE LÍNEA
-   ═══════════════════════════════════════════════════════════════════════ */
+/* ─── Grosor de línea ─── */
 const LINE_WEIGHT_PX = 1.3;
 const LWT_WEIGHT_MULTIPLIER = 2.4;
 function currentStrokeWidth(){ return (LINE_WEIGHT_PX * (state.lwt ? LWT_WEIGHT_MULTIPLIER : 1)) / view.zoom; }
@@ -790,9 +747,7 @@ function refreshStrokeWidths(){
   }
 }
 
-/* ═══════════════════════════════════════════════════════════════════════
-   RIBBON UI
-   ═══════════════════════════════════════════════════════════════════════ */
+/* ═══════════ Ribbon UI ═══════════ */
 document.querySelectorAll('#ribbon-tabs button').forEach(tab => {
   tab.addEventListener('click', () => {
     document.querySelectorAll('#ribbon-tabs button').forEach(t => t.classList.remove('active'));
@@ -801,7 +756,6 @@ document.querySelectorAll('#ribbon-tabs button').forEach(tab => {
     document.querySelectorAll('.ribbon-group').forEach(g => {
       g.style.display = (g.dataset.tab === tabName) ? 'flex' : 'none';
     });
-    // Show/hide CNC panel based on tab
     if (tabName === 'cnc'){
       document.getElementById('cnc-panel').classList.add('visible');
       document.getElementById('canvas-container').classList.add('cnc-mode');
@@ -825,16 +779,13 @@ document.querySelectorAll('.ribbon-btn[data-cmd]').forEach(btn => {
   });
 });
 
-/* Layer dropdown */
 const layerDropdownBtn = document.getElementById('layer-dropdown');
 const layerComboMenu   = document.getElementById('layer-combo-menu');
 layerDropdownBtn.addEventListener('click', e => { e.stopPropagation(); layerComboMenu.classList.toggle('open'); });
 layerComboMenu.addEventListener('click', e => e.stopPropagation());
 document.addEventListener('click', () => layerComboMenu.classList.remove('open'));
 
-/* ═══════════════════════════════════════════════════════════════════════
-   CAPAS UI
-   ═══════════════════════════════════════════════════════════════════════ */
+/* ═══════════ Capas UI ═══════════ */
 function renderLayerList(){
   const list = document.getElementById('layer-list');
   list.innerHTML = '';
@@ -921,9 +872,7 @@ document.getElementById('add-layer-btn').addEventListener('click', () => {
   }
 });
 
-/* ═══════════════════════════════════════════════════════════════════════
-   PROPIEDADES
-   ═══════════════════════════════════════════════════════════════════════ */
+/* ═══════════ Propiedades ═══════════ */
 function updateProperties(){
   const panel = document.getElementById('properties-panel');
   const sel = state.selectedItems;
@@ -932,7 +881,6 @@ function updateProperties(){
   const item = sel[0];
   const container = document.getElementById('props-content');
   container.innerHTML = '';
-  // Capa
   const layerRow = document.createElement('div');
   layerRow.className = 'prop-row';
   layerRow.innerHTML = `<span class="prop-label">Capa</span>`;
@@ -959,7 +907,6 @@ function updateProperties(){
   layerRow.appendChild(layerSelect);
   container.appendChild(layerRow);
 
-  // Color
   const colorRow = document.createElement('div');
   colorRow.className = 'prop-row';
   colorRow.innerHTML = `<span class="prop-label">Color</span>`;
@@ -974,7 +921,6 @@ function updateProperties(){
   colorRow.appendChild(colorInput);
   container.appendChild(colorRow);
 
-  // Tipo
   let type = 'Desconocido';
   if (isLineItem(item)) type = 'Línea';
   else if (isCircleItem(item)) type = 'Círculo';
@@ -985,7 +931,6 @@ function updateProperties(){
   typeRow.innerHTML = `<span class="prop-label">Tipo</span><span class="prop-value">${type}</span>`;
   container.appendChild(typeRow);
 
-  // Coordenadas
   const makeInput = (label, getter, setter) => {
     const row = document.createElement('div');
     row.className = 'prop-row';
@@ -1031,9 +976,7 @@ function updateProperties(){
   }
 }
 
-/* ═══════════════════════════════════════════════════════════════════════
-   PROMPT / LOG
-   ═══════════════════════════════════════════════════════════════════════ */
+/* ═══════════ Prompt ═══════════ */
 const promptEl = document.getElementById('cmd-prompt');
 const statusEl = document.getElementById('cmd-status');
 function setPrompt(text){
@@ -1051,7 +994,6 @@ function renderCmdHistory(){
   body.scrollTop = body.scrollHeight;
 }
 
-/* Reset de comando CAD */
 function resetStateCmd(){
   state.currentCommand = null; state.step = 0; state.collectedPoints = [];
   state.basePoint = null; state.expectingPoint = false; state.dynamicLastPoint = null;
@@ -1074,9 +1016,7 @@ function resetStateCmd(){
   renderGrips();
 }
 
-/* ═══════════════════════════════════════════════════════════════════════
-   SELECCIÓN
-   ═══════════════════════════════════════════════════════════════════════ */
+/* ═══════════ Selección ═══════════ */
 function clearSelection(){
   state.selectedItems.forEach(i => { i.selected = false; i.shadowColor = null; });
   state.selectedItems = [];
@@ -1107,9 +1047,7 @@ function setSingleSelection(item){
   renderGrips();
 }
 
-/* ═══════════════════════════════════════════════════════════════════════
-   GRIPS
-   ═══════════════════════════════════════════════════════════════════════ */
+/* ═══════════ Grips ═══════════ */
 function addGripMarker(point, data){
   const r = 4.5 / view.zoom;
   const marker = new Path.Rectangle(new paper.Rectangle(point.x-r, point.y-r, r*2, r*2));
@@ -1143,9 +1081,7 @@ function renderGrips(){
   });
 }
 
-/* ═══════════════════════════════════════════════════════════════════════
-   VERBO-SUSTANTIVO
-   ═══════════════════════════════════════════════════════════════════════ */
+/* ═══════════ Verbo-sustantivo ═══════════ */
 function beginModifyCommand(cmd, promptText){
   if (state.selectedItems.length){ proceedModifyCommand(cmd); }
   else {
@@ -1201,9 +1137,7 @@ function proceedModifyCommand(cmd){
   }
 }
 
-/* ═══════════════════════════════════════════════════════════════════════
-   HIT TEST / SNAP / TRACK
-   ═══════════════════════════════════════════════════════════════════════ */
+/* ═══════════ Hit test / Snap ═══════════ */
 function hitTestContent(pt, extraOptions){
   const options = Object.assign({
     tolerance: 8 / view.zoom,
@@ -1268,7 +1202,7 @@ function acquireTrackPoint(pt){
   if (state.acquiredPoints.some(p => p.getDistance(pt) < 1e-6)) return;
   state.acquiredPoints.push(pt.clone());
   if (state.acquiredPoints.length > 2) state.acquiredPoints.shift();
-  setPrompt('Referencia adquirida — mueve el ratón o teclea distancia (ESC suelta)');
+  setPrompt('Referencia adquirida');
 }
 function releaseTrackPoints(){
   state.acquiredPoints = [];
@@ -1345,9 +1279,7 @@ function renderTrackingGuides(guides, resolvedPoint){
   }
 }
 
-/* ═══════════════════════════════════════════════════════════════════════
-   RESOLUCIÓN DE PUNTO
-   ═══════════════════════════════════════════════════════════════════════ */
+/* ═══════════ Resolución de punto ═══════════ */
 function resolvePoint(raw, base, cmd, excludeItems){
   let pt = raw;
   const snap = getSnapPoint(pt, excludeItems);
@@ -1381,9 +1313,7 @@ function orthoProject(base, target){
   return Math.abs(d.x) > Math.abs(d.y) ? new Point(target.x, base.y) : new Point(base.x, target.y);
 }
 
-/* ═══════════════════════════════════════════════════════════════════════
-   PARSEO DE ENTRADA
-   ═══════════════════════════════════════════════════════════════════════ */
+/* ═══════════ Parseo entrada ═══════════ */
 function parseDynamicInput(input, lastPoint){
   input = input.trim();
   if (!input) return null;
@@ -1432,9 +1362,7 @@ function parseDynamicInput(input, lastPoint){
   return null;
 }
 
-/* ═══════════════════════════════════════════════════════════════════════
-   COMANDOS CAD
-   ═══════════════════════════════════════════════════════════════════════ */
+/* ═══════════ Comandos CAD ═══════════ */
 function executeCommand(cmd){
   if (state.currentCommand) resetStateCmd();
   const cmdMap = {
@@ -1501,9 +1429,7 @@ function startCommand(cmd, prompt){
   previewLayer.removeChildren(); gripLayer.removeChildren(); releaseTrackPoints();
 }
 
-/* ═══════════════════════════════════════════════════════════════════════
-   HISTORIAL
-   ═══════════════════════════════════════════════════════════════════════ */
+/* ═══════════ Historial ═══════════ */
 function snapshotCurrent(){
   const snap = { activeLayerName: activeLayer.name, layers: {} };
   for (let internal in layers){
@@ -1559,7 +1485,7 @@ function restoreState(snap){
   if (cncState.mode !== 'off') cncRefreshOpsOverlay();
 }
 function undo(){
-  if (!state.history.length){ setPrompt('No hay más acciones para deshacer'); return; }
+  if (!state.history.length){ setPrompt('No hay más acciones'); return; }
   const prev = state.history.pop();
   state.redoStack.push(snapshotCurrent());
   if (state.redoStack.length > 50) state.redoStack.shift();
@@ -1568,7 +1494,7 @@ function undo(){
   view.update(); updateProperties(); renderLayerList();
 }
 function redo(){
-  if (!state.redoStack.length){ setPrompt('No hay más acciones para rehacer'); return; }
+  if (!state.redoStack.length){ setPrompt('No hay más acciones'); return; }
   const next = state.redoStack.pop();
   state.history.push(snapshotCurrent());
   if (state.history.length > 50) state.history.shift();
@@ -1577,9 +1503,7 @@ function redo(){
   view.update(); updateProperties(); renderLayerList();
 }
 
-/* ═══════════════════════════════════════════════════════════════════════
-   HANDLER DE PUNTOS (CAD)
-   ═══════════════════════════════════════════════════════════════════════ */
+/* ═══════════ Handler de puntos ═══════════ */
 function handlePointInput(point){
   if (!state.currentCommand) return;
   const cmd = state.currentCommand;
@@ -1748,9 +1672,7 @@ function handlePointInput(point){
   }
 }
 
-/* ═══════════════════════════════════════════════════════════════════════
-   JOIN
-   ═══════════════════════════════════════════════════════════════════════ */
+/* ═══════════ JOIN ═══════════ */
 function joinSelected(){
   const items = state.selectedItems.filter(i => i instanceof Path && i.segments.length > 0);
   if (items.length < 2){ setPrompt('Selecciona al menos dos líneas/polilíneas/arcos'); return; }
@@ -1788,9 +1710,7 @@ function joinSelected(){
   setPrompt(`${chains.length} trazado(s) unido(s)`);
 }
 
-/* ═══════════════════════════════════════════════════════════════════════
-   TRIM / EXTEND / CHAMFER / FILLET
-   ═══════════════════════════════════════════════════════════════════════ */
+/* ═══════════ TRIM/EXTEND/CHAMFER/FILLET ═══════════ */
 function getAllDrawableItems(){
   const out = [];
   for (let internal in layers){
@@ -1879,7 +1799,7 @@ function trimObject(item, boundaries, clickPoint){
     const d = pLoc.point.getDistance(clickOnPath);
     if (d < bestDist){ bestDist = d; bestInters = p; bestOffset = pLoc.offset; }
   });
-  if (!bestInters){ setPrompt('TRIM: no se encontró intersección válida'); return; }
+  if (!bestInters){ setPrompt('TRIM: sin intersección válida'); return; }
   saveState();
   if (item.segments && item.segments.length === 2 && !item.closed){
     const p0 = item.segments[0].point, p1 = item.segments[1].point;
@@ -1916,7 +1836,7 @@ function extendObject(item, boundaries, clickPoint){
     });
   });
   ray.remove();
-  if (!best){ setPrompt('No se encontró punto de extensión'); return; }
+  if (!best){ setPrompt('No se encontró punto'); return; }
   saveState();
   if (d1 < d2) item.segments[0].point = best; else item.segments[1].point = best;
   setPrompt('Línea extendida');
@@ -1992,7 +1912,7 @@ function handleFilletClick(event){
       saveState();
       if (s1_nearIsP1) s1.setP1(int); else s1.setP2(int);
       if (s2_nearIsP1) s2.setP1(int); else s2.setP2(int);
-      invalidateSnapCache(); resetStateCmd(); setPrompt('Esquina unida (radio 0)'); return;
+      invalidateSnapCache(); resetStateCmd(); setPrompt('Esquina unida'); return;
     }
     if (keep1.getDistance(int) < 0.001 || keep2.getDistance(int) < 0.001){ setPrompt('FILLET: sin longitud'); return; }
     const unit1 = keep1.subtract(int).normalize();
@@ -2000,7 +1920,7 @@ function handleFilletClick(event){
     const angle = Math.acos(Math.max(-1, Math.min(1, unit1.dot(unit2))));
     if (angle < 0.001 || angle > Math.PI - 0.001){ setPrompt('FILLET: casi paralelos'); return; }
     const tanDist = radius / Math.tan(angle / 2);
-    if (tanDist > keep1.getDistance(int) || tanDist > keep2.getDistance(int)){ setPrompt('FILLET: radio demasiado grande'); return; }
+    if (tanDist > keep1.getDistance(int) || tanDist > keep2.getDistance(int)){ setPrompt('FILLET: radio grande'); return; }
     const tan1 = int.add(unit1.multiply(tanDist));
     const tan2 = int.add(unit2.multiply(tanDist));
     const bisector = unit1.add(unit2).normalize();
@@ -2016,15 +1936,13 @@ function handleFilletClick(event){
       arc.strokeWidth = currentStrokeWidth();
       tagShape(arc, 'arc');
       (state.filletLine1.entity.layer || activeLayer).addChild(arc);
-    } catch (e){ setPrompt('FILLET: error al crear arco'); return; }
+    } catch (e){ setPrompt('FILLET: error'); return; }
     invalidateSnapCache(); resetStateCmd();
-    setPrompt(`Redondeado aplicado (R=${radius})`);
+    setPrompt(`Redondeado (R=${radius})`);
   }
 }
 
-/* ═══════════════════════════════════════════════════════════════════════
-   OFFSET
-   ═══════════════════════════════════════════════════════════════════════ */
+/* ═══════════ OFFSET ═══════════ */
 function circumcenter(p1, p2, p3){
   const ax=p1.x, ay=p1.y, bx=p2.x, by=p2.y, cx=p3.x, cy=p3.y;
   const d = 2*(ax*(by-cy)+bx*(cy-ay)+cx*(ay-by));
@@ -2138,7 +2056,7 @@ function resetOffsetToSelect(message){
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
-   CNC — TOOL / OPERATION MANAGEMENT
+   CNC — HERRAMIENTAS
    ═══════════════════════════════════════════════════════════════════════ */
 function uid(prefix){ return prefix + Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
 function createCNCTool(num){
@@ -2227,7 +2145,6 @@ function cncUpdateToolList(){
 }
 function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
-/* Edit tool fields */
 const toolFieldMap = {
   'cnc-tName': (t,v) => { t.name = v.trim() || t.name; },
   'cnc-tNum': (t,v) => { t.toolNumber = Math.max(1, parseInt(v) || 1); },
@@ -2256,7 +2173,7 @@ Object.keys(toolFieldMap).forEach(id => {
 });
 
 /* ═══════════════════════════════════════════════════════════════════════
-   CNC — OPERATIONS
+   CNC — OPERACIONES
    ═══════════════════════════════════════════════════════════════════════ */
 function defaultCNCDepth(){
   const t = getCNCActiveTool() || cncState.tools[0];
@@ -2264,7 +2181,7 @@ function defaultCNCDepth(){
 }
 function cncAddDrillPoint(wx, wy){
   if (!cncState.tools.length){ setPrompt('Añade primero una herramienta'); return; }
-  // Snap to circle center if near
+  // Snap to circle center if near (paper Y inverted → compare correctly)
   let bestCircle = null, bestD = 10;
   for (let internal in layers){
     const l = layers[internal];
@@ -2272,7 +2189,9 @@ function cncAddDrillPoint(wx, wy){
     l.children.forEach(item => {
       if (isCircleItem(item)){
         const c = item.position;
-        const d = Math.hypot(c.x - wx, -c.y - wy);
+        // c.x, c.y are paper coords. wx, wy are user coords (Y up).
+        // Distance in paper space = hypot(c.x - wx, c.y - (-wy)) = hypot(c.x - wx, c.y + wy)
+        const d = Math.hypot(c.x - wx, c.y + wy);
         if (d < bestD){ bestD = d; bestCircle = { x: c.x, y: -c.y }; }
       }
     });
@@ -2291,7 +2210,13 @@ function cncAddDrillPoint(wx, wy){
 }
 function cncAddCutItem(item){
   if (!cncState.tools.length){ setPrompt('Añade primero una herramienta'); return; }
-  if (!item) return;
+  if (!item){ setPrompt('Entidad no válida'); return; }
+  // Only accept Path types (Path.Line, Path.Circle, Path.Rectangle, Path.Arc, etc.)
+  if (!(item instanceof Path) && !(item instanceof paper.CompoundPath)){
+    setPrompt('Tipo no soportado para corte');
+    return;
+  }
+  if (!item.id){ setPrompt('Entidad sin ID válido'); return; }
   let op = cncState.operations.find(o => o.type === 'cut');
   if (!op){
     op = { type:'cut', itemIds:[], offset:'center', adjust:0, toolId: cncState.activeToolId, depth: defaultCNCDepth() };
@@ -2303,7 +2228,6 @@ function cncAddCutItem(item){
 }
 function cncAddPocketBoundary(boundaryPts, wx, wy){
   if (!cncState.tools.length){ setPrompt('Añade primero una herramienta'); return; }
-  // Dedupe
   const dedup = [];
   for (const p of boundaryPts){
     if (!dedup.length || Math.hypot(p.x - dedup[dedup.length-1].x, p.y - dedup[dedup.length-1].y) > 1e-3){
@@ -2403,7 +2327,7 @@ function cncUpdateOpList(){
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
-   CNC — GEOMETRY BRIDGE (paper.js ↔ CNC entities)
+   CNC — GEOMETRY BRIDGE
    ═══════════════════════════════════════════════════════════════════════ */
 function getItemEndpoints(item){
   if (isCircleItem(item)) return null;
@@ -2443,7 +2367,6 @@ function itemToPointSequence(item){
       closed: false
     };
   }
-  // Any other Path — discretize by length
   const L = item.length;
   if (L < 1e-6) return null;
   const n = Math.max(2, Math.min(500, Math.ceil(L / 0.4)));
@@ -2452,7 +2375,6 @@ function itemToPointSequence(item){
     const p = item.getPointAt(L * i / n);
     if (p) pts.push({ x: p.x, y: -p.y });
   }
-  // If closed and first/last duplicate, trim
   if (item.closed && pts.length > 2){
     const f = pts[0], l = pts[pts.length-1];
     if (Math.hypot(f.x-l.x, f.y-l.y) < 0.01) pts.pop();
@@ -2551,9 +2473,7 @@ function chainItemsIntoPoints(items, tol){
   return { points: result, closed: isClosed };
 }
 
-/* ═══════════════════════════════════════════════════════════════════════
-   CNC — GEOMETRY MATH
-   ═══════════════════════════════════════════════════════════════════════ */
+/* ═══════════ MATH helpers ═══════════ */
 function signedArea(pts){
   let a = 0; const n = pts.length;
   for (let i = 0; i < n; i++){
@@ -2596,9 +2516,7 @@ function rotatePointsToStart(pts, ox, oy){
   return pts.slice(bestIdx).concat(pts.slice(0, bestIdx));
 }
 
-/* ═══════════════════════════════════════════════════════════════════════
-   CNC — CLIPPER OFFSET
-   ═══════════════════════════════════════════════════════════════════════ */
+/* ═══════════ CLIPPER OFFSET ═══════════ */
 function offsetPointsWithClipper(pts, delta, joinTypeName){
   pts = dedupePolygon(pts, 1e-4);
   if (pts.length < 3) return [];
@@ -2678,11 +2596,10 @@ function offsetOpenPathSimple(pts, delta){
   return out;
 }
 
-/* ═══════════════════════════════════════════════════════════════════════
-   CNC — CONTOUR RESOLUTION
-   ═══════════════════════════════════════════════════════════════════════ */
+/* ═══════════ Contour resolution ═══════════ */
 function resolveCutContours(op, tool){
-  const items = (op.itemIds || []).map(id => project.getItemById(id)).filter(Boolean);
+  // FIX #1: use safe lookup instead of project.getItemById
+  const items = (op.itemIds || []).map(id => findPaperItemById(id)).filter(Boolean);
   if (!items.length) return [];
   const groups = groupItemsIntoChains(items, 0.15);
   const results = [];
@@ -2749,9 +2666,7 @@ function rebuildAllContours(){
   cncUpdateTabsInfo();
 }
 
-/* ═══════════════════════════════════════════════════════════════════════
-   CNC — TABS (PATILLAS)
-   ═══════════════════════════════════════════════════════════════════════ */
+/* ═══════════ Patillas ═══════════ */
 function computeTabSegments(pts, closed, count, width, seed, toolDiameter){
   toolDiameter = Math.max(0, toolDiameter || 0);
   const pathWidth = Math.max(0.1, width + toolDiameter);
@@ -2803,9 +2718,7 @@ function cncUpdateTabsInfo(){
   el.textContent = lines.join(' · ') + ` · Total: ${total}`;
 }
 
-/* ═══════════════════════════════════════════════════════════════════════
-   CNC — ARC LENGTH HELPERS
-   ═══════════════════════════════════════════════════════════════════════ */
+/* ═══════════ Arc length helpers ═══════════ */
 function buildPath(pts, closed){ return closed ? pts.concat([{ x: pts[0].x, y: pts[0].y }]) : pts.slice(); }
 function computeCumLens(path){
   const cum = [0];
@@ -2835,9 +2748,7 @@ function pathPointsBetween(path, cumLens, s1, s2){
   return result;
 }
 
-/* ═══════════════════════════════════════════════════════════════════════
-   CNC — G-CODE GENERATION
-   ═══════════════════════════════════════════════════════════════════════ */
+/* ═══════════ G-CODE ═══════════ */
 function sanitizeComment(txt){
   let result = '';
   let inComment = false, depth = 0;
@@ -2920,7 +2831,6 @@ function buildCNCProgram(){
   emit('', -1);
   addMove('rapid', [{x:lastX, y:lastY}, {x:0, y:0}], maxSafe, cncState.rapidXY, -1);
 
-  // Group operations by tool
   const toolOrder = [];
   const groups = new Map();
   cncState.operations.forEach((op, idx) => {
@@ -3079,7 +2989,7 @@ function buildCNCProgram(){
             d -= stepOver;
           }
           if (!offsets.length){ emit('(cajeado demasiado pequeño)', -1); emit('', -1); continue; }
-          emit(`(Cajeado ${pki+1}/${pockets.length}: ${offsets.length} anillos x ${passes} pasadas Z - ESPIRAL)`, -1);
+          emit(`(Cajeado ${pki+1}/${pockets.length}: ${offsets.length} anillos x ${passes} pasadas Z)`, -1);
           const startPt = offsets[0][0];
           emit(`G0 X${startPt.x.toFixed(3)} Y${startPt.y.toFixed(3)}`, -1);
           addMove('rapid', [{x:lastX, y:lastY}, {x:startPt.x, y:startPt.y}], tool.safe, cncState.rapidXY, -1);
@@ -3205,9 +3115,7 @@ function emitSimWithTabs(pts, closed, fullZ, feed, tabHeight, tabs, blockId, add
   }
 }
 
-/* ═══════════════════════════════════════════════════════════════════════
-   CNC — G-CODE DISPLAY
-   ═══════════════════════════════════════════════════════════════════════ */
+/* ═══════════ G-code display ═══════════ */
 function cncRenderGcodeDisplay(){
   const el = document.getElementById('cnc-gcode');
   if (!cncState.gcodeLines.length){
@@ -3289,9 +3197,7 @@ function cncUpdateActiveGlineByBlock(blockId){
   }
 }
 
-/* ═══════════════════════════════════════════════════════════════════════
-   CNC — SIMULATION
-   ═══════════════════════════════════════════════════════════════════════ */
+/* ═══════════ SIMULATION ═══════════ */
 function cncUpdateSimUI(){
   const pct = cncState.simTotalTime > 0 ? cncState.simT / cncState.simTotalTime : 0;
   document.getElementById('cnc-sim-time').textContent = fmtTime(cncState.simT) + ' / ' + fmtTime(cncState.simTotalTime);
@@ -3357,180 +3263,173 @@ function cncCurrentBlock(){
   return mv ? mv.block : -1;
 }
 
-/* ═══════════════════════════════════════════════════════════════════════
-   CNC — OVERLAY DRAWING (operations + simulation on paper.js layers)
-   ═══════════════════════════════════════════════════════════════════════ */
+/* ═══════════ Overlay drawing ═══════════ */
 function cncRefreshOpsOverlay(){
-  cncOpsLayer.removeChildren();
-  // Draw cut contours
-  for (const oiStr in cncState.cutContours){
-    const contoursArr = cncState.cutContours[oiStr];
-    if (!contoursArr || !contoursArr.length) continue;
-    for (let ci = 0; ci < contoursArr.length; ci++){
-      const c = contoursArr[ci];
-      if (!c || c.points.length < 2) continue;
-      const pts = c.points;
-      const path = new Path();
-      path.moveTo(new Point(pts[0].x, -pts[0].y));
-      for (let i = 1; i < pts.length; i++) path.lineTo(new Point(pts[i].x, -pts[i].y));
-      if (c.closed) path.closePath();
-      path.strokeColor = new Color('#FFB347');
-      path.strokeWidth = 2 / view.zoom;
-      path.fillColor = null;
-      cncOpsLayer.addChild(path);
+  try {
+    cncOpsLayer.removeChildren();
+    for (const oiStr in cncState.cutContours){
+      const contoursArr = cncState.cutContours[oiStr];
+      if (!contoursArr || !contoursArr.length) continue;
+      for (let ci = 0; ci < contoursArr.length; ci++){
+        const c = contoursArr[ci];
+        if (!c || c.points.length < 2) continue;
+        const pts = c.points;
+        const path = new Path();
+        path.moveTo(new Point(pts[0].x, -pts[0].y));
+        for (let i = 1; i < pts.length; i++) path.lineTo(new Point(pts[i].x, -pts[i].y));
+        if (c.closed) path.closePath();
+        path.strokeColor = new Color('#FFB347');
+        path.strokeWidth = 2 / view.zoom;
+        path.fillColor = null;
+        cncOpsLayer.addChild(path);
+      }
     }
-  }
-  // Draw drill points
-  for (const op of cncState.operations){
-    if (op.type !== 'drill') continue;
-    op.points.forEach(p => {
-      const circle = new Path.Circle(new Point(p.x, -p.y), 5 / view.zoom);
-      circle.fillColor = new Color(1, 0.42, 0.42, 0.3);
-      circle.strokeColor = new Color('#FF6B6B');
-      circle.strokeWidth = 1.5 / view.zoom;
-      cncOpsLayer.addChild(circle);
-      const cross1 = new Path.Line(new Point(p.x-3/view.zoom, -p.y), new Point(p.x+3/view.zoom, -p.y));
-      const cross2 = new Path.Line(new Point(p.x, -p.y-3/view.zoom), new Point(p.x, -p.y+3/view.zoom));
-      [cross1, cross2].forEach(c => { c.strokeColor = new Color('#FF6B6B'); c.strokeWidth = 1 / view.zoom; cncOpsLayer.addChild(c); });
-    });
-  }
-  // Draw pockets
-  for (const op of cncState.operations){
-    if (op.type !== 'pocket') continue;
-    (op.pockets || []).forEach(pk => {
-      if (pk.boundary.length < 3) return;
-      const path = new Path();
-      path.moveTo(new Point(pk.boundary[0].x, -pk.boundary[0].y));
-      for (let i = 1; i < pk.boundary.length; i++) path.lineTo(new Point(pk.boundary[i].x, -pk.boundary[i].y));
-      path.closePath();
-      path.strokeColor = new Color(0.31, 0.79, 0.56, 0.85);
-      path.fillColor = new Color(0.31, 0.79, 0.56, 0.12);
-      path.strokeWidth = 2 / view.zoom;
-      path.dashArray = [5/view.zoom, 4/view.zoom];
-      cncOpsLayer.addChild(path);
-    });
-  }
-  // Highlight selected gcode block
-  if (cncState.selectedGlineIdx >= 0){
-    const block = cncState.gcodeBlock[cncState.selectedGlineIdx];
-    const pts = cncState.blockPoints[block];
-    if (pts && pts.length >= 2){
-      const path = new Path();
-      path.moveTo(new Point(pts[0].x, -pts[0].y));
-      for (let i = 1; i < pts.length; i++) path.lineTo(new Point(pts[i].x, -pts[i].y));
-      path.strokeColor = new Color('#FF88DD');
-      path.strokeWidth = 4 / view.zoom;
-      path.opacity = 0.75;
-      cncOpsLayer.addChild(path);
-    } else if (pts && pts.length === 1){
-      const circle = new Path.Circle(new Point(pts[0].x, -pts[0].y), 10 / view.zoom);
-      circle.strokeColor = new Color('#FF88DD');
-      circle.strokeWidth = 3 / view.zoom;
-      circle.fillColor = null;
-      cncOpsLayer.addChild(circle);
+    for (const op of cncState.operations){
+      if (op.type !== 'drill') continue;
+      op.points.forEach(p => {
+        const circle = new Path.Circle(new Point(p.x, -p.y), 5 / view.zoom);
+        circle.fillColor = new Color(1, 0.42, 0.42, 0.3);
+        circle.strokeColor = new Color('#FF6B6B');
+        circle.strokeWidth = 1.5 / view.zoom;
+        cncOpsLayer.addChild(circle);
+        const cross1 = new Path.Line(new Point(p.x-3/view.zoom, -p.y), new Point(p.x+3/view.zoom, -p.y));
+        const cross2 = new Path.Line(new Point(p.x, -p.y-3/view.zoom), new Point(p.x, -p.y+3/view.zoom));
+        [cross1, cross2].forEach(c => { c.strokeColor = new Color('#FF6B6B'); c.strokeWidth = 1 / view.zoom; cncOpsLayer.addChild(c); });
+      });
     }
+    for (const op of cncState.operations){
+      if (op.type !== 'pocket') continue;
+      (op.pockets || []).forEach(pk => {
+        if (pk.boundary.length < 3) return;
+        const path = new Path();
+        path.moveTo(new Point(pk.boundary[0].x, -pk.boundary[0].y));
+        for (let i = 1; i < pk.boundary.length; i++) path.lineTo(new Point(pk.boundary[i].x, -pk.boundary[i].y));
+        path.closePath();
+        path.strokeColor = new Color(0.31, 0.79, 0.56, 0.85);
+        path.fillColor = new Color(0.31, 0.79, 0.56, 0.12);
+        path.strokeWidth = 2 / view.zoom;
+        path.dashArray = [5/view.zoom, 4/view.zoom];
+        cncOpsLayer.addChild(path);
+      });
+    }
+    if (cncState.selectedGlineIdx >= 0){
+      const block = cncState.gcodeBlock[cncState.selectedGlineIdx];
+      const pts = cncState.blockPoints[block];
+      if (pts && pts.length >= 2){
+        const path = new Path();
+        path.moveTo(new Point(pts[0].x, -pts[0].y));
+        for (let i = 1; i < pts.length; i++) path.lineTo(new Point(pts[i].x, -pts[i].y));
+        path.strokeColor = new Color('#FF88DD');
+        path.strokeWidth = 4 / view.zoom;
+        path.opacity = 0.75;
+        cncOpsLayer.addChild(path);
+      } else if (pts && pts.length === 1){
+        const circle = new Path.Circle(new Point(pts[0].x, -pts[0].y), 10 / view.zoom);
+        circle.strokeColor = new Color('#FF88DD');
+        circle.strokeWidth = 3 / view.zoom;
+        circle.fillColor = null;
+        cncOpsLayer.addChild(circle);
+      }
+    }
+    project.view.update();
+  } catch (err){
+    console.error('cncRefreshOpsOverlay error:', err);
   }
-  // Highlight cut items included in cut operations
-  const cutItemIds = new Set();
-  for (const op of cncState.operations){
-    if (op.type === 'cut') op.itemIds.forEach(id => cutItemIds.add(id));
-  }
-  // Refresh background rendering
-  project.view.update();
 }
 
 function cncDrawSimulation(){
-  cncSimLayer.removeChildren();
-  if (!cncState.simMoves.length) return;
-  const moves = cncState.simMoves;
-  let accTime = 0;
-  let toolPos = null, toolZ = 0, toolKind = 'rapid';
-  for (let mi = 0; mi < moves.length; mi++){
-    const mv = moves[mi];
-    const mvStart = accTime, mvEnd = accTime + mv.duration;
-    if (cncState.simT <= mvStart) break;
-    const isCurrent = cncState.simT < mvEnd;
-    const progress = isCurrent ? (cncState.simT - mvStart) / mv.duration : 1;
-    const pts = mv.points;
-    if (mv.type === 'pause'){ if (isCurrent){ toolPos = pts[0]; toolZ = mv.z; toolKind = 'pause'; } accTime = mvEnd; if (isCurrent) break; continue; }
-    if (!pts || pts.length < 1){ accTime = mvEnd; continue; }
-    let color, lw, dash;
-    if (mv.type === 'cut'){ color = '#00FF88'; lw = 2.5 / view.zoom; dash = []; }
-    else if (mv.type === 'tab'){ color = '#FF44AA'; lw = 4 / view.zoom; dash = []; }
-    else { color = '#4DA6FF'; lw = 1.5 / view.zoom; dash = [6/view.zoom, 4/view.zoom]; }
-    if (pts.length >= 2){
-      const segLens = [];
-      for (let i = 0; i < pts.length - 1; i++) segLens.push(Math.hypot(pts[i+1].x - pts[i].x, pts[i+1].y - pts[i].y));
-      const totalLen = segLens.reduce((a,b) => a+b, 0);
-      const targetLen = totalLen * progress;
-      const path = new Path();
-      path.moveTo(new Point(pts[0].x, -pts[0].y));
-      let drawn = 0, lastPt = pts[0];
-      for (let i = 0; i < segLens.length; i++){
-        const segLen = segLens[i];
-        if (drawn + segLen <= targetLen + 1e-9){
-          path.lineTo(new Point(pts[i+1].x, -pts[i+1].y));
-          drawn += segLen; lastPt = pts[i+1];
-        } else {
-          const t = segLen > 1e-9 ? (targetLen - drawn) / segLen : 0;
-          const px = pts[i].x + (pts[i+1].x - pts[i].x) * t;
-          const py = pts[i].y + (pts[i+1].y - pts[i].y) * t;
-          path.lineTo(new Point(px, -py));
-          lastPt = { x: px, y: py };
-          break;
+  try {
+    cncSimLayer.removeChildren();
+    if (!cncState.simMoves.length) return;
+    const moves = cncState.simMoves;
+    let accTime = 0;
+    let toolPos = null, toolZ = 0, toolKind = 'rapid';
+    for (let mi = 0; mi < moves.length; mi++){
+      const mv = moves[mi];
+      const mvStart = accTime, mvEnd = accTime + mv.duration;
+      if (cncState.simT <= mvStart) break;
+      const isCurrent = cncState.simT < mvEnd;
+      const progress = isCurrent ? (cncState.simT - mvStart) / mv.duration : 1;
+      const pts = mv.points;
+      if (mv.type === 'pause'){ if (isCurrent){ toolPos = pts[0]; toolZ = mv.z; toolKind = 'pause'; } accTime = mvEnd; if (isCurrent) break; continue; }
+      if (!pts || pts.length < 1){ accTime = mvEnd; continue; }
+      let color, lw, dash;
+      if (mv.type === 'cut'){ color = '#00FF88'; lw = 2.5 / view.zoom; dash = []; }
+      else if (mv.type === 'tab'){ color = '#FF44AA'; lw = 4 / view.zoom; dash = []; }
+      else { color = '#4DA6FF'; lw = 1.5 / view.zoom; dash = [6/view.zoom, 4/view.zoom]; }
+      if (pts.length >= 2){
+        const segLens = [];
+        for (let i = 0; i < pts.length - 1; i++) segLens.push(Math.hypot(pts[i+1].x - pts[i].x, pts[i+1].y - pts[i].y));
+        const totalLen = segLens.reduce((a,b) => a+b, 0);
+        const targetLen = totalLen * progress;
+        const path = new Path();
+        path.moveTo(new Point(pts[0].x, -pts[0].y));
+        let drawn = 0, lastPt = pts[0];
+        for (let i = 0; i < segLens.length; i++){
+          const segLen = segLens[i];
+          if (drawn + segLen <= targetLen + 1e-9){
+            path.lineTo(new Point(pts[i+1].x, -pts[i+1].y));
+            drawn += segLen; lastPt = pts[i+1];
+          } else {
+            const t = segLen > 1e-9 ? (targetLen - drawn) / segLen : 0;
+            const px = pts[i].x + (pts[i+1].x - pts[i].x) * t;
+            const py = pts[i].y + (pts[i+1].y - pts[i].y) * t;
+            path.lineTo(new Point(px, -py));
+            lastPt = { x: px, y: py };
+            break;
+          }
         }
+        path.strokeColor = new Color(color);
+        path.strokeWidth = lw;
+        path.opacity = isCurrent ? 1.0 : 0.55;
+        if (dash.length) path.dashArray = dash;
+        path.fillColor = null;
+        cncSimLayer.addChild(path);
+        if (isCurrent){ toolPos = lastPt; toolZ = mv.z; toolKind = mv.type; }
+      } else {
+        if (isCurrent){ toolPos = pts[0]; toolZ = mv.z; toolKind = mv.type; }
       }
-      path.strokeColor = new Color(color);
-      path.strokeWidth = lw;
-      path.opacity = isCurrent ? 1.0 : 0.55;
-      if (dash.length) path.dashArray = dash;
-      path.fillColor = null;
-      cncSimLayer.addChild(path);
-      if (isCurrent){ toolPos = lastPt; toolZ = mv.z; toolKind = mv.type; }
-    } else {
-      if (isCurrent){ toolPos = pts[0]; toolZ = mv.z; toolKind = mv.type; }
+      accTime = mvEnd;
+      if (isCurrent) break;
     }
-    accTime = mvEnd;
-    if (isCurrent) break;
+    if (!toolPos && cncState.simT === 0 && moves.length > 0){
+      const fm = moves[0]; if (fm.points.length){ toolPos = fm.points[0]; toolZ = fm.z; toolKind = fm.type; }
+    }
+    if (!toolPos && cncState.simT > 0 && moves.length > 0){
+      const lm = moves[moves.length-1]; if (lm.points.length){ toolPos = lm.points[lm.points.length-1]; toolZ = lm.z; toolKind = lm.type; }
+    }
+    if (toolPos){
+      const tool = getCNCToolById(cncState.activeToolId) || cncState.tools[0];
+      const toolD = (tool ? tool.diam : 3.175);
+      const tr = Math.max(8/view.zoom, toolD * view.zoom / 2 / view.zoom);
+      let centerCol = '#FFD700';
+      if (toolKind === 'cut') centerCol = '#00FF88';
+      else if (toolKind === 'tab') centerCol = '#FF44AA';
+      else if (toolKind === 'pause') centerCol = '#FF8800';
+      const circle = new Path.Circle(new Point(toolPos.x, -toolPos.y), Math.max(8/view.zoom, tr));
+      circle.strokeColor = new Color(centerCol);
+      circle.strokeWidth = 2.5 / view.zoom;
+      circle.fillColor = new Color(centerCol).setAlpha(0.15);
+      cncSimLayer.addChild(circle);
+      const c2 = new Path.Circle(new Point(toolPos.x, -toolPos.y), 2.5/view.zoom);
+      c2.fillColor = new Color(centerCol);
+      cncSimLayer.addChild(c2);
+    }
+    const curBlock = cncCurrentBlock();
+    cncUpdateActiveGlineByBlock(curBlock);
+  } catch (err){
+    console.error('cncDrawSimulation error:', err);
   }
-  if (!toolPos && cncState.simT === 0 && moves.length > 0){
-    const fm = moves[0]; if (fm.points.length){ toolPos = fm.points[0]; toolZ = fm.z; toolKind = fm.type; }
-  }
-  if (!toolPos && cncState.simT > 0 && moves.length > 0){
-    const lm = moves[moves.length-1]; if (lm.points.length){ toolPos = lm.points[lm.points.length-1]; toolZ = lm.z; toolKind = lm.type; }
-  }
-  if (toolPos){
-    const tool = getCNCToolById(cncState.activeToolId) || cncState.tools[0];
-    const toolD = (tool ? tool.diam : 3.175);
-    const tr = Math.max(8/view.zoom, toolD * view.zoom / 2 / view.zoom);
-    let centerCol = '#FFD700';
-    if (toolKind === 'cut') centerCol = '#00FF88';
-    else if (toolKind === 'tab') centerCol = '#FF44AA';
-    else if (toolKind === 'pause') centerCol = '#FF8800';
-    const circle = new Path.Circle(new Point(toolPos.x, -toolPos.y), Math.max(8/view.zoom, tr));
-    circle.strokeColor = new Color(centerCol);
-    circle.strokeWidth = 2.5 / view.zoom;
-    circle.fillColor = new Color(centerCol).setAlpha(0.15);
-    cncSimLayer.addChild(circle);
-    const c2 = new Path.Circle(new Point(toolPos.x, -toolPos.y), 2.5/view.zoom);
-    c2.fillColor = new Color(centerCol);
-    cncSimLayer.addChild(c2);
-  }
-  // Update active gline
-  const curBlock = cncCurrentBlock();
-  cncUpdateActiveGlineByBlock(curBlock);
 }
 
-/* ═══════════════════════════════════════════════════════════════════════
-   CNC — UI ACTIONS / REBUILD
-   ═══════════════════════════════════════════════════════════════════════ */
+/* ═══════════ UI actions ═══════════ */
 function cncRebuildAndRegen(){
-  rebuildAllContours();
-  buildCNCProgram();
-  cncUpdateOpList();
-  cncUpdateToolList();
-  cncRefreshOpsOverlay();
-  cncUpdateSimUI();
+  try { rebuildAllContours(); } catch(e){ console.error('rebuildAllContours error:', e); }
+  try { buildCNCProgram(); } catch(e){ console.error('buildCNCProgram error:', e); }
+  try { cncUpdateOpList(); } catch(e){ console.error('cncUpdateOpList error:', e); }
+  try { cncUpdateToolList(); } catch(e){ console.error('cncUpdateToolList error:', e); }
+  try { cncRefreshOpsOverlay(); } catch(e){ console.error('cncRefreshOpsOverlay error:', e); }
+  try { cncUpdateSimUI(); } catch(e){ console.error('cncUpdateSimUI error:', e); }
 }
 function cncRefreshAllUI(){
   cncUpdateToolList();
@@ -3542,10 +3441,8 @@ function cncRefreshAllUI(){
 function cncSetMode(m){
   cncState.mode = m;
   document.querySelectorAll('.cnc-mode').forEach(b => b.classList.toggle('active', b.dataset.cncMode === m));
-  document.querySelectorAll('.cnc-mode-row .cnc-btn').forEach(b => b.classList.toggle('active', b.dataset.cncMode === m));
   if (m !== 'off'){
     document.getElementById('canvas-container').classList.add('cnc-mode');
-    // Exit any CAD command
     if (state.currentCommand) resetStateCmd();
   } else {
     document.getElementById('canvas-container').classList.remove('cnc-mode');
@@ -3555,38 +3452,106 @@ function cncSetMode(m){
   cncRefreshOpsOverlay();
 }
 
-/* Handle CNC clicks */
+/* ═══════════ FIX #5: Click handler con fallback ═══════════ */
 function cncHandleClick(event){
   const pt = event.point;
   const wx = pt.x, wy = -pt.y;
-  if (cncState.mode === 'drill'){
-    cncAddDrillPoint(wx, wy);
-  } else if (cncState.mode === 'cut'){
-    const hit = hitTestContent(pt, { tolerance: 10/view.zoom });
-    if (hit && hit.item){
-      cncAddCutItem(hit.item);
-    } else {
-      // Try to add the closest item within tolerance
-      setPrompt('Clic sobre una entidad para añadir al corte');
+  try {
+    if (cncState.mode === 'drill'){
+      cncAddDrillPoint(wx, wy);
+    } else if (cncState.mode === 'cut'){
+      // Primer intento con tolerancia normal
+      let hit = hitTestContent(pt, { tolerance: 10/view.zoom });
+      // Fallback con tolerancia mayor si no se encontró nada
+      if (!hit || !hit.item){
+        hit = hitTestContent(pt, { tolerance: 25/view.zoom });
+      }
+      // Fallback final: buscar el item más cercano por distancia a segmentos
+      if (!hit || !hit.item){
+        const closest = findClosestItemByDistance(wx, wy, 25/view.zoom);
+        if (closest) hit = { item: closest };
+      }
+      if (hit && hit.item){
+        cncAddCutItem(hit.item);
+      } else {
+        setPrompt('Clic sobre una entidad para añadir al corte');
+      }
+    } else if (cncState.mode === 'pocket'){
+      const found = cncFindClosedEntityAt(wx, wy);
+      if (found){ cncAddPocketBoundary(found.boundary, wx, wy); }
+      else setPrompt('Haz clic dentro de una figura cerrada');
     }
-  } else if (cncState.mode === 'pocket'){
-    // Find closed path containing point
-    const found = cncFindClosedEntityAt(wx, wy);
-    if (found){ cncAddPocketBoundary(found.boundary, wx, wy); }
-    else setPrompt('Haz clic dentro de una figura cerrada');
+  } catch (err){
+    console.error('CNC click error:', err);
+    setPrompt('Error: ' + err.message);
   }
 }
+
+/* Buscador de item más cercano por distancia a segmentos (fallback para cut) */
+function findClosestItemByDistance(wx, wy, maxDist){
+  let best = null, bestDist = maxDist;
+  for (let internal in layers){
+    const l = layers[internal];
+    if (!l.data.visible || l.data.locked) continue;
+    if (CNC_UTILITY_LAYERS.includes(l)) continue;
+    for (const item of l.children){
+      if (!(item instanceof Path)) continue;
+      const d = distanceToPaperItem(item, wx, wy);
+      if (d < bestDist){ bestDist = d; best = item; }
+    }
+  }
+  return best;
+}
+function distanceToPaperItem(item, wx, wy){
+  // wx, wy en coordenadas usuario (Y up). Paper usa Y down.
+  const px = wx, py = -wy;
+  if (isCircleItem(item)){
+    const c = item.position;
+    const r = getCircleRadius(item);
+    // Distancia al círculo (no al centro)
+    const dc = Math.hypot(c.x - px, c.y - py);
+    return Math.abs(dc - r);
+  }
+  // Para paths: muestrear segmentos
+  const L = item.length;
+  if (L < 1e-6) return Infinity;
+  const n = Math.max(8, Math.min(100, Math.ceil(L / 1)));
+  let minDist = Infinity;
+  let prev = item.getPointAt(0);
+  for (let i = 1; i <= n; i++){
+    const p = item.getPointAt(L * i / n);
+    if (!p) continue;
+    const d = distPointToSegment(px, py, prev.x, prev.y, p.x, p.y);
+    if (d < minDist) minDist = d;
+    prev = p;
+  }
+  return minDist;
+}
+function distPointToSegment(px, py, x1, y1, x2, y2){
+  const dx = x2-x1, dy = y2-y1;
+  const ls = dx*dx+dy*dy;
+  if (ls < 1e-12) return Math.hypot(px-x1, py-y1);
+  let t = ((px-x1)*dx + (py-y1)*dy) / ls;
+  t = Math.max(0, Math.min(1, t));
+  return Math.hypot(px - (x1+t*dx), py - (y1+t*dy));
+}
+
+/* ═══════════ FIX #2 + #3: cncFindClosedEntityAt corregido ═══════════ */
 function cncFindClosedEntityAt(wx, wy){
+  // Convertir a coords paper (Y down) una sola vez
+  const px = wx, py = -wy;
   let best = null, bestArea = Infinity;
   for (let internal in layers){
     const l = layers[internal];
-    if (!l.data.visible || CNC_UTILITY_LAYERS.includes(l)) continue;
+    if (!l.data.visible || l.data.locked) continue;
+    if (CNC_UTILITY_LAYERS.includes(l)) continue;
     l.children.forEach(item => {
       let boundary = null, area = Infinity;
       if (isCircleItem(item)){
         const c = item.position;
         const r = getCircleRadius(item);
-        if (Math.hypot(c.x - wx, c.y - wy) < r){
+        // Ahora sí: comparar en coords paper (Y down) correctamente
+        if (Math.hypot(c.x - px, c.y - py) < r){
           area = Math.PI * r * r;
           boundary = [];
           for (let i = 0; i < 48; i++){
@@ -3595,10 +3560,13 @@ function cncFindClosedEntityAt(wx, wy){
           }
         }
       } else if (item instanceof Path && item.closed && item.segments.length >= 3){
-        if (pointInPath(wx, wy, item)){
-          const bb = item.bounds;
-          area = bb.width * bb.height;
-          boundary = item.segments.map(s => ({ x: s.point.x, y: -s.point.y }));
+        let contains = false;
+        try { contains = item.contains(new Point(px, py)); } catch (e){ contains = false; }
+        if (contains){
+          // Área real (no bbox) para elegir el más pequeño cuando hay anidados
+          const pts = item.segments.map(s => ({ x: s.point.x, y: -s.point.y }));
+          area = Math.abs(signedArea(pts));
+          boundary = pts;
         }
       }
       if (boundary && area < bestArea){ bestArea = area; best = { boundary }; }
@@ -3606,31 +3574,19 @@ function cncFindClosedEntityAt(wx, wy){
   }
   return best;
 }
-function pointInPath(wx, wy, path){
-  // Convert to -y for paper.js space
-  const testPt = new Point(wx, -wy);
-  return path.contains(testPt);
-}
 
-/* ═══════════════════════════════════════════════════════════════════════
-   CNC — UI EVENT HANDLERS
-   ═══════════════════════════════════════════════════════════════════════ */
-// Mode buttons (ribbon)
+/* ═══════════ Eventos UI CNC ═══════════ */
 document.querySelectorAll('#ribbon-content .cnc-mode').forEach(btn => {
   btn.addEventListener('click', () => cncSetMode(btn.dataset.cncMode));
 });
-// Add tool
 document.getElementById('cnc-add-tool').addEventListener('click', cncAddTool);
-// Undo op
 document.getElementById('cnc-undo-op').addEventListener('click', cncUndoOp);
-// Generate
 document.getElementById('cnc-generate-btn').addEventListener('click', () => {
   const t0 = performance.now();
   cncRebuildAndRegen();
   const dt = Math.round(performance.now() - t0);
   setPrompt(`G-code generado (${cncState.gcodeLines.length} líneas, ${dt} ms)`);
 });
-// Download
 document.getElementById('cnc-download-btn').addEventListener('click', () => {
   if (!cncState.gcodeLines.length){ setPrompt('Genera primero'); return; }
   const g = cncState.gcodeLines.join('\n');
@@ -3640,13 +3596,11 @@ document.getElementById('cnc-download-btn').addEventListener('click', () => {
   a.download = 'programa.nc';
   a.click();
 });
-// Copy
 document.getElementById('cnc-copy-btn').addEventListener('click', () => {
   if (!cncState.gcodeLines.length){ setPrompt('Genera primero'); return; }
   const g = cncState.gcodeLines.join('\n');
   navigator.clipboard.writeText(g).then(() => setPrompt('Copiado al portapapeles'));
 });
-// Tabs config
 ['cnc-tabsEnabled','cnc-tabsCount','cnc-tabsWidth','cnc-tabsHeight'].forEach(id => {
   document.getElementById(id).addEventListener('change', () => {
     cncState.tabs.enabled = document.getElementById('cnc-tabsEnabled').checked;
@@ -3660,7 +3614,6 @@ document.getElementById('cnc-shuffle-tabs').addEventListener('click', () => {
   cncState.tabs.seed = (cncState.tabs.seed + 7919) >>> 0;
   cncRebuildAndRegen();
 });
-// Machine config
 ['cnc-spindlePause','cnc-rapidXY','cnc-rapidZ'].forEach(id => {
   document.getElementById(id).addEventListener('change', () => {
     cncState.spindlePause = Math.max(0, parseFloat(document.getElementById('cnc-spindlePause').value) || 0);
@@ -3669,7 +3622,6 @@ document.getElementById('cnc-shuffle-tabs').addEventListener('click', () => {
     if (cncState.operations.length) cncRebuildAndRegen();
   });
 });
-// Simulation
 document.getElementById('cnc-play-btn').addEventListener('click', () => { if (cncState.simPlaying) cncPause(); else cncPlay(); });
 document.getElementById('cnc-reset-btn').addEventListener('click', cncReset);
 document.getElementById('cnc-end-btn').addEventListener('click', cncEnd);
@@ -3683,7 +3635,6 @@ document.getElementById('cnc-sim-speed').addEventListener('input', e => {
   cncState.simSpeedMult = raw / 10;
   document.getElementById('cnc-sim-speed-val').textContent = cncState.simSpeedMult.toFixed(1) + 'x';
 });
-// Ribbon actions
 document.getElementById('ribbon-cnc-generate').addEventListener('click', () => document.getElementById('cnc-generate-btn').click());
 document.getElementById('ribbon-cnc-sim').addEventListener('click', () => {
   if (!cncState.simMoves.length) cncRebuildAndRegen();
@@ -3695,9 +3646,7 @@ document.getElementById('ribbon-cnc-panel').addEventListener('click', function()
   document.getElementById('cnc-panel').classList.toggle('visible');
 });
 
-/* ═══════════════════════════════════════════════════════════════════════
-   MOUSE EVENTS (extendidos con CNC)
-   ═══════════════════════════════════════════════════════════════════════ */
+/* ═══════════ MOUSE EVENTS ═══════════ */
 let snapMarker = null;
 let middleClickTimer = null;
 function onMouseDown(event){
@@ -3705,7 +3654,6 @@ function onMouseDown(event){
 
   // ── CNC mode dispatch ──
   if (cncState.mode !== 'off' && event.event.button === 0 && !event.event.altKey){
-    if (event.event.button === 1) return;
     cncHandleClick(event);
     return;
   }
@@ -3977,9 +3925,7 @@ function onMouseMove(event){
   }
 }
 
-/* ═══════════════════════════════════════════════════════════════════════
-   PREVIEW DINÁMICO
-   ═══════════════════════════════════════════════════════════════════════ */
+/* ═══════════ Preview dinámico ═══════════ */
 function updateDynamicPreview(event){
   previewLayer.removeChildren();
   const pt = event.point;
@@ -4151,9 +4097,7 @@ function showTooltipAt(clientX, clientY, text){
   el.style.display = 'block';
 }
 
-/* ═══════════════════════════════════════════════════════════════════════
-   COORDS / SELECCIÓN / GRID / ZOOM
-   ═══════════════════════════════════════════════════════════════════════ */
+/* ═══════════ Coords / Grid / Zoom ═══════════ */
 function updateCoords(pt){
   document.getElementById('coords-display').textContent = `X: ${pt.x.toFixed(3)}, Y: ${(-pt.y).toFixed(3)}`;
   document.getElementById('zoom-display').textContent = `Zoom: ${view.zoom.toFixed(2)}x`;
@@ -4254,9 +4198,7 @@ function onMouseWheel(event){
   if (cncState.mode !== 'off') cncRefreshOpsOverlay();
 }
 
-/* ═══════════════════════════════════════════════════════════════════════
-   IMPORTAR DXF
-   ═══════════════════════════════════════════════════════════════════════ */
+/* ═══════════ Importar DXF ═══════════ */
 function getCurrentDrawingBounds(){
   let allBounds = null;
   for (let internal in layers){
@@ -4462,9 +4404,7 @@ function buildPolyline(vertsDxf, bulges, closed){
   return path;
 }
 
-/* ═══════════════════════════════════════════════════════════════════════
-   IMPRIMIR
-   ═══════════════════════════════════════════════════════════════════════ */
+/* ═══════════ Imprimir ═══════════ */
 function getContentBounds(){
   let bounds = null;
   for (let internal in layers){
@@ -4529,9 +4469,7 @@ function startPrintWindowPick(){
   setPrompt('Impresión: arrastra una ventana (ESC para cancelar)');
 }
 
-/* ═══════════════════════════════════════════════════════════════════════
-   EXPORTAR DXF
-   ═══════════════════════════════════════════════════════════════════════ */
+/* ═══════════ Exportar DXF ═══════════ */
 function exportDXF(){
   const dxf = generateDXF();
   if (!dxf){ setPrompt('No hay entidades para exportar'); return; }
@@ -4665,9 +4603,7 @@ function generateDXF(){
   return hasEntities ? dxf : null;
 }
 
-/* ═══════════════════════════════════════════════════════════════════════
-   MOUSE TOOL
-   ═══════════════════════════════════════════════════════════════════════ */
+/* ═══════════ Mouse tool ═══════════ */
 const mouseTool = new paper.Tool();
 mouseTool.onMouseDown = onMouseDown;
 mouseTool.onMouseDrag = onMouseDrag;
@@ -4677,9 +4613,7 @@ mouseTool.activate();
 view.element.addEventListener('wheel', onMouseWheel, { passive: false });
 view.on('change', () => drawGrid());
 
-/* ═══════════════════════════════════════════════════════════════════════
-   TOGGLES
-   ═══════════════════════════════════════════════════════════════════════ */
+/* ═══════════ Toggles ═══════════ */
 function setOrtho(on){
   state.ortho = on;
   document.getElementById('ortho-toggle').classList.toggle('active', state.ortho);
@@ -4715,9 +4649,7 @@ document.getElementById('btn-zoom-extents').addEventListener('click', zoomExtent
 document.getElementById('btn-zoom-in').addEventListener('click', () => { view.zoom *= 1.2; refreshStrokeWidths(); renderGrips(); view.update(); drawGrid(); });
 document.getElementById('btn-zoom-out').addEventListener('click', () => { view.zoom /= 1.2; refreshStrokeWidths(); renderGrips(); view.update(); drawGrid(); });
 
-/* ═══════════════════════════════════════════════════════════════════════
-   ARCHIVOS
-   ═══════════════════════════════════════════════════════════════════════ */
+/* ═══════════ Archivos ═══════════ */
 document.getElementById('ribbon-import').addEventListener('click', () => document.getElementById('file-input-import').click());
 document.getElementById('qa-open').addEventListener('click', () => document.getElementById('file-input-import').click());
 document.getElementById('file-input-import').addEventListener('change', e => {
@@ -4726,7 +4658,7 @@ document.getElementById('file-input-import').addEventListener('change', e => {
     if (/\.dwg$/i.test(file.name)){
       showModal({
         title: 'DWG no soportado',
-        body: 'DWG es binario propietario. Expórtalo primero a <code>.dxf</code> desde AutoCAD.',
+        body: 'DWG es binario propietario. Expórtalo primero a <code>.dxf</code>.',
         buttons: [{ label: 'Entendido', primary: true }]
       });
     } else importDXF(file);
@@ -4738,9 +4670,7 @@ document.getElementById('qa-save').addEventListener('click', exportDXF);
 document.getElementById('qa-undo').addEventListener('click', undo);
 document.getElementById('qa-redo').addEventListener('click', redo);
 
-/* ═══════════════════════════════════════════════════════════════════════
-   LÍNEA DE COMANDOS
-   ═══════════════════════════════════════════════════════════════════════ */
+/* ═══════════ Comandos ═══════════ */
 const cmdInputEl = document.getElementById('cmd-input');
 function toggleCmdHistory(){
   const panel = document.getElementById('cmd-history-panel');
@@ -4894,9 +4824,7 @@ cmdInputEl.addEventListener('keydown', e => {
   }
 });
 
-/* ═══════════════════════════════════════════════════════════════════════
-   ATAJOS GLOBALES
-   ═══════════════════════════════════════════════════════════════════════ */
+/* ═══════════ Atajos ═══════════ */
 window.addEventListener('keydown', e => {
   if (e.ctrlKey && e.key === 'z'){ e.preventDefault(); undo(); }
   if (e.ctrlKey && e.key === 'y'){ e.preventDefault(); redo(); }
@@ -4906,8 +4834,6 @@ window.addEventListener('keydown', e => {
   if (e.key === 'F10'){ e.preventDefault(); setPolar(!state.polar); }
   if (e.key === 'F7'){ e.preventDefault(); document.getElementById('grid-toggle').click(); }
   if (e.key === 'F2'){ e.preventDefault(); toggleCmdHistory(); }
-  if (e.ctrlKey && e.key === '1'){ e.preventDefault(); }
-  if (e.ctrlKey && e.key === '2'){ e.preventDefault(); }
   if ((e.key === 'Delete' || e.key === 'Del') && state.selectedItems.length){
     saveState();
     state.selectedItems.forEach(i => i.remove());
@@ -4969,9 +4895,7 @@ function refreshActivePreview(){
   else onMouseMove(fakeEvent);
 }
 
-/* ═══════════════════════════════════════════════════════════════════════
-   MENÚ CONTEXTUAL
-   ═══════════════════════════════════════════════════════════════════════ */
+/* ═══════════ Menú contextual ═══════════ */
 document.getElementById('canvas-container').addEventListener('contextmenu', e => {
   e.preventDefault();
   openContextMenu(e.clientX, e.clientY);
@@ -5003,7 +4927,7 @@ function openContextMenu(x, y){
     items.push({ label: 'Redondear', key: 'F', action: () => executeCommand('FILLET') });
     items.push({ label: 'Borrar', key: 'Supr', action: () => { saveState(); state.selectedItems.forEach(i => i.remove()); clearSelection(); setPrompt('Objetos eliminados'); if (cncState.mode !== 'off') cncRefreshOpsOverlay(); } });
     items.push({ sep: true });
-    if (cncState.tools.length && (state.selectedItems.some(i => isLineItem(i)) || state.selectedItems.some(i => isCircleItem(i)) || state.selectedItems.length > 0)){
+    if (cncState.tools.length){
       items.push({ label: '➕ Añadir a Corte (CNC)', action: () => { state.selectedItems.forEach(it => cncAddCutItem(it)); } });
     }
     items.push({ label: 'Deseleccionar todo', key: 'Esc', action: clearSelection });
@@ -5031,9 +4955,7 @@ function openContextMenu(x, y){
 }
 function closeContextMenu(){ document.getElementById('context-menu').style.display = 'none'; }
 
-/* ═══════════════════════════════════════════════════════════════════════
-   NUEVO / MODAL
-   ═══════════════════════════════════════════════════════════════════════ */
+/* ═══════════ Nuevo / Modal ═══════════ */
 function newDrawing(){
   resetStateCmd();
   clearSelection();
@@ -5101,9 +5023,7 @@ function selectAllItems(){
 window.addEventListener('click', e => { if (!e.target.closest('#context-menu')) closeContextMenu(); });
 window.addEventListener('blur', closeContextMenu);
 
-/* ═══════════════════════════════════════════════════════════════════════
-   CROSSHAIR
-   ═══════════════════════════════════════════════════════════════════════ */
+/* ═══════════ Crosshair ═══════════ */
 const crosshair = document.createElement('div');
 crosshair.className = 'crosshair';
 crosshair.style.display = 'none';
@@ -5121,9 +5041,7 @@ document.addEventListener('mousemove', e => {
   chBox.style.left = e.clientX + 'px';
 });
 
-/* ═══════════════════════════════════════════════════════════════════════
-   MINI MAPA
-   ═══════════════════════════════════════════════════════════════════════ */
+/* ═══════════ Mini mapa ═══════════ */
 const navBtn = document.getElementById('qa-navigator');
 const navContainer = document.getElementById('navigator');
 const navCanvas = document.getElementById('navCanvas');
@@ -5179,9 +5097,7 @@ function updateNavigator(){
 }
 view.on('change', () => { if (navContainer.classList.contains('visible')) updateNavigator(); });
 
-/* ═══════════════════════════════════════════════════════════════════════
-   PRINT
-   ═══════════════════════════════════════════════════════════════════════ */
+/* ═══════════ Print ═══════════ */
 document.getElementById('qa-print').addEventListener('click', () => {
   showModal({
     title: 'Imprimir / Exportar a PDF',
@@ -5194,9 +5110,7 @@ document.getElementById('qa-print').addEventListener('click', () => {
   });
 });
 
-/* ═══════════════════════════════════════════════════════════════════════
-   REDIMENSIONADO
-   ═══════════════════════════════════════════════════════════════════════ */
+/* ═══════════ Redimensionado ═══════════ */
 let resizeRAF = null;
 function syncViewSize(){
   const container = document.getElementById('canvas-container');
@@ -5218,9 +5132,7 @@ if (window.ResizeObserver){
 }
 window.addEventListener('resize', syncViewSize);
 
-/* ═══════════════════════════════════════════════════════════════════════
-   CLIPPER READY
-   ═══════════════════════════════════════════════════════════════════════ */
+/* ═══════════ Clipper ready ═══════════ */
 window.addEventListener('clipper-ready', async () => {
   try {
     const lib = window.jsAngusjClipper;
@@ -5236,9 +5148,7 @@ window.addEventListener('clipper-ready', async () => {
   }
 });
 
-/* ═══════════════════════════════════════════════════════════════════════
-   INIT
-   ═══════════════════════════════════════════════════════════════════════ */
+/* ═══════════ Init ═══════════ */
 function initAll(){
   syncViewSize();
   renderLayerList();
@@ -5246,7 +5156,6 @@ function initAll(){
   refreshStrokeWidths();
   renderGrips();
   view.update();
-  // CNC defaults
   cncState.tools = [createCNCTool(1)];
   cncState.activeToolId = cncState.tools[0].id;
   cncLoadToolIntoFields(cncState.tools[0]);
@@ -5262,7 +5171,7 @@ function initAll(){
   document.getElementById('cnc-tabsHeight').value = cncState.tabs.height;
   document.getElementById('cnc-sim-speed-val').textContent = '1.0x';
   setPrompt('Listo · CAD: F8 Ortho · F10 Polar · F3 OSnap · F7 Grid · ESC deselecciona · Pestaña CNC para G-code');
-  console.log('CAD Pro + CNC cargado');
+  console.log('CAD Pro + CNC v2 (corregido) cargado');
 }
 initAll();
 
