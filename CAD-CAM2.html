@@ -83,7 +83,6 @@ body{background:var(--bg-main);color:var(--text-primary);font-family:var(--font-
 .ribbon-btn.cnc-mode[data-cnc-mode="cut"].active{background:linear-gradient(180deg,#FFB347,#d68f1e);border-color:#FFB347;color:#2a1a00}
 .ribbon-btn.cnc-mode[data-cnc-mode="pocket"].active{background:linear-gradient(180deg,#57C46B,#3a9d50);border-color:#57C46B;color:#0a2a15}
 
-/* ═══ Flyout "Más" ═══ */
 .ribbon-flyout{position:relative}
 .ribbon-flyout-menu{display:none;position:absolute;bottom:100%;margin-bottom:6px;left:50%;
   transform:translateX(-50%);background:var(--bg-panel);border:1px solid var(--border-light);
@@ -244,7 +243,6 @@ body{background:var(--bg-main);color:var(--text-primary);font-family:var(--font-
 .cnc-op-item .op-del:hover{background:rgba(255,107,107,.15);color:var(--accent-red)}
 .cnc-hint{font-size:9.5px;color:var(--text-dim);font-style:italic;line-height:1.3;margin-top:4px}
 
-/* ═══ Patillas mejoradas ═══ */
 .cnc-tabs-toggle-row{display:flex;align-items:center;gap:8px;padding:6px 8px;margin-bottom:6px;
   background:rgba(255,107,214,.06);border:1px solid rgba(255,107,214,.25);border-radius:5px;
   cursor:pointer;transition:all .15s}
@@ -256,9 +254,6 @@ body{background:var(--bg-main);color:var(--text-primary);font-family:var(--font-
 .cnc-tabs-toggle-row .toggle-state{font-size:9.5px;padding:2px 7px;border-radius:8px;
   background:rgba(255,107,214,.15);color:#ff88dd;font-weight:600}
 .cnc-tabs-toggle-row.active .toggle-state{background:var(--accent-pink);color:#2a0a20}
-.cnc-tabs-count-badge{display:inline-flex;align-items:center;gap:4px;font-size:10px;
-  background:rgba(255,107,214,.15);color:#ff88dd;padding:3px 8px;border-radius:10px;
-  font-weight:700;font-family:var(--font-mono);margin-top:6px;border:1px solid rgba(255,107,214,.3)}
 .cnc-tabs-info{font-size:10px;color:#ff88dd;padding:6px 8px;background:rgba(255,107,214,.06);
   border:1px solid rgba(255,107,214,.2);border-radius:4px;margin-top:6px;
   font-family:var(--font-mono);line-height:1.5;white-space:pre-wrap}
@@ -421,12 +416,10 @@ body{background:var(--bg-main);color:var(--text-primary);font-family:var(--font-
         <button class="ribbon-btn" data-cmd="COPY" title="Copiar"><svg viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="0.5"/><path d="M5.5 15.5H4.5A0.5 0.5 0 0 1 4 15V4.5A0.5 0.5 0 0 1 4.5 4H15a0.5 0.5 0 0 1 0.5 0.5V5.5" fill="none"/></svg><span>Copiar</span><span class="tooltip">COPY (CO)</span></button>
         <button class="ribbon-btn" data-cmd="ROTATE" title="Rotar"><svg viewBox="0 0 24 24"><path d="M18.4 8A7.5 7.5 0 1 0 20 12"/><path d="M20 4v5h-5"/></svg><span>Rotar</span><span class="tooltip">ROTATE (RO)</span></button>
         <button class="ribbon-btn" data-cmd="TRIM" title="Recortar"><svg viewBox="0 0 24 24"><line x1="4" y1="4" x2="20" y2="20"/><line x1="20" y1="4" x2="14.3" y2="9.7"/><line x1="9.7" y1="14.3" x2="4" y2="20"/><circle cx="14.3" cy="9.7" r="1" fill="currentColor" stroke="none"/><circle cx="9.7" cy="14.3" r="1" fill="currentColor" stroke="none"/></svg><span>Recortar</span><span class="tooltip">TRIM (TR)</span></button>
-        <!-- ═══ NUEVO: JOIN (Unir) ═══ -->
         <button class="ribbon-btn" data-cmd="JOIN" title="Unir líneas/polilíneas/arcos"><svg viewBox="0 0 24 24"><path d="M3 8h6"/><path d="M9 8a5 5 0 0 1 5 5v0a5 5 0 0 0 5 5h2"/><circle cx="3" cy="8" r="1.5" fill="currentColor" stroke="none"/><circle cx="21" cy="18" r="1.5" fill="currentColor" stroke="none"/><circle cx="9" cy="8" r="1" fill="currentColor" stroke="none"/><circle cx="15" cy="18" r="1" fill="currentColor" stroke="none"/></svg><span>Unir</span><span class="tooltip">JOIN (J) — Une líneas/polilíneas/arcos conectados</span></button>
         <button class="ribbon-btn" data-cmd="OFFSET" title="Offset"><svg viewBox="0 0 24 24"><path d="M3 16c4-9 14-9 18 0" fill="none"/><path d="M6.3 16c3-6.2 8.4-6.2 11.4 0" fill="none" stroke-dasharray="2.2 2.2"/></svg><span>Offset</span><span class="tooltip">OFFSET (O)</span></button>
         <button class="ribbon-btn" data-cmd="ERASE" title="Borrar"><svg viewBox="0 0 24 24"><path d="M15.5 3.5 5 14l3 6.5h5L21 12z"/><line x1="9" y1="9.5" x2="16" y2="16.5" stroke-width="1.2"/><line x1="3" y1="20.5" x2="10" y2="20.5"/></svg><span>Borrar</span><span class="tooltip">ERASE (E)</span></button>
         <button class="ribbon-btn" data-cmd="MIRROR" title="Simetría"><svg viewBox="0 0 24 24"><line x1="12" y1="3" x2="12" y2="21" stroke-dasharray="2 2"/><polygon points="3,7 8,12 3,17"/><polygon points="21,7 16,12 21,17"/></svg><span>Simetría</span><span class="tooltip">MIRROR (MI)</span></button>
-        <!-- ═══ NUEVO: Flyout "Más" ═══ -->
         <div class="ribbon-flyout">
           <button class="ribbon-btn" id="ribbon-more-modify" title="Más comandos"><svg viewBox="0 0 24 24"><circle cx="6" cy="12" r="1.3" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.3" fill="currentColor" stroke="none"/><circle cx="18" cy="12" r="1.3" fill="currentColor" stroke="none"/></svg><span>Más <svg class="flyout-caret" viewBox="0 0 24 24" style="width:8px;height:8px;display:inline-block;vertical-align:1px;"><path d="M6 9l6 6 6-6"/></svg></span></button>
           <div class="ribbon-flyout-menu" id="ribbon-more-modify-menu">
@@ -537,7 +530,6 @@ body{background:var(--bg-main);color:var(--text-primary);font-family:var(--font-
       <button class="cnc-btn" id="cnc-undo-op">↩ Deshacer última</button>
     </div>
 
-    <!-- ═══ PANEL DE PATILLAS MEJORADO ═══ -->
     <div class="cnc-section cnc-tabs-panel" id="cnc-tabs-section">
       <h3>🔗 Patillas <span class="mini" id="cnc-tabs-badge">0</span></h3>
       <label class="cnc-tabs-toggle-row" id="cnc-tabs-toggle-row">
@@ -647,13 +639,13 @@ window.dispatchEvent(new Event('clipper-ready'));
 </script>
 <script>
 /* ═══════════════════════════════════════════════════════════════════════
-   CAD Pro + CNC — VERSIÓN v3
-   Cambios v3:
-     1. Botón JOIN en ribbon "Modificar" + flyout "Más"
-     2. Patillas dibujadas en rosa grueso sobre el contorno
-     3. Panel de patillas rediseñado (toggle llamativo + contador)
-     4. JOIN/SCALE/EXTEND en menú contextual
-     5. Todos los fixes v2 mantenidos
+   CAD Pro + CNC — v4
+   Cambios v4:
+     ★ Shift+clic: añadir/quitar de la selección (estilo AutoCAD)
+     ★ Fix crítico JOIN: detección de cierre por coincidencia de extremos
+       (paper.js .join() NO marca .closed=true aunque los extremos coincidan)
+       → antes de este fix, contornos unidos se trataban como abiertos y
+       no se aplicaba el offset por radio de herramienta (outside/inside).
    ═══════════════════════════════════════════════════════════════════════ */
 paper.setup('myCanvas');
 paper.settings.handleSize = 7;
@@ -824,7 +816,6 @@ document.querySelectorAll('.ribbon-btn[data-cmd]').forEach(btn => {
   });
 });
 
-/* ═══ Flyout "Más" handler ═══ */
 const moreModifyBtn  = document.getElementById('ribbon-more-modify');
 const moreModifyMenu = document.getElementById('ribbon-more-modify-menu');
 if (moreModifyBtn && moreModifyMenu){
@@ -948,6 +939,12 @@ function updateProperties(){
   const item = sel[0];
   const container = document.getElementById('props-content');
   container.innerHTML = '';
+
+  const countRow = document.createElement('div');
+  countRow.className = 'prop-row';
+  countRow.innerHTML = `<span class="prop-label">Seleccionados</span><span class="prop-value">${sel.length}</span>`;
+  container.appendChild(countRow);
+
   const layerRow = document.createElement('div');
   layerRow.className = 'prop-row';
   layerRow.innerHTML = `<span class="prop-label">Capa</span>`;
@@ -1018,11 +1015,6 @@ function updateProperties(){
     makeInput('Inicio Y', () => -p1.y, v => item.segments[0].point.y = -v);
     makeInput('Fin X', () => p2.x, v => item.segments[1].point.x = v);
     makeInput('Fin Y', () => -p2.y, v => item.segments[1].point.y = -v);
-    const dx = p2.x-p1.x, dy = p2.y-p1.y;
-    const lenRow = document.createElement('div');
-    lenRow.className = 'prop-row';
-    lenRow.innerHTML = `<span class="prop-label">Longitud</span><span class="prop-value">${Math.sqrt(dx*dx+dy*dy).toFixed(3)}</span>`;
-    container.appendChild(lenRow);
   } else if (isCircleItem(item)){
     const c = item.position;
     makeInput('Centro X', () => c.x, v => item.position.x = v);
@@ -1097,6 +1089,14 @@ function addToSelection(item, silent){
   }
   if (!silent){ updateProperties(); renderGrips(); }
 }
+function removeFromSelection(item, silent){
+  if (state.selectedItems.includes(item)){
+    state.selectedItems = state.selectedItems.filter(i => i !== item);
+    item.selected = false;
+    item.shadowColor = null;
+  }
+  if (!silent){ updateProperties(); renderGrips(); }
+}
 function refreshSelectionHighlight(){
   const heavy = state.selectedItems.length > 150;
   state.selectedItems.forEach(item => { item.shadowBlur = heavy ? 0 : 8; });
@@ -1153,7 +1153,7 @@ function beginModifyCommand(cmd, promptText){
   else {
     resetStateCmd();
     state.currentCommand = cmd; state.pendingCommand = cmd; state.expectingPoint = false;
-    setPrompt(`${promptText}: Selecciona objetos (Enter para terminar)`);
+    setPrompt(`${promptText}: Selecciona objetos (Shift+clic añade · Enter termina)`);
   }
 }
 function finalizePendingSelection(){
@@ -1328,20 +1328,11 @@ function renderTrackingGuides(guides, resolvedPoint){
     const line = new Path.Line(new Point(guides.v.x, b.top), new Point(guides.v.x, b.bottom));
     line.strokeColor = guideColor; line.strokeWidth = 1/view.zoom;
     line.dashArray = [6/view.zoom, 5/view.zoom]; guideLayer.addChild(line);
-    const mark = new Path.Circle(guides.v, r*0.6);
-    mark.strokeColor = guideColor; mark.strokeWidth = 1.4/view.zoom; mark.fillColor = null; guideLayer.addChild(mark);
   }
   if (guides.h){
     const line = new Path.Line(new Point(b.left, guides.h.y), new Point(b.right, guides.h.y));
     line.strokeColor = guideColor; line.strokeWidth = 1/view.zoom;
     line.dashArray = [6/view.zoom, 5/view.zoom]; guideLayer.addChild(line);
-    const mark = new Path.Circle(guides.h, r*0.6);
-    mark.strokeColor = guideColor; mark.strokeWidth = 1.4/view.zoom; mark.fillColor = null; guideLayer.addChild(mark);
-  }
-  if (guides.v && guides.h){
-    const cross = new Path([resolvedPoint.add(new Point(-r,-r)), resolvedPoint.add(new Point(r,r))]);
-    const cross2 = new Path([resolvedPoint.add(new Point(-r,r)), resolvedPoint.add(new Point(r,-r))]);
-    [cross, cross2].forEach(c => { c.strokeColor = guideColor; c.strokeWidth = 1.6/view.zoom; guideLayer.addChild(c); });
   }
 }
 
@@ -1542,8 +1533,6 @@ function restoreState(snap){
   }
   view.update(); renderLayerList(); drawGrid(); refreshStrokeWidths(); renderGrips(); updateProperties();
   previewLayer.removeChildren(); guideLayer.removeChildren(); selectionLayer.removeChildren();
-  const dt = document.getElementById('dynamic-tooltip');
-  if (dt) dt.style.display = 'none';
   if (cncState.mode !== 'off') cncRefreshOpsOverlay();
 }
 function undo(){
@@ -1733,7 +1722,7 @@ function handlePointInput(point){
   }
 }
 
-/* ═══════════ JOIN (Unir) — ya existente, mejorado feedback ═══════════ */
+/* ═══════════ JOIN ═══════════ */
 function joinSelected(){
   const items = state.selectedItems.filter(i => i instanceof Path && i.segments.length > 0);
   if (items.length < 2){ setPrompt('JOIN: selecciona al menos 2 líneas/polilíneas'); return; }
@@ -1768,7 +1757,6 @@ function joinSelected(){
   });
   clearSelection();
   chains.forEach(p => addToSelection(p));
-  // Feedback detallado: cuántas cadenas vs ítems originales
   const joined = chains.length;
   const total = items.length;
   if (joined === 1 && total > 1){
@@ -2412,6 +2400,8 @@ function getItemEndpoints(item){
   }
   return null;
 }
+
+/* ★ FIX CRÍTICO v4: detección de cierre por coincidencia de extremos */
 function itemToPointSequence(item){
   if (isCircleItem(item)){
     const c = item.position;
@@ -2441,12 +2431,22 @@ function itemToPointSequence(item){
     const p = item.getPointAt(L * i / n);
     if (p) pts.push({ x: p.x, y: -p.y });
   }
-  if (item.closed && pts.length > 2){
+  // ★ FIX: detectar cierre por coincidencia de extremos (paper.js .join()
+  //   NO marca .closed=true aunque el primer y último punto coincidan).
+  //   Esto es CRÍTICO para que el offset exterior/interior por radio de
+  //   herramienta se aplique correctamente en polilíneas unidas.
+  let closed = !!item.closed;
+  if (!closed && pts.length > 2){
     const f = pts[0], l = pts[pts.length-1];
-    if (Math.hypot(f.x-l.x, f.y-l.y) < 0.01) pts.pop();
+    if (Math.hypot(f.x - l.x, f.y - l.y) < 0.5) closed = true;
   }
-  return { points: pts, closed: item.closed };
+  if (closed && pts.length > 2){
+    const f = pts[0], l = pts[pts.length-1];
+    if (Math.hypot(f.x - l.x, f.y - l.y) < 0.5) pts.pop();
+  }
+  return { points: pts, closed };
 }
+
 function groupItemsIntoChains(items, tol){
   tol = tol || 0.15;
   const n = items.length;
@@ -2496,11 +2496,16 @@ function chainItemsIntoPoints(items, tol){
   if (!parts.length) return { points: [], closed: false };
   if (parts.length === 1){
     let pts = parts[0];
-    if (partClosed[0] && pts.length > 2){
+    let closed = partClosed[0];
+    if (!closed && pts.length > 2){
+      const f = pts[0], l = pts[pts.length-1];
+      if (Math.hypot(f.x-l.x, f.y-l.y) < tol*2) closed = true;
+    }
+    if (closed && pts.length > 2){
       const f = pts[0], l = pts[pts.length-1];
       if (Math.hypot(f.x-l.x, f.y-l.y) < tol*2) pts = pts.slice(0, -1);
     }
-    return { points: pts, closed: partClosed[0] };
+    return { points: pts, closed };
   }
   const used = new Array(parts.length).fill(false);
   let startIdx = 0;
@@ -2763,8 +2768,6 @@ function computeTabSegments(pts, closed, count, width, seed, toolDiameter){
   }
   return tabs;
 }
-
-/* ═══════ Tabs info mejorado ═══════ */
 function cncUpdateTabsInfo(){
   const keys = Object.keys(cncState.cutTabs);
   const infoEl = document.getElementById('cnc-tabs-info');
@@ -3336,13 +3339,9 @@ function cncCurrentBlock(){
   return mv ? mv.block : -1;
 }
 
-/* ═══════════════════════════════════════════════════════════════════════
-   ★ OVERLAY: dibuja contornos, PATILLAS en rosa, taladros y cajeados
-   ═══════════════════════════════════════════════════════════════════════ */
 function cncRefreshOpsOverlay(){
   try {
     cncOpsLayer.removeChildren();
-    // 1) Contornos de corte (naranja)
     for (const oiStr in cncState.cutContours){
       const contoursArr = cncState.cutContours[oiStr];
       if (!contoursArr || !contoursArr.length) continue;
@@ -3360,8 +3359,6 @@ function cncRefreshOpsOverlay(){
         cncOpsLayer.addChild(path);
       }
     }
-
-    // 2) ★ PATILLAS — gruesas, rosas, encima del contorno
     if (cncState.tabs.enabled){
       for (const oiStr in cncState.cutTabs){
         const perContour = cncState.cutTabs[oiStr];
@@ -3378,19 +3375,14 @@ function cncRefreshOpsOverlay(){
           if (!tabs || !tabs.length || !c || !c.closed || c.points.length < 3) continue;
           const path = buildPath(c.points, true);
           const cumLens = computeCumLens(path);
-          // Recortar el tab por el radio de la herramienta (zona real de material)
           for (const tab of tabs){
             const matA = getPointAtArcLength(path, cumLens, tab.sStart + toolR);
             const matB = getPointAtArcLength(path, cumLens, tab.sEnd - toolR);
-            const seg = new Path.Line(
-              new Point(matA.x, -matA.y),
-              new Point(matB.x, -matB.y)
-            );
+            const seg = new Path.Line(new Point(matA.x, -matA.y), new Point(matB.x, -matB.y));
             seg.strokeColor = new Color('#FF44AA');
-            seg.strokeWidth = 10 / view.zoom;   // ← grueso como en la versión original
+            seg.strokeWidth = 10 / view.zoom;
             seg.strokeCap = 'round';
             cncOpsLayer.addChild(seg);
-            // Marcadores en los extremos
             const capA = new Path.Circle(new Point(matA.x, -matA.y), 5 / view.zoom);
             capA.fillColor = new Color('#FF44AA');
             capA.strokeColor = new Color('#FFFFFF');
@@ -3405,8 +3397,6 @@ function cncRefreshOpsOverlay(){
         }
       }
     }
-
-    // 3) Taladros
     for (const op of cncState.operations){
       if (op.type !== 'drill') continue;
       op.points.forEach(p => {
@@ -3420,7 +3410,6 @@ function cncRefreshOpsOverlay(){
         [cross1, cross2].forEach(c => { c.strokeColor = new Color('#FF6B6B'); c.strokeWidth = 1 / view.zoom; cncOpsLayer.addChild(c); });
       });
     }
-    // 4) Cajeados
     for (const op of cncState.operations){
       if (op.type !== 'pocket') continue;
       (op.pockets || []).forEach(pk => {
@@ -3436,7 +3425,6 @@ function cncRefreshOpsOverlay(){
         cncOpsLayer.addChild(path);
       });
     }
-    // 5) Segmento seleccionado del G-code (rosa claro)
     if (cncState.selectedGlineIdx >= 0){
       const block = cncState.gcodeBlock[cncState.selectedGlineIdx];
       const pts = cncState.blockPoints[block];
@@ -3687,9 +3675,6 @@ function cncFindClosedEntityAt(wx, wy){
   return best;
 }
 
-/* ═══════════════════════════════════════════════════════════════════════
-   Eventos UI CNC
-   ═══════════════════════════════════════════════════════════════════════ */
 document.querySelectorAll('#ribbon-content .cnc-mode').forEach(btn => {
   btn.addEventListener('click', () => cncSetMode(btn.dataset.cncMode));
 });
@@ -3762,7 +3747,7 @@ document.getElementById('ribbon-cnc-panel').addEventListener('click', function()
 });
 
 /* ═══════════════════════════════════════════════════════════════════════
-   Mouse events
+   MOUSE EVENTS — ★ SHIFT+CLICK toggles selection (v4)
    ═══════════════════════════════════════════════════════════════════════ */
 let snapMarker = null;
 let middleClickTimer = null;
@@ -3826,14 +3811,37 @@ function onMouseDown(event){
   const hit = hitTestContent(event.point);
   if (hit && hit.item){
     const item = hit.item;
+
+    /* ── Modo "selección en curso" de un comando (pending) ── */
     if (state.pendingCommand){
       if (state.selectedItems.includes(item)){
-        item.selected = false; item.shadowColor = null;
-        state.selectedItems = state.selectedItems.filter(i => i !== item);
-      } else addToSelection(item);
-      setPrompt(`${state.pendingCommand}: ${state.selectedItems.length} encontrado(s) (Enter terminar)`);
+        removeFromSelection(item);
+      } else {
+        addToSelection(item);
+      }
+      setPrompt(`${state.pendingCommand}: ${state.selectedItems.length} encontrado(s) (Enter termina)`);
       return;
     }
+
+    /* ═══════════════════════════════════════════════════════════════
+       ★ v4: SHIFT+CLIC = añadir/quitar de la selección (estilo AutoCAD)
+       - Shift+clic sobre ítem NO seleccionado → añadir
+       - Shift+clic sobre ítem YA seleccionado → quitar
+       - No inicia arrastre (evita mover sin querer)
+       ═══════════════════════════════════════════════════════════════ */
+    if (event.event.shiftKey && !state.currentCommand){
+      if (state.selectedItems.includes(item)){
+        removeFromSelection(item);
+        setPrompt(`Quitado de selección · ${state.selectedItems.length} objeto(s) (Shift+clic para más)`);
+      } else {
+        addToSelection(item);
+        setPrompt(`Añadido a selección · ${state.selectedItems.length} objeto(s) (Shift+clic para más)`);
+      }
+      refreshSelectionHighlight();
+      return;
+    }
+
+    /* ── Clic normal sobre objeto seleccionado: iniciar arrastre ── */
     if (state.selectedItems.includes(item)){
       state.isDragging = true; state.dragStartPoint = event.point;
       state.originalPositions = state.selectedItems.map(it => it.position.clone());
@@ -3844,15 +3852,17 @@ function onMouseDown(event){
       state.originalPositions = [item.position.clone()];
       state.hasMoved = false; state.dynamicLastPoint = event.point;
     }
-    setPrompt(`Seleccionados: ${state.selectedItems.length}`);
+    setPrompt(`Seleccionados: ${state.selectedItems.length} (Shift+clic para añadir/quitar)`);
   } else {
-    if (!state.pendingCommand) clearSelection();
+    /* Clic en vacío sin Shift → deselecciona y comienza ventana */
+    if (!state.pendingCommand && !event.event.shiftKey) clearSelection();
     state.selecting = true; state.selectStartPoint = event.point;
     state.selectMode = 'window';
     state.selectionRect = new Rectangle(event.point, event.point);
     drawSelectionRect();
   }
 }
+
 function onMouseDrag(event){
   state.lastMousePoint = event.point;
   state.lastClientX = event.event.clientX;
@@ -3887,23 +3897,16 @@ function onMouseDrag(event){
       const resolved = resolvePoint(event.point, base, 'LINE', [item]);
       item.segments[grip.index].point = resolved;
       renderTrackingGuides(state.trackGuides, resolved);
-      const text = base
-        ? `Dist: ${base.getDistance(resolved).toFixed(3)}  ∠: ${(-(resolved.subtract(base).angle)).toFixed(1)}°`
-        : `X: ${resolved.x.toFixed(3)}, Y: ${(-resolved.y).toFixed(3)}`;
-      showTooltipAt(event.event.clientX, event.event.clientY, text);
     } else if (grip.type === 'move'){
       const delta = event.point.subtract(state.gripDragStart);
       item.segments.forEach((s, i) => { s.point = state.gripOriginalSegments[i].add(delta); });
-      showTooltipAt(event.event.clientX, event.event.clientY, `Dist: ${delta.length.toFixed(3)}  ∠: ${delta.length > 0 ? (-delta.angle).toFixed(1) : 0}°`);
     } else if (grip.type === 'circle-center'){
       const resolved = resolvePoint(event.point, null, 'MOVE', [item]);
       item.position = resolved;
-      showTooltipAt(event.event.clientX, event.event.clientY, `X: ${resolved.x.toFixed(3)}, Y: ${(-resolved.y).toFixed(3)}`);
     } else if (grip.type === 'circle-radius'){
       const resolved = resolvePoint(event.point, item.position, 'LINE', [item]);
       const newR = item.position.getDistance(resolved);
       if (newR > 0.001){ const ni = resizeCircle(item, newR); state.gripDrag.item = ni; }
-      showTooltipAt(event.event.clientX, event.event.clientY, `Radio: ${newR.toFixed(3)}`);
     }
     renderGrips(); return;
   }
@@ -3913,8 +3916,6 @@ function onMouseDrag(event){
     const moveDelta = resolved.subtract(state.dragStartPoint);
     state.selectedItems.forEach((item, idx) => item.position = state.originalPositions[idx].add(moveDelta));
     state.hasMoved = true;
-    const ang = moveDelta.length > 0 ? (-moveDelta.angle) : 0;
-    showTooltipAt(event.event.clientX, event.event.clientY, `Dist: ${moveDelta.length.toFixed(3)}  ∠: ${ang.toFixed(1)}°`);
     renderTrackingGuides(state.trackGuides, resolved, state.dragStartPoint);
     return;
   }
@@ -3958,7 +3959,8 @@ function onMouseUp(event){
     state.selecting = false;
     if (state.selectionRect && state.selectStartPoint){
       const rect = state.selectionRect;
-      if (!state.pendingCommand) clearSelection();
+      const isShift = event.event.shiftKey;
+      if (!state.pendingCommand && !isShift) clearSelection();
       const isWindow = state.selectMode === 'window';
       for (let internal in layers){
         const layer = layers[internal];
@@ -3973,7 +3975,7 @@ function onMouseUp(event){
       }
       selectionLayer.removeChildren();
       state.selectionRect = null; state.selectStartPoint = null;
-      if (state.pendingCommand) setPrompt(`${state.pendingCommand}: ${state.selectedItems.length} encontrado(s) (Enter terminar)`);
+      if (state.pendingCommand) setPrompt(`${state.pendingCommand}: ${state.selectedItems.length} encontrado(s) (Enter termina)`);
       else setPrompt(`Seleccionados: ${state.selectedItems.length}`);
       updateProperties(); renderGrips(); refreshSelectionHighlight();
     }
@@ -4066,7 +4068,6 @@ function updateDynamicPreview(event){
       preview.fillColor = null;
       previewLayer.addChild(preview);
     }
-    showTooltipAt(event.event.clientX, event.event.clientY, `Offset: ${dist}`);
     return;
   }
   if (state.currentCommand && state.expectingPoint && state.dynamicLastPoint){
@@ -4082,8 +4083,6 @@ function updateDynamicPreview(event){
       line.strokeWidth = 1 / view.zoom;
       line.dashArray = [4, 4];
       previewLayer.addChild(line);
-      showTooltipAt(event.event.clientX, event.event.clientY - 30,
-        `L: ${dist.toFixed(2)}  ∠: ${(-angle).toFixed(1)}°  ΔX: ${dx.toFixed(2)}  ΔY: ${(-dy).toFixed(2)}`);
     } else if (state.currentCommand === 'CIRCLE'){
       const r = state.circleDiameterMode ? dist / 2 : dist;
       const circle = new Path.Circle(base, r);
@@ -4091,16 +4090,12 @@ function updateDynamicPreview(event){
       circle.strokeWidth = 1 / view.zoom;
       circle.dashArray = [4, 4];
       previewLayer.addChild(circle);
-      const text = state.circleDiameterMode ? `Diámetro: ${dist.toFixed(2)} (R: ${r.toFixed(2)})` : `Radio: ${dist.toFixed(2)}`;
-      showTooltipAt(event.event.clientX, event.event.clientY - 30, text);
     } else if (state.currentCommand === 'RECTANG'){
       const rect = new Path.Rectangle(base, cursor);
       rect.strokeColor = new Color(0, 0.75, 1, 0.6);
       rect.strokeWidth = 1 / view.zoom;
       rect.dashArray = [4, 4];
       previewLayer.addChild(rect);
-      showTooltipAt(event.event.clientX, event.event.clientY - 30,
-        `Ancho: ${Math.abs(cursor.x - base.x).toFixed(2)}  Alto: ${Math.abs(cursor.y - base.y).toFixed(2)}`);
     } else if (state.currentCommand === 'ARC'){
       if (state.step === 2){
         const guide = new Path.Line(base, cursor);
@@ -4108,7 +4103,6 @@ function updateDynamicPreview(event){
         guide.strokeWidth = 1 / view.zoom;
         guide.dashArray = [4, 4];
         previewLayer.addChild(guide);
-        showTooltipAt(event.event.clientX, event.event.clientY - 30, `Dist: ${dist.toFixed(2)}`);
       } else if (state.step === 3){
         try {
           const arcPreview = new Path.Arc(state.collectedPoints[0], state.collectedPoints[1], cursor);
@@ -4118,7 +4112,6 @@ function updateDynamicPreview(event){
           arcPreview.fillColor = null;
           previewLayer.addChild(arcPreview);
         } catch (err){}
-        showTooltipAt(event.event.clientX, event.event.clientY - 30, `Dist: ${dist.toFixed(2)}`);
       }
     } else if (state.currentCommand === 'MOVE' || state.currentCommand === 'COPY'){
       const line = new Path.Line(base, cursor);
@@ -4135,7 +4128,6 @@ function updateDynamicPreview(event){
         clone.fillColor = null;
         previewLayer.addChild(clone);
       });
-      showTooltipAt(event.event.clientX, event.event.clientY - 30, `Dist: ${dist.toFixed(2)}  ∠: ${(-angle).toFixed(1)}°`);
     } else if (state.currentCommand === 'ROTATE'){
       const guideLine = new Path.Line(state.basePoint, cursor);
       guideLine.strokeColor = new Color(0, 0.75, 1, 0.4);
@@ -4152,9 +4144,6 @@ function updateDynamicPreview(event){
         clone.fillColor = null;
         previewLayer.addChild(clone);
       });
-      let angleDeg = (-delta) % 360;
-      if (angleDeg < 0) angleDeg += 360;
-      showTooltipAt(event.event.clientX, event.event.clientY - 30, `Ángulo: ${angleDeg.toFixed(2)}° (CCW)`);
     } else if (state.currentCommand === 'SCALE'){
       const guideLine = new Path.Line(state.basePoint, cursor);
       guideLine.strokeColor = new Color(0, 0.75, 1, 0.4);
@@ -4172,7 +4161,6 @@ function updateDynamicPreview(event){
         clone.fillColor = null;
         previewLayer.addChild(clone);
       });
-      showTooltipAt(event.event.clientX, event.event.clientY - 30, `Escala: ${sf.toFixed(3)}x`);
     } else if (state.currentCommand === 'MIRROR'){
       const axisLine = new Path.Line(base, cursor);
       axisLine.strokeColor = new Color(0.91, 0.64, 0.24);
@@ -4193,8 +4181,6 @@ function updateDynamicPreview(event){
           });
         } catch (err){}
       }
-      const axisAngle = cursor.subtract(base).angle;
-      showTooltipAt(event.event.clientX, event.event.clientY - 30, `Eje  L: ${dist.toFixed(2)}  ∠: ${(-axisAngle).toFixed(1)}°`);
     }
   }
 }
@@ -5027,7 +5013,7 @@ function openContextMenu(x, y){
     items.push({ label: 'Alargar', key: 'EX', action: () => executeCommand('EXTEND') });
     items.push({ label: 'Chaflán', key: 'CHA', action: () => executeCommand('CHAMFER') });
     items.push({ label: 'Redondear', key: 'F', action: () => executeCommand('FILLET') });
-    if (hasSel >= 2){
+    if (state.selectedItems.length >= 2){
       items.push({ label: '🔗 Unir líneas/polilíneas', key: 'J', action: () => executeCommand('JOIN') });
     }
     items.push({ label: 'Borrar', key: 'Supr', action: () => { saveState(); state.selectedItems.forEach(i => i.remove()); clearSelection(); setPrompt('Objetos eliminados'); if (cncState.mode !== 'off') cncRefreshOpsOverlay(); } });
@@ -5268,8 +5254,8 @@ function initAll(){
   document.getElementById('cnc-tabsWidth').value = cncState.tabs.width;
   document.getElementById('cnc-tabsHeight').value = cncState.tabs.height;
   document.getElementById('cnc-sim-speed-val').textContent = '1.0x';
-  setPrompt('Listo · JOIN en ribbon "Modificar" · Patillas visibles en rosa · ESC deselecciona');
-  console.log('CAD Pro + CNC v3 (JOIN + patillas visibles) cargado');
+  setPrompt('Listo · Shift+clic añade/quita de selección · JOIN+offset arreglado');
+  console.log('CAD Pro + CNC v4 (Shift+clic selección · JOIN offset fix) cargado');
 }
 initAll();
 
