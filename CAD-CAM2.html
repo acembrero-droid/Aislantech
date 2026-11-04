@@ -639,17 +639,7 @@ window.dispatchEvent(new Event('clipper-ready'));
 </script>
 <script>
 /* ═══════════════════════════════════════════════════════════════════════
-   CAD Pro + CNC — v6
-   Cambios v6 (fix crítico del offset exterior/interior):
-     ★★★ BUG PRINCIPAL RESUELTO: el signo de delta dependía de cutDir
-         (reversed forzado) → con cutDir='cw' el offset exterior contraía.
-         Fix: normalizar a CCW para Clipper, aplicar delta SEMÁNTICO
-         (outside=+R, inside=−R, adjust=+valor), y aplicar reverse para
-         cutDir AL FINAL (después del offset).
-     ★ JOIN ahora marca .closed=true si los extremos coinciden
-         (elimina el 5º segmento duplicado y cierra el path)
-     ★ Tolerancia de cierre más generosa (1mm en vez de 0.3/0.5mm)
-     ★ Diagnóstico por consola (F12) para depurar offsets futuros
+   CAD Pro + CNC — v7 (FIX ROBUSTO DEL OFFSET)
    ═══════════════════════════════════════════════════════════════════════ */
 paper.setup('myCanvas');
 paper.settings.handleSize = 7;
@@ -1727,16 +1717,12 @@ function handlePointInput(point){
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
-   ★ JOIN con cierre automático (v6)
-   - Une las entidades con la tolerancia especificada
-   - Si el path resultante tiene primer y último punto coincidentes,
-     elimina el segmento duplicado y marca .closed = true
-   - Si están cerca pero no exactos, usa closePath(tolerance)
+   ★ JOIN v7: cierre robusto con .add() + .closed = true
    ═══════════════════════════════════════════════════════════════════════ */
 function joinSelected(){
   const items = state.selectedItems.filter(i => i instanceof Path && i.segments.length > 0);
   if (items.length < 2){ setPrompt('JOIN: selecciona al menos 2 líneas/polilíneas'); return; }
-  const tolerance = 5 / view.zoom;
+  const tolerance = Math.max(2.0, 5 / view.zoom);
   saveState();
   const pool = items.slice();
   const chains = [];
@@ -1751,7 +1737,10 @@ function joinSelected(){
         const kStart = cand.firstSegment.point, kEnd = cand.lastSegment.point;
         if (cEnd.getDistance(kStart) < tolerance || cEnd.getDistance(kEnd) < tolerance ||
             cStart.getDistance(kStart) < tolerance || cStart.getDistance(kEnd) < tolerance){
-          chain.join(cand, tolerance);
+          try {
+            const r = chain.join(cand, tolerance);
+            if (r && r !== chain) chain = r;
+          } catch(e){ console.warn('join error:', e); }
           pool.splice(i, 1);
           changed = true;
         }
@@ -1767,26 +1756,24 @@ function joinSelected(){
     const hasCurves = path.curves.some(c => !c.isStraight());
     tagShape(path, hasCurves ? 'arc' : 'polyline');
 
-    /* ★ v6: intentar cerrar el path automáticamente si los extremos coinciden */
+    // ★ v7: cierre agresivo del path
     if (path.segments.length > 2){
-      const first = path.firstSegment.point;
-      const last = path.lastSegment.point;
-      const dist = first.getDistance(last);
-      if (dist < 1e-3){
-        // Coinciden exactamente: quitar el último segmento y cerrar
-        try {
+      const firstPt = path.firstSegment.point.clone();
+      const lastPt = path.lastSegment.point;
+      const dist = firstPt.getDistance(lastPt);
+      try {
+        if (dist < 1e-3){
+          // Cierre exacto: quitar duplicado
           path.removeSegment(path.segments.length - 1);
           path.closed = true;
           closedCount++;
-        } catch (e){ /* ignorar */ }
-      } else if (dist < tolerance * 2){
-        // Están cerca: intentar closePath de paper.js
-        try {
-          path.closePath(tolerance);
+        } else if (dist < tolerance * 2){
+          // Brecha pequeña: añadir punto de cierre y marcar closed
+          path.add(firstPt);
           path.closed = true;
           closedCount++;
-        } catch (e){ /* ignorar */ }
-      }
+        }
+      } catch(e){ console.warn('close error:', e); }
     }
   });
 
@@ -1802,10 +1789,9 @@ function joinSelected(){
   } else {
     msg = `JOIN: no se encontraron extremos coincidentes`;
   }
-  if (closedCount > 0){
-    msg += ` · ${closedCount} cerrado(s)`;
-  }
+  if (closedCount > 0){ msg += ` · ${closedCount} cerrado(s)`; }
   setPrompt(msg);
+  console.log('[JOIN]', msg, '| cerrados:', closedCount);
 }
 
 /* ═══════════ TRIM/EXTEND/CHAMFER/FILLET ═══════════ */
@@ -2372,10 +2358,10 @@ function cncUpdateOpList(){
         <option value="inside" ${op.offset==='inside'?'selected':''}>I</option>
         <option value="outside" ${op.offset==='outside'?'selected':''}>E</option>
       </select>` : '';
-    const adjustVal = (typeof op.adjust === 'number') ? op.adjust : 0;
+    const adjustVal = (typeof op.adjust === 'number' && isFinite(op.adjust)) ? op.adjust : 0;
     const adjustInp = (op.type === 'cut' || op.type === 'pocket')
       ? `<input type="number" class="adjust" data-i="${i}" value="${adjustVal}" step="0.05" title="Ajuste fino (+expande/−contrae)" style="width:42px">` : '';
-    const depthVal = (typeof op.depth === 'number') ? op.depth : defaultCNCDepth();
+    const depthVal = (typeof op.depth === 'number' && isFinite(op.depth)) ? op.depth : defaultCNCDepth();
     const depthInp = `<input type="number" class="depth" data-i="${i}" value="${depthVal}" step="0.5" min="0" title="Profundidad mm" style="width:42px">`;
     return `<div class="cnc-op-item">
       <span class="cnc-op-badge ${op.type}">${op.type.toUpperCase()}</span>
@@ -2441,7 +2427,6 @@ function getItemEndpoints(item){
   return null;
 }
 
-/* Muestreo fino de curvas con detección de cierre generosa (v6: 1mm) */
 function itemToPointSequence(item){
   if (isCircleItem(item)){
     const c = item.position;
@@ -2472,7 +2457,6 @@ function itemToPointSequence(item){
     const p = item.getPointAt(L * i / n);
     if (p) pts.push({ x: p.x, y: -p.y });
   }
-  /* ★ v6: tolerancia de cierre más generosa (1mm) */
   const closeTol = Math.max(1.0, L * 0.001);
   let closed = !!item.closed;
   if (!closed && pts.length > 2){
@@ -2523,7 +2507,6 @@ function groupItemsIntoChains(items, tol){
   return groups;
 }
 
-/* chainItemsIntoPoints con cierre de v6: 1mm de tolerancia */
 function chainItemsIntoPoints(items, tol){
   tol = tol || 0.15;
   const closeTol = Math.max(1.0, tol * 4);
@@ -2627,7 +2610,12 @@ function rotatePointsToStart(pts, ox, oy){
   return pts.slice(bestIdx).concat(pts.slice(0, bestIdx));
 }
 
-function offsetPointsWithClipper(pts, delta, joinTypeName){
+/* ═══════════════════════════════════════════════════════════════════════
+   ★★★ v7: OFFSET ROBUSTO ★★★
+   Llama a Clipper con múltiples APIs (defensivo).
+   Sin sanity check que rechace.
+   ═══════════════════════════════════════════════════════════════════════ */
+function offsetPointsWithClipper(pts, delta){
   pts = dedupePolygon(pts, 1e-4);
   if (pts.length < 3) return [];
   if (!cncState.clipperReady || !cncState.clipperInstance){
@@ -2636,54 +2624,75 @@ function offsetPointsWithClipper(pts, delta, joinTypeName){
   const lib = window.jsAngusjClipper;
   const clipper = cncState.clipperInstance;
   const intPath = pts.map(p => ({ x: Math.round(p.x * CLIPPER_SCALE), y: Math.round(p.y * CLIPPER_SCALE) }));
-  let co = null;
-  try {
-    co = new clipper.ClipperOffset(2.0, CLIPPER_ARC_TOLERANCE * CLIPPER_SCALE);
-    let joinType = lib.JoinType.Round;
-    if (joinTypeName === 'miter') joinType = lib.JoinType.Miter;
-    else if (joinTypeName === 'square') joinType = lib.JoinType.Square;
-    co.addPath(intPath, joinType, lib.EndType.ClosedPolygon);
-    const deltaInt = Math.round(delta * CLIPPER_SCALE);
-    let solution = null;
-    if (typeof co.executeToPaths === 'function') solution = co.executeToPaths(deltaInt, 0.5);
-    else if (typeof co.execute === 'function') solution = co.execute(deltaInt);
-    if (!solution || !solution.length) return [];
-    let bestIdx = -1, bestArea = -Infinity;
-    for (let i = 0; i < solution.length; i++){
-      const path = solution[i];
-      if (!path || path.length < 3) continue;
-      let a = 0;
-      for (let k = 0; k < path.length; k++){
-        const p1 = path[k], p2 = path[(k+1) % path.length];
-        a += p1.x * p2.y - p2.x * p1.y;
-      }
-      a = Math.abs(a / 2);
-      if (a > bestArea){ bestArea = a; bestIdx = i; }
+  const deltaInt = Math.round(delta * CLIPPER_SCALE);
+
+  /* Estrategia defensiva: intentar múltiples APIs */
+  const tryOffset = () => {
+    // API 1: instance.offsetToPaths (más moderna)
+    if (typeof clipper.offsetToPaths === 'function'){
+      try {
+        const sol = clipper.offsetToPaths({
+          delta: deltaInt,
+          miterLimit: 2.0,
+          arcTolerance: CLIPPER_ARC_TOLERANCE * CLIPPER_SCALE,
+          joinType: lib.JoinType.Round,
+          endType: lib.EndType.ClosedPolygon,
+          paths: [intPath]
+        });
+        if (sol && sol.length) return sol;
+      } catch(e){ /* sigue */ }
     }
-    if (bestIdx < 0) return [];
-    const result = solution[bestIdx].map(p => ({ x: p.x / CLIPPER_SCALE, y: p.y / CLIPPER_SCALE }));
-    /* Sanity check */
-    const origArea = Math.abs(signedArea(pts));
-    const resultArea = Math.abs(signedArea(result));
-    if (delta > 0){
-      if (resultArea < origArea * 0.85){
-        console.warn('⚠ Offset exterior: área disminuyó (' + origArea.toFixed(2) + '→' + resultArea.toFixed(2) + '), descartando');
-        return [];
+    // API 2: new ClipperOffset + execute
+    try {
+      const co = new clipper.ClipperOffset(2.0, CLIPPER_ARC_TOLERANCE * CLIPPER_SCALE);
+      co.addPath(intPath, lib.JoinType.Round, lib.EndType.ClosedPolygon);
+      if (typeof co.execute === 'function'){
+        const sol = co.execute(deltaInt);
+        if (typeof co.dispose === 'function') try { co.dispose(); } catch(e){}
+        if (sol && sol.length) return sol;
       }
-    } else {
-      if (resultArea > origArea * 1.15){
-        console.warn('⚠ Offset interior: área aumentó (' + origArea.toFixed(2) + '→' + resultArea.toFixed(2) + '), descartando');
-        return [];
+      if (typeof co.executeToPaths === 'function'){
+        const sol = co.executeToPaths(deltaInt);
+        if (typeof co.dispose === 'function') try { co.dispose(); } catch(e){}
+        if (sol && sol.length) return sol;
       }
+    } catch(e){ console.warn('[Clipper] API 2 error:', e.message); }
+    // API 3: static method
+    if (typeof clipper.offsetPaths === 'function'){
+      try {
+        const sol = clipper.offsetPaths(intPath, deltaInt, lib.JoinType.Round, lib.EndType.ClosedPolygon, 2.0, CLIPPER_ARC_TOLERANCE * CLIPPER_SCALE);
+        if (sol && sol.length) return sol;
+      } catch(e){ /* sigue */ }
     }
-    return result;
-  } catch (err){
-    console.warn('Clipper offset error:', err);
+    return null;
+  };
+
+  let solution = tryOffset();
+  // Unwrap si es {paths: [...]}
+  if (solution && !Array.isArray(solution) && solution.paths) solution = solution.paths;
+  if (!solution || !solution.length){
+    console.warn('[Clipper] Todas las APIs fallaron, fallback simple (delta=' + delta + ')');
     return offsetPointsSimpleFallback(pts, delta);
-  } finally {
-    if (co && typeof co.dispose === 'function'){ try { co.dispose(); } catch(e){} }
   }
+
+  // Tomar el path de mayor área
+  let bestIdx = -1, bestArea = -Infinity;
+  for (let i = 0; i < solution.length; i++){
+    const path = solution[i];
+    if (!path || path.length < 3) continue;
+    let a = 0;
+    for (let k = 0; k < path.length; k++){
+      const p1 = path[k], p2 = path[(k+1) % path.length];
+      a += p1.x * p2.y - p2.x * p1.y;
+    }
+    a = Math.abs(a / 2);
+    if (a > bestArea){ bestArea = a; bestIdx = i; }
+  }
+  if (bestIdx < 0) return [];
+  return solution[bestIdx].map(p => ({ x: p.x / CLIPPER_SCALE, y: p.y / CLIPPER_SCALE }));
 }
+
+/* Fallback geométrico simple: funciona para convex y semi-concave */
 function offsetPointsSimpleFallback(pts, delta){
   if (!pts || pts.length < 3) return [];
   const n = pts.length;
@@ -2722,15 +2731,69 @@ function offsetOpenPathSimple(pts, delta){
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
-   ★★★ resolveCutContours — FIX PRINCIPAL v6 ★★★
-   Antes: delta dependía del sentido de giro (cutDir)
-   Ahora: 1) forzar CCW, 2) delta semántico, 3) aplicar cutDir al final
+   ★★★ v7: smartOffsetPolygon — prueba ambos signos y verifica área ★★★
+   Garantiza la dirección correcta (outward/inward) independientemente
+   de la convención de Clipper o cualquier API interna.
+   ═══════════════════════════════════════════════════════════════════════ */
+function smartOffsetPolygon(pts, delta){
+  // pts debe estar en CCW (Y-up). delta > 0 = expand, delta < 0 = contract.
+  if (!pts || pts.length < 3) return pts;
+  if (Math.abs(delta) < 1e-6) return pts.slice();
+
+  const origArea = Math.abs(signedArea(pts));
+  const expectedGrow = delta > 0;
+  const deltaMag = Math.abs(delta);
+
+  // Helper: intenta un delta concreto y comprueba la dirección del área
+  const tryDirection = (signedDelta) => {
+    let result = null;
+    try {
+      result = offsetPointsWithClipper(pts, signedDelta);
+    } catch(e){
+      console.warn('[offset] Clipper exception:', e.message);
+      return null;
+    }
+    if (!result || result.length < 3) return null;
+    const newArea = Math.abs(signedArea(result));
+    const grew = newArea > origArea * 1.02;
+    const shrank = newArea < origArea * 0.98;
+    if (expectedGrow && grew) return { result, newArea };
+    if (!expectedGrow && shrank) return { result, newArea };
+    return null;
+  };
+
+  // Intento 1: signo natural
+  let attempt = tryDirection(delta);
+  if (attempt){
+    console.log(`[offset] OK delta=${delta.toFixed(3)} | área ${origArea.toFixed(1)}→${attempt.newArea.toFixed(1)}`);
+    return attempt.result;
+  }
+
+  // Intento 2: signo opuesto (por si Clipper usa convención contraria)
+  attempt = tryDirection(-delta);
+  if (attempt){
+    console.log(`[offset] OK (signo opuesto) delta=${(-delta).toFixed(3)} | área ${origArea.toFixed(1)}→${attempt.newArea.toFixed(1)}`);
+    return attempt.result;
+  }
+
+  // Intento 3: fallback geométrico simple (garantiza dirección)
+  console.warn(`[offset] Clipper falló ambas direcciones, usando fallback simple (delta=${delta.toFixed(3)})`);
+  return offsetPointsSimpleFallback(pts, delta);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   ★★★ v7: resolveCutContours reescrito ★★★
    ═══════════════════════════════════════════════════════════════════════ */
 function resolveCutContours(op, tool){
   const items = (op.itemIds || []).map(id => findPaperItemById(id)).filter(Boolean);
   if (!items.length) return [];
   const groups = groupItemsIntoChains(items, 0.15);
   const results = [];
+
+  // Sanitizar parámetros
+  if (!Number.isFinite(op.adjust)) op.adjust = 0;
+  if (!Number.isFinite(tool.diam)) tool.diam = 3.175;
+
   for (const group of groups){
     const chainRes = chainItemsIntoPoints(group, 0.15);
     let pts = chainRes.points;
@@ -2738,47 +2801,26 @@ function resolveCutContours(op, tool){
     if (pts.length < 2) continue;
 
     const off = op.offset || 'center';
-    const adjust = (typeof op.adjust === 'number') ? op.adjust : 0;
+    const adjust = Number.isFinite(op.adjust) ? op.adjust : 0;
 
     if (closed && pts.length >= 3){
-      /* ★★★ PASO 1: Normalizar SIEMPRE a CCW.
-         Clipper espera orientación CCW para que delta positivo = expandir. */
-      const wasCCW = signedArea(pts) > 0;
-      if (!wasCCW) pts = pts.slice().reverse();
+      // 1. Normalizar a CCW (Y-up)
+      if (signedArea(pts) < 0) pts = pts.slice().reverse();
 
-      /* ★★★ PASO 2: delta SEMÁNTICO, independiente de cutDir.
-         outside → expande SIEMPRE (+R)
-         inside  → contrae SIEMPRE (−R)
-         adjust  → + expande, − contrae */
+      // 2. Delta semántico
       const toolRadius = tool.diam / 2;
       let delta = 0;
       if (off === 'inside')       delta = -toolRadius;
       else if (off === 'outside') delta = +toolRadius;
-      delta += adjust;
+      // center: delta = 0
+      delta += adjust;  // adjust positivo siempre expande
 
-      /* Diagnóstico (visible en F12) */
-      const origArea = Math.abs(signedArea(pts));
+      // 3. Aplicar offset con verificación de dirección
       if (Math.abs(delta) > 1e-6){
-        try {
-          const result = offsetPointsWithClipper(pts, delta, 'round');
-          if (result && result.length >= 3){
-            const newArea = Math.abs(signedArea(result));
-            console.log(
-              `[CNC Cut] off=${off} | cutDir=${tool.cutDir} | R=${toolRadius.toFixed(2)} | adjust=${adjust.toFixed(2)} | delta=${delta.toFixed(2)} | area ${origArea.toFixed(1)}→${newArea.toFixed(1)} mm²`
-            );
-            pts = result;
-          } else {
-            console.warn(`[CNC Cut] Offset descartado por validación (off=${off}, delta=${delta.toFixed(2)})`);
-          }
-        } catch (err){
-          console.error('[CNC Cut] Clipper error:', err);
-          pts = offsetPointsSimpleFallback(pts, delta);
-        }
+        pts = smartOffsetPolygon(pts, delta);
       }
 
-      /* ★★★ PASO 3: Aplicar dirección de corte DESPUÉS del offset.
-         El path resultante de Clipper está en CCW. Si el usuario quiere CW,
-         invertimos para que la fresa gire en la dirección correcta. */
+      // 4. Aplicar dirección de corte (solo para el orden, no la geometría)
       if (tool.cutDir === 'cw') pts = pts.slice().reverse();
     } else if (!closed && pts.length >= 2 && Math.abs(adjust) > 1e-6){
       pts = offsetOpenPathSimple(pts, adjust);
@@ -2789,6 +2831,7 @@ function resolveCutContours(op, tool){
   }
   return results;
 }
+
 function rebuildAllContours(){
   cncState.cutContours = {};
   cncState.cutTabs = {};
@@ -3141,7 +3184,7 @@ function buildCNCProgram(){
           let prevArea = Infinity;
           for (let iter = 0; iter < maxRings; iter++){
             let off = null;
-            try { off = offsetPointsWithClipper(boundary, d, 'round'); } catch(e){ off = null; }
+            try { off = offsetPointsWithClipper(boundary, d); } catch(e){ off = null; }
             if (!off || off.length < 3) break;
             const area = Math.abs(signedArea(off));
             if (area < minArea) break;
@@ -3758,6 +3801,37 @@ function cncFindClosedEntityAt(wx, wy){
   }
   return best;
 }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   ★ v7: cncDebugOffset() — autotest llamable desde consola
+   ═══════════════════════════════════════════════════════════════════════ */
+window.cncDebugOffset = function(){
+  console.log('===== AUTOTEST OFFSET =====');
+  // Cuadrado 10x10 en (0,0)→(10,0)→(10,10)→(0,10) CCW
+  const sq = [
+    { x: 0, y: 0 }, { x: 10, y: 0 }, { x: 10, y: 10 }, { x: 0, y: 10 }
+  ];
+  const origArea = Math.abs(signedArea(sq));
+  console.log('Orig: área=', origArea, 'signedArea=', signedArea(sq), 'CCW:', signedArea(sq) > 0);
+  console.log('Clipper ready:', cncState.clipperReady);
+  // Test expand +1.5
+  const expanded = smartOffsetPolygon(sq, +1.5);
+  console.log('Expanded +1.5: área=', Math.abs(signedArea(expanded)), '(esperado ~ 13x13=169)');
+  // Test contract -1.5
+  const contracted = smartOffsetPolygon(sq, -1.5);
+  console.log('Contracted -1.5: área=', Math.abs(signedArea(contracted)), '(esperado ~ 7x7=49)');
+  // Verificar APIs disponibles
+  if (cncState.clipperInstance){
+    const co = cncState.clipperInstance;
+    console.log('SDK APIs: offsetToPaths=', typeof co.offsetToPaths, 'offsetPaths=', typeof co.offsetPaths, 'ClipperOffset=', typeof co.ClipperOffset);
+    try {
+      const testCo = new co.ClipperOffset(2.0, 50);
+      console.log('  ClipperOffset instance: execute=', typeof testCo.execute, 'executeToPaths=', typeof testCo.executeToPaths);
+      if (typeof testCo.dispose === 'function') testCo.dispose();
+    } catch(e){ console.error('  ClipperOffset error:', e); }
+  }
+  console.log('===== FIN AUTOTEST =====');
+};
 
 document.querySelectorAll('#ribbon-content .cnc-mode').forEach(btn => {
   btn.addEventListener('click', () => cncSetMode(btn.dataset.cncMode));
@@ -5296,7 +5370,11 @@ window.addEventListener('clipper-ready', async () => {
     );
     cncState.clipperReady = true;
     console.log('✅ Clipper nativo cargado');
+    console.log('   APIs disponibles: offsetToPaths=' + typeof cncState.clipperInstance.offsetToPaths +
+      ' ClipperOffset=' + typeof cncState.clipperInstance.ClipperOffset);
     if (cncState.operations.length) cncRebuildAndRegen();
+    // Auto-ejecutar test de diagnóstico
+    setTimeout(() => { try { window.cncDebugOffset(); } catch(e){ console.warn('debug:', e); } }, 300);
   } catch (err){
     console.warn('❌ No se pudo cargar Clipper:', err);
   }
@@ -5323,8 +5401,9 @@ function initAll(){
   document.getElementById('cnc-tabsWidth').value = cncState.tabs.width;
   document.getElementById('cnc-tabsHeight').value = cncState.tabs.height;
   document.getElementById('cnc-sim-speed-val').textContent = '1.0x';
-  setPrompt('Listo v6 · Offset exterior/interior corregido (CCW-normalizado) · Consola F12 muestra diagnóstico');
-  console.log('CAD Pro + CNC v6 — Fix real del offset: normalización CCW + delta semántico');
+  setPrompt('v7 · Offset con smartOffset (prueba ambas direcciones) · Abre F12 y ejecuta cncDebugOffset()');
+  console.log('CAD Pro + CNC v7 — smartOffset + autotest');
+  console.log('   💡 Ejecuta cncDebugOffset() en consola para verificar el offset');
 }
 initAll();
 
