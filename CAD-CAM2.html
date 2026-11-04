@@ -3,10 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CAD Pro + CNC · DXF → G-Code · v10.0</title>
+<title>CAD Pro + CNC · DXF → G-Code · v11.0</title>
 <style>
-:root {
-    --bg-main:#1A1A1A; --bg-canvas:#16181A; --bg-ribbon:#232323;
+:root { --bg-main:#1A1A1A; --bg-canvas:#16181A; --bg-ribbon:#232323;
     --bg-panel:#262626; --bg-button:#333333; --bg-hover:#3E3E3E;
     --bg-pressed:#1567C4; --bg-selection:#1567C4;
     --text-primary:#D9D9D9; --text-secondary:#8C8C8C; --text-dim:#6B6B6B;
@@ -15,8 +14,7 @@
     --accent-pink:#FF6BD6; --accent-red:#FF6B6B; --accent-measure:#FFD93D;
     --shadow:0 3px 10px rgba(0,0,0,0.5); --transition:all 0.12s ease;
     --font-ui:'Segoe UI','Helvetica Neue',Arial,sans-serif;
-    --font-mono:'Cascadia Mono','Consolas','SF Mono',monospace;
-}
+    --font-mono:'Cascadia Mono','Consolas','SF Mono',monospace; }
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:var(--bg-main);color:var(--text-primary);font-family:var(--font-ui);
   overflow:hidden;height:100vh;display:flex;flex-direction:column;user-select:none;font-size:13px}
@@ -370,7 +368,7 @@ body{background:var(--bg-main);color:var(--text-primary);font-family:var(--font-
       <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 15V9l4 6V9l4 6"/>
     </svg>
     CAD&nbsp;+&nbsp;CNC
-    <span class="version-badge" id="appVersion">v10.0</span>
+    <span class="version-badge" id="appVersion">v11.0</span>
   </span>
   <div class="separator"></div>
   <button id="qa-new" title="Nuevo (Ctrl+N)"><svg viewBox="0 0 24 24"><path d="M13 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V9z"/><path d="M13 3v6h6"/></svg></button>
@@ -634,19 +632,24 @@ window.dispatchEvent(new Event('clipper-ready'));
 </script>
 <script>
 /* ═══════════════════════════════════════════════════════════════════════
-   CAD Pro + CNC — v10.0
+   CAD Pro + CNC — v11.0
    Novedades:
-     · Herramienta MEDIR (distancias y ángulos, snap, acumulativo)
-     · selfCleanPolygon (elimina self-intersections del offset)
-     · Clipper con diagnóstico mejorado
+     · s2w / w2s / fitView / render definidos
+     · measureLayer (paper.js) + refreshMeasureOverlay
+     · Medir con snap 15 px + hover highlight
+     · itemToPointSequence: sampling 0.5 mm (máx 400 pts)
+     · simplifyPolygon antes de offset
+     · MITER_LIMIT = 10
    ═══════════════════════════════════════════════════════════════════════ */
 paper.setup('myCanvas');
 paper.settings.handleSize = 7;
 const { project, view, Path, Point, Group, Layer, Rectangle, Color, PointText, Size } = paper;
 project.selectedColor = new Color(0.31, 0.76, 0.97);
 
-const APP_VERSION = '10.0';
-const VERSION_NOTES = 'Herramienta Medir (F4) + selfCleanPolygon (elimina self-intersections del offset)';
+const canvasContainer = document.getElementById('canvas-container');
+
+const APP_VERSION = '11.0';
+const VERSION_NOTES = 'Fix render/s2w · Measure con snap+hover · Offset sampling 0.5mm · MITER 10';
 
 const layers = {};
 function safeName(orig){ let n = orig.replace(/[^a-zA-Z0-9_\-]/g,'_'); if (/^\d/.test(n)) n='L_'+n; return n; }
@@ -669,10 +672,128 @@ const previewLayer   = new Layer(); previewLayer.name='preview';  project.addLay
 const gripLayer      = new Layer(); gripLayer.name='grips';       project.addLayer(gripLayer);
 const cncOpsLayer    = new Layer(); cncOpsLayer.name='cncOps';    project.addLayer(cncOpsLayer);
 const cncSimLayer    = new Layer(); cncSimLayer.name='cncSim';    project.addLayer(cncSimLayer);
-const CNC_UTILITY_LAYERS = [gridLayer, guideLayer, snapLayer, selectionLayer, previewLayer, gripLayer, cncOpsLayer, cncSimLayer];
+const measureLayer   = new Layer(); measureLayer.name='measure';  project.addLayer(measureLayer);
+const CNC_UTILITY_LAYERS = [gridLayer, guideLayer, snapLayer, selectionLayer, previewLayer, gripLayer, cncOpsLayer, cncSimLayer, measureLayer];
 let activeLayer = defaultLayer;
 project.activeLayer = activeLayer;
 
+/* ═══════════════════════════════════════════════════════════════════════
+   v11: screen↔world + render + overlay de medidas
+   ═══════════════════════════════════════════════════════════════════════ */
+function s2w(sx, sy){
+  const r = canvasContainer.getBoundingClientRect();
+  const localX = sx - r.left - r.width / 2;
+  const localY = sy - r.top - r.height / 2;
+  return {
+    x:  view.center.x + localX / view.zoom,
+    y: -(view.center.y + localY / view.zoom)
+  };
+}
+function w2s(wx, wy){
+  const r = canvasContainer.getBoundingClientRect();
+  return {
+    x: r.left + r.width/2 + (wx - view.center.x) * view.zoom,
+    y: r.top  + r.height/2 - (wy + view.center.y) * view.zoom
+  };
+}
+function fitView(){ zoomExtents(); }
+
+function render(){
+  refreshMeasureOverlay();
+  updateMeasureInfo();
+  const coordsEl = document.getElementById('coords-display');
+  const zoomEl   = document.getElementById('zoom-display');
+  if (coordsEl) coordsEl.textContent = `X: ${(state.mwx||0).toFixed(2)}, Y: ${(state.mwy||0).toFixed(2)}`;
+  if (zoomEl)   zoomEl.textContent   = `Zoom: ${view.zoom.toFixed(2)}x`;
+  view.update();
+}
+
+function refreshMeasureOverlay(){
+  if (typeof measureLayer === 'undefined') return;
+  measureLayer.removeChildren();
+  if (!state.measurements.length && !state.measureStart) { view.update(); return; }
+  const zoom = view.zoom;
+
+  const drawOne = (m, isActive) => {
+    const pA = new Point(m.from.x, -m.from.y);
+    const pB = new Point(m.to.x,   -m.to.y);
+
+    const line = new Path.Line(pA, pB);
+    line.strokeColor = new Color('#FFD93D');
+    line.strokeWidth = (isActive ? 2.5 : 1.8) / zoom;
+    line.dashArray   = [6/zoom, 4/zoom];
+    measureLayer.addChild(line);
+
+    const dir = pB.subtract(pA);
+    const len = dir.length;
+    if (len > 1e-6){
+      const unit = dir.divide(len);
+      const perp = new Point(-unit.y, unit.x);
+      const arrowLen = 10 / zoom;
+      const arrowW   = 5  / zoom;
+      const b1 = pB.subtract(unit.multiply(arrowLen)).add(perp.multiply(arrowW));
+      const b2 = pB.subtract(unit.multiply(arrowLen)).subtract(perp.multiply(arrowW));
+      const arrB = new Path([pB, b1, b2]); arrB.closePath();
+      arrB.fillColor = new Color('#FFD93D');
+      measureLayer.addChild(arrB);
+      const a1 = pA.add(unit.multiply(arrowLen)).add(perp.multiply(arrowW));
+      const a2 = pA.add(unit.multiply(arrowLen)).subtract(perp.multiply(arrowW));
+      const arrA = new Path([pA, a1, a2]); arrA.closePath();
+      arrA.fillColor = new Color('#FFD93D');
+      measureLayer.addChild(arrA);
+    }
+
+    const capA = new Path.Circle(pA, 6/zoom);
+    capA.fillColor   = new Color('#FFD93D');
+    capA.strokeColor = new Color('#1a1400');
+    capA.strokeWidth = 1.8/zoom;
+    measureLayer.addChild(capA);
+    const capB = new Path.Circle(pB, 6/zoom);
+    capB.fillColor   = new Color('#FFD93D');
+    capB.strokeColor = new Color('#1a1400');
+    capB.strokeWidth = 1.8/zoom;
+    measureLayer.addChild(capB);
+
+    const mid = pA.add(pB).divide(2);
+    const txt = new PointText(mid);
+    txt.fontSize      = 11 / zoom;
+    txt.fontFamily    = '"Segoe UI", sans-serif';
+    txt.fontWeight    = 'bold';
+    txt.justification = 'center';
+    txt.fillColor     = new Color('#1a1400');
+    txt.content       = `${m.dist.toFixed(2)} mm  ∠${m.angleDeg.toFixed(1)}°`;
+    const bb = txt.bounds;
+    const padX = 7/zoom, padY = 4/zoom;
+    const bg = new Path.Rectangle(bb.x - padX, bb.y - padY, bb.width + padX*2, bb.height + padY*2);
+    bg.fillColor   = new Color('#FFD93D');
+    bg.strokeColor = new Color('#B89A1E');
+    bg.strokeWidth = 1.2/zoom;
+    measureLayer.addChild(bg);
+    measureLayer.addChild(txt);
+  };
+
+  for (const m of state.measurements) drawOne(m, false);
+
+  if (state.measureStart && state.currentCommand === 'MEASURE'){
+    const A = state.measureStart;
+    const B = { x: state.mwx, y: state.mwy };
+    const dx = B.x - A.x, dy = B.y - A.y;
+    const dist = Math.hypot(dx, dy);
+    if (dist > 0.01){
+      drawOne({ from: A, to: B, dist, angleDeg: Math.atan2(dy, dx) * 180 / Math.PI }, true);
+    } else {
+      const pA = new Point(A.x, -A.y);
+      const cap = new Path.Circle(pA, 6/zoom);
+      cap.fillColor   = new Color('#FFD93D');
+      cap.strokeColor = new Color('#1a1400');
+      cap.strokeWidth = 1.8/zoom;
+      measureLayer.addChild(cap);
+    }
+  }
+  view.update();
+}
+
+/* helpers de forma */
 function isLineItem(it){ return !!(it && it.data && it.data.shapeType === 'line'); }
 function isCircleItem(it){ return !!(it && it.data && it.data.shapeType === 'circle'); }
 function isPolylineItem(it){ return !!(it && it.data && it.data.shapeType === 'polyline'); }
@@ -742,9 +863,12 @@ const state = {
   lastClientX:0, lastClientY:0,
   chamferDist1:0, chamferDist2:0, chamferLine1:null, chamferClick1:null,
   filletRadius:0, filletLine1:null, filletClick1:null,
-  // ★ v10: measure tool
+  // v10: measure tool
   measureStart: null,
   measurements: [],
+  // ★ v11: campos nuevos
+  mwx: 0, mwy: 0,
+  scale: 2, offX: 0, offY: 0,
 };
 let trackHoverTimer = null;
 const TRACK_ACQUIRE_DELAY = 650;
@@ -1247,7 +1371,8 @@ function collectSnapCandidates(excludeItems){
 }
 function getSnapPoint(mousePoint, excludeItems){
   if (!state.snapEnabled) return null;
-  const tol = 10 / view.zoom;
+  // ★ v11: 15px en modo medir, 10px resto
+  const tol = (state.currentCommand === 'MEASURE' ? 15 : 10) / view.zoom;
   let best = null, bestDist = tol, bestType = null;
   const candidates = collectSnapCandidates(excludeItems);
   for (let i = 0; i < candidates.length; i++){
@@ -1410,6 +1535,8 @@ function parseDynamicInput(input, lastPoint){
   }
   return null;
 }
+
+// ─── FIN PARTE 1 ───
 
 function executeCommand(cmd){
   if (state.currentCommand) resetStateCmd();
@@ -1717,7 +1844,7 @@ function handlePointInput(point){
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
-   ★★★ v10: HERRAMIENTA MEDIR ★★★
+   v10/v11: HERRAMIENTA MEDIR — usando refreshMeasureOverlay() de paper.js
    ═══════════════════════════════════════════════════════════════════════ */
 function syncMeasureButtonState(){
   const btn = document.getElementById('btnMeasure');
@@ -1732,6 +1859,7 @@ function startMeasureMode(){
   state.measureStart = null;
   setPrompt('MEDIR: clic punto A (ESC desactiva · Limpiar borra)');
   syncMeasureButtonState();
+  refreshMeasureOverlay();
   render();
 }
 function exitMeasureMode(){
@@ -1739,6 +1867,7 @@ function exitMeasureMode(){
   state.measureStart = null;
   syncMeasureButtonState();
   setPrompt('MEDIR: desactivado (medidas guardadas)');
+  refreshMeasureOverlay();
   render();
 }
 function clearMeasurements(){
@@ -1746,6 +1875,7 @@ function clearMeasurements(){
   state.measureStart = null;
   setPrompt('Medidas borradas');
   updateMeasureInfo();
+  refreshMeasureOverlay();
   render();
 }
 function updateMeasureInfo(){
@@ -1766,6 +1896,7 @@ function onMeasureClick(event){
   if (!state.measureStart){
     state.measureStart = worldPt;
     setPrompt('MEDIR: clic punto B (ESC desactiva)');
+    refreshMeasureOverlay();
     render();
     return;
   }
@@ -1786,113 +1917,8 @@ function onMeasureClick(event){
   state.measureStart = null;
   updateMeasureInfo();
   setPrompt(`MEDIR: D=${dist.toFixed(2)}mm ∠${angleDeg.toFixed(1)}° · clic para nueva medida`);
+  refreshMeasureOverlay();
   render();
-}
-function drawMeasurements(r){
-  if (!state.measurements.length && !state.measureStart) return;
-
-  const color = '#FFD93D';
-  const labelBg = 'rgba(255, 217, 61, 0.95)';
-  const labelBorder = '#B89A1E';
-  const labelText = '#1a1400';
-
-  // Helper: draw label box
-  const drawLabel = (x, y, lines) => {
-    const padX = 7, padY = 4, lineH = 13;
-    ctx.font = 'bold 11px "Segoe UI", sans-serif';
-    let maxW = 0;
-    for (const ln of lines) maxW = Math.max(maxW, ctx.measureText(ln).width);
-    const w = maxW + padX * 2;
-    const h = lineH * lines.length + padY * 2;
-    ctx.fillStyle = labelBg;
-    ctx.fillRect(x - w/2, y - h/2, w, h);
-    ctx.strokeStyle = labelBorder;
-    ctx.lineWidth = 1;
-    ctx.strokeRect(x - w/2, y - h/2, w, h);
-    ctx.fillStyle = labelText;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    for (let i = 0; i < lines.length; i++){
-      ctx.fillText(lines[i], x, y - h/2 + padY + lineH * (i + 0.5));
-    }
-    ctx.textAlign = 'start';
-    ctx.textBaseline = 'alphabetic';
-  };
-
-  // Helper: draw arrow head at from→to direction
-  const drawArrow = (fx, fy, tx, ty) => {
-    const ang = Math.atan2(ty - fy, tx - fx);
-    const len = 9;
-    ctx.fillStyle = color;
-    ctx.beginPath();
-    ctx.moveTo(fx, fy);
-    ctx.lineTo(fx + len * Math.cos(ang - 0.5), fy + len * Math.sin(ang - 0.5));
-    ctx.lineTo(fx + len * Math.cos(ang + 0.5), fy + len * Math.sin(ang + 0.5));
-    ctx.closePath();
-    ctx.fill();
-  };
-
-  // Helper: draw single measurement line
-  const drawMeasureLine = (ax, ay, bx, by, dist, angleDeg, isActive) => {
-    // Convert to screen
-    const sA = w2s(ax, ay);
-    const sB = w2s(bx, by);
-    const x1 = sA.x - r.left, y1 = sA.y - r.top;
-    const x2 = sB.x - r.left, y2 = sB.y - r.top;
-
-    // Dashed line
-    ctx.strokeStyle = color;
-    ctx.lineWidth = isActive ? 2 : 1.5;
-    ctx.setLineDash([5, 3]);
-    ctx.beginPath();
-    ctx.moveTo(x1, y1);
-    ctx.lineTo(x2, y2);
-    ctx.stroke();
-    ctx.setLineDash([]);
-
-    // Arrows
-    drawArrow(x1, y1, x2, y2);
-    drawArrow(x2, y2, x1, y1);
-
-    // Endpoints
-    ctx.fillStyle = color;
-    ctx.strokeStyle = '#1a1400';
-    ctx.lineWidth = 1.5;
-    ctx.beginPath(); ctx.arc(x1, y1, 5, 0, Math.PI*2); ctx.fill(); ctx.stroke();
-    ctx.beginPath(); ctx.arc(x2, y2, 5, 0, Math.PI*2); ctx.fill(); ctx.stroke();
-
-    // Label
-    const mx = (x1 + x2) / 2;
-    const my = (y1 + y2) / 2;
-    drawLabel(mx, my, [
-      `${dist.toFixed(2)} mm`,
-      `∠ ${angleDeg.toFixed(1)}°`
-    ]);
-  };
-
-  // Draw committed measurements
-  for (const m of state.measurements){
-    drawMeasureLine(m.from.x, m.from.y, m.to.x, m.to.y, m.dist, m.angleDeg, false);
-  }
-
-  // Draw active rubber band
-  if (state.measureStart && state.currentCommand === 'MEASURE'){
-    const A = state.measureStart;
-    const B = { x: state.mwx, y: state.mwy };
-    const dx = B.x - A.x, dy = B.y - A.y;
-    const dist = Math.hypot(dx, dy);
-    const angleDeg = Math.atan2(dy, dx) * 180 / Math.PI;
-    if (dist > 0.01){
-      drawMeasureLine(A.x, A.y, B.x, B.y, dist, angleDeg, true);
-    } else {
-      // Just show starting point
-      const sA = w2s(A.x, A.y);
-      ctx.fillStyle = color;
-      ctx.strokeStyle = '#1a1400';
-      ctx.lineWidth = 1.5;
-      ctx.beginPath(); ctx.arc(sA.x - r.left, sA.y - r.top, 5, 0, Math.PI*2); ctx.fill(); ctx.stroke();
-    }
-  }
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
@@ -2312,6 +2338,8 @@ function resetOffsetToSelect(message){
   setPrompt(message || `OFFSET: Distancia ${state.offsetDistance}. Selecciona objeto`);
 }
 
+// ─── FIN PARTE 2 ───
+
 /* ═══════════════════════════════════════════════════════════════════════
    CNC — HERRAMIENTAS
    ═══════════════════════════════════════════════════════════════════════ */
@@ -2617,7 +2645,8 @@ function itemToPointSequence(item){
   }
   const L = item.length;
   if (L < 1e-6) return null;
-  const n = Math.max(64, Math.min(2000, Math.ceil(L / 0.15)));
+  // ★ v11: sampling más grueso = 400 pts máx = offset+selfclean viables
+  const n = Math.max(24, Math.min(400, Math.ceil(L / 0.5)));
   const pts = [];
   for (let i = 0; i <= n; i++){
     const p = item.getPointAt(L * i / n);
@@ -2749,6 +2778,17 @@ function dedupePolygon(pts, tol){
   }
   return out;
 }
+/* v11: reduce puntos muy próximos antes del offset */
+function simplifyPolygon(pts, tol){
+  if (!pts || pts.length < 4) return pts;
+  const out = [pts[0]];
+  for (let i = 1; i < pts.length; i++){
+    const last = out[out.length - 1];
+    if (Math.hypot(pts[i].x - last.x, pts[i].y - last.y) > tol) out.push(pts[i]);
+  }
+  if (out.length > 2 && Math.hypot(out[0].x - out[out.length-1].x, out[0].y - out[out.length-1].y) < tol) out.pop();
+  return out.length >= 3 ? out : pts;
+}
 function bboxFromPoints(pts){
   let mnx=Infinity, mny=Infinity, mxx=-Infinity, mxy=-Infinity;
   for (const p of pts){
@@ -2771,7 +2811,7 @@ function rotatePointsToStart(pts, ox, oy){
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
-   v10: Clipper offset + selfClean
+   v10/v11: Clipper offset + selfClean + offset geométrico
    ═══════════════════════════════════════════════════════════════════════ */
 function offsetPointsWithClipper(pts, delta){
   if (!cncState.clipperReady || !cncState.clipperInstance) return null;
@@ -2810,13 +2850,13 @@ function offsetPointsWithClipper(pts, delta){
           if (a > bestArea){ bestArea = a; best = path; }
         }
         if (best){
-          console.log(`[Clipper v10] ✓ OK tol=${tol} | ${(bestArea/1e6).toFixed(1)}mm²`);
+          console.log(`[Clipper v11] ✓ OK tol=${tol} | ${(bestArea/1e6).toFixed(1)}mm²`);
           return best.map(p => ({ x: p.x / CLIPPER_SCALE, y: p.y / CLIPPER_SCALE }));
         }
       }
     } catch(e){}
   }
-  console.warn('[Clipper v10] offsetToPaths sin resultado, se usará geométrico');
+  console.warn('[Clipper v11] offsetToPaths sin resultado, se usará geométrico');
   return null;
 }
 function offsetPointsProper(pts, delta){
@@ -2835,7 +2875,7 @@ function offsetPointsProper(pts, delta){
   if (Math.abs(area) < 1e-9) return clean.slice();
   const isCCW = area > 0;
   const sign = isCCW ? 1 : -1;
-  const MITER_LIMIT = 4.0;
+  const MITER_LIMIT = 10.0;  // ★ v11: menos recortes en esquinas agudas
   const result = [];
   for (let i = 0; i < m; i++){
     const prev = clean[(i-1+m) % m];
@@ -2936,7 +2976,7 @@ function smartOffsetPolygon(pts, delta){
     r = selfCleanPolygon(r);
     if (isValid(r)) return r;
   }
-  console.warn(`[offset v10] fallback crudo delta=${delta.toFixed(3)}`);
+  console.warn(`[offset v11] fallback crudo delta=${delta.toFixed(3)}`);
   return offsetPointsProper(pts, delta);
 }
 function resolveCutContours(op, tool){
@@ -2954,6 +2994,9 @@ function resolveCutContours(op, tool){
     const off = op.offset || 'center';
     const adjust = Number.isFinite(op.adjust) ? op.adjust : 0;
     if (closed && pts.length >= 3){
+      // ★ v11: simplificar puntos duplicados/cercanos
+      pts = simplifyPolygon(pts, 0.15);
+      if (pts.length < 3) continue;
       if (signedArea(pts) < 0) pts = pts.slice().reverse();
       const toolRadius = tool.diam / 2;
       let delta = 0;
@@ -3110,6 +3153,10 @@ function fmtTime(sec){
   const h = Math.floor(t/3600), m = Math.floor((t%3600)/60), s = t%60;
   return String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
 }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   v11: buildCNCProgram
+   ═══════════════════════════════════════════════════════════════════════ */
 function buildCNCProgram(){
   cncState.gcodeLines = []; cncState.gcodeBlock = [];
   cncState.blockPoints = {}; cncState.blockZ = {};
@@ -4014,7 +4061,7 @@ function onMouseDown(event){
   }
   if (state.waitingForNumber) return;
 
-  // ★ Measure mode
+  // Measure mode
   if (state.currentCommand === 'MEASURE' && event.event.button === 0){
     onMeasureClick(event);
     return;
@@ -4210,8 +4257,22 @@ function onMouseMove(event){
   state.lastMousePoint = event.point;
   state.lastClientX = event.event.clientX;
   state.lastClientY = event.event.clientY;
+
   const w = s2w(event.event.clientX, event.event.clientY);
-  state.mwx = w.x; state.mwy = w.y;
+
+  // ★ v11: si estamos midiendo con snap, mwx/mwy reflejan el punto snap
+  if (state.currentCommand === 'MEASURE' && state.snapEnabled){
+    const snapForMeasure = getSnapPoint(event.point, null);
+    if (snapForMeasure){
+      state.mwx = snapForMeasure.point.x;
+      state.mwy = -snapForMeasure.point.y;
+    } else {
+      state.mwx = w.x; state.mwy = w.y;
+    }
+  } else {
+    state.mwx = w.x; state.mwy = w.y;
+  }
+
   updateCoords(event.point);
   guideLayer.removeChildren();
   updateDynamicPreview(event);
@@ -4248,7 +4309,9 @@ function onMouseMove(event){
     snapLayer.addChild(marker);
     snapMarker = marker;
   }
-  if (!state.currentCommand && !state.pendingCommand && !state.selecting && !state.isDragging && !state.gripDrag && cncState.mode === 'off'){
+  // ★ v11: hover también activo en modo medir
+  const idleOrMeasure = !state.currentCommand || state.currentCommand === 'MEASURE';
+  if (idleOrMeasure && !state.pendingCommand && !state.selecting && !state.isDragging && !state.gripDrag && cncState.mode === 'off'){
     const hit = hitTestContent(event.point);
     const newHover = (hit && hit.item) ? hit.item : null;
     if (newHover !== state.hoveredItem){
@@ -4263,8 +4326,9 @@ function onMouseMove(event){
     if (!state.selectedItems.includes(state.hoveredItem)) state.hoveredItem.shadowColor = null;
     state.hoveredItem = null;
   }
-  // ★ v10: refresh when measuring (rubber band follows cursor)
+  // v10/v11: refrescar rubber-band de medida
   if (state.currentCommand === 'MEASURE' && state.measureStart){
+    refreshMeasureOverlay();
     render();
   }
 }
@@ -4765,6 +4829,9 @@ function generateDXF(){
   return hasEntities ? dxf : null;
 }
 
+/* ═══════════════════════════════════════════════════════════════════════
+   Setup final: mouse tool, listeners de estado, resize, Clipper, init
+   ═══════════════════════════════════════════════════════════════════════ */
 const mouseTool = new paper.Tool();
 mouseTool.onMouseDown = onMouseDown;
 mouseTool.onMouseDrag = onMouseDrag;
@@ -4772,7 +4839,8 @@ mouseTool.onMouseUp = onMouseUp;
 mouseTool.onMouseMove = onMouseMove;
 mouseTool.activate();
 view.element.addEventListener('wheel', onMouseWheel, { passive: false });
-view.on('change', () => drawGrid());
+// ★ v11: refrescar overlay de medidas al hacer zoom/pan
+view.on('change', () => { drawGrid(); refreshMeasureOverlay(); });
 function setOrtho(on){
   state.ortho = on;
   document.getElementById('ortho-toggle').classList.toggle('active', state.ortho);
@@ -4833,7 +4901,7 @@ function toggleCmdHistory(){
 document.getElementById('cmd-history-toggle').addEventListener('click', toggleCmdHistory);
 document.getElementById('cmd-history-close').addEventListener('click', toggleCmdHistory);
 
-// ★ v10: F4 toggles Measure
+// ★ v11: F4 toggle Measure
 window.addEventListener('keydown', e => {
   if (e.ctrlKey && e.key === 'z'){ e.preventDefault(); undo(); }
   if (e.ctrlKey && e.key === 'y'){ e.preventDefault(); redo(); }
@@ -4975,6 +5043,7 @@ function newDrawing(){
   cncState.cutContours = {}; cncState.cutTabs = {};
   cncOpsLayer.removeChildren(); cncSimLayer.removeChildren();
   state.measurements = [];
+  if (typeof measureLayer !== 'undefined') measureLayer.removeChildren();
   invalidateSnapCache();
   view.zoom = 1;
   view.center = new Point(0, 0);
@@ -5172,4 +5241,4 @@ initAll();
 
 </script>
 </body>
-</html>
+</html>    
