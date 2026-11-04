@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CAD Pro + CNC · DXF → G-Code · v8.0</title>
+<title>CAD Pro + CNC · DXF → G-Code · v10.0</title>
 <style>
 :root {
     --bg-main:#1A1A1A; --bg-canvas:#16181A; --bg-ribbon:#232323;
@@ -12,7 +12,7 @@
     --text-primary:#D9D9D9; --text-secondary:#8C8C8C; --text-dim:#6B6B6B;
     --border-color:#383838; --border-light:#454545;
     --accent-blue:#4FC3F7; --accent-amber:#E8A33D; --accent-green:#57C46B;
-    --accent-pink:#FF6BD6; --accent-red:#FF6B6B;
+    --accent-pink:#FF6BD6; --accent-red:#FF6B6B; --accent-measure:#FFD93D;
     --shadow:0 3px 10px rgba(0,0,0,0.5); --transition:all 0.12s ease;
     --font-ui:'Segoe UI','Helvetica Neue',Arial,sans-serif;
     --font-mono:'Cascadia Mono','Consolas','SF Mono',monospace;
@@ -24,7 +24,6 @@ body{background:var(--bg-main);color:var(--text-primary);font-family:var(--font-
 ::-webkit-scrollbar-track{background:var(--bg-panel)}
 ::-webkit-scrollbar-thumb{background:#555;border-radius:4px}
 ::-webkit-scrollbar-thumb:hover{background:#777}
-
 #quick-access{background:linear-gradient(to bottom,#2C2C2C,#202020);
   border-bottom:1px solid var(--border-color);padding:0 10px;display:flex;align-items:center;gap:2px;height:30px}
 #quick-access .brand{display:flex;align-items:center;gap:6px;margin-right:10px;
@@ -39,22 +38,9 @@ body{background:var(--bg-main);color:var(--text-primary);font-family:var(--font-
 #quick-access button:active{transform:translateY(0) scale(.94);background:var(--accent-blue);color:#0a2336}
 #quick-access .separator{width:1px;height:18px;background:var(--border-color);margin:0 6px}
 #quick-access .file-input-hidden{display:none}
-
-/* ★ v8: version badge */
-.brand .version-badge {
-  display: inline-block;
-  padding: 1px 6px;
-  background: var(--accent-amber);
-  color: #1a1200;
-  font-size: 9px;
-  font-weight: 700;
-  border-radius: 8px;
-  font-family: var(--font-mono);
-  letter-spacing: 0.5px;
-  margin-left: 4px;
-  vertical-align: middle;
-}
-
+.brand .version-badge{display:inline-block;padding:1px 6px;background:var(--accent-amber);
+  color:#1a1200;font-size:9px;font-weight:700;border-radius:8px;font-family:var(--font-mono);
+  letter-spacing:0.5px;margin-left:4px;vertical-align:middle}
 #ribbon{background:var(--bg-ribbon);border-bottom:1px solid var(--border-color);padding:0 8px;display:flex;flex-direction:column}
 #ribbon-tabs{display:flex;gap:2px;padding:5px 0 0 2px;height:26px;align-items:flex-end}
 #ribbon-tabs button{background:transparent;border:none;color:var(--text-secondary);padding:6px 16px;
@@ -84,6 +70,9 @@ body{background:var(--bg-main);color:var(--text-primary);font-family:var(--font-
 .ribbon-btn.active{background:linear-gradient(180deg,var(--accent-blue) 0%,#3AA8D8 100%);
   border-color:var(--accent-blue);color:#0a2336;box-shadow:0 3px 12px rgba(79,195,247,.35),inset 0 1px 0 rgba(255,255,255,.2)}
 .ribbon-btn.active svg{stroke:#0a2336;stroke-width:1.9}
+.ribbon-btn.measure-btn.active{background:linear-gradient(180deg,var(--accent-measure) 0%,#c9a91e 100%);
+  border-color:var(--accent-measure);color:#1a1400;box-shadow:0 3px 12px rgba(255,217,61,.4)}
+.ribbon-btn.measure-btn.active svg{stroke:#1a1400}
 .ribbon-btn .tooltip{display:none;position:absolute;top:100%;margin-top:6px;left:50%;
   transform:translateX(-50%);background:#111;color:#eee;padding:3px 8px;border:1px solid var(--border-light);
   border-radius:5px;font-size:10px;font-family:var(--font-mono);white-space:nowrap;pointer-events:none;
@@ -97,7 +86,6 @@ body{background:var(--bg-main);color:var(--text-primary);font-family:var(--font-
 .ribbon-btn.cnc-mode[data-cnc-mode="drill"].active{background:linear-gradient(180deg,#FF6B6B,#c94f4f);border-color:#FF6B6B;color:#fff}
 .ribbon-btn.cnc-mode[data-cnc-mode="cut"].active{background:linear-gradient(180deg,#FFB347,#d68f1e);border-color:#FFB347;color:#2a1a00}
 .ribbon-btn.cnc-mode[data-cnc-mode="pocket"].active{background:linear-gradient(180deg,#57C46B,#3a9d50);border-color:#57C46B;color:#0a2a15}
-
 .ribbon-flyout{position:relative}
 .ribbon-flyout-menu{display:none;position:absolute;bottom:100%;margin-bottom:6px;left:50%;
   transform:translateX(-50%);background:var(--bg-panel);border:1px solid var(--border-light);
@@ -110,7 +98,6 @@ body{background:var(--bg-main);color:var(--text-primary);font-family:var(--font-
   color:var(--accent-blue);transform:translateX(2px)}
 .ribbon-flyout-menu button svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
 .ribbon-flyout-menu button .fk{margin-left:auto;color:var(--text-dim);font-family:var(--font-mono);font-size:10px}
-
 .layer-combo{position:relative}
 #layer-dropdown{flex-direction:row;font-size:11px;gap:6px;min-width:90px}
 .layer-combo-swatch{display:inline-block;width:11px;height:11px;border-radius:2px;border:1px solid rgba(255,255,255,.4);flex-shrink:0}
@@ -125,7 +112,6 @@ body{background:var(--bg-main);color:var(--text-primary);font-family:var(--font-
 .layer-combo-menu .lcm-item:hover{background:var(--bg-hover)}
 .layer-combo-menu .lcm-item.active{color:var(--accent-blue);font-weight:600}
 .layer-combo-menu .lcm-swatch{width:11px;height:11px;border-radius:2px;flex-shrink:0;border:1px solid rgba(255,255,255,.3)}
-
 #main-area{flex:1;display:flex;overflow:hidden;position:relative}
 #layer-panel{width:200px;background:var(--bg-panel);border-right:1px solid var(--border-color);
   padding:10px;display:flex;flex-direction:column;flex-shrink:0;overflow:hidden}
@@ -145,11 +131,18 @@ body{background:var(--bg-main);color:var(--text-primary);font-family:var(--font-
 #layer-list li .layer-controls{display:flex;gap:2px}
 #layer-list li .layer-controls button{background:transparent;border:none;color:var(--text-secondary);cursor:pointer;font-size:12px;padding:0 2px;transition:var(--transition)}
 #layer-list li .layer-controls button:hover{color:var(--text-primary)}
-
 #canvas-container{flex:1;position:relative;background:var(--bg-main);overflow:hidden}
 #myCanvas{width:100%;height:100%;display:block;background:var(--bg-canvas)}
 #canvas-container.cnc-mode #myCanvas{cursor:crosshair}
-
+#canvas-container.measure-mode #myCanvas{cursor:crosshair}
+.measure-info{position:absolute;top:10px;left:10px;
+  background:rgba(255,217,61,0.95);color:#1a1400;
+  padding:5px 12px;border-radius:8px;font-size:11px;font-weight:700;
+  font-family:var(--font-mono);pointer-events:none;
+  box-shadow:0 2px 10px rgba(0,0,0,0.5);border:1px solid #c9a91e;
+  display:none;z-index:50;line-height:1.4}
+.measure-info.show{display:block}
+.measure-info .count{opacity:0.7;font-size:10px;font-weight:600}
 #context-menu{position:fixed;display:none;z-index:2000;background:#232323;border:1px solid var(--border-light);
   border-radius:6px;box-shadow:var(--shadow);padding:4px;min-width:190px;font-size:12px}
 #context-menu .cm-item{display:flex;align-items:center;justify-content:space-between;gap:12px;
@@ -160,7 +153,6 @@ body{background:var(--bg-main);color:var(--text-primary);font-family:var(--font-
 #context-menu .cm-key{color:var(--text-dim);font-family:var(--font-mono);font-size:10.5px}
 #context-menu .cm-item:hover .cm-key{color:rgba(255,255,255,.75)}
 #context-menu .cm-sep{height:1px;background:var(--border-color);margin:4px 2px}
-
 #app-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:3000}
 #app-modal-overlay.open{display:flex}
 #app-modal-box{background:var(--bg-panel);border:1px solid var(--border-light);border-radius:8px;
@@ -174,7 +166,6 @@ body{background:var(--bg-main);color:var(--text-primary);font-family:var(--font-
 #app-modal-actions button:hover{background:var(--bg-hover);transform:translateY(-1px)}
 #app-modal-actions button.primary{background:linear-gradient(180deg,var(--accent-blue),#3AA8D8);border-color:var(--accent-blue);color:#06283d}
 #app-modal-actions button.primary:hover{filter:brightness(1.08)}
-
 #properties-panel{width:280px;background:var(--bg-panel);border-left:1px solid var(--border-color);
   padding:10px 12px;flex-shrink:0;overflow-y:auto;display:none}
 #properties-panel.visible{display:block;animation:slideIn .2s ease}
@@ -190,7 +181,6 @@ body{background:var(--bg-main);color:var(--text-primary);font-family:var(--font-
 .prop-value input[type="number"]{width:80px;text-align:right}
 .prop-value .coord-group{display:flex;gap:4px;justify-content:flex-end}
 .prop-value .coord-group input{width:60px}
-
 #cnc-panel{width:340px;background:var(--bg-panel);border-left:1px solid var(--border-color);
   flex-shrink:0;overflow-y:auto;display:none;flex-direction:column;padding:8px;gap:6px}
 #cnc-panel.visible{display:flex}
@@ -211,7 +201,6 @@ body{background:var(--bg-main);color:var(--text-primary);font-family:var(--font-
 .cnc-btn.accent{background:linear-gradient(180deg,var(--accent-amber),#c98a2a);
   border-color:var(--accent-amber);color:#2a1a00}
 .cnc-btn.accent:hover{filter:brightness(1.08);transform:translateY(-1px)}
-
 .cnc-tool-list{max-height:160px;overflow-y:auto;display:flex;flex-direction:column;gap:3px}
 .cnc-tool-item{display:flex;align-items:center;gap:6px;padding:5px 7px;background:var(--bg-panel);
   border:1px solid transparent;border-radius:5px;cursor:pointer;font-size:11px;transition:all .12s}
@@ -228,7 +217,6 @@ body{background:var(--bg-main);color:var(--text-primary);font-family:var(--font-
   cursor:pointer;padding:1px 3px;border-radius:2px;font-size:10px}
 .cnc-tool-item .tact button:hover{background:var(--bg-hover);color:var(--text-primary)}
 .cnc-tool-item .tact button.del:hover{color:var(--accent-red)}
-
 .cnc-tool-editor{display:flex;flex-direction:column;gap:3px;margin-top:6px}
 .cnc-row{display:flex;align-items:center;justify-content:space-between;gap:5px;font-size:11px}
 .cnc-row label{color:var(--text-secondary);white-space:nowrap;min-width:56px;font-size:10.5px}
@@ -239,7 +227,6 @@ body{background:var(--bg-main);color:var(--text-primary);font-family:var(--font-
 .cnc-row select{text-align:left;width:130px;font-family:var(--font-ui)}
 .cnc-row input:focus,.cnc-row select:focus{outline:none;border-color:var(--accent-blue);color:#fff}
 .cnc-row input[type="checkbox"]{width:auto;transform:scale(1.1);accent-color:var(--accent-blue)}
-
 .cnc-op-list{max-height:180px;overflow-y:auto;display:flex;flex-direction:column;gap:3px}
 .cnc-op-item{display:flex;align-items:center;gap:3px;padding:4px 5px;background:var(--bg-panel);
   border-radius:4px;font-size:10.5px;flex-wrap:wrap}
@@ -257,7 +244,6 @@ body{background:var(--bg-main);color:var(--text-primary);font-family:var(--font-
 .cnc-op-item .op-del{cursor:pointer;color:var(--text-secondary);padding:1px 4px;border-radius:2px;font-size:11px}
 .cnc-op-item .op-del:hover{background:rgba(255,107,107,.15);color:var(--accent-red)}
 .cnc-hint{font-size:9.5px;color:var(--text-dim);font-style:italic;line-height:1.3;margin-top:4px}
-
 .cnc-tabs-toggle-row{display:flex;align-items:center;gap:8px;padding:6px 8px;margin-bottom:6px;
   background:rgba(255,107,214,.06);border:1px solid rgba(255,107,214,.25);border-radius:5px;
   cursor:pointer;transition:all .15s}
@@ -272,7 +258,6 @@ body{background:var(--bg-main);color:var(--text-primary);font-family:var(--font-
 .cnc-tabs-info{font-size:10px;color:#ff88dd;padding:6px 8px;background:rgba(255,107,214,.06);
   border:1px solid rgba(255,107,214,.2);border-radius:4px;margin-top:6px;
   font-family:var(--font-mono);line-height:1.5;white-space:pre-wrap}
-
 .cnc-sim-btn-row{display:flex;gap:4px;margin-bottom:6px}
 .cnc-sim-btn{flex:1;padding:7px 6px;border:1px solid var(--border-light);border-radius:5px;
   cursor:pointer;font-size:11px;background:var(--bg-button);color:var(--text-primary);
@@ -300,7 +285,6 @@ body{background:var(--bg-main);color:var(--text-primary);font-family:var(--font-
 .cnc-legend .cb.tab{background:#FF44AA;height:5px;border-radius:2px}
 .cnc-legend .cb.tool{width:10px;height:10px;border-radius:50%;background:transparent;border:2px solid #FFD700}
 .cnc-legend .cb.hilite{background:#FF88DD;height:4px}
-
 .cnc-gcode{background:#0d0f12;color:#c0d0e0;font-family:var(--font-mono);font-size:9.5px;
   border-radius:4px;padding:6px 4px;min-height:120px;max-height:220px;overflow-y:auto;
   border:1px solid var(--border-color);line-height:1.35;position:relative}
@@ -310,7 +294,6 @@ body{background:var(--bg-main);color:var(--text-primary);font-family:var(--font-
 .cnc-gline.selected{background:#3a1533;color:#ff88dd;border-left-color:#ff88dd}
 .cnc-gline.active.selected{background:#153326;color:#00ff88;border-left-color:#ff88dd;box-shadow:inset 0 0 0 1px #ff88dd66}
 .cnc-empty-hint{color:var(--text-dim);font-style:italic;font-size:10px;padding:6px 4px;text-align:center}
-
 #status-bar{height:28px;background:var(--bg-ribbon);border-top:1px solid var(--border-color);
   display:flex;align-items:center;padding:0 8px;gap:2px;font-size:11px;color:var(--text-secondary);flex-shrink:0}
 #status-bar .status-group{display:flex;align-items:center;gap:2px}
@@ -330,7 +313,6 @@ body{background:var(--bg-main);color:var(--text-primary);font-family:var(--font-
   padding:3px 10px;border-radius:12px;cursor:pointer;font-size:10px;font-weight:700;letter-spacing:.3px;transition:all .15s ease}
 #cmd-history-toggle:hover{background:rgba(79,195,247,.1);color:var(--text-primary)}
 #cmd-history-toggle.active{color:var(--accent-blue);border-color:rgba(79,195,247,.5);background:rgba(79,195,247,.15)}
-
 #cmd-history-panel{position:fixed;left:0;right:0;bottom:54px;height:240px;background:#0c0c0c;
   border-top:1px solid var(--border-light);box-shadow:0 -6px 18px rgba(0,0,0,.5);z-index:900;
   display:none;flex-direction:column}
@@ -342,7 +324,6 @@ body{background:var(--bg-main);color:var(--text-primary);font-family:var(--font-
 #cmd-history-panel .cmh-head button:hover{color:var(--text-primary)}
 #cmd-history-panel .cmh-body{flex:1;overflow-y:auto;padding:8px 12px;font-family:var(--font-mono);font-size:12px;color:#b9b9b9;line-height:1.6}
 #cmd-history-panel .cmh-body div:last-child{color:var(--accent-blue)}
-
 #command-line{height:26px;background:#101010;border-top:1px solid var(--border-color);
   display:flex;align-items:center;padding:0 12px;gap:8px;flex-shrink:0}
 #cmd-prompt{color:var(--accent-blue);font-weight:600;font-size:12.5px;font-family:var(--font-mono);min-width:66px}
@@ -350,13 +331,11 @@ body{background:var(--bg-main);color:var(--text-primary);font-family:var(--font-
   font-size:12.5px;font-family:var(--font-mono);padding:2px 0;letter-spacing:.2px}
 #cmd-input::placeholder{color:var(--text-dim)}
 #cmd-status{color:var(--text-dim);font-size:11px;font-family:var(--font-mono);min-width:100px;text-align:right}
-
 #navigator{position:absolute;bottom:40px;right:16px;width:150px;height:120px;
   background:rgba(30,30,30,.85);border:1px solid var(--border-color);border-radius:6px;
   overflow:hidden;z-index:100;box-shadow:var(--shadow);display:none}
 #navigator canvas{width:100%;height:100%;display:block}
 #navigator.visible{display:block;animation:fadeIn .2s ease}
-
 .crosshair{position:fixed;top:0;left:0;width:100vw;height:100vh;pointer-events:none;z-index:50;display:none}
 .crosshair-line{position:absolute;background:rgba(217,217,217,.45)}
 .crosshair-line.h{width:100vw;height:1px;left:0}
@@ -367,10 +346,8 @@ body{background:var(--bg-main);color:var(--text-primary);font-family:var(--font-
 #dynamic-tooltip{position:fixed;pointer-events:none;background:#1c1c1c;color:var(--accent-blue);
   padding:3px 9px;border-radius:5px;font-family:var(--font-mono);font-size:11.5px;
   border:1px solid var(--accent-blue);box-shadow:0 2px 8px rgba(0,0,0,.5);display:none;z-index:1000}
-
 @keyframes fadeIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
 @keyframes slideIn{from{opacity:0;transform:translateX(-10px)}to{opacity:1;transform:translateX(0)}}
-
 @media (max-width:1400px){ #cnc-panel{width:300px} #properties-panel{width:240px} }
 @media (max-width:1024px){
   #layer-panel{width:160px} #properties-panel{width:200px} #cnc-panel{width:260px}
@@ -393,7 +370,7 @@ body{background:var(--bg-main);color:var(--text-primary);font-family:var(--font-
       <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 15V9l4 6V9l4 6"/>
     </svg>
     CAD&nbsp;+&nbsp;CNC
-    <span class="version-badge" id="appVersion">v8.0</span>
+    <span class="version-badge" id="appVersion">v10.0</span>
   </span>
   <div class="separator"></div>
   <button id="qa-new" title="Nuevo (Ctrl+N)"><svg viewBox="0 0 24 24"><path d="M13 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V9z"/><path d="M13 3v6h6"/></svg></button>
@@ -446,6 +423,13 @@ body{background:var(--bg-main);color:var(--text-primary);font-family:var(--font-
             <button data-cmd="FILLET"><svg viewBox="0 0 24 24"><path d="M3 18 L3 12 Q3 3 12 3 L18 3"/></svg>Redondear <span class="fk">F</span></button>
           </div>
         </div>
+      </div>
+    </div>
+    <div class="ribbon-group" data-tab="home">
+      <label>Medir</label>
+      <div class="ribbon-group-btns">
+        <button class="ribbon-btn measure-btn" id="btnMeasure" title="Medir distancias y ángulos"><svg viewBox="0 0 24 24"><line x1="4" y1="20" x2="20" y2="4"/><circle cx="4" cy="20" r="1.5" fill="currentColor" stroke="none"/><circle cx="20" cy="4" r="1.5" fill="currentColor" stroke="none"/><path d="M10 14 L12 12 L14 14" fill="none"/></svg><span>Medir</span><span class="tooltip">Medir distancias y ángulos (F4)</span></button>
+        <button class="ribbon-btn" id="btnMeasureClear" title="Limpiar medidas"><svg viewBox="0 0 24 24"><path d="M15.5 3.5 5 14l3 6.5h5L21 12z"/><line x1="9" y1="9.5" x2="16" y2="16.5" stroke-width="1.2"/></svg><span>Limpiar</span><span class="tooltip">Limpiar todas las medidas</span></button>
       </div>
     </div>
     <div class="ribbon-group" data-tab="home">
@@ -511,6 +495,7 @@ body{background:var(--bg-main);color:var(--text-primary);font-family:var(--font-
     <canvas id="myCanvas"></canvas>
     <div id="navigator"><canvas id="navCanvas"></canvas></div>
     <div id="context-menu"></div>
+    <div class="measure-info" id="measureInfo"></div>
   </div>
 
   <div id="cnc-panel">
@@ -536,16 +521,14 @@ body{background:var(--bg-main);color:var(--text-primary);font-family:var(--font-
         <div class="cnc-row"><label>Mandrino</label><select id="cnc-tSpindleDir"><option value="M3">M3 Horario</option><option value="M4">M4 Antihorario</option></select></div>
       </div>
     </div>
-
     <div class="cnc-section">
       <h3>📋 Operaciones <span class="mini" id="cnc-op-count">0</span></h3>
       <div class="cnc-op-list" id="cnc-op-list">
         <div class="cnc-empty-hint">Sin operaciones</div>
       </div>
-      <div class="cnc-hint">Naranja = <b>profundidad</b> mm · Azul = <b>ajuste fino</b> (+ expande, − contrae)</div>
+      <div class="cnc-hint">Naranja = <b>profundidad</b> mm · Azul = <b>ajuste fino</b></div>
       <button class="cnc-btn" id="cnc-undo-op">↩ Deshacer última</button>
     </div>
-
     <div class="cnc-section cnc-tabs-panel" id="cnc-tabs-section">
       <h3>🔗 Patillas <span class="mini" id="cnc-tabs-badge">0</span></h3>
       <label class="cnc-tabs-toggle-row" id="cnc-tabs-toggle-row">
@@ -559,14 +542,12 @@ body{background:var(--bg-main);color:var(--text-primary);font-family:var(--font-
       <button class="cnc-btn" id="cnc-shuffle-tabs">🎲 Reubicar patillas</button>
       <div class="cnc-tabs-info" id="cnc-tabs-info">Sin operaciones de corte</div>
     </div>
-
     <div class="cnc-section">
       <h3>⚙ Máquina</h3>
       <div class="cnc-row"><label>Pausa mandrino</label><input type="number" id="cnc-spindlePause" step="0.5" min="0" max="120"></div>
       <div class="cnc-row"><label>Rapid XY</label><input type="number" id="cnc-rapidXY" step="100" min="100"></div>
       <div class="cnc-row"><label>Rapid Z</label><input type="number" id="cnc-rapidZ" step="100" min="100"></div>
     </div>
-
     <div class="cnc-section cnc-sim-panel">
       <h3>🎬 Simulación</h3>
       <div class="cnc-sim-btn-row">
@@ -579,14 +560,13 @@ body{background:var(--bg-main);color:var(--text-primary);font-family:var(--font-
       <div class="cnc-speed-row"><span>🐢</span><input type="range" id="cnc-sim-speed" min="1" max="100" value="10"><span>🐇</span><span id="cnc-sim-speed-val">1.0x</span></div>
       <div class="cnc-hint">Velocidad 1.0x = tiempo real · <span id="cnc-sim-total">Total: 00:00:00</span></div>
       <div class="cnc-legend">
-        <span><span class="cb cut"></span> Corte (G1/G2/G3)</span>
-        <span><span class="cb rapid"></span> Rápido (G0)</span>
+        <span><span class="cb cut"></span> Corte</span>
+        <span><span class="cb rapid"></span> Rápido</span>
         <span><span class="cb tab"></span> Patilla</span>
-        <span><span class="cb hilite"></span> Segmento seleccionado</span>
+        <span><span class="cb hilite"></span> Seleccionado</span>
         <span><span class="cb tool"></span> Herramienta</span>
       </div>
     </div>
-
     <div class="cnc-section">
       <h3>📄 Código G</h3>
       <button class="cnc-btn accent" id="cnc-generate-btn">⚙ Generar / Actualizar</button>
@@ -595,7 +575,6 @@ body{background:var(--bg-main);color:var(--text-primary);font-family:var(--font-
       </div>
       <button class="cnc-btn" id="cnc-download-btn">💾 Descargar .nc</button>
       <button class="cnc-btn" id="cnc-copy-btn">📋 Copiar</button>
-      <div class="cnc-hint">Clic en una línea → resalta el segmento</div>
     </div>
   </div>
 
@@ -655,19 +634,19 @@ window.dispatchEvent(new Event('clipper-ready'));
 </script>
 <script>
 /* ═══════════════════════════════════════════════════════════════════════
-   CAD Pro + CNC — v8.0
-   FIX DEFINITIVO DEL OFFSET:
-     · Clipper API correcta: offsetToPaths (no ClipperOffset)
-     · Fallback geométrico con miter-join correcto (delta/cos(halfAngle))
-     · Validación de área para garantizar dirección
+   CAD Pro + CNC — v10.0
+   Novedades:
+     · Herramienta MEDIR (distancias y ángulos, snap, acumulativo)
+     · selfCleanPolygon (elimina self-intersections del offset)
+     · Clipper con diagnóstico mejorado
    ═══════════════════════════════════════════════════════════════════════ */
 paper.setup('myCanvas');
 paper.settings.handleSize = 7;
 const { project, view, Path, Point, Group, Layer, Rectangle, Color, PointText, Size } = paper;
 project.selectedColor = new Color(0.31, 0.76, 0.97);
 
-const APP_VERSION = '8.0';
-const VERSION_NOTES = 'Offset miter-join correcto (Clipper offsetToPaths + geométrico). Prueba cncDebugOffset()';
+const APP_VERSION = '10.0';
+const VERSION_NOTES = 'Herramienta Medir (F4) + selfCleanPolygon (elimina self-intersections del offset)';
 
 const layers = {};
 function safeName(orig){ let n = orig.replace(/[^a-zA-Z0-9_\-]/g,'_'); if (/^\d/.test(n)) n='L_'+n; return n; }
@@ -763,6 +742,9 @@ const state = {
   lastClientX:0, lastClientY:0,
   chamferDist1:0, chamferDist2:0, chamferLine1:null, chamferClick1:null,
   filletRadius:0, filletLine1:null, filletClick1:null,
+  // ★ v10: measure tool
+  measureStart: null,
+  measurements: [],
 };
 let trackHoverTimer = null;
 const TRACK_ACQUIRE_DELAY = 650;
@@ -956,12 +938,10 @@ function updateProperties(){
   const item = sel[0];
   const container = document.getElementById('props-content');
   container.innerHTML = '';
-
   const countRow = document.createElement('div');
   countRow.className = 'prop-row';
   countRow.innerHTML = `<span class="prop-label">Seleccionados</span><span class="prop-value">${sel.length}</span>`;
   container.appendChild(countRow);
-
   const layerRow = document.createElement('div');
   layerRow.className = 'prop-row';
   layerRow.innerHTML = `<span class="prop-label">Capa</span>`;
@@ -986,7 +966,6 @@ function updateProperties(){
   });
   layerRow.appendChild(layerSelect);
   container.appendChild(layerRow);
-
   const colorRow = document.createElement('div');
   colorRow.className = 'prop-row';
   colorRow.innerHTML = `<span class="prop-label">Color</span>`;
@@ -1000,7 +979,6 @@ function updateProperties(){
   });
   colorRow.appendChild(colorInput);
   container.appendChild(colorRow);
-
   let type = 'Desconocido';
   if (isLineItem(item)) type = 'Línea';
   else if (isCircleItem(item)) type = 'Círculo';
@@ -1010,7 +988,6 @@ function updateProperties(){
   typeRow.className = 'prop-row';
   typeRow.innerHTML = `<span class="prop-label">Tipo</span><span class="prop-value">${type}</span>`;
   container.appendChild(typeRow);
-
   const makeInput = (label, getter, setter) => {
     const row = document.createElement('div');
     row.className = 'prop-row';
@@ -1068,7 +1045,6 @@ function renderCmdHistory(){
   body.innerHTML = state.cmdLog.map(l => `<div>${l.replace(/</g,'&lt;')}</div>`).join('');
   body.scrollTop = body.scrollHeight;
 }
-
 function resetStateCmd(){
   state.currentCommand = null; state.step = 0; state.collectedPoints = [];
   state.basePoint = null; state.expectingPoint = false; state.dynamicLastPoint = null;
@@ -1080,6 +1056,7 @@ function resetStateCmd(){
   state.lineSegmentPaths = []; state.circleDiameterMode = false;
   state.chamferDist1 = 0; state.chamferDist2 = 0; state.chamferLine1 = null; state.chamferClick1 = null;
   state.filletRadius = 0; state.filletLine1 = null; state.filletClick1 = null;
+  state.measureStart = null;
   releaseTrackPoints();
   if (state.selectionRect){ state.selectionRect.remove(); state.selectionRect = null; }
   guideLayer.removeChildren(); selectionLayer.removeChildren(); previewLayer.removeChildren();
@@ -1739,6 +1716,188 @@ function handlePointInput(point){
   }
 }
 
+/* ═══════════════════════════════════════════════════════════════════════
+   ★★★ v10: HERRAMIENTA MEDIR ★★★
+   ═══════════════════════════════════════════════════════════════════════ */
+function syncMeasureButtonState(){
+  const btn = document.getElementById('btnMeasure');
+  if (!btn) return;
+  btn.classList.toggle('active', state.currentCommand === 'MEASURE');
+  const cc = document.getElementById('canvas-container');
+  if (cc) cc.classList.toggle('measure-mode', state.currentCommand === 'MEASURE');
+}
+function startMeasureMode(){
+  if (state.currentCommand && state.currentCommand !== 'MEASURE') resetStateCmd();
+  state.currentCommand = 'MEASURE';
+  state.measureStart = null;
+  setPrompt('MEDIR: clic punto A (ESC desactiva · Limpiar borra)');
+  syncMeasureButtonState();
+  render();
+}
+function exitMeasureMode(){
+  state.currentCommand = null;
+  state.measureStart = null;
+  syncMeasureButtonState();
+  setPrompt('MEDIR: desactivado (medidas guardadas)');
+  render();
+}
+function clearMeasurements(){
+  state.measurements = [];
+  state.measureStart = null;
+  setPrompt('Medidas borradas');
+  updateMeasureInfo();
+  render();
+}
+function updateMeasureInfo(){
+  const mEl = document.getElementById('measureInfo');
+  if (!mEl) return;
+  if (state.measurements.length === 0){ mEl.classList.remove('show'); return; }
+  const total = state.measurements.reduce((s, m) => s + m.dist, 0);
+  const n = state.measurements.length;
+  mEl.innerHTML = `${n} medida${n > 1 ? 's' : ''} · Total: <b>${total.toFixed(2)} mm</b>`;
+  mEl.classList.add('show');
+}
+function onMeasureClick(event){
+  const pt = event.point;
+  // Snap
+  const snap = getSnapPoint(pt, null);
+  const worldPt = snap ? { x: snap.point.x, y: -snap.point.y } : { x: pt.x, y: -pt.y };
+
+  if (!state.measureStart){
+    state.measureStart = worldPt;
+    setPrompt('MEDIR: clic punto B (ESC desactiva)');
+    render();
+    return;
+  }
+
+  const A = state.measureStart;
+  const B = worldPt;
+  const dx = B.x - A.x;
+  const dy = B.y - A.y;
+  const dist = Math.hypot(dx, dy);
+  if (dist < 1e-6){ setPrompt('MEDIR: puntos coinciden, repite B'); return; }
+  const angleDeg = Math.atan2(dy, dx) * 180 / Math.PI;
+
+  state.measurements.push({
+    from: { x: A.x, y: A.y },
+    to: { x: B.x, y: B.y },
+    dist, angleDeg, dx, dy
+  });
+  state.measureStart = null;
+  updateMeasureInfo();
+  setPrompt(`MEDIR: D=${dist.toFixed(2)}mm ∠${angleDeg.toFixed(1)}° · clic para nueva medida`);
+  render();
+}
+function drawMeasurements(r){
+  if (!state.measurements.length && !state.measureStart) return;
+
+  const color = '#FFD93D';
+  const labelBg = 'rgba(255, 217, 61, 0.95)';
+  const labelBorder = '#B89A1E';
+  const labelText = '#1a1400';
+
+  // Helper: draw label box
+  const drawLabel = (x, y, lines) => {
+    const padX = 7, padY = 4, lineH = 13;
+    ctx.font = 'bold 11px "Segoe UI", sans-serif';
+    let maxW = 0;
+    for (const ln of lines) maxW = Math.max(maxW, ctx.measureText(ln).width);
+    const w = maxW + padX * 2;
+    const h = lineH * lines.length + padY * 2;
+    ctx.fillStyle = labelBg;
+    ctx.fillRect(x - w/2, y - h/2, w, h);
+    ctx.strokeStyle = labelBorder;
+    ctx.lineWidth = 1;
+    ctx.strokeRect(x - w/2, y - h/2, w, h);
+    ctx.fillStyle = labelText;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    for (let i = 0; i < lines.length; i++){
+      ctx.fillText(lines[i], x, y - h/2 + padY + lineH * (i + 0.5));
+    }
+    ctx.textAlign = 'start';
+    ctx.textBaseline = 'alphabetic';
+  };
+
+  // Helper: draw arrow head at from→to direction
+  const drawArrow = (fx, fy, tx, ty) => {
+    const ang = Math.atan2(ty - fy, tx - fx);
+    const len = 9;
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.moveTo(fx, fy);
+    ctx.lineTo(fx + len * Math.cos(ang - 0.5), fy + len * Math.sin(ang - 0.5));
+    ctx.lineTo(fx + len * Math.cos(ang + 0.5), fy + len * Math.sin(ang + 0.5));
+    ctx.closePath();
+    ctx.fill();
+  };
+
+  // Helper: draw single measurement line
+  const drawMeasureLine = (ax, ay, bx, by, dist, angleDeg, isActive) => {
+    // Convert to screen
+    const sA = w2s(ax, ay);
+    const sB = w2s(bx, by);
+    const x1 = sA.x - r.left, y1 = sA.y - r.top;
+    const x2 = sB.x - r.left, y2 = sB.y - r.top;
+
+    // Dashed line
+    ctx.strokeStyle = color;
+    ctx.lineWidth = isActive ? 2 : 1.5;
+    ctx.setLineDash([5, 3]);
+    ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(x2, y2);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Arrows
+    drawArrow(x1, y1, x2, y2);
+    drawArrow(x2, y2, x1, y1);
+
+    // Endpoints
+    ctx.fillStyle = color;
+    ctx.strokeStyle = '#1a1400';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.arc(x1, y1, 5, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+    ctx.beginPath(); ctx.arc(x2, y2, 5, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+
+    // Label
+    const mx = (x1 + x2) / 2;
+    const my = (y1 + y2) / 2;
+    drawLabel(mx, my, [
+      `${dist.toFixed(2)} mm`,
+      `∠ ${angleDeg.toFixed(1)}°`
+    ]);
+  };
+
+  // Draw committed measurements
+  for (const m of state.measurements){
+    drawMeasureLine(m.from.x, m.from.y, m.to.x, m.to.y, m.dist, m.angleDeg, false);
+  }
+
+  // Draw active rubber band
+  if (state.measureStart && state.currentCommand === 'MEASURE'){
+    const A = state.measureStart;
+    const B = { x: state.mwx, y: state.mwy };
+    const dx = B.x - A.x, dy = B.y - A.y;
+    const dist = Math.hypot(dx, dy);
+    const angleDeg = Math.atan2(dy, dx) * 180 / Math.PI;
+    if (dist > 0.01){
+      drawMeasureLine(A.x, A.y, B.x, B.y, dist, angleDeg, true);
+    } else {
+      // Just show starting point
+      const sA = w2s(A.x, A.y);
+      ctx.fillStyle = color;
+      ctx.strokeStyle = '#1a1400';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.arc(sA.x - r.left, sA.y - r.top, 5, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+    }
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   JOIN
+   ═══════════════════════════════════════════════════════════════════════ */
 function joinSelected(){
   const items = state.selectedItems.filter(i => i instanceof Path && i.segments.length > 0);
   if (items.length < 2){ setPrompt('JOIN: selecciona al menos 2 líneas/polilíneas'); return; }
@@ -1768,14 +1927,12 @@ function joinSelected(){
     }
     chains.push(chain);
   }
-
   let closedCount = 0;
   chains.forEach(path => {
     path.strokeColor = 'white';
     path.strokeWidth = currentStrokeWidth();
     const hasCurves = path.curves.some(c => !c.isStraight());
     tagShape(path, hasCurves ? 'arc' : 'polyline');
-
     if (path.segments.length > 2){
       const firstPt = path.firstSegment.point.clone();
       const lastPt = path.lastSegment.point;
@@ -1793,7 +1950,6 @@ function joinSelected(){
       } catch(e){ console.warn('close error:', e); }
     }
   });
-
   clearSelection();
   chains.forEach(p => addToSelection(p));
   const joined = chains.length;
@@ -2171,7 +2327,6 @@ function createCNCTool(num){
 function getCNCToolById(id){ return cncState.tools.find(t => t.id === id) || null; }
 function getCNCActiveTool(){ return getCNCToolById(cncState.activeToolId); }
 function nextCNCToolNumber(){ let m = 0; for (const t of cncState.tools) if (t.toolNumber > m) m = t.toolNumber; return m + 1; }
-
 function cncAddTool(){
   const t = createCNCTool(nextCNCToolNumber());
   cncState.tools.push(t);
@@ -2310,8 +2465,7 @@ function cncAddCutItem(item){
   if (!cncState.tools.length){ setPrompt('Añade primero una herramienta'); return; }
   if (!item){ setPrompt('Entidad no válida'); return; }
   if (!(item instanceof Path) && !(item instanceof paper.CompoundPath)){
-    setPrompt('Tipo no soportado para corte');
-    return;
+    setPrompt('Tipo no soportado para corte'); return;
   }
   if (!item.id){ setPrompt('Entidad sin ID válido'); return; }
   let op = cncState.operations.find(o => o.type === 'cut');
@@ -2354,13 +2508,11 @@ function cncUndoOp(){
   else cncState.operations.pop();
   cncRebuildAndRegen();
 }
-
 function cncUpdateOpList(){
   const list = document.getElementById('cnc-op-list');
   document.getElementById('cnc-op-count').textContent = cncState.operations.length;
   if (!cncState.operations.length){
-    list.innerHTML = '<div class="cnc-empty-hint">Sin operaciones</div>';
-    return;
+    list.innerHTML = '<div class="cnc-empty-hint">Sin operaciones</div>'; return;
   }
   const toolOptions = cncState.tools.map(t => `<option value="${t.id}">T${t.toolNumber}</option>`).join('');
   list.innerHTML = cncState.operations.map((op, i) => {
@@ -2377,7 +2529,7 @@ function cncUpdateOpList(){
       </select>` : '';
     const adjustVal = (typeof op.adjust === 'number' && isFinite(op.adjust)) ? op.adjust : 0;
     const adjustInp = (op.type === 'cut' || op.type === 'pocket')
-      ? `<input type="number" class="adjust" data-i="${i}" value="${adjustVal}" step="0.05" title="Ajuste fino (+expande/−contrae)" style="width:42px">` : '';
+      ? `<input type="number" class="adjust" data-i="${i}" value="${adjustVal}" step="0.05" title="Ajuste fino" style="width:42px">` : '';
     const depthVal = (typeof op.depth === 'number' && isFinite(op.depth)) ? op.depth : defaultCNCDepth();
     const depthInp = `<input type="number" class="depth" data-i="${i}" value="${depthVal}" step="0.5" min="0" title="Profundidad mm" style="width:42px">`;
     return `<div class="cnc-op-item">
@@ -2423,9 +2575,7 @@ function cncUpdateOpList(){
   });
 }
 
-/* ═══════════════════════════════════════════════════════════════════════
-   CNC — GEOMETRY BRIDGE
-   ═══════════════════════════════════════════════════════════════════════ */
+/* ═══════════ CNC GEOMETRY BRIDGE ═══════════ */
 function getItemEndpoints(item){
   if (isCircleItem(item)) return null;
   if (item instanceof Path && item.closed) return null;
@@ -2443,7 +2593,6 @@ function getItemEndpoints(item){
   }
   return null;
 }
-
 function itemToPointSequence(item){
   if (isCircleItem(item)){
     const c = item.position;
@@ -2486,7 +2635,6 @@ function itemToPointSequence(item){
   }
   return { points: pts, closed };
 }
-
 function groupItemsIntoChains(items, tol){
   tol = tol || 0.15;
   const n = items.length;
@@ -2523,7 +2671,6 @@ function groupItemsIntoChains(items, tol){
   }
   return groups;
 }
-
 function chainItemsIntoPoints(items, tol){
   tol = tol || 0.15;
   const closeTol = Math.max(1.0, tol * 4);
@@ -2541,10 +2688,7 @@ function chainItemsIntoPoints(items, tol){
     let closed = partClosed[0];
     if (!closed && pts.length > 2){
       const f = pts[0], l = pts[pts.length-1];
-      if (Math.hypot(f.x-l.x, f.y-l.y) < closeTol){
-        closed = true;
-        pts = pts.slice(0, -1);
-      }
+      if (Math.hypot(f.x-l.x, f.y-l.y) < closeTol){ closed = true; pts = pts.slice(0, -1); }
     }
     return { points: pts, closed };
   }
@@ -2584,7 +2728,6 @@ function chainItemsIntoPoints(items, tol){
   if (isClosed && result.length > 2) result = result.slice(0, -1);
   return { points: result, closed: isClosed };
 }
-
 function signedArea(pts){
   let a = 0; const n = pts.length;
   for (let i = 0; i < n; i++){
@@ -2628,138 +2771,131 @@ function rotatePointsToStart(pts, ox, oy){
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
-   v8: Clipper con API CORRECTA (offsetToPaths, no ClipperOffset)
-   Devuelve null si falla → el caller usa fallback geométrico
+   v10: Clipper offset + selfClean
    ═══════════════════════════════════════════════════════════════════════ */
 function offsetPointsWithClipper(pts, delta){
   if (!cncState.clipperReady || !cncState.clipperInstance) return null;
   if (!pts || pts.length < 3) return null;
-  const lib = window.jsAngusjClipper;
   const clipper = cncState.clipperInstance;
   if (typeof clipper.offsetToPaths !== 'function') return null;
-
-  const intPath = pts.map(p => ({
-    x: Math.round(p.x * CLIPPER_SCALE),
-    y: Math.round(p.y * CLIPPER_SCALE)
-  }));
+  const lib = window.jsAngusjClipper;
+  const intPath = pts.map(p => ({ x: Math.round(p.x * CLIPPER_SCALE), y: Math.round(p.y * CLIPPER_SCALE) }));
   const deltaInt = Math.round(delta * CLIPPER_SCALE);
-
-  let joinType = 2, endType = 0;
+  let joinType = 1, endType = 0;
   try {
     if (lib && lib.JoinType && typeof lib.JoinType.Round === 'number') joinType = lib.JoinType.Round;
     if (lib && lib.EndType && typeof lib.EndType.ClosedPolygon === 'number') endType = lib.EndType.ClosedPolygon;
   } catch(e){}
-
-  let sol = null;
-  try {
-    sol = clipper.offsetToPaths({
-      delta: deltaInt,
-      miterLimit: 2.0,
-      arcTolerance: 50,
-      joinType: joinType,
-      endType: endType,
-      paths: [intPath]
-    });
-  } catch(e){
-    console.warn('[Clipper v8] offsetToPaths exception:', e.message);
-    return null;
+  const tolerances = [50, 500, 5, 2000];
+  for (const tol of tolerances){
+    try {
+      const attempt = clipper.offsetToPaths({
+        delta: deltaInt, miterLimit: 2.0, arcTolerance: tol,
+        joinType: joinType, endType: endType,
+        paths: [intPath]
+      });
+      let paths = null;
+      if (Array.isArray(attempt)) paths = attempt;
+      else if (attempt && Array.isArray(attempt.paths)) paths = attempt.paths;
+      if (paths && paths.length > 0 && paths.some(p => p && p.length >= 3)){
+        let best = null, bestArea = -Infinity;
+        for (const path of paths){
+          if (!path || path.length < 3) continue;
+          let a = 0;
+          for (let i = 0; i < path.length; i++){
+            const p1 = path[i], p2 = path[(i+1) % path.length];
+            a += p1.x * p2.y - p2.x * p1.y;
+          }
+          a = Math.abs(a / 2);
+          if (a > bestArea){ bestArea = a; best = path; }
+        }
+        if (best){
+          console.log(`[Clipper v10] ✓ OK tol=${tol} | ${(bestArea/1e6).toFixed(1)}mm²`);
+          return best.map(p => ({ x: p.x / CLIPPER_SCALE, y: p.y / CLIPPER_SCALE }));
+        }
+      }
+    } catch(e){}
   }
-  if (!sol) return null;
-  if (typeof sol.then === 'function') return null;
-  if (!Array.isArray(sol) || !sol.length) return null;
-
-  let best = null, bestArea = -Infinity;
-  for (const path of sol){
-    if (!path || path.length < 3) continue;
-    let a = 0;
-    for (let i = 0; i < path.length; i++){
-      const p1 = path[i], p2 = path[(i+1) % path.length];
-      a += p1.x * p2.y - p2.x * p1.y;
-    }
-    a = Math.abs(a / 2);
-    if (a > bestArea){ bestArea = a; best = path; }
-  }
-  if (!best) return null;
-  return best.map(p => ({ x: p.x / CLIPPER_SCALE, y: p.y / CLIPPER_SCALE }));
+  console.warn('[Clipper v10] offsetToPaths sin resultado, se usará geométrico');
+  return null;
 }
-
-/* ═══════════════════════════════════════════════════════════════════════
-   v8: Offset geométrico CORRECTO con miter-join real.
-   Para cada vértice extiende delta/cos(halfAngle) a lo largo de la
-   bisectriz de las normales exteriores.
-   ═══════════════════════════════════════════════════════════════════════ */
 function offsetPointsProper(pts, delta){
   if (!pts || pts.length < 3) return [];
   if (Math.abs(delta) < 1e-6) return pts.slice();
-
   const clean = [];
   for (let i = 0; i < pts.length; i++){
     const p = pts[i];
-    if (!clean.length ||
-        Math.hypot(p.x - clean[clean.length-1].x, p.y - clean[clean.length-1].y) > 1e-6){
+    if (!clean.length || Math.hypot(p.x - clean[clean.length-1].x, p.y - clean[clean.length-1].y) > 1e-6){
       clean.push(p);
     }
   }
   if (clean.length < 3) return [];
   const m = clean.length;
-
   const area = signedArea(clean);
   if (Math.abs(area) < 1e-9) return clean.slice();
   const isCCW = area > 0;
   const sign = isCCW ? 1 : -1;
   const MITER_LIMIT = 4.0;
   const result = [];
-
   for (let i = 0; i < m; i++){
     const prev = clean[(i-1+m) % m];
     const curr = clean[i];
     const next = clean[(i+1) % m];
-
     const inDx = curr.x - prev.x, inDy = curr.y - prev.y;
     const inLen = Math.hypot(inDx, inDy);
     const outDx = next.x - curr.x, outDy = next.y - curr.y;
     const outLen = Math.hypot(outDx, outDy);
-
-    if (inLen < 1e-9 || outLen < 1e-9){
-      result.push({ x: curr.x, y: curr.y });
-      continue;
-    }
-
+    if (inLen < 1e-9 || outLen < 1e-9){ result.push({ x: curr.x, y: curr.y }); continue; }
     const inUx = inDx/inLen, inUy = inDy/inLen;
     const outUx = outDx/outLen, outUy = outDy/outLen;
-
     const n1x =  sign * inUy, n1y = -sign * inUx;
     const n2x =  sign * outUy, n2y = -sign * outUx;
-
     const bx = n1x + n2x, by = n1y + n2y;
     const bLen = Math.hypot(bx, by);
-
-    if (bLen < 1e-9){
-      result.push({ x: curr.x + n1x * delta, y: curr.y + n1y * delta });
-      continue;
-    }
-
+    if (bLen < 1e-9){ result.push({ x: curr.x + n1x * delta, y: curr.y + n1y * delta }); continue; }
     const bUx = bx/bLen, bUy = by/bLen;
     const cosHalf = bLen / 2;
-
     let miterLength = delta / cosHalf;
     const maxMiter = Math.abs(delta) * MITER_LIMIT;
-    if (Math.abs(miterLength) > maxMiter){
-      miterLength = Math.sign(miterLength) * maxMiter;
-    }
-
-    result.push({
-      x: curr.x + bUx * miterLength,
-      y: curr.y + bUy * miterLength
-    });
+    if (Math.abs(miterLength) > maxMiter) miterLength = Math.sign(miterLength) * maxMiter;
+    result.push({ x: curr.x + bUx * miterLength, y: curr.y + bUy * miterLength });
   }
   return result;
 }
-
-function offsetPointsSimpleFallback(pts, delta){
-  return offsetPointsProper(pts, delta);
+function selfCleanPolygon(pts){
+  if (!pts || pts.length < 3) return pts;
+  try {
+    const tmpPath = new paper.Path({ closed: true, insert: false });
+    for (const p of pts) tmpPath.add(new paper.Point(p.x, -p.y));
+    tmpPath.closed = true;
+    if (tmpPath.segments.length < 3) return pts;
+    const clone = tmpPath.clone({ insert: false });
+    let united;
+    try { united = tmpPath.unite(clone, { insert: false }); }
+    catch(e){ try { clone.remove(); tmpPath.remove(); } catch(_){} return pts; }
+    let resultPts = [];
+    if (united instanceof paper.Path){
+      resultPts = united.segments.map(s => ({ x: s.point.x, y: -s.point.y }));
+    } else if (united instanceof paper.CompoundPath){
+      let bestChild = null, bestArea = 0;
+      for (const child of united.children){
+        if (!child || !child.segments || child.segments.length < 3) continue;
+        const a = Math.abs(child.area || 0);
+        if (a > bestArea){ bestArea = a; bestChild = child; }
+      }
+      if (bestChild) resultPts = bestChild.segments.map(s => ({ x: s.point.x, y: -s.point.y }));
+    }
+    try { clone.remove(); tmpPath.remove(); if (united && united !== tmpPath) united.remove(); } catch(_){}
+    if (resultPts.length >= 3){
+      console.log(`[selfClean] ${pts.length} → ${resultPts.length} pts`);
+      return resultPts;
+    }
+    return pts;
+  } catch(e){
+    console.warn('[selfClean] error:', e.message);
+    return pts;
+  }
 }
-
 function offsetOpenPathSimple(pts, delta){
   if (!pts || pts.length < 2) return pts ? pts.slice() : [];
   const n = pts.length;
@@ -2775,98 +2911,65 @@ function offsetOpenPathSimple(pts, delta){
   }
   return out;
 }
-
-/* ═══════════════════════════════════════════════════════════════════════
-   v8: Orquestador con validación de área
-   1) Clipper (mejor calidad)
-   2) Clipper con signo invertido
-   3) Geométrico con miter (garantizado)
-   4) Geométrico invertido
-   ═══════════════════════════════════════════════════════════════════════ */
 function smartOffsetPolygon(pts, delta){
   if (!pts || pts.length < 3) return pts;
   if (Math.abs(delta) < 1e-6) return pts.slice();
-
   const origArea = Math.abs(signedArea(pts));
   const expectedGrow = delta > 0;
-
   const isValid = (r) => {
     if (!r || r.length < 3) return false;
     const a = Math.abs(signedArea(r));
     if (expectedGrow) return a > origArea * 1.02;
     return a < origArea * 0.98;
   };
-
   let r = offsetPointsWithClipper(pts, delta);
-  if (r && isValid(r)){
-    console.log(`[offset v8] Clipper OK delta=${delta.toFixed(3)} | área ${origArea.toFixed(1)}→${Math.abs(signedArea(r)).toFixed(1)}`);
-    return r;
-  }
-
+  if (r && isValid(r)) return r;
   r = offsetPointsWithClipper(pts, -delta);
-  if (r && isValid(r)){
-    console.log(`[offset v8] Clipper OK (signo inv.) delta=${(-delta).toFixed(3)}`);
-    return r;
-  }
-
+  if (r && isValid(r)) return r;
   r = offsetPointsProper(pts, delta);
-  if (isValid(r)){
-    console.log(`[offset v8] Geométrico OK delta=${delta.toFixed(3)} | área ${origArea.toFixed(1)}→${Math.abs(signedArea(r)).toFixed(1)}`);
-    return r;
+  if (r && r.length >= 3){
+    r = selfCleanPolygon(r);
+    if (isValid(r)) return r;
   }
-
   r = offsetPointsProper(pts, -delta);
-  if (isValid(r)){
-    console.log(`[offset v8] Geométrico OK (signo inv.) delta=${(-delta).toFixed(3)}`);
-    return r;
+  if (r && r.length >= 3){
+    r = selfCleanPolygon(r);
+    if (isValid(r)) return r;
   }
-
-  console.error(`[offset v8] TODOS fallaron para delta=${delta.toFixed(3)}`);
-  return pts;
+  console.warn(`[offset v10] fallback crudo delta=${delta.toFixed(3)}`);
+  return offsetPointsProper(pts, delta);
 }
-
 function resolveCutContours(op, tool){
   const items = (op.itemIds || []).map(id => findPaperItemById(id)).filter(Boolean);
   if (!items.length) return [];
   const groups = groupItemsIntoChains(items, 0.15);
   const results = [];
-
   if (!Number.isFinite(op.adjust)) op.adjust = 0;
   if (!Number.isFinite(tool.diam)) tool.diam = 3.175;
-
   for (const group of groups){
     const chainRes = chainItemsIntoPoints(group, 0.15);
     let pts = chainRes.points;
     const closed = chainRes.closed;
     if (pts.length < 2) continue;
-
     const off = op.offset || 'center';
     const adjust = Number.isFinite(op.adjust) ? op.adjust : 0;
-
     if (closed && pts.length >= 3){
       if (signedArea(pts) < 0) pts = pts.slice().reverse();
-
       const toolRadius = tool.diam / 2;
       let delta = 0;
-      if (off === 'inside')       delta = -toolRadius;
+      if (off === 'inside') delta = -toolRadius;
       else if (off === 'outside') delta = +toolRadius;
       delta += adjust;
-
-      if (Math.abs(delta) > 1e-6){
-        pts = smartOffsetPolygon(pts, delta);
-      }
-
+      if (Math.abs(delta) > 1e-6) pts = smartOffsetPolygon(pts, delta);
       if (tool.cutDir === 'cw') pts = pts.slice().reverse();
     } else if (!closed && pts.length >= 2 && Math.abs(adjust) > 1e-6){
       pts = offsetOpenPathSimple(pts, adjust);
     }
-
     if (closed && pts.length >= 3) pts = rotatePointsToStart(pts, 0, 0);
     results.push({ points: pts, closed });
   }
   return results;
 }
-
 function rebuildAllContours(){
   cncState.cutContours = {};
   cncState.cutTabs = {};
@@ -2894,7 +2997,6 @@ function rebuildAllContours(){
   }
   cncUpdateTabsInfo();
 }
-
 function computeTabSegments(pts, closed, count, width, seed, toolDiameter){
   toolDiameter = Math.max(0, toolDiameter || 0);
   const pathWidth = Math.max(0.1, width + toolDiameter);
@@ -2948,8 +3050,8 @@ function cncUpdateTabsInfo(){
   toggleRow.classList.toggle('active', cncState.tabs.enabled);
   toggleState.textContent = cncState.tabs.enabled ? 'ON' : 'OFF';
   sectionEl.classList.toggle('active-tabs', cncState.tabs.enabled);
-  if (!cncState.tabs.enabled){ infoEl.textContent = 'Patillas desactivadas — activa el interruptor'; return; }
-  if (!keys.length){ infoEl.textContent = 'Añade una operación de CORTE para generar patillas'; return; }
+  if (!cncState.tabs.enabled){ infoEl.textContent = 'Patillas desactivadas'; return; }
+  if (!keys.length){ infoEl.textContent = 'Añade una operación de CORTE'; return; }
   let lines = [];
   for (const k of keys){
     const perContour = cncState.cutTabs[k] || [];
@@ -2959,7 +3061,6 @@ function cncUpdateTabsInfo(){
   }
   infoEl.textContent = lines.join(' · ') + `\nTOTAL: ${total} patillas`;
 }
-
 function buildPath(pts, closed){ return closed ? pts.concat([{ x: pts[0].x, y: pts[0].y }]) : pts.slice(); }
 function computeCumLens(path){
   const cum = [0];
@@ -2988,7 +3089,6 @@ function pathPointsBetween(path, cumLens, s1, s2){
   result.push(getPointAtArcLength(path, cumLens, s2));
   return result;
 }
-
 function sanitizeComment(txt){
   let result = '';
   let inComment = false, depth = 0;
@@ -3010,14 +3110,12 @@ function fmtTime(sec){
   const h = Math.floor(t/3600), m = Math.floor((t%3600)/60), s = t%60;
   return String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
 }
-
 function buildCNCProgram(){
   cncState.gcodeLines = []; cncState.gcodeBlock = [];
   cncState.blockPoints = {}; cncState.blockZ = {};
   cncState.simMoves = []; cncState.simMoveTimes = []; cncState.simTotalTime = 0; cncState.simT = 0;
   cncState.activeGlineIdx = -1; cncState.selectedGlineIdx = -1;
   cncState._lastActiveBlock = -999;
-
   if (!cncState.operations.length || !cncState.tools.length){
     cncRenderGcodeDisplay(); cncUpdateSimUI(); return;
   }
@@ -3030,7 +3128,6 @@ function buildCNCProgram(){
   const moves = [];
   const blockPoints = cncState.blockPoints;
   const blockZ = cncState.blockZ;
-
   const emit = (txt, block) => {
     if (lines.length >= MAX_GCODE_LINES * 1.5) return;
     lines.push(sanitizeComment(txt));
@@ -3061,7 +3158,6 @@ function buildCNCProgram(){
   const addSpindlePause = block => {
     if (cncState.spindlePause > 0) moves.push({ type:'pause', points:[{x:lastX, y:lastY}], z:lastZ, duration: cncState.spindlePause, block });
   };
-
   emit('%', -1);
   emit('O0001 (CNC DXF → G-Code)', -1);
   emit(`(Generado por CAD Pro + CNC v${APP_VERSION})`, -1);
@@ -3070,7 +3166,6 @@ function buildCNCProgram(){
   emit('G0 X0 Y0', -1);
   emit('', -1);
   addMove('rapid', [{x:lastX, y:lastY}, {x:0, y:0}], maxSafe, cncState.rapidXY, -1);
-
   const toolOrder = [];
   const groups = new Map();
   cncState.operations.forEach((op, idx) => {
@@ -3080,14 +3175,12 @@ function buildCNCProgram(){
     if (!groups.has(tid)){ groups.set(tid, []); toolOrder.push(tid); }
     groups.get(tid).push({ op, originalIndex: idx });
   });
-
   for (const tid of toolOrder){
     const tool = getCNCToolById(tid); if (!tool) continue;
     const entries = groups.get(tid);
     const spindleDir = tool.spindleDir === 'M4' ? 'M4' : 'M3';
     const dirName = spindleDir === 'M4' ? 'antihorario' : 'horario';
     const cutDirName = tool.cutDir === 'cw' ? 'horario' : 'antihorario';
-
     emit(`(--- T${tool.toolNumber}: ${tool.name} ---)`, -1);
     emit(`(D${tool.diam}mm · ${tool.rpm}rpm · F${tool.feed} · FZ${tool.feedZ})`, -1);
     emit(`(Corte ${cutDirName} · Mandrino ${spindleDir} ${dirName})`, -1);
@@ -3104,20 +3197,15 @@ function buildCNCProgram(){
       addSpindlePause(-1);
     }
     emit('', -1);
-
     for (let oi = 0; oi < entries.length; oi++){
       const { op, originalIndex } = entries[oi];
       const opDepth = Math.max(0, (typeof op.depth === 'number') ? op.depth : tool.depth);
       const opAdjust = (typeof op.adjust === 'number') ? op.adjust : 0;
-      if (opDepth <= 0){
-        emit(`(Op ${oi+1}/${entries.length}: ${op.type.toUpperCase()} - prof 0, omitida)`, -1);
-        emit('', -1); continue;
-      }
+      if (opDepth <= 0){ emit(`(Op ${oi+1}/${entries.length}: prof 0, omitida)`, -1); emit('', -1); continue; }
       const passes = Math.max(1, Math.min(500, Math.ceil(opDepth / tool.step)));
       const step = opDepth / passes;
       const adjStr = Math.abs(opAdjust) > 1e-6 ? ` · ajuste ${opAdjust >= 0 ? '+' : ''}${opAdjust.toFixed(3)}mm` : '';
       emit(`(Op ${oi+1}/${entries.length}: ${op.type.toUpperCase()} - prof ${opDepth.toFixed(2)}mm en ${passes} pasadas${adjStr})`, -1);
-
       if (op.type === 'drill'){
         if (!op.points.length){ emit('', -1); continue; }
         const usePeck = passes > 1;
@@ -3133,9 +3221,7 @@ function buildCNCProgram(){
           if (pi === 0){
             if (usePeck) emit(`G83 X${p.x.toFixed(3)} Y${p.y.toFixed(3)} Z-${opDepth.toFixed(3)} R${tool.retract.toFixed(3)} Q${step.toFixed(3)} F${tool.feedZ}`, blockId);
             else emit(`G81 X${p.x.toFixed(3)} Y${p.y.toFixed(3)} Z-${opDepth.toFixed(3)} R${tool.retract.toFixed(3)} F${tool.feedZ}`, blockId);
-          } else {
-            emit(`X${p.x.toFixed(3)} Y${p.y.toFixed(3)}`, blockId);
-          }
+          } else { emit(`X${p.x.toFixed(3)} Y${p.y.toFixed(3)}`, blockId); }
           for (let k = 0; k < passes; k++){
             const z = -Math.min((k+1)*step, opDepth);
             addMove('cut', [{x:p.x, y:p.y}], z, tool.feedZ, blockId);
@@ -3277,7 +3363,6 @@ function buildCNCProgram(){
   emit('M5', -1);
   emit('M30', -1);
   emit('%', -1);
-
   const times = [0];
   let total = 0;
   for (const mv of moves){ total += mv.duration; times.push(total); }
@@ -3354,13 +3439,9 @@ function emitSimWithTabs(pts, closed, fullZ, feed, tabHeight, tabs, blockId, add
     if (rest.length >= 2) addMove('cut', rest, fullZ, feed, blockId);
   }
 }
-
 function cncRenderGcodeDisplay(){
   const el = document.getElementById('cnc-gcode');
-  if (!cncState.gcodeLines.length){
-    el.innerHTML = '<div class="cnc-empty-hint">(Sin generar)</div>';
-    return;
-  }
+  if (!cncState.gcodeLines.length){ el.innerHTML = '<div class="cnc-empty-hint">(Sin generar)</div>'; return; }
   const total = cncState.gcodeLines.length;
   const displayCount = Math.min(total, MAX_GCODE_LINES);
   const parts = [];
@@ -3435,7 +3516,6 @@ function cncUpdateActiveGlineByBlock(blockId){
     }
   }
 }
-
 function cncUpdateSimUI(){
   const pct = cncState.simTotalTime > 0 ? cncState.simT / cncState.simTotalTime : 0;
   document.getElementById('cnc-sim-time').textContent = fmtTime(cncState.simT) + ' / ' + fmtTime(cncState.simTotalTime);
@@ -3492,7 +3572,6 @@ function cncTick(){
 }
 function cncReset(){ if (cncState.simAnimId) cancelAnimationFrame(cncState.simAnimId); cncState.simPlaying = false; cncState.simT = 0; cncState._lastActiveBlock = -999; cncUpdateSimUI(); }
 function cncEnd(){ if (cncState.simAnimId) cancelAnimationFrame(cncState.simAnimId); cncState.simPlaying = false; cncState.simT = cncState.simTotalTime; cncUpdateSimUI(); }
-
 function cncCurrentBlock(){
   if (!cncState.simMoves.length) return -1;
   let mi = 0;
@@ -3500,7 +3579,6 @@ function cncCurrentBlock(){
   const mv = cncState.simMoves[Math.min(mi, cncState.simMoves.length - 1)];
   return mv ? mv.block : -1;
 }
-
 function cncRefreshOpsOverlay(){
   try {
     cncOpsLayer.removeChildren();
@@ -3545,16 +3623,6 @@ function cncRefreshOpsOverlay(){
             seg.strokeWidth = 10 / view.zoom;
             seg.strokeCap = 'round';
             cncOpsLayer.addChild(seg);
-            const capA = new Path.Circle(new Point(matA.x, -matA.y), 5 / view.zoom);
-            capA.fillColor = new Color('#FF44AA');
-            capA.strokeColor = new Color('#FFFFFF');
-            capA.strokeWidth = 1 / view.zoom;
-            cncOpsLayer.addChild(capA);
-            const capB = new Path.Circle(new Point(matB.x, -matB.y), 5 / view.zoom);
-            capB.fillColor = new Color('#FF44AA');
-            capB.strokeColor = new Color('#FFFFFF');
-            capB.strokeWidth = 1 / view.zoom;
-            cncOpsLayer.addChild(capB);
           }
         }
       }
@@ -3567,9 +3635,6 @@ function cncRefreshOpsOverlay(){
         circle.strokeColor = new Color('#FF6B6B');
         circle.strokeWidth = 1.5 / view.zoom;
         cncOpsLayer.addChild(circle);
-        const cross1 = new Path.Line(new Point(p.x-3/view.zoom, -p.y), new Point(p.x+3/view.zoom, -p.y));
-        const cross2 = new Path.Line(new Point(p.x, -p.y-3/view.zoom), new Point(p.x, -p.y+3/view.zoom));
-        [cross1, cross2].forEach(c => { c.strokeColor = new Color('#FF6B6B'); c.strokeWidth = 1 / view.zoom; cncOpsLayer.addChild(c); });
       });
     }
     for (const op of cncState.operations){
@@ -3598,20 +3663,11 @@ function cncRefreshOpsOverlay(){
         path.strokeWidth = 4 / view.zoom;
         path.opacity = 0.75;
         cncOpsLayer.addChild(path);
-      } else if (pts && pts.length === 1){
-        const circle = new Path.Circle(new Point(pts[0].x, -pts[0].y), 10 / view.zoom);
-        circle.strokeColor = new Color('#FF88DD');
-        circle.strokeWidth = 3 / view.zoom;
-        circle.fillColor = null;
-        cncOpsLayer.addChild(circle);
       }
     }
     project.view.update();
-  } catch (err){
-    console.error('cncRefreshOpsOverlay error:', err);
-  }
+  } catch (err){ console.error('cncRefreshOpsOverlay error:', err); }
 }
-
 function cncDrawSimulation(){
   try {
     cncSimLayer.removeChildren();
@@ -3692,11 +3748,8 @@ function cncDrawSimulation(){
     }
     const curBlock = cncCurrentBlock();
     cncUpdateActiveGlineByBlock(curBlock);
-  } catch (err){
-    console.error('cncDrawSimulation error:', err);
-  }
+  } catch (err){ console.error('cncDrawSimulation error:', err); }
 }
-
 function cncRebuildAndRegen(){
   try { rebuildAllContours(); } catch(e){ console.error('rebuildAllContours error:', e); }
   try { buildCNCProgram(); } catch(e){ console.error('buildCNCProgram error:', e); }
@@ -3725,38 +3778,27 @@ function cncSetMode(m){
   setPrompt(`CNC: ${modeNames[m] || m}`);
   cncRefreshOpsOverlay();
 }
-
 function cncHandleClick(event){
   const pt = event.point;
   const wx = pt.x, wy = -pt.y;
   try {
-    if (cncState.mode === 'drill'){
-      cncAddDrillPoint(wx, wy);
-    } else if (cncState.mode === 'cut'){
+    if (cncState.mode === 'drill'){ cncAddDrillPoint(wx, wy); }
+    else if (cncState.mode === 'cut'){
       let hit = hitTestContent(pt, { tolerance: 10/view.zoom });
-      if (!hit || !hit.item){
-        hit = hitTestContent(pt, { tolerance: 25/view.zoom });
-      }
+      if (!hit || !hit.item) hit = hitTestContent(pt, { tolerance: 25/view.zoom });
       if (!hit || !hit.item){
         const closest = findClosestItemByDistance(wx, wy, 25/view.zoom);
         if (closest) hit = { item: closest };
       }
-      if (hit && hit.item){
-        cncAddCutItem(hit.item);
-      } else {
-        setPrompt('Clic sobre una entidad para añadir al corte');
-      }
+      if (hit && hit.item) cncAddCutItem(hit.item);
+      else setPrompt('Clic sobre una entidad');
     } else if (cncState.mode === 'pocket'){
       const found = cncFindClosedEntityAt(wx, wy);
-      if (found){ cncAddPocketBoundary(found.boundary, wx, wy); }
+      if (found) cncAddPocketBoundary(found.boundary, wx, wy);
       else setPrompt('Haz clic dentro de una figura cerrada');
     }
-  } catch (err){
-    console.error('CNC click error:', err);
-    setPrompt('Error: ' + err.message);
-  }
+  } catch (err){ console.error('CNC click error:', err); setPrompt('Error: ' + err.message); }
 }
-
 function findClosestItemByDistance(wx, wy, maxDist){
   let best = null, bestDist = maxDist;
   for (let internal in layers){
@@ -3774,10 +3816,8 @@ function findClosestItemByDistance(wx, wy, maxDist){
 function distanceToPaperItem(item, wx, wy){
   const px = wx, py = -wy;
   if (isCircleItem(item)){
-    const c = item.position;
-    const r = getCircleRadius(item);
-    const dc = Math.hypot(c.x - px, c.y - py);
-    return Math.abs(dc - r);
+    const c = item.position, r = getCircleRadius(item);
+    return Math.abs(Math.hypot(c.x - px, c.y - py) - r);
   }
   const L = item.length;
   if (L < 1e-6) return Infinity;
@@ -3801,7 +3841,6 @@ function distPointToSegment(px, py, x1, y1, x2, y2){
   t = Math.max(0, Math.min(1, t));
   return Math.hypot(px - (x1+t*dx), py - (y1+t*dy));
 }
-
 function cncFindClosedEntityAt(wx, wy){
   const px = wx, py = -wy;
   let best = null, bestArea = Infinity;
@@ -3812,8 +3851,7 @@ function cncFindClosedEntityAt(wx, wy){
     l.children.forEach(item => {
       let boundary = null, area = Infinity;
       if (isCircleItem(item)){
-        const c = item.position;
-        const r = getCircleRadius(item);
+        const c = item.position, r = getCircleRadius(item);
         if (Math.hypot(c.x - px, c.y - py) < r){
           area = Math.PI * r * r;
           boundary = [];
@@ -3838,29 +3876,32 @@ function cncFindClosedEntityAt(wx, wy){
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
-   ★ v8: cncDebugOffset() — autotest en consola
+   cncDebugOffset — autotest
    ═══════════════════════════════════════════════════════════════════════ */
 window.cncDebugOffset = function(){
-  console.log(`===== AUTOTEST OFFSET v${APP_VERSION} =====`);
+  console.log(`===== AUTOTEST v${APP_VERSION} =====`);
   const sq = [{ x: 0, y: 0 }, { x: 10, y: 0 }, { x: 10, y: 10 }, { x: 0, y: 10 }];
-  const origArea = Math.abs(signedArea(sq));
-  console.log('Orig: área=', origArea, 'CCW:', signedArea(sq) > 0, '| Clipper ready:', cncState.clipperReady);
-
-  const expanded = smartOffsetPolygon(sq, +1.5);
-  const expArea = Math.abs(signedArea(expanded));
-  console.log(`Expanded +1.5: área=${expArea.toFixed(2)} (esperado 169) ${Math.abs(expArea - 169) < 5 ? '✓' : '✗'}`);
-
-  const contracted = smartOffsetPolygon(sq, -1.5);
-  const conArea = Math.abs(signedArea(contracted));
-  console.log(`Contracted -1.5: área=${conArea.toFixed(2)} (esperado 49) ${Math.abs(conArea - 49) < 5 ? '✓' : '✗'}`);
-
+  console.log('Orig:', Math.abs(signedArea(sq)), 'CCW:', signedArea(sq) > 0);
+  const exp = smartOffsetPolygon(sq, +1.5);
+  const expA = Math.abs(signedArea(exp));
+  console.log(`+1.5 → ${expA.toFixed(2)}mm² ${Math.abs(expA - 169) < 5 ? '✓' : '✗'} (esperado 169)`);
+  const con = smartOffsetPolygon(sq, -1.5);
+  const conA = Math.abs(signedArea(con));
+  console.log(`-1.5 → ${conA.toFixed(2)}mm² ${Math.abs(conA - 49) < 5 ? '✓' : '✗'} (esperado 49)`);
+  const lshape = [{ x: 0, y: 0 }, { x: 10, y: 0 }, { x: 10, y: 3 }, { x: 3, y: 3 }, { x: 3, y: 10 }, { x: 0, y: 10 }];
+  console.log('L-shape orig:', Math.abs(signedArea(lshape)));
+  const lIn = smartOffsetPolygon(lshape, -1.0);
+  console.log(`L-shape inward -1.0 → ${Math.abs(signedArea(lIn)).toFixed(2)}mm² (${lIn.length} pts)`);
   if (cncState.clipperInstance){
     const c = cncState.clipperInstance;
-    console.log('SDK: offsetToPaths=', typeof c.offsetToPaths, '| offsetPaths=', typeof c.offsetPaths, '| ClipperOffset=', typeof c.ClipperOffset);
+    console.log('SDK: offsetToPaths=' + typeof c.offsetToPaths + ' | ClipperOffset=' + typeof c.ClipperOffset);
   }
-  console.log(`===== FIN AUTOTEST v${APP_VERSION} =====`);
+  console.log(`===== FIN v${APP_VERSION} =====`);
 };
 
+/* ═══════════════════════════════════════════════════════════════════════
+   Listeners CNC + Measure
+   ═══════════════════════════════════════════════════════════════════════ */
 document.querySelectorAll('#ribbon-content .cnc-mode').forEach(btn => {
   btn.addEventListener('click', () => cncSetMode(btn.dataset.cncMode));
 });
@@ -3932,6 +3973,16 @@ document.getElementById('ribbon-cnc-panel').addEventListener('click', function()
   document.getElementById('cnc-panel').classList.toggle('visible');
 });
 
+// Measure buttons
+document.getElementById('btnMeasure').addEventListener('click', () => {
+  if (state.currentCommand === 'MEASURE') exitMeasureMode();
+  else startMeasureMode();
+});
+document.getElementById('btnMeasureClear').addEventListener('click', clearMeasurements);
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Mouse events
+   ═══════════════════════════════════════════════════════════════════════ */
 let snapMarker = null;
 let middleClickTimer = null;
 function onMouseDown(event){
@@ -3962,6 +4013,13 @@ function onMouseDown(event){
     state.panning = true; state.panStartPoint = event.point; return;
   }
   if (state.waitingForNumber) return;
+
+  // ★ Measure mode
+  if (state.currentCommand === 'MEASURE' && event.event.button === 0){
+    onMeasureClick(event);
+    return;
+  }
+
   if (!state.currentCommand && state.selectedItems.length){
     const gripTol = 6 / view.zoom;
     const gripHit = gripLayer.hitTest(event.point, { fill: true, stroke: true, tolerance: gripTol });
@@ -3995,21 +4053,18 @@ function onMouseDown(event){
   if (hit && hit.item){
     const item = hit.item;
     if (state.pendingCommand){
-      if (state.selectedItems.includes(item)){
-        removeFromSelection(item);
-      } else {
-        addToSelection(item);
-      }
-      setPrompt(`${state.pendingCommand}: ${state.selectedItems.length} encontrado(s) (Enter termina)`);
+      if (state.selectedItems.includes(item)) removeFromSelection(item);
+      else addToSelection(item);
+      setPrompt(`${state.pendingCommand}: ${state.selectedItems.length} encontrado(s)`);
       return;
     }
     if (event.event.shiftKey && !state.currentCommand){
       if (state.selectedItems.includes(item)){
         removeFromSelection(item);
-        setPrompt(`Quitado de selección · ${state.selectedItems.length} objeto(s)`);
+        setPrompt(`Quitado · ${state.selectedItems.length} objeto(s)`);
       } else {
         addToSelection(item);
-        setPrompt(`Añadido a selección · ${state.selectedItems.length} objeto(s)`);
+        setPrompt(`Añadido · ${state.selectedItems.length} objeto(s)`);
       }
       refreshSelectionHighlight();
       return;
@@ -4033,7 +4088,6 @@ function onMouseDown(event){
     drawSelectionRect();
   }
 }
-
 function onMouseDrag(event){
   state.lastMousePoint = event.point;
   state.lastClientX = event.event.clientX;
@@ -4146,7 +4200,7 @@ function onMouseUp(event){
       }
       selectionLayer.removeChildren();
       state.selectionRect = null; state.selectStartPoint = null;
-      if (state.pendingCommand) setPrompt(`${state.pendingCommand}: ${state.selectedItems.length} encontrado(s) (Enter termina)`);
+      if (state.pendingCommand) setPrompt(`${state.pendingCommand}: ${state.selectedItems.length} encontrado(s)`);
       else setPrompt(`Seleccionados: ${state.selectedItems.length}`);
       updateProperties(); renderGrips(); refreshSelectionHighlight();
     }
@@ -4156,6 +4210,8 @@ function onMouseMove(event){
   state.lastMousePoint = event.point;
   state.lastClientX = event.event.clientX;
   state.lastClientY = event.event.clientY;
+  const w = s2w(event.event.clientX, event.event.clientY);
+  state.mwx = w.x; state.mwy = w.y;
   updateCoords(event.point);
   guideLayer.removeChildren();
   updateDynamicPreview(event);
@@ -4206,6 +4262,10 @@ function onMouseMove(event){
   } else if (state.hoveredItem){
     if (!state.selectedItems.includes(state.hoveredItem)) state.hoveredItem.shadowColor = null;
     state.hoveredItem = null;
+  }
+  // ★ v10: refresh when measuring (rubber band follows cursor)
+  if (state.currentCommand === 'MEASURE' && state.measureStart){
+    render();
   }
 }
 
@@ -4267,23 +4327,6 @@ function updateDynamicPreview(event){
       rect.strokeWidth = 1 / view.zoom;
       rect.dashArray = [4, 4];
       previewLayer.addChild(rect);
-    } else if (state.currentCommand === 'ARC'){
-      if (state.step === 2){
-        const guide = new Path.Line(base, cursor);
-        guide.strokeColor = new Color(0, 0.75, 1, 0.6);
-        guide.strokeWidth = 1 / view.zoom;
-        guide.dashArray = [4, 4];
-        previewLayer.addChild(guide);
-      } else if (state.step === 3){
-        try {
-          const arcPreview = new Path.Arc(state.collectedPoints[0], state.collectedPoints[1], cursor);
-          arcPreview.strokeColor = new Color(0, 0.75, 1, 0.6);
-          arcPreview.strokeWidth = 1 / view.zoom;
-          arcPreview.dashArray = [4, 4];
-          arcPreview.fillColor = null;
-          previewLayer.addChild(arcPreview);
-        } catch (err){}
-      }
     } else if (state.currentCommand === 'MOVE' || state.currentCommand === 'COPY'){
       const line = new Path.Line(base, cursor);
       line.strokeColor = new Color(0, 0.75, 1, 0.6);
@@ -4310,23 +4353,6 @@ function updateDynamicPreview(event){
       state.selectedItems.forEach(item => {
         const clone = item.clone({ insert: false });
         clone.rotate(delta, state.basePoint);
-        clone.strokeColor = new Color(0, 0.75, 1, 0.6);
-        clone.dashArray = [4, 4];
-        clone.fillColor = null;
-        previewLayer.addChild(clone);
-      });
-    } else if (state.currentCommand === 'SCALE'){
-      const guideLine = new Path.Line(state.basePoint, cursor);
-      guideLine.strokeColor = new Color(0, 0.75, 1, 0.4);
-      guideLine.strokeWidth = 1 / view.zoom;
-      guideLine.dashArray = [3, 3];
-      previewLayer.addChild(guideLine);
-      const refDist = state.referencePoint.subtract(state.basePoint).length || 1;
-      const curDist = cursor.subtract(state.basePoint).length;
-      const sf = curDist / refDist;
-      state.selectedItems.forEach(item => {
-        const clone = item.clone({ insert: false });
-        clone.scale(sf, state.basePoint);
         clone.strokeColor = new Color(0, 0.75, 1, 0.6);
         clone.dashArray = [4, 4];
         clone.fillColor = null;
@@ -4363,7 +4389,6 @@ function showTooltipAt(clientX, clientY, text){
   el.textContent = text;
   el.style.display = 'block';
 }
-
 function updateCoords(pt){
   document.getElementById('coords-display').textContent = `X: ${pt.x.toFixed(3)}, Y: ${(-pt.y).toFixed(3)}`;
   document.getElementById('zoom-display').textContent = `Zoom: ${view.zoom.toFixed(2)}x`;
@@ -4463,7 +4488,6 @@ function onMouseWheel(event){
   drawGrid(); refreshStrokeWidths(); renderGrips(); view.update();
   if (cncState.mode !== 'off') cncRefreshOpsOverlay();
 }
-
 function getCurrentDrawingBounds(){
   let allBounds = null;
   for (let internal in layers){
@@ -4486,10 +4510,7 @@ function importDXF(file){
         setPrompt(`DXF importado: ${result.length} entidades`);
         zoomExtents();
       } else setPrompt('No se encontraron entidades válidas');
-    } catch (err){
-      console.error(err);
-      setPrompt('Error al importar: ' + err.message);
-    }
+    } catch (err){ console.error(err); setPrompt('Error al importar: ' + err.message); }
   };
   reader.readAsText(file);
 }
@@ -4498,7 +4519,7 @@ function parseDXF(dxfText){
   let i = 0;
   const itemsToAdd = [];
   while (i < lines.length && lines[i] !== 'ENTITIES' && lines[i] !== 'entities') i++;
-  if (i >= lines.length){ setPrompt('No se encontró sección ENTITIES'); return []; }
+  if (i >= lines.length){ setPrompt('No se encontró ENTITIES'); return []; }
   i++;
   while (i < lines.length && lines[i] !== 'ENDSEC' && lines[i] !== 'endsec'){
     if (lines[i] === '0'){
@@ -4542,11 +4563,7 @@ function parseDXF(dxfText){
             const fromDxf = new Point(cx + r * Math.cos(aRad), cy + r * Math.sin(aRad));
             const toDxf = new Point(cx + r * Math.cos(bRad), cy + r * Math.sin(bRad));
             const midDxf = new Point(cx + r * Math.cos(midRad), cy + r * Math.sin(midRad));
-            const arc = new Path.Arc(
-              new Point(fromDxf.x, -fromDxf.y),
-              new Point(midDxf.x, -midDxf.y),
-              new Point(toDxf.x, -toDxf.y)
-            );
+            const arc = new Path.Arc(new Point(fromDxf.x, -fromDxf.y), new Point(midDxf.x, -midDxf.y), new Point(toDxf.x, -toDxf.y));
             arc.strokeColor = 'white'; arc.strokeWidth = currentStrokeWidth();
             tagShape(arc, 'arc');
             itemsToAdd.push({ item: arc, layer: originalLayerName });
@@ -4572,42 +4589,8 @@ function parseDXF(dxfText){
               itemsToAdd.push({ item: poly, layer: originalLayerName });
             }
           }
-        } else if (type === 'POLYLINE'){
-          const closed = (parseInt(codes.find(p => p.code === 70)?.value || '0', 10) & 1) === 1;
-          const vertsDxf = [], bulges = [];
-          while (i < lines.length && lines[i] === '0'){
-            const subType = lines[i+1] ? lines[i+1].toUpperCase() : '';
-            if (subType === 'SEQEND'){
-              i += 2;
-              while (i < lines.length && lines[i] !== '0' && lines[i] !== 'ENDSEC' && lines[i] !== 'endsec') i += 2;
-              break;
-            }
-            if (subType !== 'VERTEX') break;
-            i += 2;
-            const vcodes = [];
-            while (i < lines.length && lines[i] !== '0' && lines[i] !== 'ENDSEC' && lines[i] !== 'endsec'){
-              const vcode = parseInt(lines[i], 10);
-              const vvalue = lines[i+1] || '';
-              if (!isNaN(vcode)) vcodes.push({ code: vcode, value: vvalue });
-              i += 2;
-            }
-            const vx = parseFloat(vcodes.find(p => p.code === 10)?.value);
-            const vy = parseFloat(vcodes.find(p => p.code === 20)?.value);
-            const vbulge = parseFloat(vcodes.find(p => p.code === 42)?.value);
-            if (!isNaN(vx) && !isNaN(vy)){
-              vertsDxf.push({ x: vx, y: vy });
-              bulges.push(isNaN(vbulge) ? 0 : vbulge);
-            }
-          }
-          if (vertsDxf.length > 1){
-            const poly = buildPolyline(vertsDxf, bulges, closed);
-            if (poly){
-              poly.strokeColor = 'white'; poly.strokeWidth = currentStrokeWidth();
-              itemsToAdd.push({ item: poly, layer: originalLayerName });
-            }
-          }
         }
-      } catch (err){ console.warn('Error al procesar DXF:', err); }
+      } catch (err){ console.warn('Error DXF:', err); }
     } else { i++; }
   }
   if (itemsToAdd.length === 0) return [];
@@ -4615,8 +4598,7 @@ function parseDXF(dxfText){
   const tempGroup = new Group();
   itemsToAdd.forEach(({ item }) => tempGroup.addChild(item));
   const newBounds = tempGroup.bounds;
-  tempGroup.removeChildren();
-  tempGroup.remove();
+  tempGroup.removeChildren(); tempGroup.remove();
   let offsetX = 0;
   if (currentBounds && newBounds && newBounds.width > 0){
     const gap = 20;
@@ -4668,7 +4650,6 @@ function buildPolyline(vertsDxf, bulges, closed){
   tagShape(path, 'polyline');
   return path;
 }
-
 function getContentBounds(){
   let bounds = null;
   for (let internal in layers){
@@ -4714,30 +4695,22 @@ function generatePrintView(bounds){
 }
 function openPrintWindow(svgString){
   const win = window.open('', '_blank');
-  if (!win){ setPrompt('Bloqueado. Permite ventanas emergentes.'); return; }
-  win.document.write(
-    '<!DOCTYPE html><html><head><title>Imprimir</title><style>' +
-    'html,body{margin:0;padding:0;background:#fff;}' +
-    '.sheet{padding:24px;display:flex;align-items:center;justify-content:center;min-height:100vh;box-sizing:border-box;}' +
-    'svg{max-width:100%;height:auto;}' +
-    '@media print{.sheet{padding:0;min-height:0;}}' +
+  if (!win){ setPrompt('Permite ventanas emergentes'); return; }
+  win.document.write('<!DOCTYPE html><html><head><title>Imprimir</title><style>' +
+    'html,body{margin:0;padding:0;background:#fff}.sheet{padding:24px;display:flex;align-items:center;justify-content:center;min-height:100vh;box-sizing:border-box}svg{max-width:100%;height:auto}@media print{.sheet{padding:0;min-height:0}}' +
     '</style></head><body><div class="sheet">' + svgString + '</div>' +
-    '<script>window.onload=function(){setTimeout(function(){window.print();},250);};<' + '/script>' +
-    '</body></html>'
-  );
+    '<script>window.onload=function(){setTimeout(function(){window.print();},250);};<' + '/script></body></html>');
   win.document.close();
 }
 function startPrintWindowPick(){
   state.pickingPrintWindow = true;
   state.printPickStart = null; state.printPickRect = null;
-  setPrompt('Impresión: arrastra una ventana (ESC para cancelar)');
+  setPrompt('Impresión: arrastra (ESC cancela)');
 }
-
 function exportDXF(){
   const dxf = generateDXF();
-  if (!dxf){ setPrompt('No hay entidades para exportar'); return; }
-  const bom = '\uFEFF';
-  const content = bom + dxf;
+  if (!dxf){ setPrompt('No hay entidades'); return; }
+  const content = '\uFEFF' + dxf;
   const blob = new Blob([content], { type: 'application/dxf;charset=utf-8' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -4756,55 +4729,18 @@ function writePolylineEntity(item, layerName){
     pts = pts.filter(Boolean);
   } else { pts = item.segments.map(s => s.point); }
   if (pts.length < 2) return '';
-  let dxf = '';
-  dxf += '0\nPOLYLINE\n';
-  dxf += '8\n' + layerName + '\n';
-  dxf += '66\n1\n';
-  dxf += '70\n' + (item.closed ? 1 : 0) + '\n';
-  dxf += '10\n0.0\n20\n0.0\n30\n0.0\n';
+  let dxf = '0\nPOLYLINE\n8\n' + layerName + '\n66\n1\n70\n' + (item.closed ? 1 : 0) + '\n10\n0.0\n20\n0.0\n30\n0.0\n';
   pts.forEach(p => {
-    dxf += '0\nVERTEX\n';
-    dxf += '8\n' + layerName + '\n';
-    dxf += '10\n' + p.x.toFixed(6) + '\n';
-    dxf += '20\n' + (-p.y).toFixed(6) + '\n';
-    dxf += '30\n0.0\n70\n0\n';
+    dxf += '0\nVERTEX\n8\n' + layerName + '\n10\n' + p.x.toFixed(6) + '\n20\n' + (-p.y).toFixed(6) + '\n30\n0.0\n70\n0\n';
   });
-  dxf += '0\nSEQEND\n';
-  dxf += '8\n' + layerName + '\n';
+  dxf += '0\nSEQEND\n8\n' + layerName + '\n';
   return dxf;
 }
 function generateDXF(){
   let dxf = '';
-  dxf += '0\nSECTION\n2\nHEADER\n';
-  dxf += '9\n$ACADVER\n1\nAC1009\n';
-  dxf += '9\n$INSBASE\n10\n0.0\n20\n0.0\n30\n0.0\n';
-  dxf += '9\n$EXTMIN\n10\n-1000.0\n20\n-1000.0\n30\n0.0\n';
-  dxf += '9\n$EXTMAX\n10\n1000.0\n20\n1000.0\n30\n0.0\n';
-  dxf += '9\n$LIMMIN\n10\n0.0\n20\n0.0\n';
-  dxf += '9\n$LIMMAX\n10\n420.0\n20\n297.0\n';
-  dxf += '0\nENDSEC\n';
-  dxf += '0\nSECTION\n2\nTABLES\n';
-  let layerNames = ['0'];
-  for (let internal in layers){
-    const l = layers[internal];
-    if (!CNC_UTILITY_LAYERS.includes(l)){
-      const name = l.data.originalName || '0';
-      if (name !== '0' && !layerNames.includes(name)) layerNames.push(name);
-    }
-  }
-  dxf += '0\nTABLE\n2\nLAYER\n70\n' + layerNames.length + '\n';
-  layerNames.forEach(name => { dxf += '0\nLAYER\n2\n' + name + '\n70\n0\n62\n7\n6\nCONTINUOUS\n'; });
-  dxf += '0\nENDTAB\n';
-  dxf += '0\nTABLE\n2\nLTYPE\n70\n1\n';
-  dxf += '0\nLTYPE\n2\nCONTINUOUS\n70\n0\n3\nLínea continua\n72\n65\n73\n0\n40\n0.0\n';
-  dxf += '0\nENDTAB\n';
-  dxf += '0\nTABLE\n2\nSTYLE\n70\n1\n';
-  dxf += '0\nSTYLE\n2\nSTANDARD\n70\n0\n40\n0.0\n41\n1.0\n50\n0.0\n71\n0\n42\n2.5\n3\narial.ttf\n4\n\n';
-  dxf += '0\nENDTAB\n';
-  dxf += '0\nENDSEC\n';
-  dxf += '0\nSECTION\n2\nBLOCKS\n';
-  dxf += '0\nENDSEC\n';
-  dxf += '0\nSECTION\n2\nENTITIES\n';
+  dxf += '0\nSECTION\n2\nHEADER\n9\n$ACADVER\n1\nAC1009\n9\n$INSBASE\n10\n0.0\n20\n0.0\n30\n0.0\n9\n$EXTMIN\n10\n-1000.0\n20\n-1000.0\n30\n0.0\n9\n$EXTMAX\n10\n1000.0\n20\n1000.0\n30\n0.0\n0\nENDSEC\n';
+  dxf += '0\nSECTION\n2\nTABLES\n0\nTABLE\n2\nLAYER\n70\n1\n0\nLAYER\n2\n0\n70\n0\n62\n7\n6\nCONTINUOUS\n0\nENDTAB\n0\nENDSEC\n';
+  dxf += '0\nSECTION\n2\nBLOCKS\n0\nENDSEC\n0\nSECTION\n2\nENTITIES\n';
   let hasEntities = false;
   for (let internal in layers){
     const layer = layers[internal];
@@ -4813,49 +4749,12 @@ function generateDXF(){
     layer.children.forEach(item => {
       if (isLineItem(item)){
         const p1 = item.segments[0].point, p2 = item.segments[1].point;
-        dxf += '0\nLINE\n8\n' + layerName + '\n';
-        dxf += '10\n' + p1.x.toFixed(6) + '\n20\n' + (-p1.y).toFixed(6) + '\n30\n0.0\n';
-        dxf += '11\n' + p2.x.toFixed(6) + '\n21\n' + (-p2.y).toFixed(6) + '\n31\n0.0\n';
+        dxf += '0\nLINE\n8\n' + layerName + '\n10\n' + p1.x.toFixed(6) + '\n20\n' + (-p1.y).toFixed(6) + '\n30\n0.0\n11\n' + p2.x.toFixed(6) + '\n21\n' + (-p2.y).toFixed(6) + '\n31\n0.0\n';
         hasEntities = true;
       } else if (isCircleItem(item)){
         const c = item.position;
-        dxf += '0\nCIRCLE\n8\n' + layerName + '\n';
-        dxf += '10\n' + c.x.toFixed(6) + '\n20\n' + (-c.y).toFixed(6) + '\n30\n0.0\n';
-        dxf += '40\n' + getCircleRadius(item).toFixed(6) + '\n';
+        dxf += '0\nCIRCLE\n8\n' + layerName + '\n10\n' + c.x.toFixed(6) + '\n20\n' + (-c.y).toFixed(6) + '\n30\n0.0\n40\n' + getCircleRadius(item).toFixed(6) + '\n';
         hasEntities = true;
-      } else if (isArcItem(item) && item.segments.length > 1){
-        const p0 = item.segments[0].point;
-        const p1 = item.segments[item.segments.length-1].point;
-        const mid = item.getPointAt(item.length/2) || item.segments[Math.floor(item.segments.length/2)].point;
-        const center = circumcenter(p0, mid, p1);
-        let validArc = false, radius = 0;
-        if (center){
-          radius = center.getDistance(p0);
-          const tol = Math.max(radius * 0.02, 0.05);
-          validArc = radius > 1e-6 && item.segments.every(s => Math.abs(s.point.getDistance(center) - radius) < tol);
-        }
-        if (validArc){
-          const toDxfAngle = p => {
-            const dx2 = p.x - center.x, dy2 = -(p.y - center.y);
-            let a = Math.atan2(dy2, dx2) * 180 / Math.PI;
-            if (a < 0) a += 360;
-            return a;
-          };
-          let sa = toDxfAngle(p0), ea = toDxfAngle(p1);
-          const ma = toDxfAngle(mid);
-          let sweep = ea - sa;
-          if (sweep < 0) sweep += 360;
-          let midOffset = ma - sa;
-          if (midOffset < 0) midOffset += 360;
-          if (midOffset > sweep){ const tmp = sa; sa = ea; ea = tmp; }
-          dxf += '0\nARC\n8\n' + layerName + '\n';
-          dxf += '10\n' + center.x.toFixed(6) + '\n20\n' + (-center.y).toFixed(6) + '\n30\n0.0\n';
-          dxf += '40\n' + radius.toFixed(6) + '\n50\n' + sa.toFixed(6) + '\n51\n' + ea.toFixed(6) + '\n';
-          hasEntities = true;
-        } else {
-          dxf += writePolylineEntity(item, layerName);
-          hasEntities = true;
-        }
       } else if (item instanceof Path && item.segments.length > 1){
         dxf += writePolylineEntity(item, layerName);
         hasEntities = true;
@@ -4874,7 +4773,6 @@ mouseTool.onMouseMove = onMouseMove;
 mouseTool.activate();
 view.element.addEventListener('wheel', onMouseWheel, { passive: false });
 view.on('change', () => drawGrid());
-
 function setOrtho(on){
   state.ortho = on;
   document.getElementById('ortho-toggle').classList.toggle('active', state.ortho);
@@ -4909,18 +4807,13 @@ document.getElementById('grid-toggle').addEventListener('click', function(){
 document.getElementById('btn-zoom-extents').addEventListener('click', zoomExtents);
 document.getElementById('btn-zoom-in').addEventListener('click', () => { view.zoom *= 1.2; refreshStrokeWidths(); renderGrips(); view.update(); drawGrid(); });
 document.getElementById('btn-zoom-out').addEventListener('click', () => { view.zoom /= 1.2; refreshStrokeWidths(); renderGrips(); view.update(); drawGrid(); });
-
 document.getElementById('ribbon-import').addEventListener('click', () => document.getElementById('file-input-import').click());
 document.getElementById('qa-open').addEventListener('click', () => document.getElementById('file-input-import').click());
 document.getElementById('file-input-import').addEventListener('change', e => {
   const file = e.target.files[0];
   if (file){
     if (/\.dwg$/i.test(file.name)){
-      showModal({
-        title: 'DWG no soportado',
-        body: 'DWG es binario propietario. Expórtalo primero a <code>.dxf</code>.',
-        buttons: [{ label: 'Entendido', primary: true }]
-      });
+      showModal({ title: 'DWG no soportado', body: 'Exporta primero a <code>.dxf</code>.', buttons: [{ label: 'OK', primary: true }] });
     } else importDXF(file);
   }
   e.target.value = '';
@@ -4929,7 +4822,6 @@ document.getElementById('ribbon-export').addEventListener('click', exportDXF);
 document.getElementById('qa-save').addEventListener('click', exportDXF);
 document.getElementById('qa-undo').addEventListener('click', undo);
 document.getElementById('qa-redo').addEventListener('click', redo);
-
 const cmdInputEl = document.getElementById('cmd-input');
 function toggleCmdHistory(){
   const panel = document.getElementById('cmd-history-panel');
@@ -4941,153 +4833,13 @@ function toggleCmdHistory(){
 document.getElementById('cmd-history-toggle').addEventListener('click', toggleCmdHistory);
 document.getElementById('cmd-history-close').addEventListener('click', toggleCmdHistory);
 
-cmdInputEl.addEventListener('keydown', e => {
-  if (e.key === 'Enter'){
-    const input = cmdInputEl.value.trim();
-    if (!input && state.pendingCommand){ finalizePendingSelection(); cmdInputEl.value = ''; e.preventDefault(); return; }
-    if (!input && state.currentCommand === 'LINE' && state.expectingPoint && state.collectedPoints.length >= 2){
-      setPrompt('LINE finalizado'); resetStateCmd(); cmdInputEl.value = ''; e.preventDefault(); return;
-    }
-    if (input.toUpperCase() === 'C' && state.currentCommand === 'LINE' && state.expectingPoint && state.collectedPoints.length >= 2){
-      saveState();
-      const last = state.collectedPoints[state.collectedPoints.length - 1];
-      const first = state.collectedPoints[0];
-      const closeLine = new Path.Line(last, first);
-      closeLine.strokeColor = 'white'; closeLine.strokeWidth = currentStrokeWidth();
-      tagShape(closeLine, 'line');
-      activeLayer.addChild(closeLine);
-      setPrompt('LINE cerrado'); resetStateCmd(); cmdInputEl.value = ''; e.preventDefault(); return;
-    }
-    if (input.toUpperCase() === 'U' && state.currentCommand === 'LINE' && state.expectingPoint && state.lineSegmentPaths.length > 0){
-      const lastPath = state.lineSegmentPaths.pop();
-      lastPath.remove();
-      state.collectedPoints.pop();
-      invalidateSnapCache();
-      state.history.pop();
-      state.dynamicLastPoint = state.collectedPoints[state.collectedPoints.length - 1];
-      setPrompt('LINE: último tramo deshecho'); cmdInputEl.value = ''; e.preventDefault(); return;
-    }
-    if (input.toUpperCase() === 'D' && state.currentCommand === 'CIRCLE' && state.step === 2){
-      state.circleDiameterMode = true; setPrompt('CIRCLE: Diámetro'); cmdInputEl.value = ''; e.preventDefault(); return;
-    }
-    if (!input && state.currentCommand && !state.expectingPoint &&
-        (state.currentCommand === 'TRIM' || state.currentCommand === 'EXTEND')){
-      setPrompt(`${state.currentCommand} finalizado`); resetStateCmd(); cmdInputEl.value = ''; e.preventDefault(); return;
-    }
-    if (!input && state.currentCommand === 'COPY' && state.step === 2){
-      setPrompt('COPY finalizado'); resetStateCmd(); cmdInputEl.value = ''; e.preventDefault(); return;
-    }
-    if (!input && state.currentCommand === 'OFFSET' && state.step >= 2){
-      setPrompt('OFFSET finalizado'); resetStateCmd(); cmdInputEl.value = ''; e.preventDefault(); return;
-    }
-    if (!input && state.currentCommand === 'CHAMFER' && state.step === 1){
-      state.chamferDist1 = 0; state.step = 2;
-      setPrompt('CHAMFER: distancia 2 (Enter = 0)'); cmdInputEl.value = ''; e.preventDefault(); return;
-    }
-    if (!input && state.currentCommand === 'CHAMFER' && state.step === 2){
-      state.chamferDist2 = state.chamferDist1; state.step = 3;
-      setPrompt('CHAMFER: haz clic en el primer objeto'); cmdInputEl.value = ''; e.preventDefault(); return;
-    }
-    if (!input && state.currentCommand === 'FILLET' && state.step === 1){
-      state.filletRadius = 0; state.step = 2;
-      setPrompt('FILLET: haz clic en el primer objeto'); cmdInputEl.value = ''; e.preventDefault(); return;
-    }
-    if (!input && (state.currentCommand === 'CHAMFER' || state.currentCommand === 'FILLET') && state.step > 2){
-      setPrompt(`${state.currentCommand} finalizado`); resetStateCmd(); cmdInputEl.value = ''; e.preventDefault(); return;
-    }
-    if (input){
-      state.commandHistory.push(input);
-      state.historyIdx = state.commandHistory.length;
-      if (state.currentCommand === 'CHAMFER' && state.step <= 2){
-        const d = parseFloat(input);
-        if (state.step === 1){
-          state.chamferDist1 = isNaN(d) ? 0 : Math.max(0, d);
-          state.step = 2;
-          setPrompt(`CHAMFER: distancia 2 (Enter = ${state.chamferDist1})`);
-        } else {
-          state.chamferDist2 = isNaN(d) ? state.chamferDist1 : Math.max(0, d);
-          state.step = 3;
-          setPrompt('CHAMFER: haz clic en el primer objeto');
-        }
-        cmdInputEl.value = ''; e.preventDefault(); return;
-      }
-      if (state.currentCommand === 'FILLET' && state.step === 1){
-        const d = parseFloat(input);
-        state.filletRadius = isNaN(d) ? 0 : Math.max(0, d);
-        state.step = 2;
-        setPrompt('FILLET: haz clic en el primer objeto');
-        cmdInputEl.value = ''; e.preventDefault(); return;
-      }
-      if (state.waitingForNumber){
-        const dist = parseFloat(input);
-        if (!isNaN(dist) && dist > 0){
-          state.offsetDistance = dist;
-          state.waitingForNumber = false;
-          state.step = 2;
-          setPrompt(`OFFSET: Distancia ${dist}. Selecciona objeto`);
-          state.expectingPoint = false;
-        } else setPrompt('Distancia inválida');
-        cmdInputEl.value = ''; e.preventDefault(); return;
-      }
-      if (state.currentCommand === 'ROTATE' && state.step === 2){
-        const ang = parseFloat(input);
-        if (!isNaN(ang)){
-          saveState();
-          state.selectedItems.forEach(i => i.rotate(-ang, state.basePoint));
-          resetStateCmd();
-          setPrompt(`Rotado ${ang}° (CCW)`);
-        } else setPrompt('Ángulo inválido');
-        cmdInputEl.value = ''; e.preventDefault(); return;
-      }
-      if (state.currentCommand === 'SCALE' && state.step === 2){
-        const sf = parseFloat(input);
-        if (!isNaN(sf) && sf > 0){
-          saveState();
-          state.selectedItems.forEach(i => i.scale(sf, state.basePoint));
-          resetStateCmd();
-          setPrompt(`Escalado x${sf}`);
-        } else setPrompt('Factor inválido');
-        cmdInputEl.value = ''; e.preventDefault(); return;
-      }
-      if (state.currentCommand && state.expectingPoint){
-        const pt = parseDynamicInput(input, state.dynamicLastPoint);
-        if (pt) handlePointInput(pt);
-        else setPrompt('Entrada no válida');
-      } else {
-        executeCommand(input);
-      }
-    }
-    cmdInputEl.value = '';
-    e.preventDefault();
-  } else if (e.key === 'ArrowUp'){
-    e.preventDefault();
-    if (state.commandHistory.length > 0){
-      if (state.historyIdx > 0) state.historyIdx--;
-      cmdInputEl.value = state.commandHistory[state.historyIdx] || '';
-    }
-  } else if (e.key === 'ArrowDown'){
-    e.preventDefault();
-    if (state.commandHistory.length > 0){
-      if (state.historyIdx < state.commandHistory.length - 1) state.historyIdx++;
-      cmdInputEl.value = state.commandHistory[state.historyIdx] || '';
-    }
-  } else if (e.key === 'Escape'){
-    const hadCmd = !!state.currentCommand;
-    const hadSel = state.selectedItems.length > 0;
-    if (hadCmd){ resetStateCmd(); previewLayer.removeChildren(); const dt = document.getElementById('dynamic-tooltip'); if (dt) dt.style.display = 'none'; }
-    if (hadSel) clearSelection();
-    cmdInputEl.value = '';
-    if (hadCmd) setPrompt('Comando cancelado');
-    else if (hadSel) setPrompt('Selección deseleccionada');
-    e.preventDefault();
-  }
-});
-
+// ★ v10: F4 toggles Measure
 window.addEventListener('keydown', e => {
   if (e.ctrlKey && e.key === 'z'){ e.preventDefault(); undo(); }
   if (e.ctrlKey && e.key === 'y'){ e.preventDefault(); redo(); }
   if (e.ctrlKey && e.key === 'n'){ e.preventDefault(); document.getElementById('qa-new').click(); }
   if (e.key === 'F3'){ e.preventDefault(); setOsnap(!state.snapEnabled); }
+  if (e.key === 'F4'){ e.preventDefault(); if (state.currentCommand === 'MEASURE') exitMeasureMode(); else startMeasureMode(); }
   if (e.key === 'F8'){ e.preventDefault(); setOrtho(!state.ortho); }
   if (e.key === 'F10'){ e.preventDefault(); setPolar(!state.polar); }
   if (e.key === 'F7'){ e.preventDefault(); document.getElementById('grid-toggle').click(); }
@@ -5102,10 +4854,12 @@ window.addEventListener('keydown', e => {
     if (cncState.mode !== 'off') cncRefreshOpsOverlay();
   }
   if (e.key === 'Escape'){
-    if (cncState.mode !== 'off'){
-      cncSetMode('off');
-      setPrompt('CNC: modo navegar');
+    if (state.currentCommand === 'MEASURE'){
+      exitMeasureMode();
       e.preventDefault(); return;
+    }
+    if (cncState.mode !== 'off'){
+      cncSetMode('off'); setPrompt('CNC: navegar'); e.preventDefault(); return;
     }
     if (state.pickingPrintWindow){
       state.pickingPrintWindow = false; state.printPickStart = null; state.printPickRect = null;
@@ -5125,16 +4879,6 @@ window.addEventListener('keydown', e => {
       if (state.lastCommand){ e.preventDefault(); executeCommand(state.lastCommand); }
     } else if ((e.key === 'Enter' || e.key === ' ') && state.pendingCommand){
       e.preventDefault(); finalizePendingSelection();
-    } else if ((e.key === 'Enter' || e.key === ' ') && state.currentCommand === 'LINE' &&
-        state.expectingPoint && state.collectedPoints.length >= 2){
-      e.preventDefault(); setPrompt('LINE finalizado'); resetStateCmd();
-    } else if ((e.key === 'Enter' || e.key === ' ') && state.currentCommand && !state.expectingPoint &&
-        (state.currentCommand === 'TRIM' || state.currentCommand === 'EXTEND')){
-      e.preventDefault(); setPrompt(`${state.currentCommand} finalizado`); resetStateCmd();
-    } else if ((e.key === 'Enter' || e.key === ' ') && state.currentCommand === 'COPY' && state.step === 2){
-      e.preventDefault(); setPrompt('COPY finalizado'); resetStateCmd();
-    } else if ((e.key === 'Enter' || e.key === ' ') && state.currentCommand === 'OFFSET' && state.step >= 2){
-      e.preventDefault(); setPrompt('OFFSET finalizado'); resetStateCmd();
     } else if (/^[a-zA-Z0-9@.,\-<]$/.test(e.key)){
       e.preventDefault();
       cmdInputEl.focus();
@@ -5152,7 +4896,6 @@ function refreshActivePreview(){
   if (state.isDragging) onMouseDrag(fakeEvent);
   else onMouseMove(fakeEvent);
 }
-
 document.getElementById('canvas-container').addEventListener('contextmenu', e => {
   e.preventDefault();
   openContextMenu(e.clientX, e.clientY);
@@ -5168,6 +4911,7 @@ function openContextMenu(x, y){
     items.push({ sep: true });
   } else {
     items.push({ label: 'Repetir último comando', key: 'Enter', disabled: !state.lastCommand, action: () => state.lastCommand && executeCommand(state.lastCommand) });
+    items.push({ label: '📏 Medir (F4)', action: startMeasureMode });
     items.push({ sep: true });
   }
   if (!inCmd){
@@ -5185,25 +4929,20 @@ function openContextMenu(x, y){
     items.push({ label: 'Chaflán', key: 'CHA', action: () => executeCommand('CHAMFER') });
     items.push({ label: 'Redondear', key: 'F', action: () => executeCommand('FILLET') });
     if (state.selectedItems.length >= 2){
-      items.push({ label: '🔗 Unir líneas/polilíneas', key: 'J', action: () => executeCommand('JOIN') });
+      items.push({ label: '🔗 Unir', key: 'J', action: () => executeCommand('JOIN') });
     }
-    items.push({ label: 'Borrar', key: 'Supr', action: () => { saveState(); state.selectedItems.forEach(i => i.remove()); clearSelection(); setPrompt('Objetos eliminados'); if (cncState.mode !== 'off') cncRefreshOpsOverlay(); } });
+    items.push({ label: 'Borrar', key: 'Supr', action: () => { saveState(); state.selectedItems.forEach(i => i.remove()); clearSelection(); setPrompt('Borrados'); if (cncState.mode !== 'off') cncRefreshOpsOverlay(); } });
     items.push({ sep: true });
     if (cncState.tools.length){
       items.push({ label: '➕ Añadir a Corte (CNC)', action: () => { state.selectedItems.forEach(it => cncAddCutItem(it)); } });
     }
-    items.push({ label: 'Deseleccionar todo', key: 'Esc', action: clearSelection });
+    items.push({ label: 'Deseleccionar', key: 'Esc', action: clearSelection });
   } else if (!inCmd){
     items.push({ label: 'Seleccionar todo', key: 'Ctrl+A', action: selectAllItems });
   }
   menu.innerHTML = '';
   items.forEach(it => {
-    if (it.sep){
-      const sep = document.createElement('div');
-      sep.className = 'cm-sep';
-      menu.appendChild(sep);
-      return;
-    }
+    if (it.sep){ const sep = document.createElement('div'); sep.className = 'cm-sep'; menu.appendChild(sep); return; }
     const row = document.createElement('div');
     row.className = 'cm-item' + (it.disabled ? ' disabled' : '');
     row.innerHTML = `<span>${it.label}</span>${it.key ? `<span class="cm-key">${it.key}</span>` : ''}`;
@@ -5216,7 +4955,6 @@ function openContextMenu(x, y){
   menu.style.top = Math.min(y, window.innerHeight - rect.height - 6) + 'px';
 }
 function closeContextMenu(){ document.getElementById('context-menu').style.display = 'none'; }
-
 function newDrawing(){
   resetStateCmd();
   clearSelection();
@@ -5236,10 +4974,12 @@ function newDrawing(){
   cncState.operations = []; cncState.gcodeLines = []; cncState.simMoves = []; cncState.simT = 0;
   cncState.cutContours = {}; cncState.cutTabs = {};
   cncOpsLayer.removeChildren(); cncSimLayer.removeChildren();
+  state.measurements = [];
   invalidateSnapCache();
   view.zoom = 1;
   view.center = new Point(0, 0);
   drawGrid(); refreshStrokeWidths(); renderLayerList(); renderGrips(); updateProperties();
+  updateMeasureInfo();
   setPrompt('Dibujo nuevo');
   view.update();
   if (cncState.mode !== 'off') cncRefreshAllUI();
@@ -5247,11 +4987,8 @@ function newDrawing(){
 document.getElementById('qa-new').addEventListener('click', () => {
   showModal({
     title: 'Nuevo dibujo',
-    body: 'Se borrará todo el dibujo actual y no se podrá deshacer. ¿Continuar?',
-    buttons: [
-      { label: 'Cancelar' },
-      { label: 'Crear nuevo', primary: true, onClick: newDrawing }
-    ]
+    body: 'Se borrará el dibujo actual. ¿Continuar?',
+    buttons: [{ label: 'Cancelar' }, { label: 'Crear nuevo', primary: true, onClick: newDrawing }]
   });
 });
 function showModal({ title, body, buttons }){
@@ -5283,7 +5020,6 @@ function selectAllItems(){
 }
 window.addEventListener('click', e => { if (!e.target.closest('#context-menu')) closeContextMenu(); });
 window.addEventListener('blur', closeContextMenu);
-
 const crosshair = document.createElement('div');
 crosshair.className = 'crosshair';
 crosshair.style.display = 'none';
@@ -5300,7 +5036,6 @@ document.addEventListener('mousemove', e => {
   chBox.style.top = e.clientY + 'px';
   chBox.style.left = e.clientX + 'px';
 });
-
 const navBtn = document.getElementById('qa-navigator');
 const navContainer = document.getElementById('navigator');
 const navCanvas = document.getElementById('navCanvas');
@@ -5355,10 +5090,9 @@ function updateNavigator(){
   ctx.strokeRect(vx * scale + offsetX, vy * scale + offsetY, vw * scale, vh * scale);
 }
 view.on('change', () => { if (navContainer.classList.contains('visible')) updateNavigator(); });
-
 document.getElementById('qa-print').addEventListener('click', () => {
   showModal({
-    title: 'Imprimir / Exportar a PDF',
+    title: 'Imprimir',
     body: 'Elige qué parte del dibujo quieres imprimir.',
     buttons: [
       { label: 'Cancelar' },
@@ -5367,7 +5101,6 @@ document.getElementById('qa-print').addEventListener('click', () => {
     ]
   });
 });
-
 let resizeRAF = null;
 function syncViewSize(){
   const container = document.getElementById('canvas-container');
@@ -5388,7 +5121,6 @@ if (window.ResizeObserver){
   ro.observe(document.getElementById('canvas-container'));
 }
 window.addEventListener('resize', syncViewSize);
-
 window.addEventListener('clipper-ready', async () => {
   try {
     const lib = window.jsAngusjClipper;
@@ -5398,17 +5130,14 @@ window.addEventListener('clipper-ready', async () => {
     );
     cncState.clipperReady = true;
     console.log(`✅ Clipper nativo cargado (v${APP_VERSION})`);
-    console.log('   APIs: offsetToPaths=' + typeof cncState.clipperInstance.offsetToPaths +
-      ' | ClipperOffset=' + typeof cncState.clipperInstance.ClipperOffset);
+    console.log('   APIs: offsetToPaths=' + typeof cncState.clipperInstance.offsetToPaths + ' | ClipperOffset=' + typeof cncState.clipperInstance.ClipperOffset);
     if (cncState.operations.length) cncRebuildAndRegen();
-    // Auto-ejecutar autotest
     setTimeout(() => { try { window.cncDebugOffset(); } catch(e){ console.warn('debug:', e); } }, 300);
   } catch (err){
-    console.warn('❌ No se pudo cargar Clipper:', err);
-    console.warn('   → Usará fallback geométrico con miter correcto');
+    console.warn('❌ Clipper:', err);
+    console.warn('   → Usará fallback geométrico con miter correcto + self-clean');
   }
 });
-
 function initAll(){
   syncViewSize();
   renderLayerList();
@@ -5431,12 +5160,13 @@ function initAll(){
   document.getElementById('cnc-tabsHeight').value = cncState.tabs.height;
   document.getElementById('cnc-sim-speed-val').textContent = '1.0x';
 
-  // ★ v8: badge de versión
   document.getElementById('appVersion').textContent = 'v' + APP_VERSION;
-
   setPrompt(`v${APP_VERSION} · ${VERSION_NOTES}`);
-  console.log(`CAD Pro + CNC v${APP_VERSION} cargado · ${VERSION_NOTES}`);
-  console.log(`   💡 Ejecuta cncDebugOffset() en consola si el offset falla`);
+  console.log(`═══════════════════════════════════════════════════════════════════`);
+  console.log(`  CAD Pro + CNC v${APP_VERSION}`);
+  console.log(`  ${VERSION_NOTES}`);
+  console.log(`  💡 Ejecuta cncDebugOffset() en F12 si el offset falla`);
+  console.log(`═══════════════════════════════════════════════════════════════════`);
 }
 initAll();
 
