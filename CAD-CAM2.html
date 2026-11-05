@@ -2270,13 +2270,13 @@ function clipperOffsetAll(pts, delta){
   const L = window.jsAngusjClipper;
   const S = CLIPPER_SCALE;
   
-  // 1. Limpiar la entrada antes del offset para evitar micro-intersecciones
+  // 1. Limpiar la entrada (usando NonZero para ignorar solapamientos del DXF)
   const data = pts.map(p => ({ x: Math.round(p.x * S), y: Math.round(p.y * S) }));
   let cleaned;
   try {
     cleaned = cncState.clipperInstance.clipToPaths({
       clipType: L.ClipType.Union,
-      subjectFillType: L.PolyFillType.EvenOdd,
+      subjectFillType: L.PolyFillType.NonZero, // ★ Fix: NonZero rellena líneas cruzadas sin crear agujeros
       subjectInputs: [{ data: data, closed: true }]
     });
   } catch(e) {
@@ -2284,7 +2284,7 @@ function clipperOffsetAll(pts, delta){
     cleaned = [data];
   }
 
-  // 2. Aplicar Offset con MiterLimit alto para que las líneas se crucen y resuelvan la esquina
+  // 2. Offset con MiterLimit 2.0
   const offsetPaths = [];
   for (const path of cleaned) {
     if (!path || path.length < 3) continue;
@@ -2293,9 +2293,9 @@ function clipperOffsetAll(pts, delta){
       const res = cncState.clipperInstance.offsetToPaths({
         delta: Math.round(delta * S),
         arcTolerance: 0.02 * S,
-        miterLimit: 100.0, // ★ Muy alto: permite que las líneas se extiendan hasta su intersección real
+        miterLimit: 2.0, // ★ Fix: Límite estándar. Evita picos infinitos y hace que se omita la ranura si no cabe
         offsetInputs: [{
-          joinType: L.JoinType.Miter,
+          joinType: L.JoinType.Miter, // ★ Offset perfecto en ángulos
           endType:  L.EndType.ClosedPolygon,
           data: pathData
         }]
@@ -2306,6 +2306,33 @@ function clipperOffsetAll(pts, delta){
     }
   }
 
+  if (!offsetPaths.length) return null;
+
+  // 3. Unir los fragmentos resultantes para limpiar cualquier lazo residual
+  let finalPaths;
+  try {
+    finalPaths = cncState.clipperInstance.clipToPaths({
+      clipType: L.ClipType.Union,
+      subjectFillType: L.PolyFillType.NonZero, // ★ Fix: NonZero en la unión final
+      subjectInputs: offsetPaths.map(p => ({ data: p, closed: true }))
+    });
+  } catch(e) {
+    console.warn('[Clipper union] Error:', e);
+    finalPaths = offsetPaths; 
+  }
+
+  if (!finalPaths) return null;
+
+  // 4. Devolver los bucles válidos
+  const out = [];
+  for (const path of finalPaths){
+    if (!path || path.length < 3) continue;
+    const a = signedArea(path) / (S * S);
+    if (Math.abs(a) < 0.01) continue; 
+    out.push(path.map(p => ({ x: p.x / S, y: p.y / S })));
+  }
+  return out;
+}
   if (!offsetPaths.length) return null;
 
   // 3. Unir todos los fragmentos resultantes para eliminar auto-intersecciones y bucles
