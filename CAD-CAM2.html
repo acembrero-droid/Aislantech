@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CAD Pro + CNC · DXF → G-Code · v12.1</title>
+<title>CAD Pro + CNC · DXF → G-Code · v12</title>
 <style>
 :root { --bg-main:#1A1A1A; --bg-canvas:#16181A; --bg-ribbon:#232323;
     --bg-panel:#262626; --bg-button:#333333; --bg-hover:#3E3E3E;
@@ -368,7 +368,7 @@ body{background:var(--bg-main);color:var(--text-primary);font-family:var(--font-
       <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 15V9l4 6V9l4 6"/>
     </svg>
     CAD&nbsp;+&nbsp;CNC
-    <span class="version-badge" id="appVersion">v12.1</span>
+    <span class="version-badge" id="appVersion">v12.2</span>
   </span>
   <div class="separator"></div>
   <button id="qa-new" title="Nuevo (Ctrl+N)"><svg viewBox="0 0 24 24"><path d="M13 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V9z"/><path d="M13 3v6h6"/></svg></button>
@@ -632,7 +632,7 @@ window.dispatchEvent(new Event('clipper-ready'));
 </script>
 <script>
 /* ═══════════════════════════════════════════════════════════════════════
-   CAD Pro + CNC — v12.1
+   CAD Pro + CNC — v12.2
    Novedades:
      · Fix render/s2w
      · Measure con snap 15px + hover
@@ -647,7 +647,7 @@ project.selectedColor = new Color(0.31, 0.76, 0.97);
 
 const canvasContainer = document.getElementById('canvas-container');
 
-const APP_VERSION = '12';
+const APP_VERSION = '12.2';
 const VERSION_NOTES = 'Fix trayectorias CNC · Curvas suaves · MITER 2 · Tolerancia unión 0.05mm';
 
 const layers = {};
@@ -2261,118 +2261,71 @@ function handleFilletClick(event){
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
-   PIPELINE DE OFFSET ROBUSTO (v12.1) - Miter exacto
+   PIPELINE DE OFFSET ROBUSTO (v12.3) - SOLUCIÓN DEFINITIVA
    ═══════════════════════════════════════════════════════════════════════ */
 
+// 1. Offset de Clipper corregido (sin descartar por signo de área, normalizando a CCW)
 function clipperOffsetAll(pts, delta){
-  if (!cncState.clipperReady || !cncState.clipperInstance) return null;
+  if (!cncState.clipperReady || !cncState.clipperInstance){
+    console.warn('[offset] Clipper no está listo, se usará el fallback');
+    return null;
+  }
   if (!pts || pts.length < 3) return null;
   const L = window.jsAngusjClipper;
   const S = CLIPPER_SCALE;
-  
-  // 1. Limpiar la entrada (usando NonZero para ignorar solapamientos del DXF)
   const data = pts.map(p => ({ x: Math.round(p.x * S), y: Math.round(p.y * S) }));
-  let cleaned;
+  let res;
   try {
-    cleaned = cncState.clipperInstance.clipToPaths({
-      clipType: L.ClipType.Union,
-      subjectFillType: L.PolyFillType.NonZero, // ★ Fix: NonZero rellena líneas cruzadas sin crear agujeros
-      subjectInputs: [{ data: data, closed: true }]
+    res = cncState.clipperInstance.offsetToPaths({
+      delta: Math.round(delta * S),
+      arcTolerance: 0.02 * S,
+      miterLimit: 2,
+      offsetInputs: [{
+        joinType: L.JoinType.Round, // Físicamente correcto para la fresa
+        endType:  L.EndType.ClosedPolygon,
+        data
+      }]
     });
-  } catch(e) {
-    console.warn('[Clipper clean] Error:', e);
-    cleaned = [data];
+  } catch (e){
+    console.error('[offset] Clipper lanzó excepción:', e);
+    return null;                       // fallo real → fallback
   }
+  if (!res) return null;
 
-  // 2. Offset con MiterLimit 2.0
-  const offsetPaths = [];
-  for (const path of cleaned) {
-    if (!path || path.length < 3) continue;
-    const pathData = path.map(p => ({ x: p.x, y: p.y }));
-    try {
-      const res = cncState.clipperInstance.offsetToPaths({
-        delta: Math.round(delta * S),
-        arcTolerance: 0.02 * S,
-        miterLimit: 2.0, // ★ Fix: Límite estándar. Evita picos infinitos y hace que se omita la ranura si no cabe
-        offsetInputs: [{
-          joinType: L.JoinType.Miter, // ★ Offset perfecto en ángulos
-          endType:  L.EndType.ClosedPolygon,
-          data: pathData
-        }]
-      });
-      if (res) offsetPaths.push(...res);
-    } catch (e) {
-      console.error('[Clipper offset] Error:', e);
-    }
-  }
+  const cand = res
+    .filter(p => p && p.length >= 3)
+    .map(p => ({ path: p, a: signedArea(p) / (S * S) }));
+  if (!cand.length) return [];         // vacío legítimo: la figura desaparece
 
-  if (!offsetPaths.length) return null;
+  // El bucle de mayor área define qué orientación es "exterior"
+  const big = cand.reduce((m, c) => Math.abs(c.a) > Math.abs(m.a) ? c : m);
+  const sign = Math.sign(big.a);
 
-  // 3. Unir los fragmentos resultantes para limpiar cualquier lazo residual
-  let finalPaths;
-  try {
-    finalPaths = cncState.clipperInstance.clipToPaths({
-      clipType: L.ClipType.Union,
-      subjectFillType: L.PolyFillType.NonZero, // ★ Fix: NonZero en la unión final
-      subjectInputs: offsetPaths.map(p => ({ data: p, closed: true }))
-    });
-  } catch(e) {
-    console.warn('[Clipper union] Error:', e);
-    finalPaths = offsetPaths; 
-  }
-
-  if (!finalPaths) return null;
-
-  // 4. Devolver los bucles válidos
   const out = [];
-  for (const path of finalPaths){
-    if (!path || path.length < 3) continue;
-    const a = signedArea(path) / (S * S);
-    if (Math.abs(a) < 0.01) continue; 
-    out.push(path.map(p => ({ x: p.x / S, y: p.y / S })));
-  }
-  return out;
-}
-  if (!offsetPaths.length) return null;
-
-  // 3. Unir todos los fragmentos resultantes para eliminar auto-intersecciones y bucles
-  let finalPaths;
-  try {
-    finalPaths = cncState.clipperInstance.clipToPaths({
-      clipType: L.ClipType.Union,
-      subjectFillType: L.PolyFillType.EvenOdd,
-      subjectInputs: offsetPaths.map(p => ({ data: p, closed: true }))
-    });
-  } catch(e) {
-    console.warn('[Clipper union] Error:', e);
-    finalPaths = offsetPaths; // Fallback a los fragmentos sin unir
-  }
-
-  if (!finalPaths) return null;
-
-  // 4. Devolver todos los bucles válidos (sin descartar ninguno)
-  const out = [];
-  for (const path of finalPaths){
-    if (!path || path.length < 3) continue;
-    const a = signedArea(path) / (S * S);
-    if (Math.abs(a) < 0.01) continue; // Descartar solo la basura infinitesimal
-    out.push(path.map(p => ({ x: p.x / S, y: p.y / S })));
+  for (const c of cand){
+    if (Math.sign(c.a) !== sign) continue;      // descarta huecos
+    if (Math.abs(c.a) < 0.01) continue;         // descarta basura
+    let loop = c.path.map(p => ({ x: p.x / S, y: p.y / S }));
+    if (signedArea(loop) < 0) loop.reverse();   // normaliza a CCW
+    out.push(loop);
   }
   return out;
 }
 
+// 2. Wrapper para el CAD y CNC
 function offsetPointsWithClipper(pts, delta, isClosed = true){
-  if (isClosed) {
-    const all = clipperOffsetAll(pts, delta);
-    if (!all || !all.length) return null;
-    let best = all[0], bestA = Math.abs(signedArea(best));
-    for (const p of all){ const a = Math.abs(signedArea(p)); if (a > bestA){ best = p; bestA = a; } }
-    return best;
-  } else {
-    return offsetOpenPathSimple(pts, delta);
+  const all = clipperOffsetAll(pts, delta);
+  if (all === null) return null;                // fallo → fallback
+  if (!all.length)  return [];                  // vacío legítimo
+  let best = all[0], bestA = Math.abs(signedArea(best));
+  for (const p of all){
+    const a = Math.abs(signedArea(p));
+    if (a > bestA){ best = p; bestA = a; }
   }
+  return best;
 }
 
+// 3. Fallback Geométrico
 function offsetPointsProper(pts, delta){
   if (!pts || pts.length < 3) return [];
   if (Math.abs(delta) < 1e-6) return pts.slice();
@@ -2389,7 +2342,7 @@ function offsetPointsProper(pts, delta){
   if (Math.abs(area) < 1e-9) return clean.slice();
   const isCCW = area > 0;
   const sign = isCCW ? 1 : -1;
-  const MITER_LIMIT = 1.0; 
+  const MITER_LIMIT = 2.0; 
   const result = [];
   for (let i = 0; i < m; i++){
     const prev = clean[(i-1+m) % m];
@@ -2446,6 +2399,7 @@ function offsetOpenPathSimple(pts, delta){
   return out;
 }
 
+// 4. Comando CAD Offset
 function offsetPolyline(item, dist, clickPt){
   const isClosed = item.closed;
   let pts = [];
@@ -3034,6 +2988,7 @@ function pointInPoly(pt, poly){
   return inside;
 }
 
+// 5. Resolución de contornos CNC
 function resolveCutContours(op, tool){
   const items = (op.itemIds || []).map(id => findPaperItemById(id)).filter(Boolean);
   if (!items.length) return [];
