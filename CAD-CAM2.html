@@ -2264,7 +2264,6 @@ function handleFilletClick(event){
    PIPELINE DE OFFSET ROBUSTO (v12.3) - SOLUCIÓN DEFINITIVA
    ═══════════════════════════════════════════════════════════════════════ */
 
-// 1. Offset de Clipper corregido (sin descartar por signo de área, normalizando a CCW)
 function clipperOffsetAll(pts, delta){
   if (!cncState.clipperReady || !cncState.clipperInstance){
     console.warn('[offset] Clipper no está listo, se usará el fallback');
@@ -2273,40 +2272,41 @@ function clipperOffsetAll(pts, delta){
   if (!pts || pts.length < 3) return null;
   const L = window.jsAngusjClipper;
   const S = CLIPPER_SCALE;
+  
   const data = pts.map(p => ({ x: Math.round(p.x * S), y: Math.round(p.y * S) }));
   let res;
   try {
     res = cncState.clipperInstance.offsetToPaths({
       delta: Math.round(delta * S),
       arcTolerance: 0.02 * S,
-      miterLimit: 2,
+      miterLimit: 2.0, // ★ 2.0 mantiene las esquinas de 90° rectas sin crear picos infinitos
       offsetInputs: [{
-        joinType: L.JoinType.Round, // Físicamente correcto para la fresa
+        joinType: L.JoinType.Miter, // ★ Miter en lugar de Round para esquinas rectas
         endType:  L.EndType.ClosedPolygon,
         data
       }]
     });
   } catch (e){
     console.error('[offset] Clipper lanzó excepción:', e);
-    return null;                       // fallo real → fallback
+    return null;
   }
   if (!res) return null;
 
   const cand = res
     .filter(p => p && p.length >= 3)
     .map(p => ({ path: p, a: signedArea(p) / (S * S) }));
-  if (!cand.length) return [];         // vacío legítimo: la figura desaparece
+  if (!cand.length) return [];
 
-  // El bucle de mayor área define qué orientación es "exterior"
-  const big = cand.reduce((m, c) => Math.abs(c.a) > Math.abs(m.a) ? c : m);
+  // Filtrar usando la orientación del bucle más grande
+  const big = cand.reduce((m, c) => Math.abs(c.a) > Math.abs(m.a) ? c : m, cand[0]);
   const sign = Math.sign(big.a);
 
   const out = [];
   for (const c of cand){
-    if (Math.sign(c.a) !== sign) continue;      // descarta huecos
-    if (Math.abs(c.a) < 0.01) continue;         // descarta basura
+    if (Math.sign(c.a) !== sign) continue; 
+    if (Math.abs(c.a) < 0.01) continue; 
     let loop = c.path.map(p => ({ x: p.x / S, y: p.y / S }));
-    if (signedArea(loop) < 0) loop.reverse();   // normaliza a CCW
+    if (signedArea(loop) < 0) loop.reverse(); 
     out.push(loop);
   }
   return out;
