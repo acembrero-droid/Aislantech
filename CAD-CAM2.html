@@ -1524,8 +1524,8 @@ function parseDynamicInput(input, lastPoint){
 /* ═══════════════════════════════════════════════════════════════════════
    EVENTOS DE ENTRADA DE COMANDOS Y TECLADO (Fix bloqueo OFFSET)
    ═══════════════════════════════════════════════════════════════════════ */
-const cmdInputEl = document.getElementById('cmd-input');
-cmdInputEl.addEventListener('keydown', e => {
+const cmdInputElement = document.getElementById('cmd-input');
+cmdInputElement.addEventListener('keydown', e => {
   if (e.key === 'Enter') {
     const input = e.target.value.trim();
     if (state.waitingForNumber) {
@@ -2261,7 +2261,7 @@ function handleFilletClick(event){
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
-   PIPELINE DE OFFSET ROBUSTO (v11.6)
+   PIPELINE DE OFFSET ROBUSTO (v11.8)
    ═══════════════════════════════════════════════════════════════════════ */
 
 // 1. Limpieza profunda (Union)
@@ -2277,7 +2277,7 @@ function cleanPolygonWithClipper(pts) {
     const paths = clipper.clipToPaths({
       clipType: 1, // Union
       subjectFillType: 1, // EvenOdd
-      subjectPaths: [intPath]
+      subjectInputs: [{ data: intPath, closed: true }]
     });
     
     if (paths && paths.length > 0) {
@@ -3092,6 +3092,7 @@ function resolveCutContours(op, tool){
 }
 
 // ─── FIN PARTE 2 ───
+
     function rebuildAllContours(){
   cncState.cutContours = {};
   cncState.cutTabs = {};
