@@ -2271,13 +2271,14 @@ function cleanPolygonWithClipper(pts) {
   const clipper = cncState.clipperInstance;
   if (typeof clipper.clipToPaths !== 'function') return pts;
 
-  // ★ CORRECCIÓN: Usar x, y en minúsculas
+  // Convertir a puntos con x, y en minúsculas
   const intPath = pts.map(p => ({ x: Math.round(p.x * CLIPPER_SCALE), y: Math.round(p.y * CLIPPER_SCALE) }));
 
   try {
+    // Usar los enums en lugar de valores numéricos
     const paths = clipper.clipToPaths({
-      clipType: 1, // Union
-      subjectFillType: 1, // EvenOdd
+      clipType: clipperLib.ClipType.Union,
+      subjectFillType: clipperLib.PolyFillType.EvenOdd,
       subjectInputs: [{ data: intPath, closed: true }],
       autoFix: true
     });
@@ -2303,7 +2304,6 @@ function cleanPolygonWithClipper(pts) {
   }
   return pts;
 }
-
 // 2. Offset con MiterLimit 2.0 y JoinType Miter (0)
 function offsetPointsWithClipper(pts, delta, isClosed = true){
   if (!cncState.clipperReady || !cncState.clipperInstance) return null;
