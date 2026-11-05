@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CAD Pro + CNC · DXF → G-Code · v12</title>
+<title>CAD Pro + CNC · DXF → G-Code · v12.1</title>
 <style>
 :root { --bg-main:#1A1A1A; --bg-canvas:#16181A; --bg-ribbon:#232323;
     --bg-panel:#262626; --bg-button:#333333; --bg-hover:#3E3E3E;
@@ -368,7 +368,7 @@ body{background:var(--bg-main);color:var(--text-primary);font-family:var(--font-
       <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 15V9l4 6V9l4 6"/>
     </svg>
     CAD&nbsp;+&nbsp;CNC
-    <span class="version-badge" id="appVersion">v12</span>
+    <span class="version-badge" id="appVersion">v12.1</span>
   </span>
   <div class="separator"></div>
   <button id="qa-new" title="Nuevo (Ctrl+N)"><svg viewBox="0 0 24 24"><path d="M13 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V9z"/><path d="M13 3v6h6"/></svg></button>
@@ -632,7 +632,7 @@ window.dispatchEvent(new Event('clipper-ready'));
 </script>
 <script>
 /* ═══════════════════════════════════════════════════════════════════════
-   CAD Pro + CNC — v12
+   CAD Pro + CNC — v12.1
    Novedades:
      · Fix render/s2w
      · Measure con snap 15px + hover
@@ -2261,10 +2261,9 @@ function handleFilletClick(event){
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
-   PIPELINE DE OFFSET ROBUSTO (v12.0) - SOLUCIÓN DEFINITIVA
+   PIPELINE DE OFFSET ROBUSTO (v12.1) - Miter exacto
    ═══════════════════════════════════════════════════════════════════════ */
 
-// 1. Offset usando la API correcta y JoinType.Round
 function clipperOffsetAll(pts, delta){
   if (!cncState.clipperReady || !cncState.clipperInstance) return null;
   if (!pts || pts.length < 3) return null;
@@ -2276,9 +2275,9 @@ function clipperOffsetAll(pts, delta){
     res = cncState.clipperInstance.offsetToPaths({
       delta: Math.round(delta * S),
       arcTolerance: 0.02 * S,
-      miterLimit: 2,
+      miterLimit: 2.0, // Límite seguro para evitar picos infinitos
       offsetInputs: [{
-        joinType: L.JoinType.Round, // Round es lo correcto para fresas
+        joinType: L.JoinType.Miter, // ★ Miter exacto: la fresa sigue perfectamente los ángulos
         endType:  L.EndType.ClosedPolygon,
         data
       }]
@@ -2292,13 +2291,12 @@ function clipperOffsetAll(pts, delta){
   for (const path of res){
     if (!path || path.length < 3) continue;
     const a = signedArea(path) / (S * S);
-    if (a < 0.01) continue;          // descarta huecos inalcanzables y basura
+    if (Math.abs(a) < 0.01) continue; 
     out.push(path.map(p => ({ x: p.x / S, y: p.y / S })));
   }
   return out;
 }
 
-// 2. Wrapper para el CAD
 function offsetPointsWithClipper(pts, delta, isClosed = true){
   if (isClosed) {
     const all = clipperOffsetAll(pts, delta);
@@ -2311,7 +2309,6 @@ function offsetPointsWithClipper(pts, delta, isClosed = true){
   }
 }
 
-// 3. Fallback Geométrico (por si Clipper no carga)
 function offsetPointsProper(pts, delta){
   if (!pts || pts.length < 3) return [];
   if (Math.abs(delta) < 1e-6) return pts.slice();
@@ -2385,7 +2382,6 @@ function offsetOpenPathSimple(pts, delta){
   return out;
 }
 
-// 4. CAD OFFSET
 function offsetPolyline(item, dist, clickPt){
   const isClosed = item.closed;
   let pts = [];
@@ -2964,7 +2960,6 @@ function rotatePointsToStart(pts, ox, oy){
   return pts.slice(bestIdx).concat(pts.slice(0, bestIdx));
 }
 
-// 5. Utilidad para saber si un punto está dentro de un polígono
 function pointInPoly(pt, poly){
   let inside = false;
   for (let i = 0, j = poly.length - 1; i < poly.length; j = i++){
@@ -2975,7 +2970,6 @@ function pointInPoly(pt, poly){
   return inside;
 }
 
-// 6. Resolución de contornos CNC con compensación de huecos
 function resolveCutContours(op, tool){
   const items = (op.itemIds || []).map(id => findPaperItemById(id)).filter(Boolean);
   if (!items.length) return [];
