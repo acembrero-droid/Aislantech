@@ -1521,6 +1521,63 @@ function parseDynamicInput(input, lastPoint){
 }
 
 // ─── FIN PARTE 1 ───
+/* ═══════════════════════════════════════════════════════════════════════
+   EVENTOS DE ENTRADA DE COMANDOS Y TECLADO (Fix bloqueo OFFSET)
+   ═══════════════════════════════════════════════════════════════════════ */
+const cmdInputEl = document.getElementById('cmd-input');
+cmdInputEl.addEventListener('keydown', e => {
+  if (e.key === 'Enter') {
+    const input = e.target.value.trim();
+    if (state.waitingForNumber) {
+      const val = parseFloat(input);
+      if (!isNaN(val)) {
+        state.offsetDistance = val;
+        state.waitingForNumber = false;
+        state.step = 2;
+        setPrompt(`OFFSET: Distancia ${val}. Selecciona objeto`);
+        e.target.value = '';
+        e.target.blur();
+        return;
+      }
+    }
+    if (!input) {
+      if (state.pendingCommand) { finalizePendingSelection(); return; }
+      if (state.currentCommand && state.expectingPoint) { return; }
+      return;
+    }
+    handleCommandInput(input);
+  } else if (e.key === 'Escape') {
+    resetStateCmd();
+    e.target.blur();
+  }
+});
+
+function handleCommandInput(input) {
+  if (!input && !state.currentCommand) return;
+  if (!state.currentCommand) {
+    if (state.selectedItems.length > 0) {
+      const cmd = input.toUpperCase();
+      executeCommand(cmd);
+    }
+  } else if (state.expectingPoint) {
+    const pt = parseDynamicInput(input, state.dynamicLastPoint);
+    if (pt) { handlePointInput(pt); }
+    else { setPrompt('Entrada no válida'); }
+  } else if (state.currentCommand === 'CHAMFER' && state.step === 1) {
+    state.chamferDist1 = parseFloat(input) || 0;
+    state.chamferDist2 = state.chamferDist1;
+    state.step = 3;
+    setPrompt('CHAMFER: haz clic en el primer objeto');
+  } else if (state.currentCommand === 'FILLET' && state.step === 1) {
+    state.filletRadius = parseFloat(input) || 0;
+    state.step = 2;
+    setPrompt('FILLET: haz clic en el primer objeto');
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   COMANDOS CAD
+   ═══════════════════════════════════════════════════════════════════════ */
 function executeCommand(cmd){
   if (state.currentCommand) resetStateCmd();
   const cmdMap = {
@@ -1826,6 +1883,9 @@ function handlePointInput(point){
   }
 }
 
+/* ═══════════════════════════════════════════════════════════════════════
+   HERRAMIENTA MEDIR
+   ═══════════════════════════════════════════════════════════════════════ */
 function syncMeasureButtonState(){
   const btn = document.getElementById('btnMeasure');
   if (!btn) return;
@@ -2204,7 +2264,7 @@ function handleFilletClick(event){
    PIPELINE DE OFFSET ROBUSTO (v11.6)
    ═══════════════════════════════════════════════════════════════════════ */
 
-// 1. Limpieza (Union): Elimina cruces y lazos de la figura original
+// 1. Limpieza profunda (Union)
 function cleanPolygonWithClipper(pts) {
   if (!cncState.clipperReady || !cncState.clipperInstance) return pts;
   if (!pts || pts.length < 3) return pts;
@@ -2242,7 +2302,7 @@ function cleanPolygonWithClipper(pts) {
   return pts;
 }
 
-// 2. Offset con Miter
+// 2. Offset de Clipper con autoFix: true
 function offsetPointsWithClipper(pts, delta, isClosed = true){
   if (!cncState.clipperReady || !cncState.clipperInstance) return null;
   if (!pts || pts.length < 2) return null;
@@ -2255,11 +2315,12 @@ function offsetPointsWithClipper(pts, delta, isClosed = true){
   try {
     const attempt = clipper.offsetToPaths({
       delta: deltaInt, 
-      miterLimit: 10.0,      // Une las esquinas proyectándolas hasta el infinito si es necesario
+      miterLimit: 10.0,      // ★ Miter alto para unir en punta las esquinas (no hacer chaflán)
       arcTolerance: 0.1 * CLIPPER_SCALE,
-      joinType: 2,           // Miter (Unión en punta)
+      joinType: 2,           // 2 = Miter
       endType: isClosed ? 0 : 1, 
-      paths: [intPath]
+      paths: [intPath],
+      autoFix: true          // ★ CRÍTICO: Repara polígonos auto-intersectados
     });
     
     let paths = null;
@@ -2280,7 +2341,7 @@ function offsetPointsWithClipper(pts, delta, isClosed = true){
       }
       if (best){
         let resultPts = best.map(p => ({ x: p.X / CLIPPER_SCALE, y: p.Y / CLIPPER_SCALE }));
-        // Limpiar el resultado final para evitar "regresos" internos
+        // ★ Limpieza final del resultado para quitar cualquier bucle residual
         return cleanPolygonWithClipper(resultPts);
       }
     }
@@ -2290,7 +2351,7 @@ function offsetPointsWithClipper(pts, delta, isClosed = true){
   return null;
 }
 
-// 3. Fallback geométrico por si Clipper tarda en cargar
+// 3. Fallback Geométrico
 function offsetPointsProper(pts, delta){
   if (!pts || pts.length < 3) return [];
   if (Math.abs(delta) < 1e-6) return pts.slice();
@@ -2307,7 +2368,7 @@ function offsetPointsProper(pts, delta){
   if (Math.abs(area) < 1e-9) return clean.slice();
   const isCCW = area > 0;
   const sign = isCCW ? 1 : -1;
-  const MITER_LIMIT = 1.0; 
+  const MITER_LIMIT = 10.0; 
   const result = [];
   for (let i = 0; i < m; i++){
     const prev = clean[(i-1+m) % m];
@@ -2398,6 +2459,7 @@ function smartOffsetPolygon(pts, delta){
   return offsetPointsProper(pts, delta);
 }
 
+// 4. Comando CAD Offset
 function offsetPolyline(item, dist, clickPt){
   const isClosed = item.closed;
   let pts = [];
@@ -2410,7 +2472,9 @@ function offsetPolyline(item, dist, clickPt){
   }
   if (pts.length < 3) return null;
   
-  pts = cleanPolygonWithClipper(pts);
+  if (isClosed) {
+    pts = cleanPolygonWithClipper(pts); // Limpiar solo si es cerrado
+  }
   pts = simplifyPolygon(pts, 0.05); 
   if (pts.length < 3) return null;
 
@@ -2513,6 +2577,9 @@ function resetOffsetToSelect(message){
   setPrompt(message || `OFFSET: Distancia ${state.offsetDistance}. Selecciona objeto`);
 }
 
+/* ═══════════════════════════════════════════════════════════════════════
+   CNC Y HERRAMIENTAS
+   ═══════════════════════════════════════════════════════════════════════ */
 function uid(prefix){ return prefix + Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
 function createCNCTool(num){
   return {
@@ -3025,7 +3092,7 @@ function resolveCutContours(op, tool){
 }
 
 // ─── FIN PARTE 2 ───
-function rebuildAllContours(){
+    function rebuildAllContours(){
   cncState.cutContours = {};
   cncState.cutTabs = {};
   for (let i = 0; i < cncState.operations.length; i++){
