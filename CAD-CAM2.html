@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CAD Pro + CNC · DXF → G-Code · v11.6</title>
+<title>CAD Pro + CNC · DXF → G-Code · v11.8</title>
 <style>
 :root { --bg-main:#1A1A1A; --bg-canvas:#16181A; --bg-ribbon:#232323;
     --bg-panel:#262626; --bg-button:#333333; --bg-hover:#3E3E3E;
@@ -91,7 +91,7 @@ body{background:var(--bg-main);color:var(--text-primary);font-family:var(--font-
 .ribbon-flyout-menu.open{display:block}
 .ribbon-flyout-menu button{display:flex;align-items:center;gap:10px;width:100%;background:transparent;
   border:none;border-radius:5px;color:var(--text-primary);padding:7px 10px;cursor:pointer;
-  font-size:11.6px;text-align:left;white-space:nowrap;transition:all .15s ease;font-family:var(--font-ui)}
+  font-size:11px;text-align:left;white-space:nowrap;transition:all .15s ease;font-family:var(--font-ui)}
 .ribbon-flyout-menu button:hover{background:linear-gradient(90deg,rgba(79,195,247,.18),rgba(79,195,247,.06));
   color:var(--accent-blue);transform:translateX(2px)}
 .ribbon-flyout-menu button svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
@@ -106,7 +106,7 @@ body{background:var(--bg-main);color:var(--text-primary);font-family:var(--font-
 .layer-combo-menu.open{display:block}
 .layer-combo-menu .lcm-item{display:flex;align-items:center;gap:8px;width:100%;background:transparent;
   border:none;color:var(--text-primary);padding:6px 8px;border-radius:5px;cursor:pointer;
-  font-size:11.6px;text-align:left;white-space:nowrap;transition:background .12s ease}
+  font-size:11px;text-align:left;white-space:nowrap;transition:background .12s ease}
 .layer-combo-menu .lcm-item:hover{background:var(--bg-hover)}
 .layer-combo-menu .lcm-item.active{color:var(--accent-blue);font-weight:600}
 .layer-combo-menu .lcm-swatch{width:11px;height:11px;border-radius:2px;flex-shrink:0;border:1px solid rgba(255,255,255,.3)}
@@ -342,7 +342,7 @@ body{background:var(--bg-main);color:var(--text-primary);font-family:var(--font-
   border:1px solid var(--accent-blue);background:rgba(79,195,247,.10)}
 #color-picker-hidden{display:none;position:fixed;z-index:9999}
 #dynamic-tooltip{position:fixed;pointer-events:none;background:#1c1c1c;color:var(--accent-blue);
-  padding:3px 9px;border-radius:5px;font-family:var(--font-mono);font-size:11.6px;
+  padding:3px 9px;border-radius:5px;font-family:var(--font-mono);font-size:11px;
   border:1px solid var(--accent-blue);box-shadow:0 2px 8px rgba(0,0,0,.5);display:none;z-index:1000}
 @keyframes fadeIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
 @keyframes slideIn{from{opacity:0;transform:translateX(-10px)}to{opacity:1;transform:translateX(0)}}
@@ -368,7 +368,7 @@ body{background:var(--bg-main);color:var(--text-primary);font-family:var(--font-
       <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 15V9l4 6V9l4 6"/>
     </svg>
     CAD&nbsp;+&nbsp;CNC
-    <span class="version-badge" id="appVersion">v11.6</span>
+    <span class="version-badge" id="appVersion">v11.8</span>
   </span>
   <div class="separator"></div>
   <button id="qa-new" title="Nuevo (Ctrl+N)"><svg viewBox="0 0 24 24"><path d="M13 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V9z"/><path d="M13 3v6h6"/></svg></button>
@@ -632,7 +632,7 @@ window.dispatchEvent(new Event('clipper-ready'));
 </script>
 <script>
 /* ═══════════════════════════════════════════════════════════════════════
-   CAD Pro + CNC — v11.6
+   CAD Pro + CNC — v11.8
    Novedades:
      · Fix render/s2w
      · Measure con snap 15px + hover
@@ -647,7 +647,7 @@ project.selectedColor = new Color(0.31, 0.76, 0.97);
 
 const canvasContainer = document.getElementById('canvas-container');
 
-const APP_VERSION = '11.6';
+const APP_VERSION = '11.8';
 const VERSION_NOTES = 'Fix trayectorias CNC · Curvas suaves · MITER 2 · Tolerancia unión 0.05mm';
 
 const layers = {};
@@ -2264,7 +2264,7 @@ function handleFilletClick(event){
    PIPELINE DE OFFSET ROBUSTO (v11.8)
    ═══════════════════════════════════════════════════════════════════════ */
 
-// 1. Limpieza profunda (Union)
+// 1. Limpieza profunda (Union con autoFix)
 function cleanPolygonWithClipper(pts) {
   if (!cncState.clipperReady || !cncState.clipperInstance) return pts;
   if (!pts || pts.length < 3) return pts;
@@ -2277,7 +2277,8 @@ function cleanPolygonWithClipper(pts) {
     const paths = clipper.clipToPaths({
       clipType: 1, // Union
       subjectFillType: 1, // EvenOdd
-      subjectInputs: [{ data: intPath, closed: true }]
+      subjectInputs: [{ data: intPath, closed: true }],
+      autoFix: true
     });
     
     if (paths && paths.length > 0) {
@@ -2302,7 +2303,7 @@ function cleanPolygonWithClipper(pts) {
   return pts;
 }
 
-// 2. Offset de Clipper con autoFix: true
+// 2. Offset con MiterLimit óptimo (4.0)
 function offsetPointsWithClipper(pts, delta, isClosed = true){
   if (!cncState.clipperReady || !cncState.clipperInstance) return null;
   if (!pts || pts.length < 2) return null;
@@ -2315,12 +2316,12 @@ function offsetPointsWithClipper(pts, delta, isClosed = true){
   try {
     const attempt = clipper.offsetToPaths({
       delta: deltaInt, 
-      miterLimit: 10.0,      // ★ Miter alto para unir en punta las esquinas (no hacer chaflán)
+      miterLimit: 4.0,       // ★ Óptimo: Une en punta hasta 90° sin crear picos infinitos
       arcTolerance: 0.1 * CLIPPER_SCALE,
       joinType: 2,           // 2 = Miter
       endType: isClosed ? 0 : 1, 
       paths: [intPath],
-      autoFix: true          // ★ CRÍTICO: Repara polígonos auto-intersectados
+      autoFix: true          // ★ Limpia auto-intersecciones
     });
     
     let paths = null;
@@ -2341,7 +2342,6 @@ function offsetPointsWithClipper(pts, delta, isClosed = true){
       }
       if (best){
         let resultPts = best.map(p => ({ x: p.X / CLIPPER_SCALE, y: p.Y / CLIPPER_SCALE }));
-        // ★ Limpieza final del resultado para quitar cualquier bucle residual
         return cleanPolygonWithClipper(resultPts);
       }
     }
@@ -2368,7 +2368,7 @@ function offsetPointsProper(pts, delta){
   if (Math.abs(area) < 1e-9) return clean.slice();
   const isCCW = area > 0;
   const sign = isCCW ? 1 : -1;
-  const MITER_LIMIT = 10.0; 
+  const MITER_LIMIT = 4.0; 
   const result = [];
   for (let i = 0; i < m; i++){
     const prev = clean[(i-1+m) % m];
@@ -2459,7 +2459,7 @@ function smartOffsetPolygon(pts, delta){
   return offsetPointsProper(pts, delta);
 }
 
-// 4. Comando CAD Offset
+// 4. Comando CAD Offset (Manejo de subrutas y orientación)
 function offsetPolyline(item, dist, clickPt){
   const isClosed = item.closed;
   let pts = [];
@@ -2473,7 +2473,7 @@ function offsetPolyline(item, dist, clickPt){
   if (pts.length < 3) return null;
   
   if (isClosed) {
-    pts = cleanPolygonWithClipper(pts); // Limpiar solo si es cerrado
+    pts = cleanPolygonWithClipper(pts);
   }
   pts = simplifyPolygon(pts, 0.05); 
   if (pts.length < 3) return null;
@@ -3092,7 +3092,6 @@ function resolveCutContours(op, tool){
 }
 
 // ─── FIN PARTE 2 ───
-
     function rebuildAllContours(){
   cncState.cutContours = {};
   cncState.cutTabs = {};
