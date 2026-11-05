@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CAD Pro + CNC · DXF → G-Code · v11.3</title>
+<title>CAD Pro + CNC · DXF → G-Code · v11.4</title>
 <style>
 :root { --bg-main:#1A1A1A; --bg-canvas:#16181A; --bg-ribbon:#232323;
     --bg-panel:#262626; --bg-button:#333333; --bg-hover:#3E3E3E;
@@ -368,7 +368,7 @@ body{background:var(--bg-main);color:var(--text-primary);font-family:var(--font-
       <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 15V9l4 6V9l4 6"/>
     </svg>
     CAD&nbsp;+&nbsp;CNC
-    <span class="version-badge" id="appVersion">v11.3</span>
+    <span class="version-badge" id="appVersion">v11.4</span>
   </span>
   <div class="separator"></div>
   <button id="qa-new" title="Nuevo (Ctrl+N)"><svg viewBox="0 0 24 24"><path d="M13 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V9z"/><path d="M13 3v6h6"/></svg></button>
@@ -632,7 +632,7 @@ window.dispatchEvent(new Event('clipper-ready'));
 </script>
 <script>
 /* ═══════════════════════════════════════════════════════════════════════
-   CAD Pro + CNC — v11.3
+   CAD Pro + CNC — v11.4
    Novedades:
      · Fix render/s2w
      · Measure con snap 15px + hover
@@ -647,7 +647,7 @@ project.selectedColor = new Color(0.31, 0.76, 0.97);
 
 const canvasContainer = document.getElementById('canvas-container');
 
-const APP_VERSION = '11.3';
+const APP_VERSION = '11.4';
 const VERSION_NOTES = 'Fix trayectorias CNC · Curvas suaves · MITER 2 · Tolerancia unión 0.05mm';
 
 const layers = {};
@@ -2200,53 +2200,71 @@ function handleFilletClick(event){
   }
 }
 
-function circumcenter(p1, p2, p3){
-  const ax=p1.x, ay=p1.y, bx=p2.x, by=p2.y, cx=p3.x, cy=p3.y;
-  const d = 2*(ax*(by-cy)+bx*(cy-ay)+cx*(ay-by));
-  if (Math.abs(d) < 1e-9) return null;
-  const ux = ((ax*ax+ay*ay)*(by-cy)+(bx*bx+by*by)*(cy-ay)+(cx*cx+cy*cy)*(ay-by))/d;
-  const uy = ((ax*ax+ay*ay)*(cx-bx)+(bx*bx+by*by)*(ax-cx)+(cx*cx+cy*cy)*(bx-ax))/d;
-  return new Point(ux, uy);
-}
 function offsetPolyline(item, dist, clickPt){
-  const pts = item.segments.map(s => s.point);
-  const n = pts.length;
-  if (n < 2) return null;
-  const closed = item.closed;
+  const isClosed = item.closed;
+  let pts = [];
+  const L = item.length;
+  if (L < 1e-6) return null;
+  const n = Math.max(64, Math.min(2000, Math.ceil(L / 0.1)));
+  for (let i = 0; i <= n; i++){
+    const p = item.getPointAt(L * i / n);
+    if (p) pts.push({ x: p.x, y: -p.y }); // Y-UP para Clipper
+  }
+  if (pts.length < 2) return null;
+  pts = simplifyPolygon(pts, 0.05); // Limpiar puntos redundantes
+
   let side = 1;
-  if (closed) side = item.contains(clickPt) ? 1 : -1;
-  else {
+  if (isClosed) {
+    side = item.contains(clickPt) ? -1 : 1;
+    // Asegurar orientación CCW para Clipper
+    let area = 0;
+    for (let i = 0; i < pts.length; i++) area += pts[i].x * pts[(i+1)%pts.length].y - pts[(i+1)%pts.length].x * pts[i].y;
+    if (area < 0) pts.reverse();
+  } else {
     let bestD = Infinity, bestSide = 1;
-    for (let i = 0; i < n - 1; i++){
-      const a = pts[i], b = pts[i+1];
-      const dir = b.subtract(a).normalize();
-      const normal = dir.rotate(90);
-      const mid = a.add(b).divide(2);
-      const d = mid.getDistance(clickPt);
-      if (d < bestD){ bestD = d; bestSide = clickPt.subtract(mid).dot(normal) > 0 ? 1 : -1; }
+    for (let i = 0; i < item.segments.length; i++) {
+        const a = item.segments[i].point;
+        const b = item.segments[(i+1) % item.segments.length].point;
+        const dir = b.subtract(a).normalize();
+        const normal = dir.rotate(90);
+        const mid = a.add(b).divide(2);
+        const d = mid.getDistance(clickPt);
+        if (d < bestD){ bestD = d; bestSide = clickPt.subtract(mid).dot(normal) > 0 ? 1 : -1; }
     }
     side = bestSide;
   }
-  const edgeCount = closed ? n : n - 1;
+
+  const delta = dist * side;
+  const clipperRes = offsetPointsWithClipper(pts, delta, isClosed);
+  
+  if (clipperRes && clipperRes.length >= 2) {
+    const newPath = new Path(clipperRes.map(p => new Point(p.x, -p.y)));
+    newPath.closed = isClosed;
+    return newPath;
+  }
+
+  // Fallback geométrico si Clipper falla o no está listo
+  const ptsCad = pts.map(p => new Point(p.x, -p.y));
+  const edgeCount = isClosed ? ptsCad.length : ptsCad.length - 1;
   const offsetEdges = [];
   for (let i = 0; i < edgeCount; i++){
-    const a = pts[i], b = pts[(i+1) % n];
+    const a = ptsCad[i], b = ptsCad[(i+1) % ptsCad.length];
     const dir = b.subtract(a).normalize();
-    const normal = dir.rotate(90).multiply(dist * side);
+    const normal = dir.rotate(90).multiply(delta * -1);
     offsetEdges.push({ a: a.add(normal), b: b.add(normal) });
   }
   const newPts = [];
   for (let i = 0; i < offsetEdges.length; i++){
     const cur = offsetEdges[i];
-    if (!closed && i === 0){ newPts.push(cur.a); continue; }
+    if (!isClosed && i === 0){ newPts.push(cur.a); continue; }
     const prevIdx = (i - 1 + offsetEdges.length) % offsetEdges.length;
     const prev = offsetEdges[prevIdx];
     const corner = lineLineIntersection(prev.a, prev.b, cur.a, cur.b);
     newPts.push(corner || cur.a);
   }
-  if (!closed) newPts.push(offsetEdges[offsetEdges.length - 1].b);
+  if (!isClosed) newPts.push(offsetEdges[offsetEdges.length - 1].b);
   const newPath = new Path(newPts);
-  newPath.closed = closed;
+  newPath.closed = isClosed;
   return newPath;
 }
 function highlightOffsetTarget(item, on){
@@ -2773,23 +2791,59 @@ function rotatePointsToStart(pts, ox, oy){
   return pts.slice(bestIdx).concat(pts.slice(0, bestIdx));
 }
 
-function offsetPointsWithClipper(pts, delta){
+function cleanPolygonWithClipper(pts) {
+  if (!cncState.clipperReady || !cncState.clipperInstance) return pts;
+  if (!pts || pts.length < 3) return pts;
+  const clipper = cncState.clipperInstance;
+  if (typeof clipper.clipToPaths !== 'function') return pts;
+
+  const intPath = pts.map(p => ({ X: Math.round(p.x * CLIPPER_SCALE), Y: Math.round(p.y * CLIPPER_SCALE) }));
+
+  try {
+    const paths = clipper.clipToPaths({
+      clipType: 1,
+      subjectFillType: 1,
+      subjectPaths: [intPath]
+    });
+    
+    if (paths && paths.length > 0) {
+      let best = null, bestArea = -Infinity;
+      for (const path of paths){
+        if (!path || path.length < 3) continue;
+        let a = 0;
+        for (let i = 0; i < path.length; i++){
+          const p1 = path[i], p2 = path[(i+1) % path.length];
+          a += p1.X * p2.Y - p2.X * p1.Y;
+        }
+        a = Math.abs(a / 2);
+        if (a > bestArea){ bestArea = a; best = path; }
+      }
+      if (best) {
+         return best.map(p => ({ x: p.X / CLIPPER_SCALE, y: p.Y / CLIPPER_SCALE }));
+      }
+    }
+  } catch(e) {
+    console.warn('[Limpieza] Error:', e.message);
+  }
+  return pts;
+}
+
+function offsetPointsWithClipper(pts, delta, isClosed = true){
   if (!cncState.clipperReady || !cncState.clipperInstance) return null;
-  if (!pts || pts.length < 3) return null;
+  if (!pts || pts.length < 2) return null;
   const clipper = cncState.clipperInstance;
   if (typeof clipper.offsetToPaths !== 'function') return null;
   
-  // ★ FIX: js-angusj-clipper requiere las propiedades X e Y en mayúsculas
   const intPath = pts.map(p => ({ X: Math.round(p.x * CLIPPER_SCALE), Y: Math.round(p.y * CLIPPER_SCALE) }));
   const deltaInt = Math.round(delta * CLIPPER_SCALE);
   
   try {
     const attempt = clipper.offsetToPaths({
       delta: deltaInt, 
-      miterLimit: 2.0, 
-      arcTolerance: 0.25 * CLIPPER_SCALE, // 0.25mm de tolerancia para curvas redondas
-      joinType: 2,  // 2 = JoinType.Round (esquinas redondeadas en el exterior)
-      endType: 0,   // 0 = EndType.ClosedPolygon
+      miterLimit: 4.0, 
+      arcTolerance: 0.1 * CLIPPER_SCALE,
+      joinType: 2,          // 2 = Miter (esquinas proyectadas)
+      endType: isClosed ? 0 : 1, // 0 = ClosedPolygon, 1 = OpenButt
       paths: [intPath]
     });
     
@@ -2797,29 +2851,28 @@ function offsetPointsWithClipper(pts, delta){
     if (Array.isArray(attempt)) paths = attempt;
     else if (attempt && Array.isArray(attempt.paths)) paths = attempt.paths;
     
-    if (paths && paths.length > 0 && paths.some(p => p && p.length >= 3)){
+    if (paths && paths.length > 0){
       let best = null, bestArea = -Infinity;
       for (const path of paths){
-        if (!path || path.length < 3) continue;
+        if (!path || path.length < 2) continue;
         let a = 0;
         for (let i = 0; i < path.length; i++){
           const p1 = path[i], p2 = path[(i+1) % path.length];
-          a += p1.X * p2.Y - p2.X * p1.Y; // ★ X e Y en mayúsculas
+          a += p1.X * p2.Y - p2.X * p1.Y;
         }
         a = Math.abs(a / 2);
         if (a > bestArea){ bestArea = a; best = path; }
       }
       if (best){
-        console.log(`[Clipper v11.3] ✓ OK | ${(bestArea/(CLIPPER_SCALE*CLIPPER_SCALE)).toFixed(1)}mm²`);
-        // Convertir de vuelta a minúsculas para el resto del programa
         return best.map(p => ({ x: p.X / CLIPPER_SCALE, y: p.Y / CLIPPER_SCALE }));
       }
     }
   } catch(e) {
-    console.warn('[Clipper v11.3] Error:', e.message);
+    console.warn('[Clipper Offset] Error:', e.message);
   }
   return null;
 }
+
 function offsetPointsProper(pts, delta){
   if (!pts || pts.length < 3) return [];
   if (Math.abs(delta) < 1e-6) return pts.slice();
@@ -2885,6 +2938,7 @@ function offsetPointsProper(pts, delta){
   }
   return result;
 }
+
 function selfCleanPolygon(pts){
   if (!pts || pts.length < 3) return pts;
   try {
@@ -2910,15 +2964,14 @@ function selfCleanPolygon(pts){
     }
     try { clone.remove(); tmpPath.remove(); if (united && united !== tmpPath) united.remove(); } catch(_){}
     if (resultPts.length >= 3){
-      console.log(`[selfClean] ${pts.length} → ${resultPts.length} pts`);
       return resultPts;
     }
     return pts;
   } catch(e){
-    console.warn('[selfClean] error:', e.message);
     return pts;
   }
 }
+
 function offsetOpenPathSimple(pts, delta){
   if (!pts || pts.length < 2) return pts ? pts.slice() : [];
   const n = pts.length;
@@ -2934,6 +2987,7 @@ function offsetOpenPathSimple(pts, delta){
   }
   return out;
 }
+
 function smartOffsetPolygon(pts, delta){
   if (!pts || pts.length < 3) return pts;
   if (Math.abs(delta) < 1e-6) return pts.slice();
@@ -2959,9 +3013,9 @@ function smartOffsetPolygon(pts, delta){
     r = selfCleanPolygon(r);
     if (isValid(r)) return r;
   }
-  console.warn(`[offset v11.3] fallback crudo delta=${delta.toFixed(3)}`);
   return offsetPointsProper(pts, delta);
 }
+
 function resolveCutContours(op, tool){
   const items = (op.itemIds || []).map(id => findPaperItemById(id)).filter(Boolean);
   if (!items.length) return [];
@@ -2969,6 +3023,7 @@ function resolveCutContours(op, tool){
   const results = [];
   if (!Number.isFinite(op.adjust)) op.adjust = 0;
   if (!Number.isFinite(tool.diam)) tool.diam = 3.175;
+  
   for (const group of groups){
     const chainRes = chainItemsIntoPoints(group, 0.05);
     let pts = chainRes.points;
@@ -2976,16 +3031,31 @@ function resolveCutContours(op, tool){
     if (pts.length < 2) continue;
     const off = op.offset || 'center';
     const adjust = Number.isFinite(op.adjust) ? op.adjust : 0;
+    
     if (closed && pts.length >= 3){
-      pts = simplifyPolygon(pts, 0.01);
+      pts = cleanPolygonWithClipper(pts);
+      pts = simplifyPolygon(pts, 0.05); 
       if (pts.length < 3) continue;
+      
       if (signedArea(pts) < 0) pts = pts.slice().reverse();
+      
       const toolRadius = tool.diam / 2;
       let delta = 0;
       if (off === 'inside') delta = -toolRadius;
       else if (off === 'outside') delta = +toolRadius;
       delta += adjust;
-      if (Math.abs(delta) > 1e-6) pts = smartOffsetPolygon(pts, delta);
+      
+      if (Math.abs(delta) > 1e-6) {
+        const clipperResult = offsetPointsWithClipper(pts, delta, true);
+        if (clipperResult && clipperResult.length >= 3) {
+          pts = clipperResult;
+        } else if (!clipperResult) {
+          pts = smartOffsetPolygon(pts, delta);
+        } else {
+          continue; 
+        }
+      }
+      
       if (tool.cutDir === 'cw') pts = pts.slice().reverse();
     } else if (!closed && pts.length >= 2 && Math.abs(adjust) > 1e-6){
       pts = offsetOpenPathSimple(pts, adjust);
