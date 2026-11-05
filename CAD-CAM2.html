@@ -2269,29 +2269,66 @@ function clipperOffsetAll(pts, delta){
   if (!pts || pts.length < 3) return null;
   const L = window.jsAngusjClipper;
   const S = CLIPPER_SCALE;
+  
+  // 1. Limpiar la entrada antes del offset para evitar micro-intersecciones
   const data = pts.map(p => ({ x: Math.round(p.x * S), y: Math.round(p.y * S) }));
-  let res;
+  let cleaned;
   try {
-    res = cncState.clipperInstance.offsetToPaths({
-      delta: Math.round(delta * S),
-      arcTolerance: 0.02 * S,
-      miterLimit: 2.0, // Límite seguro para evitar picos infinitos
-      offsetInputs: [{
-        joinType: L.JoinType.Miter, // ★ Miter exacto: la fresa sigue perfectamente los ángulos
-        endType:  L.EndType.ClosedPolygon,
-        data
-      }]
+    cleaned = cncState.clipperInstance.clipToPaths({
+      clipType: L.ClipType.Union,
+      subjectFillType: L.PolyFillType.EvenOdd,
+      subjectInputs: [{ data: data, closed: true }]
     });
-  } catch (e) {
-    console.error('[Clipper offsetAll] ERROR:', e);
-    return null;
+  } catch(e) {
+    console.warn('[Clipper clean] Error:', e);
+    cleaned = [data];
   }
-  if (!res) return null;
+
+  // 2. Aplicar Offset con MiterLimit alto para que las líneas se crucen y resuelvan la esquina
+  const offsetPaths = [];
+  for (const path of cleaned) {
+    if (!path || path.length < 3) continue;
+    const pathData = path.map(p => ({ x: p.x, y: p.y }));
+    try {
+      const res = cncState.clipperInstance.offsetToPaths({
+        delta: Math.round(delta * S),
+        arcTolerance: 0.02 * S,
+        miterLimit: 100.0, // ★ Muy alto: permite que las líneas se extiendan hasta su intersección real
+        offsetInputs: [{
+          joinType: L.JoinType.Miter,
+          endType:  L.EndType.ClosedPolygon,
+          data: pathData
+        }]
+      });
+      if (res) offsetPaths.push(...res);
+    } catch (e) {
+      console.error('[Clipper offset] Error:', e);
+    }
+  }
+
+  if (!offsetPaths.length) return null;
+
+  // 3. Unir todos los fragmentos resultantes para eliminar auto-intersecciones y bucles
+  let finalPaths;
+  try {
+    finalPaths = cncState.clipperInstance.clipToPaths({
+      clipType: L.ClipType.Union,
+      subjectFillType: L.PolyFillType.EvenOdd,
+      subjectInputs: offsetPaths.map(p => ({ data: p, closed: true }))
+    });
+  } catch(e) {
+    console.warn('[Clipper union] Error:', e);
+    finalPaths = offsetPaths; // Fallback a los fragmentos sin unir
+  }
+
+  if (!finalPaths) return null;
+
+  // 4. Devolver todos los bucles válidos (sin descartar ninguno)
   const out = [];
-  for (const path of res){
+  for (const path of finalPaths){
     if (!path || path.length < 3) continue;
     const a = signedArea(path) / (S * S);
-    if (Math.abs(a) < 0.01) continue; 
+    if (Math.abs(a) < 0.01) continue; // Descartar solo la basura infinitesimal
     out.push(path.map(p => ({ x: p.x / S, y: p.y / S })));
   }
   return out;
