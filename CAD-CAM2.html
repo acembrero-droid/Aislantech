@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CAD Pro + CNC · DXF → G-Code · v11.8</title>
+<title>CAD Pro + CNC · DXF → G-Code · v11.9</title>
 <style>
 :root { --bg-main:#1A1A1A; --bg-canvas:#16181A; --bg-ribbon:#232323;
     --bg-panel:#262626; --bg-button:#333333; --bg-hover:#3E3E3E;
@@ -368,7 +368,7 @@ body{background:var(--bg-main);color:var(--text-primary);font-family:var(--font-
       <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 15V9l4 6V9l4 6"/>
     </svg>
     CAD&nbsp;+&nbsp;CNC
-    <span class="version-badge" id="appVersion">v11.8</span>
+    <span class="version-badge" id="appVersion">v11.9</span>
   </span>
   <div class="separator"></div>
   <button id="qa-new" title="Nuevo (Ctrl+N)"><svg viewBox="0 0 24 24"><path d="M13 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V9z"/><path d="M13 3v6h6"/></svg></button>
@@ -632,7 +632,7 @@ window.dispatchEvent(new Event('clipper-ready'));
 </script>
 <script>
 /* ═══════════════════════════════════════════════════════════════════════
-   CAD Pro + CNC — v11.8
+   CAD Pro + CNC — v11.9
    Novedades:
      · Fix render/s2w
      · Measure con snap 15px + hover
@@ -647,7 +647,7 @@ project.selectedColor = new Color(0.31, 0.76, 0.97);
 
 const canvasContainer = document.getElementById('canvas-container');
 
-const APP_VERSION = '11.8';
+const APP_VERSION = '11.9';
 const VERSION_NOTES = 'Fix trayectorias CNC · Curvas suaves · MITER 2 · Tolerancia unión 0.05mm';
 
 const layers = {};
@@ -1522,7 +1522,7 @@ function parseDynamicInput(input, lastPoint){
 
 // ─── FIN PARTE 1 ───
 /* ═══════════════════════════════════════════════════════════════════════
-   EVENTOS DE ENTRADA DE COMANDOS Y TECLADO (Fix bloqueo OFFSET)
+   EVENTOS DE ENTRADA DE COMANDOS Y TECLADO
    ═══════════════════════════════════════════════════════════════════════ */
 const cmdInputElement = document.getElementById('cmd-input');
 cmdInputElement.addEventListener('keydown', e => {
@@ -2261,7 +2261,7 @@ function handleFilletClick(event){
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
-   PIPELINE DE OFFSET ROBUSTO (v11.8)
+   PIPELINE DE OFFSET ROBUSTO (v11.9) - CORREGIDO
    ═══════════════════════════════════════════════════════════════════════ */
 
 // 1. Limpieza profunda (Union con autoFix)
@@ -2271,7 +2271,8 @@ function cleanPolygonWithClipper(pts) {
   const clipper = cncState.clipperInstance;
   if (typeof clipper.clipToPaths !== 'function') return pts;
 
-  const intPath = pts.map(p => ({ X: Math.round(p.x * CLIPPER_SCALE), Y: Math.round(p.y * CLIPPER_SCALE) }));
+  // ★ CORRECCIÓN: Usar x, y en minúsculas
+  const intPath = pts.map(p => ({ x: Math.round(p.x * CLIPPER_SCALE), y: Math.round(p.y * CLIPPER_SCALE) }));
 
   try {
     const paths = clipper.clipToPaths({
@@ -2288,13 +2289,13 @@ function cleanPolygonWithClipper(pts) {
         let a = 0;
         for (let i = 0; i < path.length; i++){
           const p1 = path[i], p2 = path[(i+1) % path.length];
-          a += p1.X * p2.Y - p2.X * p1.Y;
+          a += p1.x * p2.y - p2.x * p1.y;
         }
         a = Math.abs(a / 2);
         if (a > bestArea){ bestArea = a; best = path; }
       }
       if (best) {
-         return best.map(p => ({ x: p.X / CLIPPER_SCALE, y: p.Y / CLIPPER_SCALE }));
+         return best.map(p => ({ x: p.x / CLIPPER_SCALE, y: p.y / CLIPPER_SCALE }));
       }
     }
   } catch(e) {
@@ -2303,25 +2304,26 @@ function cleanPolygonWithClipper(pts) {
   return pts;
 }
 
-// 2. Offset con MiterLimit óptimo (4.0)
+// 2. Offset con MiterLimit 2.0 y JoinType Miter (0)
 function offsetPointsWithClipper(pts, delta, isClosed = true){
   if (!cncState.clipperReady || !cncState.clipperInstance) return null;
   if (!pts || pts.length < 2) return null;
   const clipper = cncState.clipperInstance;
   if (typeof clipper.offsetToPaths !== 'function') return null;
   
-  const intPath = pts.map(p => ({ X: Math.round(p.x * CLIPPER_SCALE), Y: Math.round(p.y * CLIPPER_SCALE) }));
+  // ★ CORRECCIÓN: Usar x, y en minúsculas
+  const intPath = pts.map(p => ({ x: Math.round(p.x * CLIPPER_SCALE), y: Math.round(p.y * CLIPPER_SCALE) }));
   const deltaInt = Math.round(delta * CLIPPER_SCALE);
   
   try {
     const attempt = clipper.offsetToPaths({
       delta: deltaInt, 
-      miterLimit: 4.0,       // ★ Óptimo: Une en punta hasta 90° sin crear picos infinitos
+      miterLimit: 2.0,       // ★ Valor estándar: une en punta hasta 90° sin picos
       arcTolerance: 0.1 * CLIPPER_SCALE,
-      joinType: 2,           // 2 = Miter
+      joinType: 0,           // ★ 0 = Miter (unión en punta)
       endType: isClosed ? 0 : 1, 
       paths: [intPath],
-      autoFix: true          // ★ Limpia auto-intersecciones
+      autoFix: true
     });
     
     let paths = null;
@@ -2335,13 +2337,13 @@ function offsetPointsWithClipper(pts, delta, isClosed = true){
         let a = 0;
         for (let i = 0; i < path.length; i++){
           const p1 = path[i], p2 = path[(i+1) % path.length];
-          a += p1.X * p2.Y - p2.X * p1.Y;
+          a += p1.x * p2.y - p2.x * p1.y;
         }
         a = Math.abs(a / 2);
         if (a > bestArea){ bestArea = a; best = path; }
       }
       if (best){
-        let resultPts = best.map(p => ({ x: p.X / CLIPPER_SCALE, y: p.Y / CLIPPER_SCALE }));
+        let resultPts = best.map(p => ({ x: p.x / CLIPPER_SCALE, y: p.y / CLIPPER_SCALE }));
         return cleanPolygonWithClipper(resultPts);
       }
     }
@@ -2351,7 +2353,7 @@ function offsetPointsWithClipper(pts, delta, isClosed = true){
   return null;
 }
 
-// 3. Fallback Geométrico
+// 3. Fallback Geométrico (Mejorado)
 function offsetPointsProper(pts, delta){
   if (!pts || pts.length < 3) return [];
   if (Math.abs(delta) < 1e-6) return pts.slice();
@@ -2368,7 +2370,7 @@ function offsetPointsProper(pts, delta){
   if (Math.abs(area) < 1e-9) return clean.slice();
   const isCCW = area > 0;
   const sign = isCCW ? 1 : -1;
-  const MITER_LIMIT = 4.0; 
+  const MITER_LIMIT = 2.0; 
   const result = [];
   for (let i = 0; i < m; i++){
     const prev = clean[(i-1+m) % m];
@@ -2459,7 +2461,7 @@ function smartOffsetPolygon(pts, delta){
   return offsetPointsProper(pts, delta);
 }
 
-// 4. Comando CAD Offset (Manejo de subrutas y orientación)
+// 4. Comando CAD Offset
 function offsetPolyline(item, dist, clickPt){
   const isClosed = item.closed;
   let pts = [];
@@ -3092,7 +3094,8 @@ function resolveCutContours(op, tool){
 }
 
 // ─── FIN PARTE 2 ───
-    function rebuildAllContours(){
+    
+function rebuildAllContours(){
   cncState.cutContours = {};
   cncState.cutTabs = {};
   for (let i = 0; i < cncState.operations.length; i++){
