@@ -2263,7 +2263,6 @@ function handleFilletClick(event){
 /* ═══════════════════════════════════════════════════════════════════════
    PIPELINE DE OFFSET ROBUSTO (v12.3) - SOLUCIÓN DEFINITIVA
    ═══════════════════════════════════════════════════════════════════════ */
-
 function clipperOffsetAll(pts, delta){
   if (!cncState.clipperReady || !cncState.clipperInstance){
     console.warn('[offset] Clipper no está listo, se usará el fallback');
@@ -2279,9 +2278,10 @@ function clipperOffsetAll(pts, delta){
     res = cncState.clipperInstance.offsetToPaths({
       delta: Math.round(delta * S),
       arcTolerance: 0.02 * S,
-      miterLimit: 2.0, // ★ 2.0 mantiene las esquinas de 90° rectas sin crear picos infinitos
+      miterLimit: 10.0, // ★ 10.0: Une las esquinas de 45° en punta perfecta (sin chaflán)
+      autoFix: true,    // ★ Repara autointersecciones del offset
       offsetInputs: [{
-        joinType: L.JoinType.Miter, // ★ Miter en lugar de Round para esquinas rectas
+        joinType: L.JoinType.Miter, // ★ Miter para ángulos rectos
         endType:  L.EndType.ClosedPolygon,
         data
       }]
@@ -2292,12 +2292,28 @@ function clipperOffsetAll(pts, delta){
   }
   if (!res) return null;
 
-  const cand = res
+  // ★ PASO CRÍTICO: Unión con EvenOdd
+  // Esto elimina el lazo invertido del "hueso de perro". Al ser EvenOdd, la zona cruzada se resta,
+  // dejando una trayectoria recta limpia que omite la zona inalcanzable.
+  let cleanedRes;
+  try {
+    cleanedRes = cncState.clipperInstance.clipToPaths({
+      clipType: L.ClipType.Union,
+      subjectFillType: L.PolyFillType.EvenOdd, 
+      subjectInputs: res.map(p => ({ data: p, closed: true }))
+    });
+  } catch(e) {
+    console.warn('[offset] Fallo en la limpieza de lazos:', e);
+    cleanedRes = res;
+  }
+
+  if (!cleanedRes) return null;
+
+  const cand = cleanedRes
     .filter(p => p && p.length >= 3)
     .map(p => ({ path: p, a: signedArea(p) / (S * S) }));
   if (!cand.length) return [];
 
-  // Filtrar usando la orientación del bucle más grande
   const big = cand.reduce((m, c) => Math.abs(c.a) > Math.abs(m.a) ? c : m, cand[0]);
   const sign = Math.sign(big.a);
 
