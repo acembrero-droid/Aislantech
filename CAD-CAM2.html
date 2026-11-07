@@ -4085,10 +4085,17 @@ let snapMarker = null;
 let middleClickTimer = null;
 function onMouseDown(event){
   state.lastMousePoint = event.point;
+  
   if (cncState.mode !== 'off' && event.event.button === 0 && !event.event.altKey){
-    cncHandleClick(event);
+    // ★ Fix CNC: Iniciar cuadro de selección en lugar de clic directo
+    state.selecting = true;
+    state.selectStartPoint = event.point;
+    state.selectMode = 'window';
+    state.selectionRect = new Rectangle(event.point, event.point);
+    drawSelectionRect();
     return;
   }
+  
   if (state.pickingPrintWindow){
     state.printPickStart = event.point;
     state.printPickRect = new Rectangle(event.point, event.point);
@@ -4190,6 +4197,14 @@ function onMouseDrag(event){
   state.lastClientX = event.event.clientX;
   state.lastClientY = event.event.clientY;
   updateCoords(event.point);
+
+  if (state.selecting){
+    state.selectionRect = new Rectangle(state.selectStartPoint, event.point);
+    state.selectMode = (event.point.x > state.selectStartPoint.x) ? 'window' : 'crossing';
+    drawSelectionRect();
+    return;
+  }
+
   if (state.pickingPrintWindow){
     if (!state.printPickStart) return;
     state.printPickRect = new Rectangle(state.printPickStart, event.point);
@@ -4277,11 +4292,21 @@ function onMouseUp(event){
     if (cncState.mode !== 'off') cncRefreshOpsOverlay();
     return;
   }
+  
   if (state.selecting){
     state.selecting = false;
     if (state.selectionRect && state.selectStartPoint){
       const rect = state.selectionRect;
       const isShift = event.event.shiftKey;
+      const isDrag = (rect.width > 4 || rect.height > 4);
+
+      if (!isDrag && cncState.mode !== 'off') {
+        cncHandleClick(event);
+        selectionLayer.removeChildren();
+        state.selectionRect = null; state.selectStartPoint = null;
+        return;
+      }
+
       if (!state.pendingCommand && !isShift) clearSelection();
       const isWindow = state.selectMode === 'window';
       for (let internal in layers){
@@ -4297,8 +4322,16 @@ function onMouseUp(event){
       }
       selectionLayer.removeChildren();
       state.selectionRect = null; state.selectStartPoint = null;
-      if (state.pendingCommand) setPrompt(`${state.pendingCommand}: ${state.selectedItems.length} encontrado(s)`);
-      else setPrompt(`Seleccionados: ${state.selectedItems.length}`);
+
+      if (cncState.mode === 'cut' && state.selectedItems.length > 0) {
+        const count = state.selectedItems.length;
+        state.selectedItems.forEach(item => cncAddCutItem(item));
+        clearSelection();
+        setPrompt(`Añadidos ${count} ítems al corte`);
+      } else {
+        if (state.pendingCommand) setPrompt(`${state.pendingCommand}: ${state.selectedItems.length} encontrado(s)`);
+        else setPrompt(`Seleccionados: ${state.selectedItems.length}`);
+      }
       updateProperties(); renderGrips(); refreshSelectionHighlight();
     }
   }
@@ -5282,4 +5315,4 @@ initAll();
 
 </script>
 </body>
-</html>    
+</html>
