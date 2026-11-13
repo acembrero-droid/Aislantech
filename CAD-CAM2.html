@@ -2272,65 +2272,55 @@ function clipperOffsetAll(pts, delta){
   const L = window.jsAngusjClipper;
   const S = CLIPPER_SCALE;
   
-  // 1. Limpiar la entrada (Union con NonZero) para eliminar micro-auto-intersecciones del DXF
   const data = pts.map(p => ({ x: Math.round(p.x * S), y: Math.round(p.y * S) }));
-  let cleanedInput;
+  let res;
   try {
-    cleanedInput = cncState.clipperInstance.clipToPaths({
+    res = cncState.clipperInstance.offsetToPaths({
+      delta: Math.round(delta * S),
+      arcTolerance: 0.02 * S,
+      miterLimit: 10.0, // ★ Alto para que las esquinas rectas se unan en punta perfecta
+      offsetInputs: [{
+        joinType: L.JoinType.Miter, 
+        endType:  L.EndType.ClosedPolygon,
+        data
+      }]
+    });
+  } catch (e){
+    console.error('[offset] Clipper lanzó excepción:', e);
+    return null;
+  }
+  if (!res || res.length === 0) return [];
+
+  // ★ PASO CRÍTICO: Limpieza con relleno Positive
+  // Elimina los bucles de orientación invertida (la "V" de la ranura) sin borrar el resto.
+  let cleanedRes;
+  try {
+    cleanedRes = cncState.clipperInstance.clipToPaths({
       clipType: L.ClipType.Union,
-      subjectFillType: L.PolyFillType.NonZero,
-      subjectInputs: [{ data, closed: true }]
+      subjectFillType: L.PolyFillType.Positive, 
+      subjectInputs: res.map(p => ({ data: p, closed: true }))
     });
   } catch(e) {
-    console.warn('[offset] Fallo limpiando entrada:', e);
-    cleanedInput = [data];
+    console.warn('[offset] Fallo en limpieza Positive:', e);
+    cleanedRes = res;
   }
 
-  if (!cleanedInput || !cleanedInput.length) return null;
-
-  // 2. Offset con Miter y miterLimit 3.0 (esquinas rectas sin picos)
-  const offsetPaths = [];
-  for (const path of cleanedInput) {
-    if (!path || path.length < 3) continue;
+  // Si por alguna razón la limpieza Positive se queda vacía, intentamos con EvenOdd
+  if (!cleanedRes || cleanedRes.length === 0) {
     try {
-      const res = cncState.clipperInstance.offsetToPaths({
-        delta: Math.round(delta * S),
-        arcTolerance: 0.02 * S,
-        miterLimit: 3.0, // ★ 3.0: Estándar para esquinas rectas sin picos infinitos
-        offsetInputs: [{
-          joinType: L.JoinType.Miter, // ★ Miter para ángulos rectos perfectos
-          endType:  L.EndType.ClosedPolygon,
-          data: path
-        }]
+      cleanedRes = cncState.clipperInstance.clipToPaths({
+        clipType: L.ClipType.Union,
+        subjectFillType: L.PolyFillType.EvenOdd,
+        subjectInputs: res.map(p => ({ data: p, closed: true }))
       });
-      if (res) offsetPaths.push(...res);
-    } catch (e) {
-      console.error('[offset] Fallo en offset:', e);
-    }
+    } catch(e) {}
   }
 
-  if (!offsetPaths.length) return null;
+  if (!cleanedRes || cleanedRes.length === 0) return [];
 
-  // 3. Limpieza final (Union con NonZero) para eliminar el lazo invertido del hueso
-  let finalPaths;
-  try {
-    finalPaths = cncState.clipperInstance.clipToPaths({
-      clipType: L.ClipType.Union,
-      subjectFillType: L.PolyFillType.NonZero, // ★ NonZero: Elimina lazos invertidos, preserva el contorno
-      subjectInputs: offsetPaths.map(p => ({ data: p, closed: true }))
-    });
-  } catch(e) {
-    console.warn('[offset] Fallo en limpieza final:', e);
-    finalPaths = offsetPaths;
-  }
-
-  if (!finalPaths) return null;
-
-  // 4. Filtrar y normalizar
-  const cand = finalPaths
+  const cand = cleanedRes
     .filter(p => p && p.length >= 3)
     .map(p => ({ path: p, a: signedArea(p) / (S * S) }));
-  
   if (!cand.length) return [];
 
   const big = cand.reduce((m, c) => Math.abs(c.a) > Math.abs(m.a) ? c : m, cand[0]);
@@ -2346,7 +2336,6 @@ function clipperOffsetAll(pts, delta){
   }
   return out;
 }
-
 // 2. Wrapper para el CAD y CNC
 function offsetPointsWithClipper(pts, delta, isClosed = true){
   const all = clipperOffsetAll(pts, delta);
