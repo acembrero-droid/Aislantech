@@ -3014,8 +3014,19 @@ function pointInPoly(pt, poly){
 
 // 5. Resolución de contornos CNC
 function resolveCutContours(op, tool){
-  const items = (op.itemIds || []).map(id => findPaperItemById(id)).filter(Boolean);
-  if (!items.length) return [];
+  const rawItems = (op.itemIds || []).map(id => findPaperItemById(id)).filter(Boolean);
+  if (!rawItems.length) return [];
+  
+  // ★ FIX CRÍTICO: Descomponer CompoundPaths para evitar saltos entre trazos
+  let items = [];
+  for (const it of rawItems) {
+    if (it instanceof paper.CompoundPath) {
+      for (const child of it.children) items.push(child);
+    } else {
+      items.push(it);
+    }
+  }
+
   if (!Number.isFinite(op.adjust)) op.adjust = 0;
   if (!Number.isFinite(tool.diam)) tool.diam = 3.175;
 
