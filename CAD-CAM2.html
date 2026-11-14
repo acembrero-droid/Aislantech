@@ -2273,64 +2273,83 @@ function clipperOffsetAll(pts, delta){
   const S = CLIPPER_SCALE;
   
   const data = pts.map(p => ({ x: Math.round(p.x * S), y: Math.round(p.y * S) }));
-  let res;
+  
+  // 1. Limpiar la entrada con EvenOdd para eliminar autointersecciones causadas por JOIN
+  let cleanedInput;
   try {
-    res = cncState.clipperInstance.offsetToPaths({
-      delta: Math.round(delta * S),
-      arcTolerance: 0.02 * S,
-      miterLimit: 10.0, // ★ Alto para que las esquinas rectas se unan en punta perfecta
-      offsetInputs: [{
-        joinType: L.JoinType.Miter, 
-        endType:  L.EndType.ClosedPolygon,
-        data
-      }]
-    });
-  } catch (e){
-    console.error('[offset] Clipper lanzó excepción:', e);
-    return null;
-  }
-  if (!res || res.length === 0) return [];
-
-  // ★ PASO CRÍTICO: Limpieza con relleno Positive
-  // Elimina los bucles de orientación invertida (la "V" de la ranura) sin borrar el resto.
-  let cleanedRes;
-  try {
-    cleanedRes = cncState.clipperInstance.clipToPaths({
+    cleanedInput = cncState.clipperInstance.clipToPaths({
       clipType: L.ClipType.Union,
-      subjectFillType: L.PolyFillType.Positive, 
-      subjectInputs: res.map(p => ({ data: p, closed: true }))
+      subjectFillType: L.PolyFillType.EvenOdd, 
+      subjectInputs: [{ data, closed: true }]
     });
   } catch(e) {
-    console.warn('[offset] Fallo en limpieza Positive:', e);
-    cleanedRes = res;
+    console.warn('[offset] Fallo limpiando entrada:', e);
+    cleanedInput = [data];
   }
 
-  // Si por alguna razón la limpieza Positive se queda vacía, intentamos con EvenOdd
-  if (!cleanedRes || cleanedRes.length === 0) {
-    try {
-      cleanedRes = cncState.clipperInstance.clipToPaths({
-        clipType: L.ClipType.Union,
-        subjectFillType: L.PolyFillType.EvenOdd,
-        subjectInputs: res.map(p => ({ data: p, closed: true }))
-      });
-    } catch(e) {}
-  }
+  if (!cleanedInput || cleanedInput.length === 0) return [];
 
-  if (!cleanedRes || cleanedRes.length === 0) return [];
-
-  const cand = cleanedRes
-    .filter(p => p && p.length >= 3)
-    .map(p => ({ path: p, a: signedArea(p) / (S * S) }));
-  if (!cand.length) return [];
-
-  const big = cand.reduce((m, c) => Math.abs(c.a) > Math.abs(m.a) ? c : m, cand[0]);
+  // 2. Analizar áreas para distinguir contornos exteriores de huecos
+  const cands = cleanedInput.filter(p => p && p.length >= 3).map(p => ({ path: p, a: signedArea(p) / (S*S) }));
+  if (!cands.length) return [];
+  
+  // El área más grande define la orientación del "exterior"
+  const big = cands.reduce((m, c) => Math.abs(c.a) > Math.abs(m.a) ? c : m, cands[0]);
   const sign = Math.sign(big.a);
 
+  const offsetPaths = [];
+
+  // 3. Offset individual de cada contorno (invertir offset si es un hueco)
+  for (const c of cands) {
+    let currentDelta = delta;
+    // Si es un hueco (orientación opuesta al contorno exterior), invertimos el offset
+    if (Math.sign(c.a) !== sign) {
+      currentDelta = -delta;
+    }
+
+    try {
+      const res = cncState.clipperInstance.offsetToPaths({
+        delta: Math.round(currentDelta * S),
+        arcTolerance: 0.02 * S,
+        miterLimit: 10.0, // Esquinas rectas perfectas
+        offsetInputs: [{
+          joinType: L.JoinType.Miter, 
+          endType:  L.EndType.ClosedPolygon,
+          data: c.path
+        }]
+      });
+      if (res) offsetPaths.push(...res);
+    } catch (e) {
+      console.error('[offset] Clipper lanzó excepción:', e);
+    }
+  }
+
+  if (!offsetPaths.length) return [];
+
+  // 4. Unión final con EvenOdd
+  // Al usar EvenOdd, los lazos invertidos (colas de golondrina) se restan, 
+  // dejando un trazo limpio y manteniendo los huecos intactos.
+  let finalPaths;
+  try {
+    finalPaths = cncState.clipperInstance.clipToPaths({
+      clipType: L.ClipType.Union,
+      subjectFillType: L.PolyFillType.EvenOdd, 
+      subjectInputs: offsetPaths.map(p => ({ data: p, closed: true }))
+    });
+  } catch(e) {
+    console.warn('[offset] Fallo en limpieza final:', e);
+    finalPaths = offsetPaths;
+  }
+
+  if (!finalPaths) return null;
+
+  // 5. Extraer los bucles válidos
   const out = [];
-  for (const c of cand){
-    if (Math.sign(c.a) !== sign) continue; 
-    if (Math.abs(c.a) < 0.01) continue; 
-    let loop = c.path.map(p => ({ x: p.x / S, y: p.y / S }));
+  for (const path of finalPaths){
+    if (!path || path.length < 3) continue;
+    const a = signedArea(path) / (S * S);
+    if (Math.abs(a) < 0.01) continue; 
+    let loop = path.map(p => ({ x: p.x / S, y: p.y / S }));
     if (signedArea(loop) < 0) loop.reverse(); 
     out.push(loop);
   }
