@@ -3,7 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CAD Pro + CNC · DXF → G-Code · v12</title>
+<title>CAD Pro + CNC · DXF → G-Code · v12.5</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 :root { --bg-main:#1A1A1A; --bg-canvas:#16181A; --bg-ribbon:#232323;
     --bg-panel:#262626; --bg-button:#333333; --bg-hover:#3E3E3E;
@@ -346,6 +349,156 @@ body{background:var(--bg-main);color:var(--text-primary);font-family:var(--font-
   border:1px solid var(--accent-blue);box-shadow:0 2px 8px rgba(0,0,0,.5);display:none;z-index:1000}
 @keyframes fadeIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
 @keyframes slideIn{from{opacity:0;transform:translateX(-10px)}to{opacity:1;transform:translateX(0)}}
+/* ═══════════════════════════════════════════════════════════════════════
+   TEMA MODERNO v12.5 — solo capa visual (no cambia IDs, clases ni lógica)
+   ═══════════════════════════════════════════════════════════════════════ */
+:root{
+  --bg-main:#0F1115; --bg-canvas:#12141A; --bg-ribbon:#15181E;
+  --bg-panel:#181B22; --bg-button:#22262F; --bg-hover:#2A2F3A;
+  --bg-pressed:#2D7FF9; --bg-selection:#2D6FD6;
+  --text-primary:#E6E8EC; --text-secondary:#9AA1AD; --text-dim:#6B7280;
+  --border-color:rgba(255,255,255,.07); --border-light:rgba(255,255,255,.11);
+  --accent-blue:#5CC8FF; --accent-amber:#F5A524; --accent-green:#3DD68C;
+  --accent-pink:#FF6BD6; --accent-red:#FF6B6B;
+  --surface-1:#1C2028; --surface-2:#13161C; --ring:0 0 0 3px rgba(92,200,255,.22);
+  --radius-s:6px; --radius-m:10px; --radius-l:14px;
+  --shadow:0 10px 30px -8px rgba(0,0,0,.6),0 2px 6px rgba(0,0,0,.35);
+  --font-ui:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;
+  --font-mono:'JetBrains Mono','Cascadia Mono','SF Mono',Consolas,monospace;
+}
+body{font-feature-settings:'cv11','ss01';-webkit-font-smoothing:antialiased;letter-spacing:.005em}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,.10);border-radius:10px;border:3px solid transparent;background-clip:padding-box}
+::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.2);background-clip:padding-box}
+button,input,select{font-family:inherit}
+input[type="number"]{font-variant-numeric:tabular-nums}
+
+/* Barra superior */
+#quick-access{background:var(--bg-ribbon);border-bottom:1px solid var(--border-color);height:34px;padding:0 12px;gap:4px}
+#quick-access .brand{color:var(--text-primary);font-size:13px;font-weight:700;letter-spacing:.2px;gap:8px}
+#quick-access .brand svg{width:20px;height:20px;padding:3px;border-radius:6px;color:#0b1a24;
+  background:linear-gradient(135deg,var(--accent-blue),#7C8CFF);stroke:#0b1a24}
+.brand .version-badge{background:rgba(245,165,36,.14);color:var(--accent-amber);border:1px solid rgba(245,165,36,.35);
+  border-radius:999px;padding:1px 7px;font-size:9.5px}
+#quick-access button{width:30px;height:28px;border-radius:8px;color:var(--text-secondary)}
+#quick-access button:hover{background:var(--bg-hover);color:var(--text-primary);border-color:transparent;box-shadow:none;transform:none}
+#quick-access button:active{background:var(--bg-pressed);color:#fff;transform:scale(.96)}
+#quick-access .separator{background:var(--border-light);height:16px;margin:0 6px}
+
+/* Ribbon */
+#ribbon{background:var(--bg-ribbon);padding:0 10px;border-bottom:1px solid var(--border-color)}
+#ribbon-tabs{height:auto;padding:4px 0;gap:4px;align-items:center}
+#ribbon-tabs button{border-radius:999px;padding:4px 14px;font-size:11.5px;font-weight:600;text-transform:none;letter-spacing:.1px;color:var(--text-secondary)}
+#ribbon-tabs button:hover{background:var(--bg-hover);color:var(--text-primary);transform:none}
+#ribbon-tabs button.active{background:rgba(92,200,255,.14);color:var(--accent-blue);box-shadow:inset 0 0 0 1px rgba(92,200,255,.35)}
+#ribbon-tabs button[data-tab="cnc"].active{background:rgba(245,165,36,.14);color:var(--accent-amber);box-shadow:inset 0 0 0 1px rgba(245,165,36,.4)}
+#ribbon-content{background:transparent;border-top:none;padding:0 0 6px;gap:6px 6px}
+.ribbon-group{background:var(--surface-2);border:1px solid var(--border-color);border-radius:var(--radius-m);padding:3px 6px 2px}
+.ribbon-group:last-child{border-right:1px solid var(--border-color)}
+.ribbon-group label{font-size:9.5px;letter-spacing:.5px;color:var(--text-dim);font-weight:600}
+.ribbon-btn{border-radius:8px;font-size:10px;font-weight:500;color:var(--text-secondary);padding:5px 9px}
+.ribbon-btn svg{stroke-width:1.6}
+.ribbon-btn:hover{background:var(--bg-hover);border-color:transparent;color:var(--text-primary);box-shadow:none;transform:none}
+.ribbon-btn:hover svg{transform:none}
+.ribbon-btn:active{transform:scale(.97)}
+.ribbon-btn.active{background:rgba(92,200,255,.16);border-color:rgba(92,200,255,.45);color:var(--accent-blue);box-shadow:none}
+.ribbon-btn.active svg{stroke:currentColor}
+.ribbon-btn.measure-btn.active{background:rgba(255,217,61,.16);border-color:rgba(255,217,61,.5);color:var(--accent-measure);box-shadow:none}
+.ribbon-btn.measure-btn.active svg{stroke:currentColor}
+.ribbon-btn.cnc-action{color:var(--accent-amber)}
+.ribbon-btn.cnc-action:hover{background:rgba(245,165,36,.12);border-color:transparent;box-shadow:none;color:var(--accent-amber)}
+.ribbon-btn.cnc-action.active{background:rgba(245,165,36,.16);border-color:rgba(245,165,36,.5);color:var(--accent-amber);box-shadow:none}
+.ribbon-btn.cnc-mode[data-cnc-mode="drill"].active{background:rgba(255,107,107,.16);border-color:rgba(255,107,107,.55);color:#FF8A8A}
+.ribbon-btn.cnc-mode[data-cnc-mode="cut"].active{background:rgba(255,179,71,.16);border-color:rgba(255,179,71,.55);color:#FFB347}
+.ribbon-btn.cnc-mode[data-cnc-mode="pocket"].active{background:rgba(61,214,140,.16);border-color:rgba(61,214,140,.55);color:var(--accent-green)}
+.ribbon-btn .tooltip{background:#0B0D11;border-color:var(--border-light);border-radius:6px;padding:4px 8px}
+.ribbon-flyout-menu,.layer-combo-menu,#context-menu{background:var(--surface-1);border:1px solid var(--border-light);border-radius:var(--radius-m);box-shadow:var(--shadow);padding:5px}
+.ribbon-flyout-menu button{border-radius:6px}
+.ribbon-flyout-menu button:hover{background:var(--bg-hover);color:var(--text-primary);transform:none}
+#context-menu .cm-item{border-radius:6px}
+
+/* Panel de capas */
+#layer-panel{background:var(--bg-panel);padding:12px 10px}
+#layer-panel h3{border-bottom:none;color:var(--text-secondary);font-size:10.5px;letter-spacing:.6px}
+#layer-panel h3 button{width:22px;height:22px;border-radius:6px;padding:0;line-height:1}
+#layer-panel h3 button:hover{background:var(--bg-hover)}
+#layer-list li{border-radius:8px;padding:6px 8px;margin-bottom:2px}
+#layer-list li.active{background:rgba(92,200,255,.14);color:var(--text-primary);box-shadow:inset 0 0 0 1px rgba(92,200,255,.3)}
+#layer-list li .color-swatch{border-radius:4px}
+
+/* Paneles laterales */
+#properties-panel{background:var(--bg-panel);padding:12px 14px}
+#properties-panel h3{border-bottom:1px solid var(--border-color);color:var(--text-secondary)}
+.prop-value select,.prop-value input{background:var(--surface-2);border:1px solid var(--border-light);border-radius:var(--radius-s);padding:4px 7px}
+.prop-value select:focus,.prop-value input:focus{outline:none;border-color:rgba(92,200,255,.6);box-shadow:var(--ring)}
+#cnc-panel{background:var(--bg-panel);padding:10px;gap:10px}
+#cnc-panel h3{font-size:11px;font-weight:600;letter-spacing:.2px;text-transform:none;color:var(--text-primary);margin-bottom:10px;gap:8px;justify-content:flex-start}
+#cnc-panel h3 .mini{margin-left:auto;font-size:10px;padding:1px 8px;border-radius:999px;background:rgba(255,255,255,.06);color:var(--text-secondary);font-family:var(--font-mono)}
+#cnc-panel h3 .h-ico{width:15px;height:15px;flex-shrink:0;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;color:var(--text-secondary)}
+.cnc-section{background:var(--surface-1);border:1px solid var(--border-color);border-radius:var(--radius-l);padding:12px;box-shadow:0 1px 0 rgba(255,255,255,.03) inset}
+.cnc-section.cnc-sim-panel{background:var(--surface-1);border-color:rgba(92,200,255,.16)}
+.cnc-section.cnc-tabs-panel{background:var(--surface-1);border-color:rgba(255,107,214,.18)}
+.cnc-section.cnc-tabs-panel h3,.cnc-section.cnc-tabs-panel h3 .h-ico{color:var(--accent-pink)}
+.cnc-section.cnc-tabs-panel.active-tabs{background:linear-gradient(180deg,rgba(255,107,214,.07),rgba(255,107,214,0) 60%),var(--surface-1);border-color:rgba(255,107,214,.45);box-shadow:0 0 0 1px rgba(255,107,214,.12)}
+.cnc-section.cnc-tabs-panel.active-tabs h3{color:#FF8FE0}
+.cnc-btn{border-radius:8px;padding:7px 10px;margin-top:8px;background:var(--bg-button);border:1px solid var(--border-light);font-weight:600;font-size:11.5px}
+.cnc-btn:hover{background:var(--bg-hover);border-color:rgba(92,200,255,.45);color:var(--text-primary)}
+.cnc-btn.accent{background:var(--accent-amber);border-color:var(--accent-amber);color:#231500}
+.cnc-btn.accent:hover{filter:brightness(1.06);transform:none;color:#231500}
+.cnc-tool-list{gap:4px}
+.cnc-tool-item{background:var(--surface-2);border:1px solid var(--border-color);border-radius:var(--radius-m);padding:7px 9px}
+.cnc-tool-item:hover{background:var(--bg-hover)}
+.cnc-tool-item.active{border-color:rgba(92,200,255,.55);background:rgba(92,200,255,.08);box-shadow:var(--ring)}
+.cnc-tool-item .tnum{background:var(--accent-blue);color:#06202e;border-radius:6px;padding:2px 6px;font-family:var(--font-mono)}
+.cnc-tool-editor{gap:5px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border-color)}
+.cnc-row{font-size:11.5px;min-height:26px}
+.cnc-row label{color:var(--text-secondary);font-size:11px}
+.cnc-row input,.cnc-row select{background:var(--surface-2);border:1px solid var(--border-light);border-radius:var(--radius-s);padding:4px 8px;height:26px;font-size:11.5px;transition:border-color .15s,box-shadow .15s}
+.cnc-row input:hover,.cnc-row select:hover{border-color:rgba(255,255,255,.18)}
+.cnc-row input:focus,.cnc-row select:focus{border-color:rgba(92,200,255,.6);box-shadow:var(--ring);color:#fff}
+.cnc-op-list{gap:4px}
+.cnc-op-item{background:var(--surface-2);border:1px solid var(--border-color);border-radius:var(--radius-m);padding:6px 7px;gap:4px}
+.cnc-op-badge{border-radius:999px;padding:2px 7px;letter-spacing:.3px}
+.cnc-op-item select,.cnc-op-item input{background:var(--bg-panel);border:1px solid var(--border-light);border-radius:5px;height:22px}
+.cnc-op-item select:focus,.cnc-op-item input:focus{outline:none;border-color:rgba(92,200,255,.6)}
+.cnc-op-item .op-del{border-radius:5px;padding:1px 6px}
+.cnc-hint{font-style:normal;color:var(--text-dim);font-size:10.5px;line-height:1.45;margin-top:6px}
+.cnc-tabs-toggle-row{border-radius:var(--radius-m);padding:8px 10px}
+.cnc-tabs-toggle-row .toggle-state{border-radius:999px}
+.cnc-tabs-info{border-radius:8px}
+.cnc-sim-btn{border-radius:8px;padding:8px}
+.cnc-sim-btn.play{background:rgba(61,214,140,.14);border-color:rgba(61,214,140,.45);color:#8FF0C0}
+.cnc-sim-btn.playing{background:rgba(255,107,107,.14);border-color:rgba(255,107,107,.45);color:#FFB0B0}
+.cnc-sim-slider::-webkit-slider-runnable-track{height:5px;background:var(--surface-2);border-radius:999px;border:1px solid var(--border-light)}
+.cnc-sim-slider::-webkit-slider-thumb{background:var(--accent-green);border:2px solid var(--surface-1);box-shadow:0 0 0 3px rgba(61,214,140,.25)}
+.cnc-legend{border-top-color:var(--border-color)}
+.cnc-gcode{background:#0A0C10;border-radius:var(--radius-m);border:1px solid var(--border-color);padding:8px 4px;font-size:10px;line-height:1.45}
+.cnc-gline{border-radius:3px}
+
+/* Modal */
+#app-modal-overlay{background:rgba(5,7,10,.6);backdrop-filter:blur(4px)}
+#app-modal-box{background:var(--surface-1);border:1px solid var(--border-light);border-radius:var(--radius-l);padding:20px 22px}
+#app-modal-actions button{border-radius:8px}
+#app-modal-actions button.primary{background:var(--accent-blue);border-color:var(--accent-blue);color:#06202e}
+
+/* Línea de comandos y barra de estado */
+#command-line{background:var(--surface-2);height:28px;border-top:1px solid var(--border-color)}
+#cmd-prompt{color:var(--accent-blue)}
+#cmd-history-panel{background:#0B0D11;border-top:1px solid var(--border-light)}
+#cmd-history-panel .cmh-head{background:var(--bg-ribbon)}
+#status-bar{background:var(--bg-ribbon);height:30px;padding:0 10px;border-top:1px solid var(--border-color)}
+#status-bar .coords{background:var(--surface-2);border:1px solid var(--border-light);border-radius:8px;font-size:11.5px}
+#status-bar .status-group{gap:4px}
+#status-bar .status-group button{border-radius:999px;padding:3px 10px;font-weight:500}
+#status-bar .status-group button:hover{background:var(--bg-hover)}
+#status-bar .status-group button.active{background:rgba(92,200,255,.14);border-color:rgba(92,200,255,.4);color:var(--accent-blue);box-shadow:none}
+#cmd-history-toggle{border-radius:999px}
+
+/* Flotantes del lienzo */
+#navigator{background:rgba(21,24,30,.85);backdrop-filter:blur(6px);border:1px solid var(--border-light);border-radius:var(--radius-m)}
+.measure-info{border-radius:var(--radius-m)}
+#dynamic-tooltip{background:rgba(15,17,21,.92);border-radius:8px;border-color:rgba(92,200,255,.6);backdrop-filter:blur(4px)}
 @media (max-width:1400px){ #cnc-panel{width:300px} #properties-panel{width:240px} }
 @media (max-width:1024px){
   #layer-panel{width:160px} #properties-panel{width:200px} #cnc-panel{width:260px}
@@ -368,7 +521,7 @@ body{background:var(--bg-main);color:var(--text-primary);font-family:var(--font-
       <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 15V9l4 6V9l4 6"/>
     </svg>
     CAD&nbsp;+&nbsp;CNC
-    <span class="version-badge" id="appVersion">v12.4</span>
+    <span class="version-badge" id="appVersion">v12.5</span>
   </span>
   <div class="separator"></div>
   <button id="qa-new" title="Nuevo (Ctrl+N)"><svg viewBox="0 0 24 24"><path d="M13 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V9z"/><path d="M13 3v6h6"/></svg></button>
@@ -498,7 +651,7 @@ body{background:var(--bg-main);color:var(--text-primary);font-family:var(--font-
 
   <div id="cnc-panel">
     <div class="cnc-section">
-      <h3>🔧 Herramientas <span class="mini" id="cnc-tool-count">0</span></h3>
+      <h3><svg class="h-ico" viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.2L3 17.8V21h3.2l6.3-6.3a4 4 0 0 0 5.2-5.4l-2.6 2.6-2.5-.6-.6-2.5z"/></svg>Herramientas <span class="mini" id="cnc-tool-count">0</span></h3>
       <div class="cnc-tool-list" id="cnc-tool-list">
         <div class="cnc-empty-hint">Sin herramientas.</div>
       </div>
@@ -520,15 +673,17 @@ body{background:var(--bg-main);color:var(--text-primary);font-family:var(--font-
       </div>
     </div>
     <div class="cnc-section">
-      <h3>📋 Operaciones <span class="mini" id="cnc-op-count">0</span></h3>
+      <h3><svg class="h-ico" viewBox="0 0 24 24"><path d="M9 5h10M9 12h10M9 19h10"/><circle cx="4.5" cy="5" r="1"/><circle cx="4.5" cy="12" r="1"/><circle cx="4.5" cy="19" r="1"/></svg>Operaciones <span class="mini" id="cnc-op-count">0</span></h3>
       <div class="cnc-op-list" id="cnc-op-list">
         <div class="cnc-empty-hint">Sin operaciones</div>
       </div>
       <div class="cnc-hint">Naranja = <b>profundidad</b> mm · Azul = <b>ajuste fino</b></div>
+      <div class="cnc-row" title="Material que dejan las pasadas de desbaste en cortes Interior/Exterior con más de una pasada. La última pasada va a cota de dibujo. 0 = desactivado."><label>Sobreespesor desbaste</label><input type="number" id="cnc-finishAllowance" step="0.05" min="0" max="5"></div>
+      <div class="cnc-hint">Las pasadas previas se separan este valor de la pieza; la última ajusta al dibujo. Solo cortes I / E.</div>
       <button class="cnc-btn" id="cnc-undo-op">↩ Deshacer última</button>
     </div>
     <div class="cnc-section cnc-tabs-panel" id="cnc-tabs-section">
-      <h3>🔗 Patillas <span class="mini" id="cnc-tabs-badge">0</span></h3>
+      <h3><svg class="h-ico" viewBox="0 0 24 24"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg>Patillas <span class="mini" id="cnc-tabs-badge">0</span></h3>
       <label class="cnc-tabs-toggle-row" id="cnc-tabs-toggle-row">
         <input type="checkbox" id="cnc-tabsEnabled">
         <span class="toggle-label">Pestañas de sujeción</span>
@@ -541,13 +696,13 @@ body{background:var(--bg-main);color:var(--text-primary);font-family:var(--font-
       <div class="cnc-tabs-info" id="cnc-tabs-info">Sin operaciones de corte</div>
     </div>
     <div class="cnc-section">
-      <h3>⚙ Máquina</h3>
+      <h3><svg class="h-ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M2 12h3M19 12h3M4.9 19.1 7 17M17 7l2.1-2.1"/></svg>Máquina</h3>
       <div class="cnc-row"><label>Pausa mandrino</label><input type="number" id="cnc-spindlePause" step="0.5" min="0" max="120"></div>
       <div class="cnc-row"><label>Rapid XY</label><input type="number" id="cnc-rapidXY" step="100" min="100"></div>
       <div class="cnc-row"><label>Rapid Z</label><input type="number" id="cnc-rapidZ" step="100" min="100"></div>
     </div>
     <div class="cnc-section cnc-sim-panel">
-      <h3>🎬 Simulación</h3>
+      <h3><svg class="h-ico" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m10 9 5 3-5 3z"/></svg>Simulación</h3>
       <div class="cnc-sim-btn-row">
         <button class="cnc-sim-btn play" id="cnc-play-btn">▶ PLAY</button>
         <button class="cnc-sim-btn" id="cnc-reset-btn" style="flex:0 0 auto;">⏮</button>
@@ -566,7 +721,7 @@ body{background:var(--bg-main);color:var(--text-primary);font-family:var(--font-
       </div>
     </div>
     <div class="cnc-section">
-      <h3>📄 Código G</h3>
+      <h3><svg class="h-ico" viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13l-2 2 2 2M15 13l2 2-2 2"/></svg>Código G</h3>
       <button class="cnc-btn accent" id="cnc-generate-btn">⚙ Generar / Actualizar</button>
       <div class="cnc-gcode" id="cnc-gcode">
         <div class="cnc-empty-hint">(Sin generar)</div>
@@ -632,7 +787,8 @@ window.dispatchEvent(new Event('clipper-ready'));
 </script>
 <script>
 /* ═══════════════════════════════════════════════════════════════════════
-   CAD Pro + CNC — v12.4
+   CAD Pro + CNC — v12.5
+   v12.5: sobreespesor de desbaste (pasadas previas a +N mm, última a cota) · tema moderno · fix pasadas en contornos abiertos
    Novedades:
      · Fix render/s2w
      · Measure con snap 15px + hover
@@ -647,8 +803,8 @@ project.selectedColor = new Color(0.31, 0.76, 0.97);
 
 const canvasContainer = document.getElementById('canvas-container');
 
-const APP_VERSION = '12.4';
-const VERSION_NOTES = 'Fix trayectorias CNC · Curvas suaves · MITER 2 · Tolerancia unión 0.05mm';
+const APP_VERSION = '12.5';
+const VERSION_NOTES = 'Sobreespesor de desbaste en cortes I/E (última pasada a cota) · Interfaz renovada';
 
 const layers = {};
 function safeName(orig){ let n = orig.replace(/[^a-zA-Z0-9_\-]/g,'_'); if (/^\d/.test(n)) n='L_'+n; return n; }
@@ -875,6 +1031,7 @@ const cncState = {
   rapidXY: 5000,
   rapidZ: 3000,
   tabs: { enabled:false, count:3, width:1.0, height:1.0, seed:12345 },
+  finishAllowance: 0.2,   // mm que se dejan en las pasadas de desbaste (la última va a cota)
   simMoves: [], simMoveTimes: [], simTotalTime: 0, simT: 0,
   simPlaying: false, simSpeedMult: 1, simAnimId: null, simLastFrame: 0,
   gcodeLines: [], gcodeBlock: [], blockPoints: {}, blockZ: {},
@@ -3060,6 +3217,8 @@ function resolveCutContours(op, tool){
   const results = [];
   const toolR = tool.diam / 2;
   const off = op.offset || 'center';
+  const allowance = cncFinishAllowance();
+  const useAllowance = allowance > 0 && cncPassCount(op, tool) > 1;
 
   raw.forEach((r, idx) => {
     let pts = r.points;
@@ -3076,23 +3235,112 @@ function resolveCutContours(op, tool){
       if (isHole) delta = -delta;
       delta += (isHole ? -op.adjust : op.adjust);
 
-      let loops = [pts];
-      if (Math.abs(delta) > 1e-6){
-        const res = clipperOffsetAll(pts, delta);
-        if (res) loops = res;
-        else { const f = smartOffsetPolygon(pts, delta); loops = (f && f.length >= 3) ? [f] : []; }
-      }
+      const loopsFor = (d) => {
+        if (Math.abs(d) <= 1e-6) return [pts];
+        const res = clipperOffsetAll(pts, d);
+        if (res) return res;
+        const f = smartOffsetPolygon(pts, d);
+        return (f && f.length >= 3) ? [f] : [];
+      };
+      const loops = loopsFor(delta);
+      const finals = [];
       for (let l of loops){
         if (l.length < 3) continue;
         if (tool.cutDir === 'cw') l = l.slice().reverse();
-        results.push({ points: rotatePointsToStart(l, 0, 0), closed: true });
+        finals.push(rotatePointsToStart(l, 0, 0));
       }
+
+      // ★ Sobreespesor de desbaste: las pasadas previas a la última se alejan
+      //   `allowance` mm de la pieza (en el mismo sentido que la compensación
+      //   de herramienta); la última pasada va a cota de dibujo.
+      //   Solo aplica con offset Interior/Exterior (en Centro no hay "lado pieza").
+      let compSign = 0;
+      if (off === 'outside') compSign = isHole ? -1 : 1;
+      if (off === 'inside')  compSign = isHole ? 1 : -1;
+      let roughs = null;
+      if (useAllowance && compSign !== 0 && finals.length){
+        const roughLoops = loopsFor(delta + compSign * allowance).filter(l => l && l.length >= 3);
+        roughs = cncPairRoughLoops(finals, roughLoops, allowance, toolR);
+      }
+      finals.forEach((l, k) => {
+        const rough = roughs ? roughs[k] : null;
+        results.push({ points: l, closed: true, rough, roughFailed: !!(useAllowance && compSign !== 0 && !rough) });
+      });
     } else {
       if (Math.abs(op.adjust) > 1e-6) pts = offsetOpenPathSimple(pts, op.adjust);
       results.push({ points: pts, closed: false });
     }
   });
   return results;
+}
+
+/* ── Sobreespesor de desbaste: utilidades ─────────────────────────────── */
+function cncFinishAllowance(){
+  const a = cncState.finishAllowance;
+  return (typeof a === 'number' && isFinite(a) && a > 0) ? a : 0;
+}
+// Misma fórmula de nº de pasadas que buildCNCProgram()
+function cncPassCount(op, tool){
+  const d = Math.max(0, (typeof op.depth === 'number') ? op.depth : tool.depth);
+  if (d <= 0 || !(tool.step > 0)) return 0;
+  return Math.max(1, Math.min(500, Math.ceil(d / tool.step)));
+}
+function cncClosestOnLoop(loop, p){
+  let best = { d: Infinity, i: 0, x: loop[0].x, y: loop[0].y };
+  const n = loop.length;
+  for (let i = 0; i < n; i++){
+    const a = loop[i], b = loop[(i + 1) % n];
+    const dx = b.x - a.x, dy = b.y - a.y;
+    const L2 = dx*dx + dy*dy;
+    let t = L2 > 0 ? ((p.x - a.x)*dx + (p.y - a.y)*dy) / L2 : 0;
+    t = Math.max(0, Math.min(1, t));
+    const x = a.x + t*dx, y = a.y + t*dy;
+    const d = Math.hypot(p.x - x, p.y - y);
+    if (d < best.d) best = { d, i, x, y };
+  }
+  return best;
+}
+// Distancia máxima de los vértices del contorno final al de desbaste (muestreada).
+// Si es grande, el desbaste no "cubre" alguna zona (ranura estrecha, detalle que
+// desaparece al desplazar) y esa zona se cortaría a profundidad total de golpe.
+function cncMaxDeviation(finalLoop, roughLoop){
+  const stride = Math.max(1, Math.floor(finalLoop.length / 400));
+  let maxD = 0;
+  for (let i = 0; i < finalLoop.length; i += stride){
+    const d = cncClosestOnLoop(roughLoop, finalLoop[i]).d;
+    if (d > maxD) maxD = d;
+  }
+  return maxD;
+}
+// Empareja cada contorno final con su contorno de desbaste. Devuelve un array
+// (mismo orden que finals) con el contorno de desbaste orientado igual y que
+// arranca en el punto más cercano al inicio del final, o null si no es seguro.
+// Tolerancia: en esquinas vivas la distancia final→desbaste crece (a/sen(θ/2));
+// se acepta hasta medio radio de herramienta (o 2·a si es mayor).
+function cncPairRoughLoops(finals, roughLoops, allowance, toolR){
+  const tol = Math.max(allowance * 2 + 0.02, 0.5 * (toolR || 0));
+  const used = new Set();
+  return finals.map(fl => {
+    let bestJ = -1, bestDev = Infinity;
+    roughLoops.forEach((rl, j) => {
+      if (used.has(j)) return;
+      const dev = cncMaxDeviation(fl, rl);
+      if (dev < bestDev){ bestDev = dev; bestJ = j; }
+    });
+    if (bestJ < 0 || bestDev > tol) return null;
+    used.add(bestJ);
+    let rl = roughLoops[bestJ];
+    if (Math.sign(signedArea(rl)) !== Math.sign(signedArea(fl))) rl = rl.slice().reverse();
+    const q = cncClosestOnLoop(rl, fl[0]);
+    const n = rl.length;
+    const out = [{ x: q.x, y: q.y }];
+    for (let k = 1; k <= n; k++){
+      const p = rl[(q.i + k) % n];
+      if (Math.hypot(p.x - out[out.length-1].x, p.y - out[out.length-1].y) > 1e-6) out.push({ x: p.x, y: p.y });
+    }
+    if (out.length > 1 && Math.hypot(out[out.length-1].x - q.x, out[out.length-1].y - q.y) <= 1e-6) out.pop();
+    return out.length >= 3 ? out : null;
+  });
 }
 
 // ─── FIN PARTE 2 ───
@@ -3372,20 +3620,40 @@ function buildCNCProgram(){
           const ptsEff = c.points;
           if (ptsEff.length < 2) continue;
           const isClosed = c.closed;
-          const f = ptsEff[0];
           let tabsEff = [];
           if (cncState.tabs.enabled && isClosed){
             const seed = cncState.tabs.seed + originalIndex*137 + ci*9973;
             tabsEff = computeTabSegments(ptsEff, true, cncState.tabs.count, cncState.tabs.width, seed, tool.diam);
           }
           const shape = isClosed ? 'cerrado' : 'abierto';
-          emit(`(Contorno ${ci+1}/${contoursArr.length}: ${shape}, ${ptsEff.length} pts)`, -1);
-          emit(`G0 X${f.x.toFixed(3)} Y${f.y.toFixed(3)}`, -1);
-          addMove('rapid', [{x:lastX, y:lastY}, {x:f.x, y:f.y}], tool.safe, cncState.rapidXY, -1);
+          // Desbaste con sobreespesor: solo si hay más de una pasada y el contorno lo admite
+          const roughPts = (isClosed && passes > 1 && c.rough && c.rough.length >= 3) ? c.rough : null;
+          const allowStr = roughPts ? `, desbaste +${cncFinishAllowance().toFixed(2)}mm` : '';
+          emit(`(Contorno ${ci+1}/${contoursArr.length}: ${shape}, ${ptsEff.length} pts${allowStr})`, -1);
+          if (c.roughFailed && passes > 1) emit('(aviso: sin sobreespesor en este contorno - geometria demasiado estrecha)', -1);
+          const firstPts = roughPts || ptsEff;
+          emit(`G0 X${firstPts[0].x.toFixed(3)} Y${firstPts[0].y.toFixed(3)}`, -1);
+          addMove('rapid', [{x:lastX, y:lastY}, {x:firstPts[0].x, y:firstPts[0].y}], tool.safe, cncState.rapidXY, -1);
           for (let k = 0; k < passes; k++){
             blockId++;
             const z = -Math.min((k+1)*step, opDepth);
             const isLastPass = (k === passes - 1);
+            const passPts = (roughPts && !isLastPass) ? roughPts : ptsEff;
+            const f = passPts[0];
+            if (Math.hypot(lastX - f.x, lastY - f.y) > 1e-3){
+              if (isClosed){
+                // Paso del desbaste al acabado: desplazamiento corto (≈ sobreespesor) a la cota actual
+                if (roughPts && isLastPass) emit('(--- pasada final de acabado a cota de dibujo ---)', blockId);
+                emit(`G1 X${f.x.toFixed(3)} Y${f.y.toFixed(3)} F${tool.feed}`, blockId);
+                addMove('cut', [{x:lastX, y:lastY}, {x:f.x, y:f.y}], lastZ, tool.feed, blockId);
+              } else {
+                // Contorno abierto: el final queda lejos del inicio → subir, reposicionar y bajar
+                emit(`G0 Z${tool.retract.toFixed(3)}`, blockId);
+                addMove('rapid', [{x:lastX, y:lastY}], tool.retract, cncState.rapidZ, blockId);
+                emit(`G0 X${f.x.toFixed(3)} Y${f.y.toFixed(3)}`, blockId);
+                addMove('rapid', [{x:lastX, y:lastY}, {x:f.x, y:f.y}], tool.retract, cncState.rapidXY, blockId);
+              }
+            }
             emit(`G1 Z${z.toFixed(3)} F${tool.feedZ}`, blockId);
             addMove('cut', [{x:f.x, y:f.y}], z, tool.feedZ, blockId);
             if (cncState.tabs.enabled && isLastPass && isClosed && tabsEff.length > 0){
@@ -3393,16 +3661,16 @@ function buildCNCProgram(){
               emitCutWithTabs(ptsEff, isClosed, tool, z, tabsEff, cncState.tabs.height, blockId);
               emitSimWithTabs(ptsEff, isClosed, z, tool.feed, cncState.tabs.height, tabsEff, blockId, addMove);
             } else {
-              for (let i = 1; i < ptsEff.length; i++){
-                emit(`G1 X${ptsEff[i].x.toFixed(3)} Y${ptsEff[i].y.toFixed(3)} F${tool.feed}`, blockId);
+              for (let i = 1; i < passPts.length; i++){
+                emit(`G1 X${passPts[i].x.toFixed(3)} Y${passPts[i].y.toFixed(3)} F${tool.feed}`, blockId);
               }
               if (isClosed){
-                const lastPt = ptsEff[ptsEff.length - 1];
+                const lastPt = passPts[passPts.length - 1];
                 if (Math.hypot(lastPt.x - f.x, lastPt.y - f.y) > 1e-3){
                   emit(`G1 X${f.x.toFixed(3)} Y${f.y.toFixed(3)} F${tool.feed}`, blockId);
                 }
               }
-              const contourPts = isClosed ? ptsEff.concat([ptsEff[0]]) : ptsEff;
+              const contourPts = isClosed ? passPts.concat([passPts[0]]) : passPts;
               addMove('cut', contourPts, z, tool.feed, blockId);
             }
           }
@@ -3724,6 +3992,19 @@ function cncRefreshOpsOverlay(){
         path.strokeWidth = 2 / view.zoom;
         path.fillColor = null;
         cncOpsLayer.addChild(path);
+        if (c.rough && c.rough.length >= 3){
+          // Trayectoria de desbaste (con sobreespesor): discontinua y tenue
+          const rp = new Path();
+          rp.moveTo(new Point(c.rough[0].x, -c.rough[0].y));
+          for (let i = 1; i < c.rough.length; i++) rp.lineTo(new Point(c.rough[i].x, -c.rough[i].y));
+          rp.closePath();
+          rp.strokeColor = new Color('#FFB347');
+          rp.opacity = 0.55;
+          rp.strokeWidth = 1 / view.zoom;
+          rp.dashArray = [4 / view.zoom, 3 / view.zoom];
+          rp.fillColor = null;
+          cncOpsLayer.addChild(rp);
+        }
       }
     }
     if (cncState.tabs.enabled){
@@ -4057,6 +4338,12 @@ document.getElementById('cnc-copy-btn').addEventListener('click', () => {
     cncUpdateTabsInfo();
     cncRebuildAndRegen();
   });
+});
+document.getElementById('cnc-finishAllowance').addEventListener('change', e => {
+  const v = parseFloat(e.target.value);
+  cncState.finishAllowance = (isFinite(v) && v >= 0) ? Math.min(5, v) : 0.2;
+  e.target.value = cncState.finishAllowance;
+  if (cncState.operations.length) cncRebuildAndRegen();
 });
 document.getElementById('cnc-shuffle-tabs').addEventListener('click', () => {
   cncState.tabs.seed = (cncState.tabs.seed + 7919) >>> 0;
@@ -5316,6 +5603,7 @@ function initAll(){
   document.getElementById('cnc-spindlePause').value = cncState.spindlePause;
   document.getElementById('cnc-rapidXY').value = cncState.rapidXY;
   document.getElementById('cnc-rapidZ').value = cncState.rapidZ;
+  document.getElementById('cnc-finishAllowance').value = cncState.finishAllowance;
   document.getElementById('cnc-tabsEnabled').checked = cncState.tabs.enabled;
   document.getElementById('cnc-tabsCount').value = cncState.tabs.count;
   document.getElementById('cnc-tabsWidth').value = cncState.tabs.width;
