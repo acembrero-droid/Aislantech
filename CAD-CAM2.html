@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CAD Pro + CNC · DXF → G-Code · v12.6</title>
+<title>CAD Pro + CNC · DXF → G-Code · v12.9</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -426,6 +426,9 @@ input[type="number"]{font-variant-numeric:tabular-nums}
 #layer-list li{border-radius:8px;padding:6px 8px;margin-bottom:2px}
 #layer-list li.active{background:rgba(92,200,255,.14);color:var(--text-primary);box-shadow:inset 0 0 0 1px rgba(92,200,255,.3)}
 #layer-list li .color-swatch{border-radius:4px}
+#layer-list li .lock-toggle{opacity:.35}
+#layer-list li.is-locked .lock-toggle{opacity:1}
+#layer-list li.is-locked .layer-name{font-style:italic;color:var(--text-secondary)}
 
 /* Paneles laterales */
 #properties-panel{background:var(--bg-panel);padding:12px 14px}
@@ -521,7 +524,7 @@ input[type="number"]{font-variant-numeric:tabular-nums}
       <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 15V9l4 6V9l4 6"/>
     </svg>
     CAD&nbsp;+&nbsp;CNC
-    <span class="version-badge" id="appVersion">v12.6</span>
+    <span class="version-badge" id="appVersion">v12.9</span>
   </span>
   <div class="separator"></div>
   <button id="qa-new" title="Nuevo (Ctrl+N)"><svg viewBox="0 0 24 24"><path d="M13 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V9z"/><path d="M13 3v6h6"/></svg></button>
@@ -722,6 +725,7 @@ input[type="number"]{font-variant-numeric:tabular-nums}
     </div>
     <div class="cnc-section">
       <h3><svg class="h-ico" viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13l-2 2 2 2M15 13l2 2-2 2"/></svg>Código G</h3>
+      <div class="cnc-row" id="cnc-plate-row" style="display:none" title="Genera el programa solo con las operaciones de esa placa, con X0 Y0 en la esquina inferior izquierda de su contorno"><label>Placa</label><select id="cnc-plate" style="width:190px"></select></div>
       <button class="cnc-btn accent" id="cnc-generate-btn">⚙ Generar / Actualizar</button>
       <div class="cnc-gcode" id="cnc-gcode">
         <div class="cnc-empty-hint">(Sin generar)</div>
@@ -787,7 +791,10 @@ window.dispatchEvent(new Event('clipper-ready'));
 </script>
 <script>
 /* ═══════════════════════════════════════════════════════════════════════
-   CAD Pro + CNC — v12.6
+   CAD Pro + CNC — v12.9
+   v12.9: selector "Placa a mecanizar": programa solo de esa placa con X0 Y0 en su esquina inferior izquierda
+   v12.8: nesting → una capa por placa + contorno en capa bloqueada · capas bloqueadas/ocultas no seleccionables
+   v12.7: importación DXF con BLOCK/INSERT (anidados, simetría, rotación, MINSERT, extrusión -Z)
    v12.6: desbaste parcial (solo renuncia al sobreespesor en zonas estrechas) · patillas fuera de ranuras
    v12.5: sobreespesor de desbaste (pasadas previas a +N mm, última a cota) · tema moderno · fix pasadas en contornos abiertos
    Novedades:
@@ -804,8 +811,8 @@ project.selectedColor = new Color(0.31, 0.76, 0.97);
 
 const canvasContainer = document.getElementById('canvas-container');
 
-const APP_VERSION = '12.6';
-const VERSION_NOTES = 'Desbaste parcial en zonas estrechas · Patillas fuera de ranuras · Sobreespesor de desbaste';
+const APP_VERSION = '12.9';
+const VERSION_NOTES = 'Programa por placa con origen en su esquina · Nesting: una capa por placa';
 
 const layers = {};
 function safeName(orig){ let n = orig.replace(/[^a-zA-Z0-9_\-]/g,'_'); if (/^\d/.test(n)) n='L_'+n; return n; }
@@ -1032,7 +1039,8 @@ const cncState = {
   rapidXY: 5000,
   rapidZ: 3000,
   tabs: { enabled:false, count:3, width:1.0, height:1.0, seed:12345 },
-  finishAllowance: 0.2,   // mm que se dejan en las pasadas de desbaste (la última va a cota)
+  finishAllowance: 0.2,
+  plateFilter: '',        // '' = todas (origen del dibujo) · 'Placa_N' = solo esa placa, origen en su esquina   // mm que se dejan en las pasadas de desbaste (la última va a cota)
   simMoves: [], simMoveTimes: [], simTotalTime: 0, simT: 0,
   simPlaying: false, simSpeedMult: 1, simAnimId: null, simLastFrame: 0,
   gcodeLines: [], gcodeBlock: [], blockPoints: {}, blockZ: {},
@@ -1125,6 +1133,7 @@ function renderLayerList(){
     const li = document.createElement('li');
     if (layer === activeLayer) li.classList.add('active');
     if (!layer.data.visible) li.style.opacity = '0.4';
+    if (layer.data.locked) li.classList.add('is-locked');
     const color = layer.data.color || '#FFFFFF';
     li.innerHTML = `
       <span class="color-swatch" style="background:${color}"></span>
@@ -1150,6 +1159,7 @@ function renderLayerList(){
     li.querySelector('.lock-toggle').addEventListener('click', e => { e.stopPropagation(); toggleLayerLock(internal); });
     list.appendChild(li);
   }
+  try { cncRefreshPlateSelect(); } catch (e){}
   document.getElementById('current-layer-name').textContent = activeLayer.data.originalName;
   document.getElementById('current-layer-swatch').style.background = activeLayer.data.color || '#FFFFFF';
   renderLayerCombo();
@@ -1471,7 +1481,10 @@ function hitTestContent(pt, extraOptions){
     stroke: true, fill: true, segments: true,
     match: r => {
       const l = r.item.layer;
-      return !CNC_UTILITY_LAYERS.includes(l);
+      if (CNC_UTILITY_LAYERS.includes(l)) return false;
+      // Capa bloqueada u oculta → no seleccionable (igual que snap y CNC por proximidad)
+      if (l && l.data && (l.data.locked || l.data.visible === false)) return false;
+      return true;
     }
   }, extraOptions || {});
   return project.hitTest(pt, options);
@@ -3211,6 +3224,7 @@ function resolveCutContours(op, tool){
   const raw = [];
   for (const group of groups){
     const r = chainItemsIntoPoints(group, 0.05);
+    r.srcLayer = (group[0] && group[0].layer) ? group[0].layer.name : null;
     if (r.points.length >= 2) raw.push(r);
   }
 
@@ -3280,6 +3294,7 @@ function resolveCutContours(op, tool){
           roughPartial = !!rough;
         }
         results.push({
+          srcLayer: r.srcLayer,
           points: l, closed: true, rough, roughPartial,
           roughFailed: !!(useAllowance && compSign !== 0 && !rough),
           wasteInside: compSign !== 0 ? !matIn : null
@@ -3287,7 +3302,7 @@ function resolveCutContours(op, tool){
       });
     } else {
       if (Math.abs(op.adjust) > 1e-6) pts = offsetOpenPathSimple(pts, op.adjust);
-      results.push({ points: pts, closed: false });
+      results.push({ points: pts, closed: false, srcLayer: r.srcLayer });
     }
   });
   return results;
@@ -3657,6 +3672,96 @@ function fmtTime(sec){
   const h = Math.floor(t/3600), m = Math.floor((t%3600)/60), s = t%60;
   return String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
 }
+/* ── Placa a mecanizar ─────────────────────────────────────────────────
+   Las capas Placa_N (y Placa_N_<capa>) vienen de importar un nesting. Con una
+   placa elegida, el programa solo incluye sus operaciones y toma como X0 Y0 la
+   esquina inferior izquierda de su contorno (capa Contorno_placas).          */
+const PLATE_LAYER_RE = /^(Placa_\d+)(_.+)?$/;
+function cncPlateOf(layerName){
+  const m = PLATE_LAYER_RE.exec(layerName || '');
+  return m ? m[1] : null;
+}
+function cncListPlates(){
+  const set = new Set();
+  for (const k in layers){
+    const pl = cncPlateOf(k);
+    if (pl && layers[k].children.length) set.add(pl);
+  }
+  return [...set].sort((a, b) => parseInt(a.slice(6)) - parseInt(b.slice(6)));
+}
+function cncPlateContext(){
+  const name = cncState.plateFilter;
+  if (!name) return null;
+  let pb = null;
+  for (const k in layers){
+    if (cncPlateOf(k) !== name) continue;
+    for (const it of layers[k].children) pb = pb ? pb.unite(it.bounds) : it.bounds.clone();
+  }
+  if (!pb) return null;
+  // Contorno de la placa: el más pequeño de Contorno_placas que envuelve sus piezas
+  let ob = null;
+  const ol = layers['Contorno_placas'];
+  if (ol){
+    for (const it of ol.children){
+      const b = it.bounds;
+      if (b.left <= pb.left + 0.01 && b.top <= pb.top + 0.01 && b.right >= pb.right - 0.01 && b.bottom >= pb.bottom - 0.01){
+        if (!ob || b.area < ob.area) ob = b;
+      }
+    }
+  }
+  const box = ob || pb;
+  // paper usa Y invertida: X/Y de máquina = (left, -bottom)
+  const region = { x0: box.left - 0.5, x1: box.right + 0.5, y0: -box.bottom - 0.5, y1: -box.top + 0.5 };
+  return {
+    name, hasOutline: !!ob,
+    origin: { x: box.left, y: -box.bottom },
+    size: { w: box.width, h: box.height },
+    inRegion: (x, y) => x >= region.x0 && x <= region.x1 && y >= region.y0 && y <= region.y1
+  };
+}
+// Operaciones tal y como entran al programa: todas, o solo las de la placa
+// elegida y desplazadas a su origen. Devuelve [{ op, originalIndex, contours }]
+function cncProgramOperations(plate){
+  const out = [];
+  cncState.operations.forEach((op, idx) => {
+    const all = (op.type === 'cut') ? (cncState.cutContours[idx] || []) : null;
+    if (!plate){ out.push({ op, originalIndex: idx, contours: all }); return; }
+    const ox = plate.origin.x, oy = plate.origin.y;
+    const sh = q => ({ x: q.x - ox, y: q.y - oy });
+    if (op.type === 'cut'){
+      const cs = [];
+      all.forEach((c, ci) => {
+        if (cncPlateOf(c.srcLayer) !== plate.name) return;
+        cs.push(Object.assign({}, c, { tabIndex: ci, points: c.points.map(sh), rough: c.rough ? c.rough.map(sh) : c.rough }));
+      });
+      if (cs.length) out.push({ op, originalIndex: idx, contours: cs });
+    } else if (op.type === 'drill'){
+      const pts = (op.points || []).filter(q => plate.inRegion(q.x, q.y)).map(sh);
+      if (pts.length) out.push({ op: Object.assign({}, op, { points: pts }), originalIndex: idx, contours: null });
+    } else if (op.type === 'pocket'){
+      const pk = (op.pockets || []).filter(k => {
+        const bb = bboxFromPoints(k.boundary);
+        return plate.inRegion((bb.mnx + bb.mxx) / 2, (bb.mny + bb.mxy) / 2);
+      }).map(k => Object.assign({}, k, { boundary: k.boundary.map(sh) }));
+      if (pk.length) out.push({ op: Object.assign({}, op, { pockets: pk }), originalIndex: idx, contours: null });
+    }
+  });
+  return out;
+}
+function cncRefreshPlateSelect(){
+  const sel = document.getElementById('cnc-plate');
+  if (!sel) return;
+  const plates = cncListPlates();
+  if (cncState.plateFilter && !plates.includes(cncState.plateFilter)) cncState.plateFilter = '';
+  const want = ['', ...plates].join('|');
+  if (sel.dataset.opts !== want){
+    sel.innerHTML = '<option value="">Todas · origen del dibujo</option>' +
+      plates.map(pl => `<option value="${pl}">${pl.replace('_', ' ')} · origen en su esquina</option>`).join('');
+    sel.dataset.opts = want;
+  }
+  sel.value = cncState.plateFilter;
+  document.getElementById('cnc-plate-row').style.display = plates.length ? '' : 'none';
+}
 function buildCNCProgram(){
   cncState.gcodeLines = []; cncState.gcodeBlock = [];
   cncState.blockPoints = {}; cncState.blockZ = {};
@@ -3675,6 +3780,9 @@ function buildCNCProgram(){
   const moves = [];
   const blockPoints = cncState.blockPoints;
   const blockZ = cncState.blockZ;
+  const plate = cncPlateContext();
+  if (cncState.plateFilter && !plate) cncState.plateFilter = '';
+  const simOx = plate ? plate.origin.x : 0, simOy = plate ? plate.origin.y : 0;
   const emit = (txt, block) => {
     if (lines.length >= MAX_GCODE_LINES * 1.5) return;
     lines.push(sanitizeComment(txt));
@@ -3695,19 +3803,25 @@ function buildCNCProgram(){
       duration = dz / (feed / 60);
     }
     if (duration < 0.03) duration = 0.03;
-    moves.push({ type, points: pts, z, duration, block });
+    // El G-code puede ir desplazado al origen de la placa; la simulación se dibuja en su sitio
+    const ptsW = (simOx || simOy) ? pts.map(p => ({ x: p.x + simOx, y: p.y + simOy })) : pts;
+    moves.push({ type, points: ptsW, z, duration, block });
     if (!blockPoints[block]) blockPoints[block] = [];
-    for (const p of pts) blockPoints[block].push({ x: p.x, y: p.y });
+    for (const p of ptsW) blockPoints[block].push({ x: p.x, y: p.y });
     if (blockZ[block] === undefined) blockZ[block] = z;
     const last = pts[pts.length - 1];
     lastX = last.x; lastY = last.y; lastZ = z;
   };
   const addSpindlePause = block => {
-    if (cncState.spindlePause > 0) moves.push({ type:'pause', points:[{x:lastX, y:lastY}], z:lastZ, duration: cncState.spindlePause, block });
+    if (cncState.spindlePause > 0) moves.push({ type:'pause', points:[{x:lastX + simOx, y:lastY + simOy}], z:lastZ, duration: cncState.spindlePause, block });
   };
   emit('%', -1);
   emit('O0001 (CNC DXF → G-Code)', -1);
   emit(`(Generado por CAD Pro + CNC v${APP_VERSION})`, -1);
+  if (plate){
+    emit(`(PLACA: ${plate.name} - ${plate.size.w.toFixed(1)} x ${plate.size.h.toFixed(1)} mm)`, -1);
+    emit(`(X0 Y0 = esquina inferior izquierda de ${plate.hasOutline ? 'la placa' : 'las piezas (sin contorno de placa)'}; dibujo X${plate.origin.x.toFixed(3)} Y${plate.origin.y.toFixed(3)})`, -1);
+  }
   emit('G21 G90 G17', -1);
   emit(`G0 Z${maxSafe.toFixed(3)}`, -1);
   emit('G0 X0 Y0', -1);
@@ -3715,12 +3829,14 @@ function buildCNCProgram(){
   addMove('rapid', [{x:lastX, y:lastY}, {x:0, y:0}], maxSafe, cncState.rapidXY, -1);
   const toolOrder = [];
   const groups = new Map();
-  cncState.operations.forEach((op, idx) => {
+  const progOps = cncProgramOperations(plate);
+  if (plate && !progOps.length) emit(`(${plate.name}: sin operaciones en esta placa)`, -1);
+  progOps.forEach(({ op, originalIndex, contours }) => {
     let tid = op.toolId;
     if (!getCNCToolById(tid)) tid = cncState.tools[0]?.id;
     if (!tid) return;
     if (!groups.has(tid)){ groups.set(tid, []); toolOrder.push(tid); }
-    groups.get(tid).push({ op, originalIndex: idx });
+    groups.get(tid).push({ op, originalIndex, contours });
   });
   for (const tid of toolOrder){
     const tool = getCNCToolById(tid); if (!tool) continue;
@@ -3745,7 +3861,7 @@ function buildCNCProgram(){
     }
     emit('', -1);
     for (let oi = 0; oi < entries.length; oi++){
-      const { op, originalIndex } = entries[oi];
+      const { op, originalIndex, contours } = entries[oi];
       const opDepth = Math.max(0, (typeof op.depth === 'number') ? op.depth : tool.depth);
       const opAdjust = (typeof op.adjust === 'number') ? op.adjust : 0;
       if (opDepth <= 0){ emit(`(Op ${oi+1}/${entries.length}: prof 0, omitida)`, -1); emit('', -1); continue; }
@@ -3780,7 +3896,7 @@ function buildCNCProgram(){
         emit('G80', -1);
         emit(`G0 Z${tool.safe.toFixed(3)}`, -1);
       } else if (op.type === 'cut'){
-        const contoursArr = cncState.cutContours[originalIndex];
+        const contoursArr = contours;
         if (!contoursArr || !contoursArr.length){ emit('(sin contorno resuelto)', -1); emit('', -1); continue; }
         if (Math.abs(lastZ - tool.safe) > 0.01){
           emit(`G0 Z${tool.safe.toFixed(3)}`, -1);
@@ -3794,7 +3910,7 @@ function buildCNCProgram(){
           const isClosed = c.closed;
           let tabsEff = [];
           if (cncState.tabs.enabled && isClosed){
-            const seed = cncState.tabs.seed + originalIndex*137 + ci*9973;
+            const seed = cncState.tabs.seed + originalIndex*137 + (c.tabIndex !== undefined ? c.tabIndex : ci)*9973;
             tabsEff = computeTabSegments(ptsEff, true, cncState.tabs.count, cncState.tabs.width, seed, tool.diam, c.wasteInside);
           }
           const shape = isClosed ? 'cerrado' : 'abierto';
@@ -4232,6 +4348,18 @@ function cncRefreshOpsOverlay(){
         cncOpsLayer.addChild(path);
       });
     }
+    // Marca del origen X0 Y0 de la placa elegida
+    const plateCtx = cncPlateContext();
+    if (plateCtx){
+      const o = new Point(plateCtx.origin.x, -plateCtx.origin.y), L = 40 / view.zoom;
+      const ax = new Path.Line(o, o.add(new Point(L, 0))); ax.strokeColor = new Color('#FF6B6B');
+      const ay = new Path.Line(o, o.add(new Point(0, -L))); ay.strokeColor = new Color('#57C46B');
+      const oc = new Path.Circle(o, 5 / view.zoom); oc.strokeColor = new Color('#FFD93D'); oc.fillColor = new Color(1, 0.85, 0.24, 0.25);
+      [ax, ay, oc].forEach(it => { it.strokeWidth = 2 / view.zoom; cncOpsLayer.addChild(it); });
+      const t = new PointText(o.add(new Point(8 / view.zoom, 16 / view.zoom)));
+      t.content = 'X0 Y0 · ' + plateCtx.name; t.fillColor = new Color('#FFD93D'); t.fontSize = 12 / view.zoom; t.fontFamily = 'monospace';
+      cncOpsLayer.addChild(t);
+    }
     if (cncState.selectedGlineIdx >= 0){
       const block = cncState.gcodeBlock[cncState.selectedGlineIdx];
       const pts = cncState.blockPoints[block];
@@ -4493,7 +4621,7 @@ document.getElementById('cnc-download-btn').addEventListener('click', () => {
   const b = new Blob([g], { type: 'text/plain' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(b);
-  a.download = 'programa.nc';
+  a.download = cncState.plateFilter ? `programa_${cncState.plateFilter}.nc` : 'programa.nc';
   a.click();
 });
 document.getElementById('cnc-copy-btn').addEventListener('click', () => {
@@ -4510,6 +4638,12 @@ document.getElementById('cnc-copy-btn').addEventListener('click', () => {
     cncUpdateTabsInfo();
     cncRebuildAndRegen();
   });
+});
+document.getElementById('cnc-plate').addEventListener('change', e => {
+  cncState.plateFilter = e.target.value || '';
+  cncRebuildAndRegen();
+  cncRefreshOpsOverlay();
+  setPrompt(cncState.plateFilter ? `Programa de ${cncState.plateFilter}: origen en la esquina inferior izquierda de la placa` : 'Programa de todas las placas, origen del dibujo');
 });
 document.getElementById('cnc-finishAllowance').addEventListener('change', e => {
   const v = parseFloat(e.target.value);
@@ -5128,92 +5262,222 @@ function importDXF(file){
       const result = parseDXF(ev.target.result);
       if (result && result.length > 0){
         invalidateSnapCache();
-        setPrompt(`DXF importado: ${result.length} entidades`);
+        const np = parseDXF.lastPlates || 0;
+        setPrompt(np ? `DXF importado: ${result.length} entidades en ${np} placas (capas Placa_N; contorno en capa bloqueada)` : `DXF importado: ${result.length} entidades`);
         zoomExtents();
       } else setPrompt('No se encontraron entidades válidas');
     } catch (err){ console.error(err); setPrompt('Error al importar: ' + err.message); }
   };
   reader.readAsText(file);
 }
-function parseDXF(dxfText){
-  const lines = dxfText.split(/\r?\n/).map(l => l.trim());
-  let i = 0;
-  const itemsToAdd = [];
-  while (i < lines.length && lines[i] !== 'ENTITIES' && lines[i] !== 'entities') i++;
-  if (i >= lines.length){ setPrompt('No se encontró ENTITIES'); return []; }
-  i++;
-  while (i < lines.length && lines[i] !== 'ENDSEC' && lines[i] !== 'endsec'){
-    if (lines[i] === '0'){
-      const type = lines[i+1] ? lines[i+1].toUpperCase() : '';
-      i += 2;
-      const codes = [];
-      while (i < lines.length && lines[i] !== '0' && lines[i] !== 'ENDSEC' && lines[i] !== 'endsec'){
-        const code = parseInt(lines[i], 10);
-        const value = lines[i+1] || '';
-        if (!isNaN(code)) codes.push({ code, value });
-        i += 2;
-      }
-      const get = c => parseFloat(codes.find(p => p.code === c)?.value);
-      const layerCode = codes.find(p => p.code === 8);
-      const originalLayerName = layerCode ? layerCode.value : '0';
-      try {
-        if (type === 'LINE'){
-          const x1 = get(10), y1 = get(20), x2 = get(11), y2 = get(21);
-          if (!isNaN(x1) && !isNaN(y1) && !isNaN(x2) && !isNaN(y2)){
-            const line = new Path.Line(new Point(x1, -y1), new Point(x2, -y2));
-            line.strokeColor = 'white'; line.strokeWidth = currentStrokeWidth();
-            tagShape(line, 'line');
-            itemsToAdd.push({ item: line, layer: originalLayerName });
-          }
-        } else if (type === 'CIRCLE'){
-          const cx = get(10), cy = get(20), r = get(40);
-          if (!isNaN(cx) && !isNaN(cy) && !isNaN(r) && r > 0){
-            const circle = new Path.Circle(new Point(cx, -cy), r);
-            circle.strokeColor = 'white'; circle.strokeWidth = currentStrokeWidth();
-            tagShape(circle, 'circle'); circle.data.radius = r;
-            itemsToAdd.push({ item: circle, layer: originalLayerName });
-          }
-        } else if (type === 'ARC'){
-          const cx = get(10), cy = get(20), r = get(40);
-          const sa = get(50), ea = get(51);
-          if (!isNaN(cx) && !isNaN(cy) && !isNaN(r) && r > 0 && !isNaN(sa) && !isNaN(ea)){
-            const aRad = sa * Math.PI / 180, bRad = ea * Math.PI / 180;
-            let sweep = bRad - aRad;
-            if (sweep < 0) sweep += 2 * Math.PI;
-            const midRad = aRad + sweep / 2;
-            const fromDxf = new Point(cx + r * Math.cos(aRad), cy + r * Math.sin(aRad));
-            const toDxf = new Point(cx + r * Math.cos(bRad), cy + r * Math.sin(bRad));
-            const midDxf = new Point(cx + r * Math.cos(midRad), cy + r * Math.sin(midRad));
-            const arc = new Path.Arc(new Point(fromDxf.x, -fromDxf.y), new Point(midDxf.x, -midDxf.y), new Point(toDxf.x, -toDxf.y));
-            arc.strokeColor = 'white'; arc.strokeWidth = currentStrokeWidth();
-            tagShape(arc, 'arc');
-            itemsToAdd.push({ item: arc, layer: originalLayerName });
-          }
-        } else if (type === 'LWPOLYLINE'){
-          const vertsDxf = [], bulges = [];
-          for (let j = 0; j < codes.length; j++){
-            const c = codes[j];
-            if (c.code === 10){
-              const x = parseFloat(c.value);
-              let y = 0, bulge = 0;
-              if (j+1 < codes.length && codes[j+1].code === 20){ y = parseFloat(codes[j+1].value); j++; }
-              if (j+1 < codes.length && codes[j+1].code === 42){ bulge = parseFloat(codes[j+1].value); j++; }
-              vertsDxf.push({ x, y });
-              bulges.push(isNaN(bulge) ? 0 : bulge);
-            }
-          }
-          const closed = (parseInt(codes.find(p => p.code === 70)?.value || '0', 10) & 1) === 1;
-          if (vertsDxf.length > 1){
-            const poly = buildPolyline(vertsDxf, bulges, closed);
-            if (poly){
-              poly.strokeColor = 'white'; poly.strokeWidth = currentStrokeWidth();
-              itemsToAdd.push({ item: poly, layer: originalLayerName });
-            }
-          }
-        }
-      } catch (err){ console.warn('Error DXF:', err); }
-    } else { i++; }
+/* ── Lectura DXF ──────────────────────────────────────────────────────
+   Lee pares código/valor, resuelve BLOCKS + INSERT (anidados, punto base,
+   escala/simetría, rotación, MINSERT y extrusión -Z) y crea LINE, CIRCLE,
+   ARC y LWPOLYLINE como antes. Los archivos de nesting (Nesting Center,
+   DeepNest, etc.) guardan TODA la geometría dentro de bloques.            */
+function dxfReadPairs(text){
+  const lines = text.split(/\r?\n/);
+  const pairs = [];
+  for (let k = 0; k + 1 < lines.length; k += 2){
+    const code = parseInt(lines[k].trim(), 10);
+    if (isNaN(code)){ k -= 1; continue; }          // re-sincronizar ante una línea suelta
+    pairs.push({ code, value: lines[k + 1].trim() });
   }
+  return pairs;
+}
+function dxfSections(pairs){
+  const secs = {};
+  for (let i = 0; i < pairs.length; i++){
+    if (pairs[i].code === 0 && pairs[i].value.toUpperCase() === 'SECTION' && pairs[i+1] && pairs[i+1].code === 2){
+      const name = pairs[i+1].value.toUpperCase();
+      let j = i + 2;
+      while (j < pairs.length && !(pairs[j].code === 0 && pairs[j].value.toUpperCase() === 'ENDSEC')) j++;
+      secs[name] = pairs.slice(i + 2, j);
+      i = j;
+    }
+  }
+  return secs;
+}
+function dxfSplitEntities(list){
+  const out = []; let cur = null;
+  for (const p of (list || [])){
+    if (p.code === 0){ cur = { type: p.value.toUpperCase(), codes: [] }; out.push(cur); }
+    else if (cur) cur.codes.push(p);
+  }
+  return out;
+}
+// Matrices afines en espacio DXF: x' = a·x + c·y + tx ; y' = b·x + d·y + ty
+const DXF_IDENTITY = { a:1, b:0, c:0, d:1, tx:0, ty:0 };
+function dxfMatMul(A, B){   // A∘B (primero B)
+  return { a: A.a*B.a + A.c*B.b, b: A.b*B.a + A.d*B.b,
+           c: A.a*B.c + A.c*B.d, d: A.b*B.c + A.d*B.d,
+           tx: A.a*B.tx + A.c*B.ty + A.tx, ty: A.b*B.tx + A.d*B.ty + A.ty };
+}
+function dxfIsIdentity(M){
+  return Math.abs(M.a-1) < 1e-12 && Math.abs(M.b) < 1e-12 && Math.abs(M.c) < 1e-12 &&
+         Math.abs(M.d-1) < 1e-12 && Math.abs(M.tx) < 1e-12 && Math.abs(M.ty) < 1e-12;
+}
+// Aplica una matriz DXF a un ítem de paper (que vive en Y invertida)
+function dxfApplyMatrix(item, M){
+  item.transform(new paper.Matrix(M.a, -M.b, -M.c, M.d, M.tx, -M.ty));
+  if (isCircleItem(item)){
+    const sx = Math.hypot(M.a, M.b), sy = Math.hypot(M.c, M.d);
+    if (Math.abs(sx - sy) < 1e-9 && item.data.radius) item.data.radius *= sx;
+    else tagShape(item, 'polyline');               // escala no uniforme → elipse
+  }
+}
+// Crea el ítem de paper de una entidad simple (sin transformar). null si no aplica.
+function dxfBuildEntity(type, codes){
+  const get = c => parseFloat(codes.find(p => p.code === c)?.value);
+  let out = null;
+  if (type === 'LINE'){
+    const x1 = get(10), y1 = get(20), x2 = get(11), y2 = get(21);
+    if (!isNaN(x1) && !isNaN(y1) && !isNaN(x2) && !isNaN(y2)){
+      const line = new Path.Line(new Point(x1, -y1), new Point(x2, -y2));
+      line.strokeColor = 'white'; line.strokeWidth = currentStrokeWidth();
+      tagShape(line, 'line');
+      out = line;
+    }
+  } else if (type === 'CIRCLE'){
+    const cx = get(10), cy = get(20), r = get(40);
+    if (!isNaN(cx) && !isNaN(cy) && !isNaN(r) && r > 0){
+      const circle = new Path.Circle(new Point(cx, -cy), r);
+      circle.strokeColor = 'white'; circle.strokeWidth = currentStrokeWidth();
+      tagShape(circle, 'circle'); circle.data.radius = r;
+      out = circle;
+    }
+  } else if (type === 'ARC'){
+    const cx = get(10), cy = get(20), r = get(40);
+    const sa = get(50), ea = get(51);
+    if (!isNaN(cx) && !isNaN(cy) && !isNaN(r) && r > 0 && !isNaN(sa) && !isNaN(ea)){
+      const aRad = sa * Math.PI / 180, bRad = ea * Math.PI / 180;
+      let sweep = bRad - aRad;
+      if (sweep < 0) sweep += 2 * Math.PI;
+      const midRad = aRad + sweep / 2;
+      const fromDxf = new Point(cx + r * Math.cos(aRad), cy + r * Math.sin(aRad));
+      const toDxf = new Point(cx + r * Math.cos(bRad), cy + r * Math.sin(bRad));
+      const midDxf = new Point(cx + r * Math.cos(midRad), cy + r * Math.sin(midRad));
+      const arc = new Path.Arc(new Point(fromDxf.x, -fromDxf.y), new Point(midDxf.x, -midDxf.y), new Point(toDxf.x, -toDxf.y));
+      arc.strokeColor = 'white'; arc.strokeWidth = currentStrokeWidth();
+      tagShape(arc, 'arc');
+      out = arc;
+    }
+  } else if (type === 'LWPOLYLINE'){
+    const vertsDxf = [], bulges = [];
+    for (let j = 0; j < codes.length; j++){
+      const c = codes[j];
+      if (c.code === 10){
+        const x = parseFloat(c.value);
+        let y = 0, bulge = 0;
+        if (j+1 < codes.length && codes[j+1].code === 20){ y = parseFloat(codes[j+1].value); j++; }
+        if (j+1 < codes.length && codes[j+1].code === 42){ bulge = parseFloat(codes[j+1].value); j++; }
+        vertsDxf.push({ x, y });
+        bulges.push(isNaN(bulge) ? 0 : bulge);
+      }
+    }
+    const closed = (parseInt(codes.find(p => p.code === 70)?.value || '0', 10) & 1) === 1;
+    if (vertsDxf.length > 1){
+      const poly = buildPolyline(vertsDxf, bulges, closed);
+      if (poly){
+        poly.strokeColor = 'white'; poly.strokeWidth = currentStrokeWidth();
+        out = poly;
+      }
+    }
+  }
+  return out;
+}
+function parseDXF(dxfText){
+  const pairs = dxfReadPairs(dxfText);
+  const secs = dxfSections(pairs);
+  if (!secs.ENTITIES){ setPrompt('No se encontró ENTITIES'); return []; }
+  const blocks = {};
+  let curBlk = null;
+  for (const e of dxfSplitEntities(secs.BLOCKS)){
+    const val = c => e.codes.find(p => p.code === c)?.value;
+    if (e.type === 'BLOCK'){
+      curBlk = { name: val(2) || '', base: { x: parseFloat(val(10)) || 0, y: parseFloat(val(20)) || 0 }, ents: [], busy: false };
+      blocks[curBlk.name.toUpperCase()] = curBlk;
+    } else if (e.type === 'ENDBLK') curBlk = null;
+    else if (curBlk) curBlk.ents.push(e);
+  }
+  const itemsToAdd = [];
+  const stats = { inserts: 0, missing: 0, plates: 0 };
+  // Archivos de nesting: un INSERT de primer nivel cuyo bloque contiene a su vez INSERTs
+  // es una PLACA → sus piezas van a la capa "Placa_N" y su contorno a "Contorno_placas".
+  const isContainer = blk => blk && blk.ents.some(x => x.type === 'INSERT');
+  const PLATE_COLORS = ['#4FC3F7', '#FFB347', '#57C46B', '#FF6BD6', '#B39DDB', '#FFD93D', '#FF8A80', '#80CBC4'];
+  const OUTLINE_LAYER = 'Contorno_placas';
+  const plateGroups = [];   // { layerName, color, items: [{entry, direct}] }
+  const FLIP_X = { a:-1, b:0, c:0, d:1, tx:0, ty:0 };      // extrusión (0,0,-1)
+  const OCS_TYPES = ['CIRCLE', 'ARC', 'LWPOLYLINE', 'INSERT'];
+  const emitEntity = (e, M, parentLayer, depth, plate, direct) => {
+    const val = c => e.codes.find(p => p.code === c)?.value;
+    const num = c => parseFloat(val(c));
+    const rawLayer = val(8) || '0';
+    const layer = (rawLayer === '0' && parentLayer) ? parentLayer : rawLayer;   // capa 0 hereda la del INSERT
+    const extrNeg = OCS_TYPES.includes(e.type) && num(230) < 0;
+    if (e.type === 'INSERT'){
+      const blk = blocks[(val(2) || '').toUpperCase()];
+      if (!blk){ stats.missing++; return; }
+      if (blk.busy || depth > 16) return;                  // ciclo o anidamiento absurdo
+      const ix = num(10) || 0, iy = num(20) || 0;
+      const sx = isNaN(num(41)) ? 1 : num(41), sy = isNaN(num(42)) ? 1 : num(42);
+      const rot = (num(50) || 0) * Math.PI / 180, cr = Math.cos(rot), sr = Math.sin(rot);
+      const cols = Math.max(1, parseInt(val(70) || '1', 10) || 1), rows = Math.max(1, parseInt(val(71) || '1', 10) || 1);
+      const cs = num(44) || 0, rs = num(45) || 0;
+      let childPlate = plate;
+      if (depth === 0 && !plate && isContainer(blk)){
+        stats.plates++;
+        const m = /(\d+)\s*$/.exec(blk.name);
+        const num = m ? m[1] : String(stats.plates);
+        childPlate = { layerName: 'Placa_' + num, color: PLATE_COLORS[(stats.plates - 1) % PLATE_COLORS.length], items: [] };
+        plateGroups.push(childPlate);
+      }
+      blk.busy = true;
+      for (let r = 0; r < rows; r++){
+        for (let c = 0; c < cols; c++){
+          // p = ins + R·(desfase_matriz + S·(p_bloque − base))
+          let L = { a: sx, b: 0, c: 0, d: sy, tx: -sx * blk.base.x + c * cs, ty: -sy * blk.base.y + r * rs };
+          L = dxfMatMul({ a: cr, b: sr, c: -sr, d: cr, tx: ix, ty: iy }, L);
+          if (extrNeg) L = dxfMatMul(FLIP_X, L);
+          stats.inserts++;
+          const Mc = dxfMatMul(M, L);
+          for (const ch of blk.ents) emitEntity(ch, Mc, layer, depth + 1, childPlate, childPlate !== plate);
+        }
+      }
+      blk.busy = false;
+      return;
+    }
+    let item = null;
+    try { item = dxfBuildEntity(e.type, e.codes); } catch (err){ console.warn('Error DXF:', err); }
+    if (!item) return;
+    const Me = extrNeg ? dxfMatMul(M, FLIP_X) : M;
+    if (!dxfIsIdentity(Me)) dxfApplyMatrix(item, Me);
+    const entry = { item, layer };
+    if (plate){
+      entry.layer = (layer === '0') ? plate.layerName : plate.layerName + '_' + layer;
+      entry.color = plate.color;
+      plate.items.push({ entry, direct: !!direct });
+    }
+    itemsToAdd.push(entry);
+  };
+  for (const e of dxfSplitEntities(secs.ENTITIES)) emitEntity(e, DXF_IDENTITY, null, 0, null, false);
+  // Contorno de cada placa: entidad directa de la placa cuyo rectángulo envuelve al resto
+  for (const pg of plateGroups){
+    const rest = pg.items.filter(x => !x.direct);
+    if (!rest.length) continue;
+    let ub = null;
+    for (const x of rest) ub = ub ? ub.unite(x.entry.item.bounds) : x.entry.item.bounds.clone();
+    for (const x of pg.items){
+      if (!x.direct) continue;
+      const b = x.entry.item.bounds;
+      if (b.left <= ub.left + 0.01 && b.top <= ub.top + 0.01 && b.right >= ub.right - 0.01 && b.bottom >= ub.bottom - 0.01){
+        x.entry.layer = OUTLINE_LAYER; x.entry.color = '#6B7280'; x.entry.outline = true;
+      }
+    }
+  }
+  if (stats.inserts || stats.missing) console.log(`[DXF] bloques insertados: ${stats.inserts}${stats.plates ? ' · placas: ' + stats.plates : ''}${stats.missing ? ' · bloques no encontrados: ' + stats.missing : ''}`);
+  parseDXF.lastPlates = stats.plates;
   if (itemsToAdd.length === 0) return [];
   const currentBounds = getCurrentDrawingBounds();
   const tempGroup = new Group();
@@ -5227,9 +5491,14 @@ function parseDXF(dxfText){
   }
   if (offsetX !== 0) itemsToAdd.forEach(({ item }) => item.translate(new Point(offsetX, 0)));
   saveState();
-  itemsToAdd.forEach(({ item, layer: originalLayerName }) => {
+  itemsToAdd.forEach(({ item, layer: originalLayerName, color, outline }) => {
     const internal = safeName(originalLayerName);
-    if (!layers[internal]) createLayer(internal);
+    const isNew = !layers[internal];
+    if (isNew){
+      createLayer(internal, color || '#FFFFFF');
+      if (outline) layers[internal].data.locked = true;   // referencia visible, no seleccionable
+    }
+    if (color) item.strokeColor = color;
     layers[internal].addChild(item);
   });
   renderLayerList();
