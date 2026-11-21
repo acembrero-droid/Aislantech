@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CAD Pro + CNC · DXF → G-Code · v12.9</title>
+<title>CAD Pro + CNC · DXF → G-Code · v12.10</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -524,7 +524,7 @@ input[type="number"]{font-variant-numeric:tabular-nums}
       <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 15V9l4 6V9l4 6"/>
     </svg>
     CAD&nbsp;+&nbsp;CNC
-    <span class="version-badge" id="appVersion">v12.9</span>
+    <span class="version-badge" id="appVersion">v12.10</span>
   </span>
   <div class="separator"></div>
   <button id="qa-new" title="Nuevo (Ctrl+N)"><svg viewBox="0 0 24 24"><path d="M13 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V9z"/><path d="M13 3v6h6"/></svg></button>
@@ -791,7 +791,8 @@ window.dispatchEvent(new Event('clipper-ready'));
 </script>
 <script>
 /* ═══════════════════════════════════════════════════════════════════════
-   CAD Pro + CNC — v12.9
+   CAD Pro + CNC — v12.10
+   v12.10: FIX esquinas achaflanadas: contornos con vértices exactos (CNC, cajeado, offset CAD, export DXF)
    v12.9: selector "Placa a mecanizar": programa solo de esa placa con X0 Y0 en su esquina inferior izquierda
    v12.8: nesting → una capa por placa + contorno en capa bloqueada · capas bloqueadas/ocultas no seleccionables
    v12.7: importación DXF con BLOCK/INSERT (anidados, simetría, rotación, MINSERT, extrusión -Z)
@@ -811,8 +812,8 @@ project.selectedColor = new Color(0.31, 0.76, 0.97);
 
 const canvasContainer = document.getElementById('canvas-container');
 
-const APP_VERSION = '12.9';
-const VERSION_NOTES = 'Programa por placa con origen en su esquina · Nesting: una capa por placa';
+const APP_VERSION = '12.10';
+const VERSION_NOTES = 'FIX esquinas achaflanadas (vértices exactos) · Programa por placa · Nesting';
 
 const layers = {};
 function safeName(orig){ let n = orig.replace(/[^a-zA-Z0-9_\-]/g,'_'); if (/^\d/.test(n)) n='L_'+n; return n; }
@@ -2619,11 +2620,7 @@ function offsetPolyline(item, dist, clickPt){
   let pts = [];
   const L = item.length;
   if (L < 1e-6) return null;
-  const n = Math.max(64, Math.min(1000, Math.ceil(L / 0.2)));
-  for (let i = 0; i <= n; i++){
-    const p = item.getPointAt(L * i / n);
-    if (p) pts.push({ x: p.x, y: -p.y });
-  }
+  pts = pathToExactPoints(item, 0.2);
   if (pts.length < 3) return null;
   
   pts = simplifyPolygon(pts, 0.05); 
@@ -3005,6 +3002,40 @@ function getItemEndpoints(item){
   }
   return null;
 }
+// Convierte un Path de paper en puntos CONSERVANDO TODOS LOS VÉRTICES exactos.
+// Solo los tramos curvos (arcos, bezier) se subdividen con paso máx. `step` mm.
+// (Antes se muestreaba a intervalos iguales de todo el perímetro con un tope de
+//  puntos: en piezas largas el paso crecía a ~1 mm y las esquinas quedaban
+//  recortadas; el offset de la fresa agrandaba ese recorte a varios mm.)
+// flipY=true → coordenadas de máquina (Y hacia arriba); false → coordenadas paper.
+function pathToExactPoints(item, step, flipY){
+  if (flipY === undefined) flipY = true;
+  const curves = item && item.curves;
+  if (!curves || !curves.length) return [];
+  const out = [];
+  const push = q => {
+    const pt = { x: q.x, y: flipY ? -q.y : q.y };
+    const last = out[out.length - 1];
+    if (!last || Math.hypot(pt.x - last.x, pt.y - last.y) > 1e-9) out.push(pt);
+  };
+  push(curves[0].point1);
+  for (const c of curves){
+    if (!c.isStraight()){
+      const L = c.length;
+      const n = Math.max(4, Math.min(4000, Math.ceil(L / step)));
+      for (let k = 1; k < n; k++){
+        const q = c.getPointAt(L * k / n);
+        if (q) push(q);
+      }
+    }
+    push(c.point2);
+  }
+  if (item.closed && out.length > 2){
+    const f = out[0], l = out[out.length - 1];
+    if (Math.hypot(f.x - l.x, f.y - l.y) < 1e-6) out.pop();
+  }
+  return out;
+}
 function itemToPointSequence(item){
   if (isCircleItem(item)){
     const c = item.position;
@@ -3029,12 +3060,8 @@ function itemToPointSequence(item){
   }
   const L = item.length;
   if (L < 1e-6) return null;
-  const n = Math.max(64, Math.min(2000, Math.ceil(L / 0.1)));
-  const pts = [];
-  for (let i = 0; i <= n; i++){
-    const p = item.getPointAt(L * i / n);
-    if (p) pts.push({ x: p.x, y: -p.y });
-  }
+  const pts = pathToExactPoints(item, 0.1);
+  if (pts.length < 2) return null;
   const closeTol = Math.max(0.05, L * 0.001);
   let closed = !!item.closed;
   if (!closed && pts.length > 2){
@@ -4572,7 +4599,7 @@ function cncFindClosedEntityAt(wx, wy){
         let contains = false;
         try { contains = item.contains(new Point(px, py)); } catch (e){ contains = false; }
         if (contains){
-          const pts = item.segments.map(s => ({ x: s.point.x, y: -s.point.y }));
+          const pts = pathToExactPoints(item, 0.1);   // arcos reales, no cuerdas entre vértices
           area = Math.abs(signedArea(pts));
           boundary = pts;
         }
@@ -5613,10 +5640,7 @@ function writePolylineEntity(item, layerName){
   const isCurved = item.curves.some(c => !c.isStraight());
   let pts;
   if (isCurved){
-    const steps = Math.max(8, Math.min(64, Math.round(item.length / 2)));
-    pts = [];
-    for (let i = 0; i <= steps; i++) pts.push(item.getPointAt((item.length * i) / steps));
-    pts = pts.filter(Boolean);
+    pts = pathToExactPoints(item, 0.25, false);   // vértices exactos + arcos subdivididos
   } else { pts = item.segments.map(s => s.point); }
   if (pts.length < 2) return '';
   let dxf = '0\nPOLYLINE\n8\n' + layerName + '\n66\n1\n70\n' + (item.closed ? 1 : 0) + '\n10\n0.0\n20\n0.0\n30\n0.0\n';
