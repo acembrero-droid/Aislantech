@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CAD Pro + CNC · DXF → G-Code · v12.5</title>
+<title>CAD Pro + CNC · DXF → G-Code · v12.6</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -521,7 +521,7 @@ input[type="number"]{font-variant-numeric:tabular-nums}
       <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 15V9l4 6V9l4 6"/>
     </svg>
     CAD&nbsp;+&nbsp;CNC
-    <span class="version-badge" id="appVersion">v12.5</span>
+    <span class="version-badge" id="appVersion">v12.6</span>
   </span>
   <div class="separator"></div>
   <button id="qa-new" title="Nuevo (Ctrl+N)"><svg viewBox="0 0 24 24"><path d="M13 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V9z"/><path d="M13 3v6h6"/></svg></button>
@@ -787,7 +787,8 @@ window.dispatchEvent(new Event('clipper-ready'));
 </script>
 <script>
 /* ═══════════════════════════════════════════════════════════════════════
-   CAD Pro + CNC — v12.5
+   CAD Pro + CNC — v12.6
+   v12.6: desbaste parcial (solo renuncia al sobreespesor en zonas estrechas) · patillas fuera de ranuras
    v12.5: sobreespesor de desbaste (pasadas previas a +N mm, última a cota) · tema moderno · fix pasadas en contornos abiertos
    Novedades:
      · Fix render/s2w
@@ -803,8 +804,8 @@ project.selectedColor = new Color(0.31, 0.76, 0.97);
 
 const canvasContainer = document.getElementById('canvas-container');
 
-const APP_VERSION = '12.5';
-const VERSION_NOTES = 'Sobreespesor de desbaste en cortes I/E (última pasada a cota) · Interfaz renovada';
+const APP_VERSION = '12.6';
+const VERSION_NOTES = 'Desbaste parcial en zonas estrechas · Patillas fuera de ranuras · Sobreespesor de desbaste';
 
 const layers = {};
 function safeName(orig){ let n = orig.replace(/[^a-zA-Z0-9_\-]/g,'_'); if (/^\d/.test(n)) n='L_'+n; return n; }
@@ -3262,9 +3263,27 @@ function resolveCutContours(op, tool){
         const roughLoops = loopsFor(delta + compSign * allowance).filter(l => l && l.length >= 3);
         roughs = cncPairRoughLoops(finals, roughLoops, allowance, toolR);
       }
+      // ¿El material de la pieza queda dentro de este lazo? (muestreo de vértices del dibujo)
+      const materialInside = (fl) => {
+        const stride = Math.max(1, Math.floor(pts.length / 50));
+        let inside = 0, total = 0;
+        for (let i = 0; i < pts.length; i += stride){ total++; if (pointInPoly(pts[i], fl)) inside++; }
+        return inside * 2 > total;
+      };
       finals.forEach((l, k) => {
-        const rough = roughs ? roughs[k] : null;
-        results.push({ points: l, closed: true, rough, roughFailed: !!(useAllowance && compSign !== 0 && !rough) });
+        const matIn = compSign !== 0 ? materialInside(l) : null;
+        let rough = roughs ? roughs[k] : null;
+        let roughPartial = false;
+        if (!rough && useAllowance && compSign !== 0){
+          // ★ Desbaste parcial: renuncia al sobreespesor solo en las zonas donde no cabe
+          rough = cncHybridRoughLoop(l, allowance, matIn ? 1 : -1, toolR);
+          roughPartial = !!rough;
+        }
+        results.push({
+          points: l, closed: true, rough, roughPartial,
+          roughFailed: !!(useAllowance && compSign !== 0 && !rough),
+          wasteInside: compSign !== 0 ? !matIn : null
+        });
       });
     } else {
       if (Math.abs(op.adjust) > 1e-6) pts = offsetOpenPathSimple(pts, op.adjust);
@@ -3343,6 +3362,69 @@ function cncPairRoughLoops(finals, roughLoops, allowance, toolR){
   });
 }
 
+// Desbaste "parcial": cuando el desbaste con sobreespesor no puede seguir al contorno
+// final en alguna zona (ranura/alivio más estrecho que fresa+sobreespesor), se construye
+// un recorrido que mantiene el sobreespesor en todo el contorno EXCEPTO en esas zonas,
+// donde va a cota de dibujo en cada pasada (así nunca se corta ahí a profundidad total de golpe).
+//   dir = +1 → el material queda dentro del lazo (la fresa va por fuera)
+//   dir = -1 → el material queda fuera del lazo (la fresa va por dentro)
+// Morfología con Clipper (uniones a inglete, como el resto de offsets):
+//   dir +1: S = cierre(I,a) \ I ;  H = I ∪ (dilata(I,a) \ dilata(S,a))
+//   dir -1: S = I \ apertura(I,a) ; H = erosiona(I,a) ∪ (dilata(S,a) ∩ I)
+function cncHybridRoughLoop(fl, a, dir, toolR){
+  if (!cncState.clipperReady || !cncState.clipperInstance || !fl || fl.length < 3) return null;
+  try {
+    const Lb = window.jsAngusjClipper, S = CLIPPER_SCALE, C = cncState.clipperInstance;
+    const off = (paths, d) => {
+      if (!paths.length) return [];
+      return C.offsetToPaths({
+        delta: Math.round(d * S), arcTolerance: 0.02 * S, miterLimit: 10.0,
+        offsetInputs: paths.map(pth => ({ joinType: Lb.JoinType.Miter, endType: Lb.EndType.ClosedPolygon, data: pth }))
+      }) || [];
+    };
+    const clip = (type, subj, clp) => {
+      if (!subj.length) return [];
+      return C.clipToPaths({
+        clipType: type,
+        subjectFillType: Lb.PolyFillType.NonZero, clipFillType: Lb.PolyFillType.NonZero,
+        subjectInputs: subj.map(d => ({ data: d, closed: true })),
+        clipInputs: clp.map(d => ({ data: d }))
+      }) || [];
+    };
+    const eps = 0.005;
+    const minArea = 0.0005 * S * S;
+    let base = fl.map(q => ({ x: Math.round(q.x * S), y: Math.round(q.y * S) }));
+    if (signedArea(base) < 0) base = base.slice().reverse();
+    const I = [base];
+    let H;
+    if (dir > 0){
+      const Ir = off(I, a);
+      const S1 = clip(Lb.ClipType.Difference, off(Ir, -a), off(I, eps)).filter(q => Math.abs(signedArea(q)) > minArea);
+      if (!S1.length) return null;
+      H = clip(Lb.ClipType.Union, I, clip(Lb.ClipType.Difference, Ir, off(S1, a + 2 * eps)));
+    } else {
+      const Ir = off(I, -a);
+      const S1 = clip(Lb.ClipType.Difference, off(I, -eps), off(Ir, a)).filter(q => Math.abs(signedArea(q)) > minArea);
+      if (!S1.length) return null;
+      H = clip(Lb.ClipType.Union, Ir, clip(Lb.ClipType.Intersection, off(S1, a + 2 * eps), I));
+    }
+    const loops = H.filter(q => q && q.length >= 3 && Math.abs(signedArea(q)) > 0.01 * S * S)
+                   .map(q => q.map(v => ({ x: v.x / S, y: v.y / S })));
+    if (loops.length !== 1) return null;           // topología inesperada → sin sobreespesor (seguro)
+    const h = loops[0];
+    // Seguridad: el recorrido de desbaste nunca puede entrar en la pieza respecto al final
+    for (const v of h){
+      const inside = pointInPoly(v, fl);
+      const d = cncClosestOnLoop(fl, v).d;
+      if (d > 0.003 && (dir > 0 ? inside : !inside)) return null;
+    }
+    return cncPairRoughLoops([fl], [h], a, toolR)[0];
+  } catch (e){
+    console.warn('[desbaste parcial] fallo:', e);
+    return null;
+  }
+}
+
 // ─── FIN PARTE 2 ───
     
 function rebuildAllContours(){
@@ -3362,7 +3444,7 @@ function rebuildAllContours(){
         const c = contours[ci];
         if (c.closed && c.points.length >= 3){
           const seed = cncState.tabs.seed + i*137 + ci*9973;
-          tabsPerContour.push(computeTabSegments(c.points, true, cncState.tabs.count, cncState.tabs.width, seed, tool.diam));
+          tabsPerContour.push(computeTabSegments(c.points, true, cncState.tabs.count, cncState.tabs.width, seed, tool.diam, c.wasteInside));
         } else {
           tabsPerContour.push([]);
         }
@@ -3372,7 +3454,95 @@ function rebuildAllContours(){
   }
   cncUpdateTabsInfo();
 }
-function computeTabSegments(pts, closed, count, width, seed, toolDiameter){
+// Zonas del contorno que tienen enfrente, por el lado del desperdicio y a menos de
+// 2 diámetros de fresa, otro tramo del MISMO contorno (p.ej. las dos paredes de una
+// ranura). Ahí el desperdicio se vacía entero: una patilla no uniría la pieza a nada.
+// Devuelve intervalos [s0,s1] de longitud de arco prohibidos, o [] si no hay.
+function cncTabForbiddenIntervals(pts, toolDiameter, wasteInside){
+  if (typeof wasteInside !== 'boolean' || !(toolDiameter > 0) || pts.length < 3) return [];
+  const path = buildPath(pts, true);
+  const cum = computeCumLens(path);
+  const L = cum[cum.length - 1];
+  if (!(L > 0)) return [];
+  const N = Math.max(16, Math.min(1500, Math.ceil(L / 0.5)));
+  const h = L / N;
+  const sp = [];
+  for (let i = 0; i < N; i++) sp.push(getPointAtArcLength(path, cum, i * h));
+  const thr2 = (2 * toolDiameter) * (2 * toolDiameter);
+  const bad = new Uint8Array(N);
+  for (let i = 0; i < N; i++){
+    let bestJ = -1, bestD2 = thr2;
+    for (let j = 0; j < N; j++){
+      if (j === i) continue;
+      const dx = sp[j].x - sp[i].x, dy = sp[j].y - sp[i].y;
+      const d2 = dx*dx + dy*dy;
+      if (d2 >= bestD2) continue;
+      let arc = Math.abs(j - i) * h; arc = Math.min(arc, L - arc);
+      // "Enfrentado" = cerca en línea recta pero lejos recorriendo el contorno
+      if (arc <= 2 * Math.sqrt(d2) + toolDiameter) continue;
+      bestD2 = d2; bestJ = j;
+    }
+    if (bestJ < 0) continue;
+    const mid = { x: (sp[i].x + sp[bestJ].x) / 2, y: (sp[i].y + sp[bestJ].y) / 2 };
+    if (pointInPoly(mid, pts) === wasteInside) bad[i] = 1;   // el hueco entre ambos es desperdicio
+  }
+  const out = [];
+  for (let i = 0; i < N; i++){
+    if (!bad[i]) continue;
+    const s0 = Math.max(0, (i - 1) * h), s1 = Math.min(L, (i + 1) * h);
+    if (out.length && s0 <= out[out.length - 1][1]) out[out.length - 1][1] = s1;
+    else out.push([s0, s1]);
+  }
+  return out;
+}
+// Reparte las patillas igual que el método normal (tramos iguales + variación aleatoria),
+// pero solo sobre la longitud permitida (fuera de márgenes y de zonas prohibidas).
+function cncPlaceTabsAvoiding(L, count, pathWidth, margin, forbidden, rng, toolDiameter){
+  const half = pathWidth / 2;
+  // Intervalos válidos para el CENTRO de la patilla
+  let allowed = [[margin + half, L - margin - half]];
+  for (const [f0, f1] of forbidden){
+    const c0 = f0 - half, c1 = f1 + half;
+    const next = [];
+    for (const [a0, a1] of allowed){
+      if (c1 <= a0 || c0 >= a1){ next.push([a0, a1]); continue; }
+      if (c0 > a0) next.push([a0, c0]);
+      if (c1 < a1) next.push([c1, a1]);
+    }
+    allowed = next;
+  }
+  allowed = allowed.filter(([a0, a1]) => a1 - a0 > 1e-6);
+  const U = allowed.reduce((t, [a0, a1]) => t + (a1 - a0), 0);
+  if (U <= 0) return [];
+  const uToS = u => {
+    for (const [a0, a1] of allowed){ if (u <= a1 - a0) return a0 + u; u -= (a1 - a0); }
+    return allowed[allowed.length - 1][1];
+  };
+  const n = Math.max(0, Math.min(count, Math.floor((U + pathWidth) / (pathWidth * 1.2))));
+  if (!n) return [];
+  const segLen = U / n;
+  const jitterMax = Math.max(0, segLen * 0.35);
+  const centers = [];
+  for (let i = 0; i < n; i++){
+    const u = Math.max(0, Math.min(U, i * segLen + segLen / 2 + (rng() * 2 - 1) * jitterMax));
+    centers.push(uToS(u));
+  }
+  centers.sort((x, y) => x - y);
+  const tabs = [];
+  for (let c of centers){
+    const prev = tabs.length ? tabs[tabs.length - 1].sEnd + 0.05 + half : -Infinity;
+    if (c < prev){
+      // desplazar hacia delante dentro de un intervalo válido
+      const iv = allowed.find(([a0, a1]) => a1 >= prev);
+      if (!iv) continue;
+      c = Math.max(prev, iv[0]);
+      if (c > iv[1]) continue;
+    }
+    tabs.push({ sStart: c - half, sEnd: c + half, toolDiam: toolDiameter });
+  }
+  return tabs;
+}
+function computeTabSegments(pts, closed, count, width, seed, toolDiameter, wasteInside){
   toolDiameter = Math.max(0, toolDiameter || 0);
   const pathWidth = Math.max(0.1, width + toolDiameter);
   if (!closed || pts.length < 3) return [];
@@ -3388,6 +3558,8 @@ function computeTabSegments(pts, closed, count, width, seed, toolDiameter){
   const margin = Math.max(pathWidth, L * 0.03);
   const usable = L - 2 * margin;
   if (usable < pathWidth * count * 1.2) return [];
+  const forbidden = (closed && count > 0) ? cncTabForbiddenIntervals(pts, toolDiameter, wasteInside) : [];
+  if (forbidden.length) return cncPlaceTabsAvoiding(L, count, pathWidth, margin, forbidden, rng, toolDiameter);
   const segLen = usable / count;
   const jitterMax = Math.max(0, segLen * 0.35);
   const tabs = [];
@@ -3623,12 +3795,12 @@ function buildCNCProgram(){
           let tabsEff = [];
           if (cncState.tabs.enabled && isClosed){
             const seed = cncState.tabs.seed + originalIndex*137 + ci*9973;
-            tabsEff = computeTabSegments(ptsEff, true, cncState.tabs.count, cncState.tabs.width, seed, tool.diam);
+            tabsEff = computeTabSegments(ptsEff, true, cncState.tabs.count, cncState.tabs.width, seed, tool.diam, c.wasteInside);
           }
           const shape = isClosed ? 'cerrado' : 'abierto';
           // Desbaste con sobreespesor: solo si hay más de una pasada y el contorno lo admite
           const roughPts = (isClosed && passes > 1 && c.rough && c.rough.length >= 3) ? c.rough : null;
-          const allowStr = roughPts ? `, desbaste +${cncFinishAllowance().toFixed(2)}mm` : '';
+          const allowStr = roughPts ? `, desbaste +${cncFinishAllowance().toFixed(2)}mm${c.roughPartial ? ' salvo zonas estrechas' : ''}` : '';
           emit(`(Contorno ${ci+1}/${contoursArr.length}: ${shape}, ${ptsEff.length} pts${allowStr})`, -1);
           if (c.roughFailed && passes > 1) emit('(aviso: sin sobreespesor en este contorno - geometria demasiado estrecha)', -1);
           const firstPts = roughPts || ptsEff;
