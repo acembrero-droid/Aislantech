@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CAD Pro + CNC · DXF → G-Code · v12.10</title>
+<title>CAD Pro + CNC · DXF → G-Code · v12.11</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -502,6 +502,26 @@ input[type="number"]{font-variant-numeric:tabular-nums}
 #navigator{background:rgba(21,24,30,.85);backdrop-filter:blur(6px);border:1px solid var(--border-light);border-radius:var(--radius-m)}
 .measure-info{border-radius:var(--radius-m)}
 #dynamic-tooltip{background:rgba(15,17,21,.92);border-radius:8px;border-color:rgba(92,200,255,.6);backdrop-filter:blur(4px)}
+/* Mapa de alturas */
+.cnc-section.cnc-hm-panel{border-color:rgba(61,214,140,.18)}
+.cnc-section.cnc-hm-panel.hm-on{border-color:rgba(61,214,140,.55);box-shadow:0 0 0 1px rgba(61,214,140,.12)}
+.cnc-hm-toggle,.cnc-hm-check{display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--text-primary);cursor:pointer;margin:2px 0 4px}
+.cnc-hm-toggle input,.cnc-hm-check input{accent-color:var(--accent-green);width:15px;height:15px}
+.cnc-hm-grid2{display:grid;grid-template-columns:1fr 1fr;gap:4px 10px;margin-top:6px}
+.cnc-hm-grid2 .cnc-row input{width:64px}
+.cnc-hm-grid2 .cnc-row label{min-width:0}
+.cnc-hm-table{overflow:auto;max-height:220px;margin-top:6px;border:1px solid var(--border-color);border-radius:8px;padding:4px;background:var(--surface-2)}
+.cnc-hm-table table{border-collapse:separate;border-spacing:3px}
+.cnc-hm-table td{position:relative}
+.cnc-hm-table td span{position:absolute;top:1px;left:4px;font-size:8px;color:var(--text-dim);pointer-events:none;font-family:var(--font-mono)}
+.cnc-hm-table input{width:70px;height:28px;padding:10px 4px 1px;font-size:11px;text-align:right;font-family:var(--font-mono);background:var(--bg-panel);border:1px solid var(--border-light);border-radius:5px;color:var(--text-primary)}
+.cnc-hm-table input:focus{outline:none;border-color:rgba(61,214,140,.7)}
+.cnc-hm-table input.empty{border-color:rgba(255,179,71,.45)}
+.cnc-hm-table th{font-size:9px;color:var(--text-dim);font-weight:500;font-family:var(--font-mono);padding:0 2px}
+.cnc-hm-paste{width:100%;margin-top:6px;background:var(--surface-2);border:1px solid var(--border-light);border-radius:8px;color:var(--text-primary);font-family:var(--font-mono);font-size:10.5px;padding:6px;resize:vertical}
+.cnc-hm-btns{display:flex;gap:6px}
+.cnc-hm-btns .cnc-btn{flex:1}
+#cnc-hm-info{color:#8FF0C0;background:rgba(61,214,140,.06);border-color:rgba(61,214,140,.25)}
 @media (max-width:1400px){ #cnc-panel{width:300px} #properties-panel{width:240px} }
 @media (max-width:1024px){
   #layer-panel{width:160px} #properties-panel{width:200px} #cnc-panel{width:260px}
@@ -524,7 +544,7 @@ input[type="number"]{font-variant-numeric:tabular-nums}
       <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 15V9l4 6V9l4 6"/>
     </svg>
     CAD&nbsp;+&nbsp;CNC
-    <span class="version-badge" id="appVersion">v12.10</span>
+    <span class="version-badge" id="appVersion">v12.11</span>
   </span>
   <div class="separator"></div>
   <button id="qa-new" title="Nuevo (Ctrl+N)"><svg viewBox="0 0 24 24"><path d="M13 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V9z"/><path d="M13 3v6h6"/></svg></button>
@@ -704,6 +724,30 @@ input[type="number"]{font-variant-numeric:tabular-nums}
       <div class="cnc-row"><label>Rapid XY</label><input type="number" id="cnc-rapidXY" step="100" min="100"></div>
       <div class="cnc-row"><label>Rapid Z</label><input type="number" id="cnc-rapidZ" step="100" min="100"></div>
     </div>
+    <div class="cnc-section cnc-hm-panel" id="cnc-hm-section">
+      <h3><svg class="h-ico" viewBox="0 0 24 24"><path d="M3 17l5-4 4 3 4-6 5 4"/><path d="M3 21h18"/><circle cx="8" cy="13" r="1"/><circle cx="16" cy="10" r="1"/></svg>Mapa de alturas · Z0 virtual <span class="mini" id="cnc-hm-badge">OFF</span></h3>
+      <label class="cnc-hm-toggle"><input type="checkbox" id="cnc-hm-enabled"> <span>Compensar Z del programa con el mapa</span></label>
+      <div class="cnc-hint">Las alturas son relativas a <b>P1</b> (esquina X mín · Y mín): haz el Z0 de trabajo sobre la cara del tablero en P1.</div>
+      <div class="cnc-hm-grid2">
+        <div class="cnc-row"><label>X mín</label><input type="number" id="cnc-hm-x0" step="1"></div>
+        <div class="cnc-row"><label>X máx</label><input type="number" id="cnc-hm-x1" step="1"></div>
+        <div class="cnc-row"><label>Y mín</label><input type="number" id="cnc-hm-y0" step="1"></div>
+        <div class="cnc-row"><label>Y máx</label><input type="number" id="cnc-hm-y1" step="1"></div>
+        <div class="cnc-row"><label>Puntos X</label><input type="number" id="cnc-hm-nx" min="2" max="20" step="1"></div>
+        <div class="cnc-row"><label>Puntos Y</label><input type="number" id="cnc-hm-ny" min="2" max="20" step="1"></div>
+        <div class="cnc-row" title="Hasta qué Z (negativa) baja buscando contacto"><label>Prof. búsq.</label><input type="number" id="cnc-hm-depth" min="0.5" max="50" step="0.5"></div>
+        <div class="cnc-row"><label>F palpado</label><input type="number" id="cnc-hm-feed" min="5" max="1000" step="10"></div>
+        <div class="cnc-row"><label>Z seguro</label><input type="number" id="cnc-hm-safe" min="0.5" max="50" step="0.5"></div>
+        <label class="cnc-hm-check" title="M0 antes de cada punto: para colocar la placa de contacto a mano"><input type="checkbox" id="cnc-hm-pause"> Pausa por punto</label>
+      </div>
+      <button class="cnc-btn" id="cnc-hm-fit">⤢ Ajustar zona al programa</button>
+      <button class="cnc-btn" id="cnc-hm-probe">⬇ Descargar programa de palpado</button>
+      <div class="cnc-hint">Medidas (mm, relativas o absolutas: se restan respecto a P1). Fila superior = Y máx.</div>
+      <div class="cnc-hm-table" id="cnc-hm-table"></div>
+      <textarea id="cnc-hm-paste" class="cnc-hm-paste" rows="3" placeholder="Pega aquí la consola: [PRB:x,y,z:1] (GRBL), x,y,z (Mach3), x y z … (LinuxCNC) o un valor por línea, en el orden P1, P2…"></textarea>
+      <div class="cnc-hm-btns"><button class="cnc-btn" id="cnc-hm-read">Leer valores pegados</button><button class="cnc-btn" id="cnc-hm-clear">Borrar medidas</button></div>
+      <div class="cnc-tabs-info" id="cnc-hm-info">Sin medidas</div>
+    </div>
     <div class="cnc-section cnc-sim-panel">
       <h3><svg class="h-ico" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m10 9 5 3-5 3z"/></svg>Simulación</h3>
       <div class="cnc-sim-btn-row">
@@ -791,7 +835,8 @@ window.dispatchEvent(new Event('clipper-ready'));
 </script>
 <script>
 /* ═══════════════════════════════════════════════════════════════════════
-   CAD Pro + CNC — v12.10
+   CAD Pro + CNC — v12.11
+   v12.11: mapa de alturas (Z0 virtual): programa de palpado + compensación bilineal de Z
    v12.10: FIX esquinas achaflanadas: contornos con vértices exactos (CNC, cajeado, offset CAD, export DXF)
    v12.9: selector "Placa a mecanizar": programa solo de esa placa con X0 Y0 en su esquina inferior izquierda
    v12.8: nesting → una capa por placa + contorno en capa bloqueada · capas bloqueadas/ocultas no seleccionables
@@ -812,8 +857,8 @@ project.selectedColor = new Color(0.31, 0.76, 0.97);
 
 const canvasContainer = document.getElementById('canvas-container');
 
-const APP_VERSION = '12.10';
-const VERSION_NOTES = 'FIX esquinas achaflanadas (vértices exactos) · Programa por placa · Nesting';
+const APP_VERSION = '12.11';
+const VERSION_NOTES = 'Mapa de alturas (Z0 virtual) · FIX esquinas · Programa por placa';
 
 const layers = {};
 function safeName(orig){ let n = orig.replace(/[^a-zA-Z0-9_\-]/g,'_'); if (/^\d/.test(n)) n='L_'+n; return n; }
@@ -1041,7 +1086,10 @@ const cncState = {
   rapidZ: 3000,
   tabs: { enabled:false, count:3, width:1.0, height:1.0, seed:12345 },
   finishAllowance: 0.2,
-  plateFilter: '',        // '' = todas (origen del dibujo) · 'Placa_N' = solo esa placa, origen en su esquina   // mm que se dejan en las pasadas de desbaste (la última va a cota)
+  plateFilter: '',
+  // Mapa de alturas (Z0 virtual): alturas medidas de la cara del tablero, relativas a P1
+  heightMap: { enabled: false, x0: 0, x1: 100, y0: 0, y1: 100, nx: 3, ny: 3,
+               depth: 5, feed: 100, safe: 3, pause: false, values: [] },        // '' = todas (origen del dibujo) · 'Placa_N' = solo esa placa, origen en su esquina   // mm que se dejan en las pasadas de desbaste (la última va a cota)
   simMoves: [], simMoveTimes: [], simTotalTime: 0, simT: 0,
   simPlaying: false, simSpeedMult: 1, simAnimId: null, simLastFrame: 0,
   gcodeLines: [], gcodeBlock: [], blockPoints: {}, blockZ: {},
@@ -3789,6 +3837,187 @@ function cncRefreshPlateSelect(){
   sel.value = cncState.plateFilter;
   document.getElementById('cnc-plate-row').style.display = plates.length ? '' : 'none';
 }
+/* ── Mapa de alturas (Z0 virtual por software) ─────────────────────────
+   Rejilla nx × ny sobre [x0,x1]×[y0,y1] (coordenadas del PROGRAMA, es decir, ya
+   relativas al origen de la placa si hay una elegida). values[j*nx+i] = Z medida.
+   Todo se usa relativo a P1 = (x0,y0): así da igual el grosor de la placa de
+   contacto o si la controladora informa coordenadas máquina o de trabajo.      */
+function hmGridPoint(hm, i, j){
+  return { x: hm.x0 + (hm.x1 - hm.x0) * i / (hm.nx - 1), y: hm.y0 + (hm.y1 - hm.y0) * j / (hm.ny - 1) };
+}
+// Orden de palpado en zigzag: P1 = (0,0); fila 0 de izq. a der., fila 1 de der. a izq.…
+function hmProbeOrder(hm){
+  const out = [];
+  for (let j = 0; j < hm.ny; j++){
+    const row = [];
+    for (let i = 0; i < hm.nx; i++) row.push({ i, j, idx: j * hm.nx + i });
+    if (j % 2) row.reverse();
+    out.push(...row);
+  }
+  return out;
+}
+function hmReady(hm){
+  return hm && hm.values.length === hm.nx * hm.ny && hm.values.every(v => Number.isFinite(v));
+}
+function hmHeight(hm, x, y){
+  const ref = hm.values[0];
+  let fx = (x - hm.x0) / (hm.x1 - hm.x0) * (hm.nx - 1);
+  let fy = (y - hm.y0) / (hm.y1 - hm.y0) * (hm.ny - 1);
+  fx = Math.max(0, Math.min(hm.nx - 1, fx));       // fuera de la zona: valor del borde (sin extrapolar)
+  fy = Math.max(0, Math.min(hm.ny - 1, fy));
+  const i0 = Math.min(hm.nx - 2, Math.floor(fx)), j0 = Math.min(hm.ny - 2, Math.floor(fy));
+  const tx = fx - i0, ty = fy - j0;
+  const v = (i, j) => hm.values[j * hm.nx + i] - ref;
+  return (v(i0, j0) * (1 - tx) + v(i0 + 1, j0) * tx) * (1 - ty) + (v(i0, j0 + 1) * (1 - tx) + v(i0 + 1, j0 + 1) * tx) * ty;
+}
+// Aplica el mapa a un programa ya generado. Devuelve { lines, blocks, split }.
+function hmApplyToProgram(lines, blocks, hm){
+  const cellMin = Math.min((hm.x1 - hm.x0) / (hm.nx - 1), (hm.y1 - hm.y0) / (hm.ny - 1));
+  const segLen = Math.max(0.5, Math.min(10, cellMin / 4));
+  const f3 = v => v.toFixed(3);
+  const outL = [], outB = [];
+  let x = 0, y = 0, z = 0, mode = 0, cyc = null, split = 0;
+  const wordRe = /([A-Za-z])\s*([-+]?\d*\.?\d+)/g;
+  for (let k = 0; k < lines.length; k++){
+    const line = lines[k], blk = blocks[k];
+    const ci = line.indexOf('(');
+    const code = ci >= 0 ? line.slice(0, ci) : line;
+    const cmt = ci >= 0 ? ' ' + line.slice(ci).trim() : '';
+    const words = []; let m; wordRe.lastIndex = 0;
+    while ((m = wordRe.exec(code))) words.push({ l: m[1].toUpperCase(), v: parseFloat(m[2]), s: m[2] });
+    const get = l => { const w = words.find(q => q.l === l); return w ? w.v : undefined; };
+    const getS = l => { const w = words.find(q => q.l === l); return w ? w.s : undefined; };
+    const gs = words.filter(w => w.l === 'G').map(w => w.v);
+    const X = get('X'), Y = get('Y'), Z = get('Z');
+    const pass = () => { outL.push(line); outB.push(blk); };
+    if (!words.length || words.some(w => w.l === 'O')){ pass(); continue; }
+    if (gs.some(g => Math.abs(g - 38.2) < 1e-6 || g === 28 || g === 30 || g === 53 || g === 92 || g === 10)){ pass(); continue; }
+    if (gs.includes(80)) cyc = null;
+    if (gs.includes(81) || gs.includes(83)){
+      const nx = X !== undefined ? X : x, ny = Y !== undefined ? Y : y, h = hmHeight(hm, nx, ny);
+      cyc = { z: Z, r: get('R') };
+      const parts = words.map(w => {
+        if (w.l === 'Z') return 'Z' + f3(w.v + h);
+        if (w.l === 'R') return 'R' + f3(w.v + h);
+        return w.l + w.s;
+      });
+      outL.push(parts.join(' ') + cmt); outB.push(blk);
+      x = nx; y = ny; continue;
+    }
+    if (gs.includes(0)) mode = 0;
+    if (gs.includes(1)) mode = 1;
+    if (X === undefined && Y === undefined && Z === undefined){ pass(); continue; }
+    const hasMotionG = gs.includes(0) || gs.includes(1);
+    if (cyc && !hasMotionG && Z === undefined){             // agujero siguiente del ciclo
+      const nx = X !== undefined ? X : x, ny = Y !== undefined ? Y : y, h = hmHeight(hm, nx, ny);
+      let t = `X${f3(nx)} Y${f3(ny)}`;
+      if (cyc.z !== undefined) t += ` Z${f3(cyc.z + h)}`;
+      if (cyc.r !== undefined) t += ` R${f3(cyc.r + h)}`;
+      outL.push(t + cmt); outB.push(blk);
+      x = nx; y = ny; continue;
+    }
+    const nx = X !== undefined ? X : x, ny = Y !== undefined ? Y : y, nz = Z !== undefined ? Z : z;
+    const fS = getS('F'), fStr = fS !== undefined ? ` F${fS}` : '';
+    const G = mode === 1 ? 'G1' : 'G0';
+    if (X === undefined && Y === undefined){
+      outL.push(`${G} Z${f3(nz + hmHeight(hm, nx, ny))}${fStr}${cmt}`); outB.push(blk);
+    } else {
+      const d = Math.hypot(nx - x, ny - y);
+      const n = (mode === 1 && d > segLen) ? Math.ceil(d / segLen) : 1;
+      for (let i = 1; i <= n; i++){
+        const t = i / n;
+        const px = x + (nx - x) * t, py = y + (ny - y) * t, pz = z + (nz - z) * t;
+        outL.push(`${G} X${f3(px)} Y${f3(py)} Z${f3(pz + hmHeight(hm, px, py))}${fStr}${i === n ? cmt : ''}`);
+        outB.push(blk);
+      }
+      split += n - 1;
+    }
+    x = nx; y = ny; z = nz;
+  }
+  return { lines: outL, blocks: outB, split };
+}
+function hmProbeProgram(hm){
+  const f3 = v => v.toFixed(3);
+  const order = hmProbeOrder(hm);
+  const p1 = hmGridPoint(hm, 0, 0);
+  const L = ['%', `(PALPADO MAPA DE ALTURAS ${hm.nx} x ${hm.ny} = ${order.length} puntos - CAD Pro + CNC v${APP_VERSION})`,
+    `(1. Z0 de trabajo sobre la cara del tablero en P1: X${f3(p1.x)} Y${f3(p1.y)})`,
+    `(2. Conecta el palpador. Cada punto baja con G38.2 hasta Z-${f3(hm.depth)} a F${hm.feed})`,
+    '(3. Copia la Z de cada contacto en el orden P1, P2... y pegala en la app)',
+    'G21 G90 G17', `G0 Z${f3(hm.safe)}`];
+  order.forEach((o, k) => {
+    const q = hmGridPoint(hm, o.i, o.j);
+    L.push(`(P${k + 1}  X${f3(q.x)} Y${f3(q.y)})`, `G0 X${f3(q.x)} Y${f3(q.y)}`);
+    if (hm.pause) L.push(`M0 (coloca la placa de contacto en P${k + 1})`);
+    L.push(`G38.2 Z-${f3(hm.depth)} F${hm.feed}`, `G0 Z${f3(hm.safe)}`);
+  });
+  L.push(`G0 X${f3(p1.x)} Y${f3(p1.y)}`, 'M30', '%');
+  return L.join('\n');
+}
+// Extrae valores Z en orden de palpado del texto pegado
+function hmParseText(text){
+  const out = [];
+  for (const raw of String(text || '').split(/\r?\n/)){
+    const line = raw.trim();
+    if (!line) continue;
+    const prb = /PRB:\s*([-+]?\d*\.?\d+)\s*,\s*([-+]?\d*\.?\d+)\s*,\s*([-+]?\d*\.?\d+)/i.exec(line);
+    if (prb){ out.push(parseFloat(prb[3])); continue; }
+    if (/^[\[<]/.test(line) || /^ok$/i.test(line)) continue;          // otros mensajes de GRBL
+    // Solo líneas formadas ÚNICAMENTE por números y separadores (evita "Grbl 1.1h", "error:9", etc.)
+    if (!/^[\s\d.,;:+\-eE]+$/.test(line)) continue;
+    const nums = (line.match(/[-+]?\d*\.?\d+(?:e[-+]?\d+)?/gi) || []).map(Number).filter(Number.isFinite);
+    if (nums.length === 1) out.push(nums[0]);
+    else if (nums.length >= 3) out.push(nums[2]);                        // x,y,z… → la Z es la 3ª
+  }
+  return out;
+}
+function hmRenderUI(){
+  const hm = cncState.heightMap;
+  const ids = { x0: 'cnc-hm-x0', x1: 'cnc-hm-x1', y0: 'cnc-hm-y0', y1: 'cnc-hm-y1', nx: 'cnc-hm-nx', ny: 'cnc-hm-ny', depth: 'cnc-hm-depth', feed: 'cnc-hm-feed', safe: 'cnc-hm-safe' };
+  for (const k in ids){ const el = document.getElementById(ids[k]); if (el && document.activeElement !== el) el.value = hm[k]; }
+  document.getElementById('cnc-hm-enabled').checked = hm.enabled;
+  document.getElementById('cnc-hm-pause').checked = hm.pause;
+  const order = hmProbeOrder(hm), pnum = {};
+  order.forEach((o, k) => { pnum[o.idx] = k + 1; });
+  let html = '<table><tr><th></th>';
+  for (let i = 0; i < hm.nx; i++) html += `<th>X${hmGridPoint(hm, i, 0).x.toFixed(0)}</th>`;
+  html += '</tr>';
+  for (let j = hm.ny - 1; j >= 0; j--){
+    html += `<tr><th>Y${hmGridPoint(hm, 0, j).y.toFixed(0)}</th>`;
+    for (let i = 0; i < hm.nx; i++){
+      const idx = j * hm.nx + i, v = hm.values[idx];
+      const has = Number.isFinite(v);
+      html += `<td><span>P${pnum[idx]}</span><input type="number" step="0.01" data-idx="${idx}" class="${has ? '' : 'empty'}" value="${has ? v : ''}"></td>`;
+    }
+    html += '</tr>';
+  }
+  html += '</table>';
+  const tbl = document.getElementById('cnc-hm-table');
+  tbl.innerHTML = html;
+  tbl.querySelectorAll('input').forEach(inp => inp.addEventListener('change', () => {
+    const idx = parseInt(inp.dataset.idx), v = parseFloat(inp.value);
+    if (hm.values.length !== hm.nx * hm.ny) hm.values = new Array(hm.nx * hm.ny).fill(NaN);
+    hm.values[idx] = Number.isFinite(v) ? v : NaN;
+    hmAfterChange();
+  }));
+  // Información
+  const info = document.getElementById('cnc-hm-info');
+  const n = hm.nx * hm.ny, got = hm.values.filter(Number.isFinite).length;
+  document.getElementById('cnc-hm-section').classList.toggle('hm-on', hm.enabled && hmReady(hm));
+  const badge = document.getElementById('cnc-hm-badge');
+  badge.textContent = hm.enabled ? (hmReady(hm) ? 'ON' : 'INCOMPLETO') : 'OFF';
+  if (!got){ info.textContent = `${n} puntos · sin medidas`; return; }
+  if (!hmReady(hm)){ info.textContent = `${got}/${n} medidas · faltan ${n - got}${hm.enabled ? '\nEl programa se genera SIN compensar hasta completar el mapa' : ''}`; return; }
+  const rel = hm.values.map(v => v - hm.values[0]);
+  const mn = Math.min(...rel), mx = Math.max(...rel);
+  let t = `${n}/${n} medidas · respecto a P1: mín ${mn >= 0 ? '+' : ''}${mn.toFixed(3)} · máx ${mx >= 0 ? '+' : ''}${mx.toFixed(3)} mm\nDesnivel total: ${(mx - mn).toFixed(3)} mm`;
+  if (mx - mn > 3) t += '\n⚠ Más de 3 mm de desnivel: revisa las medidas o planea el martir';
+  info.textContent = t;
+}
+function hmAfterChange(){
+  hmRenderUI();
+  if (cncState.operations.length) cncRebuildAndRegen();
+}
 function buildCNCProgram(){
   cncState.gcodeLines = []; cncState.gcodeBlock = [];
   cncState.blockPoints = {}; cncState.blockZ = {};
@@ -4080,6 +4309,22 @@ function buildCNCProgram(){
   cncState.simMoveTimes = times;
   cncState.simTotalTime = total;
   cncState.simPlaying = false;
+  // ★ Mapa de alturas: corrige todas las Z según la superficie medida
+  const hm = cncState.heightMap;
+  if (hm && hm.enabled){
+    let head;
+    if (hmReady(hm)){
+      const r = hmApplyToProgram(cncState.gcodeLines, cncState.gcodeBlock, hm);
+      cncState.gcodeLines = r.lines; cncState.gcodeBlock = r.blocks;
+      const rel = hm.values.map(v => v - hm.values[0]);
+      head = [`(MAPA DE ALTURAS ${hm.nx}x${hm.ny}: Z compensada respecto a P1 X${hm.x0.toFixed(3)} Y${hm.y0.toFixed(3)} - Z0 debe hacerse ahi)`,
+              `(desnivel ${(Math.max(...rel) - Math.min(...rel)).toFixed(3)} mm - ${r.split} tramos subdivididos)`];
+    } else {
+      head = ['(AVISO: mapa de alturas activado pero INCOMPLETO - programa SIN compensar)'];
+    }
+    cncState.gcodeLines.splice(3, 0, ...head);
+    cncState.gcodeBlock.splice(3, 0, ...head.map(() => -1));
+  }
   cncRenderGcodeDisplay();
   cncUpdateSimUI();
 }
@@ -4666,6 +4911,73 @@ document.getElementById('cnc-copy-btn').addEventListener('click', () => {
     cncRebuildAndRegen();
   });
 });
+(function hmBindUI(){
+  const hm = () => cncState.heightMap;
+  const num = (id, min, max, def) => { const v = parseFloat(document.getElementById(id).value); return Number.isFinite(v) ? Math.max(min, Math.min(max, v)) : def; };
+  ['cnc-hm-x0','cnc-hm-x1','cnc-hm-y0','cnc-hm-y1'].forEach(id => document.getElementById(id).addEventListener('change', () => {
+    const h = hm();
+    const x0 = num('cnc-hm-x0', -1e5, 1e5, h.x0), x1 = num('cnc-hm-x1', -1e5, 1e5, h.x1);
+    const y0 = num('cnc-hm-y0', -1e5, 1e5, h.y0), y1 = num('cnc-hm-y1', -1e5, 1e5, h.y1);
+    if (x1 - x0 < 1 || y1 - y0 < 1){ setPrompt('Mapa de alturas: la zona debe medir al menos 1 mm en X e Y'); hmRenderUI(); return; }
+    const moved = (x0 !== h.x0 || x1 !== h.x1 || y0 !== h.y0 || y1 !== h.y1);
+    Object.assign(h, { x0, x1, y0, y1 });
+    if (moved && h.values.some(Number.isFinite)){ h.values = []; setPrompt('Zona cambiada: medidas borradas (corresponden a otros puntos)'); }
+    hmAfterChange();
+  }));
+  ['cnc-hm-nx','cnc-hm-ny'].forEach(id => document.getElementById(id).addEventListener('change', () => {
+    const h = hm();
+    const nx = Math.round(num('cnc-hm-nx', 2, 20, h.nx)), ny = Math.round(num('cnc-hm-ny', 2, 20, h.ny));
+    if (nx !== h.nx || ny !== h.ny){
+      if (h.values.some(Number.isFinite)) setPrompt('Rejilla cambiada: medidas borradas');
+      h.nx = nx; h.ny = ny; h.values = [];
+    }
+    hmAfterChange();
+  }));
+  [['cnc-hm-depth','depth',0.5,50,5],['cnc-hm-feed','feed',5,1000,100],['cnc-hm-safe','safe',0.5,50,3]].forEach(([id, k, mn, mx, d]) =>
+    document.getElementById(id).addEventListener('change', () => { hm()[k] = num(id, mn, mx, d); hmRenderUI(); }));
+  document.getElementById('cnc-hm-pause').addEventListener('change', e => { hm().pause = e.target.checked; });
+  document.getElementById('cnc-hm-enabled').addEventListener('change', e => {
+    hm().enabled = e.target.checked; hmAfterChange();
+    setPrompt(e.target.checked ? (hmReady(hm()) ? 'Mapa de alturas ACTIVO: Z compensada' : 'Mapa de alturas activado, pero faltan medidas') : 'Mapa de alturas desactivado');
+  });
+  document.getElementById('cnc-hm-fit').addEventListener('click', () => {
+    // zona = extensión XY de los movimientos de corte del programa actual (sin compensar)
+    const h = hm(), was = h.enabled; h.enabled = false;
+    cncRebuildAndRegen();
+    let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity, z = 0;
+    for (const l of cncState.gcodeLines){
+      const zm = /\bZ(-?[\d.]+)/.exec(l); if (zm) z = parseFloat(zm[1]);
+      const m = /^G1 X(-?[\d.]+) Y(-?[\d.]+)/.exec(l);
+      if (m && z < 0){ const xv = +m[1], yv = +m[2]; x0 = Math.min(x0, xv); x1 = Math.max(x1, xv); y0 = Math.min(y0, yv); y1 = Math.max(y1, yv); }
+    }
+    h.enabled = was;
+    if (!Number.isFinite(x0)){ setPrompt('No hay movimientos de corte: genera primero el programa'); hmRenderUI(); return; }
+    Object.assign(h, { x0: Math.floor(x0), y0: Math.floor(y0), x1: Math.ceil(x1), y1: Math.ceil(y1) });
+    if (h.x1 - h.x0 < 1) h.x1 = h.x0 + 1;
+    if (h.y1 - h.y0 < 1) h.y1 = h.y0 + 1;
+    h.values = [];
+    hmAfterChange();
+    setPrompt(`Zona del mapa ajustada al programa: X${h.x0}..${h.x1} Y${h.y0}..${h.y1}`);
+  });
+  document.getElementById('cnc-hm-probe').addEventListener('click', () => {
+    const txt = hmProbeProgram(hm());
+    const b = new Blob([txt], { type: 'text/plain' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(b);
+    a.download = cncState.plateFilter ? `palpado_${cncState.plateFilter}.nc` : 'palpado.nc';
+    a.click();
+    setPrompt(`Programa de palpado: ${hm().nx * hm().ny} puntos`);
+  });
+  document.getElementById('cnc-hm-read').addEventListener('click', () => {
+    const h = hm(), vals = hmParseText(document.getElementById('cnc-hm-paste').value), n = h.nx * h.ny;
+    if (!vals.length){ setPrompt('No se encontraron valores en el texto pegado'); return; }
+    h.values = new Array(n).fill(NaN);
+    hmProbeOrder(h).forEach((o, k) => { if (k < vals.length) h.values[o.idx] = vals[k]; });
+    hmAfterChange();
+    setPrompt(vals.length === n ? `Leídos ${n} valores` : `Leídos ${vals.length} valores, se esperaban ${n}${vals.length > n ? ' (sobran: ignorados)' : ''}`);
+  });
+  document.getElementById('cnc-hm-clear').addEventListener('click', () => { hm().values = []; hmAfterChange(); setPrompt('Medidas del mapa borradas'); });
+})();
 document.getElementById('cnc-plate').addEventListener('change', e => {
   cncState.plateFilter = e.target.value || '';
   cncRebuildAndRegen();
@@ -6069,6 +6381,7 @@ function initAll(){
   document.getElementById('cnc-rapidXY').value = cncState.rapidXY;
   document.getElementById('cnc-rapidZ').value = cncState.rapidZ;
   document.getElementById('cnc-finishAllowance').value = cncState.finishAllowance;
+  hmRenderUI();
   document.getElementById('cnc-tabsEnabled').checked = cncState.tabs.enabled;
   document.getElementById('cnc-tabsCount').value = cncState.tabs.count;
   document.getElementById('cnc-tabsWidth').value = cncState.tabs.width;
