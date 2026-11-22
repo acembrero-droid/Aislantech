@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CAD Pro + CNC · DXF → G-Code · v12.11</title>
+<title>CAD Pro + CNC · DXF → G-Code · v12.12</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -521,6 +521,18 @@ input[type="number"]{font-variant-numeric:tabular-nums}
 .cnc-hm-paste{width:100%;margin-top:6px;background:var(--surface-2);border:1px solid var(--border-light);border-radius:8px;color:var(--text-primary);font-family:var(--font-mono);font-size:10.5px;padding:6px;resize:vertical}
 .cnc-hm-btns{display:flex;gap:6px}
 .cnc-hm-btns .cnc-btn{flex:1}
+.cnc-hm-manual{margin-top:8px;padding:8px;border:1px solid rgba(61,214,140,.3);border-radius:10px;background:rgba(61,214,140,.05)}
+.cnc-hm-manual-head{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.cnc-hm-cur-p{font-weight:700;font-size:13px;color:#8FF0C0;font-family:var(--font-mono);min-width:34px}
+.cnc-hm-cur-xy{flex:1;font-family:var(--font-mono);font-size:11px;color:var(--text-secondary)}
+.cnc-hm-manual-row{display:flex;gap:6px;align-items:center}
+.cnc-hm-manual-row input{flex:1;min-width:0;height:30px;background:var(--bg-panel);border:1px solid var(--border-light);border-radius:6px;color:var(--text-primary);font-family:var(--font-mono);font-size:13px;padding:0 8px;text-align:right}
+.cnc-hm-manual-row input:focus{outline:none;border-color:rgba(61,214,140,.7);box-shadow:0 0 0 3px rgba(61,214,140,.18)}
+.cnc-hm-mini{height:30px;padding:0 10px;border-radius:6px;border:1px solid var(--border-light);background:var(--bg-button);color:var(--text-primary);font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap}
+.cnc-hm-mini:hover{background:var(--bg-hover)}
+.cnc-hm-mini.accent{background:rgba(61,214,140,.18);border-color:rgba(61,214,140,.5);color:#8FF0C0}
+.cnc-hm-manual-head .cnc-hm-mini{height:24px;font-size:10px}
+.cnc-hm-table input.cur{border-color:var(--accent-green);box-shadow:0 0 0 2px rgba(61,214,140,.35)}
 #cnc-hm-info{color:#8FF0C0;background:rgba(61,214,140,.06);border-color:rgba(61,214,140,.25)}
 @media (max-width:1400px){ #cnc-panel{width:300px} #properties-panel{width:240px} }
 @media (max-width:1024px){
@@ -544,7 +556,7 @@ input[type="number"]{font-variant-numeric:tabular-nums}
       <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 15V9l4 6V9l4 6"/>
     </svg>
     CAD&nbsp;+&nbsp;CNC
-    <span class="version-badge" id="appVersion">v12.11</span>
+    <span class="version-badge" id="appVersion">v12.12</span>
   </span>
   <div class="separator"></div>
   <button id="qa-new" title="Nuevo (Ctrl+N)"><svg viewBox="0 0 24 24"><path d="M13 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V9z"/><path d="M13 3v6h6"/></svg></button>
@@ -742,7 +754,20 @@ input[type="number"]{font-variant-numeric:tabular-nums}
       </div>
       <button class="cnc-btn" id="cnc-hm-fit">⤢ Ajustar zona al programa</button>
       <button class="cnc-btn" id="cnc-hm-probe">⬇ Descargar programa de palpado</button>
-      <div class="cnc-hint">Medidas (mm, relativas o absolutas: se restan respecto a P1). Fila superior = Y máx.</div>
+      <div class="cnc-hm-manual">
+        <div class="cnc-hm-manual-head">
+          <span class="cnc-hm-cur-p" id="cnc-hm-cur-p">P1</span>
+          <span class="cnc-hm-cur-xy" id="cnc-hm-cur-xy">X0 Y0</span>
+          <button class="cnc-hm-mini" id="cnc-hm-copy" title="Copia la orden para la línea de comandos (MDI) de la controladora. Sube antes la Z a altura segura.">Copiar G0</button>
+        </div>
+        <div class="cnc-hm-manual-row">
+          <button class="cnc-hm-mini" id="cnc-hm-prev" title="Punto anterior">◀</button>
+          <input type="text" inputmode="decimal" id="cnc-hm-cur-val" placeholder="Z medida (ej. -0,25)" autocomplete="off">
+          <button class="cnc-hm-mini accent" id="cnc-hm-next" title="Guardar y pasar al siguiente (Enter)">Guardar ▶</button>
+        </div>
+        <div class="cnc-hint" id="cnc-hm-manual-hint">Mueve la máquina al punto, baja hasta tocar (papel o galga: usa siempre la misma), anota la Z del visor y pulsa Enter.</div>
+      </div>
+      <div class="cnc-hint">Tabla (fila superior = Y máx). Clic en una celda para ir a ese punto. Coma o punto decimal.</div>
       <div class="cnc-hm-table" id="cnc-hm-table"></div>
       <textarea id="cnc-hm-paste" class="cnc-hm-paste" rows="3" placeholder="Pega aquí la consola: [PRB:x,y,z:1] (GRBL), x,y,z (Mach3), x y z … (LinuxCNC) o un valor por línea, en el orden P1, P2…"></textarea>
       <div class="cnc-hm-btns"><button class="cnc-btn" id="cnc-hm-read">Leer valores pegados</button><button class="cnc-btn" id="cnc-hm-clear">Borrar medidas</button></div>
@@ -835,7 +860,8 @@ window.dispatchEvent(new Event('clipper-ready'));
 </script>
 <script>
 /* ═══════════════════════════════════════════════════════════════════════
-   CAD Pro + CNC — v12.11
+   CAD Pro + CNC — v12.12
+   v12.12: mapa de alturas: entrada manual guiada (Enter = siguiente), coma decimal, copiar G0 del punto
    v12.11: mapa de alturas (Z0 virtual): programa de palpado + compensación bilineal de Z
    v12.10: FIX esquinas achaflanadas: contornos con vértices exactos (CNC, cajeado, offset CAD, export DXF)
    v12.9: selector "Placa a mecanizar": programa solo de esa placa con X0 Y0 en su esquina inferior izquierda
@@ -857,8 +883,8 @@ project.selectedColor = new Color(0.31, 0.76, 0.97);
 
 const canvasContainer = document.getElementById('canvas-container');
 
-const APP_VERSION = '12.11';
-const VERSION_NOTES = 'Mapa de alturas (Z0 virtual) · FIX esquinas · Programa por placa';
+const APP_VERSION = '12.12';
+const VERSION_NOTES = 'Mapa de alturas: entrada manual guiada punto a punto · Z0 virtual';
 
 const layers = {};
 function safeName(orig){ let n = orig.replace(/[^a-zA-Z0-9_\-]/g,'_'); if (/^\d/.test(n)) n='L_'+n; return n; }
@@ -3987,19 +4013,61 @@ function hmRenderUI(){
     for (let i = 0; i < hm.nx; i++){
       const idx = j * hm.nx + i, v = hm.values[idx];
       const has = Number.isFinite(v);
-      html += `<td><span>P${pnum[idx]}</span><input type="number" step="0.01" data-idx="${idx}" class="${has ? '' : 'empty'}" value="${has ? v : ''}"></td>`;
+      html += `<td><span>P${pnum[idx]}</span><input type="text" inputmode="decimal" autocomplete="off" data-idx="${idx}" data-p="${pnum[idx]}" class="${has ? '' : 'empty'}" value="${has ? v : ''}"></td>`;
     }
     html += '</tr>';
   }
   html += '</table>';
   const tbl = document.getElementById('cnc-hm-table');
   tbl.innerHTML = html;
-  tbl.querySelectorAll('input').forEach(inp => inp.addEventListener('change', () => {
-    const idx = parseInt(inp.dataset.idx), v = parseFloat(inp.value);
-    if (hm.values.length !== hm.nx * hm.ny) hm.values = new Array(hm.nx * hm.ny).fill(NaN);
-    hm.values[idx] = Number.isFinite(v) ? v : NaN;
-    hmAfterChange();
-  }));
+  tbl.querySelectorAll('input').forEach(inp => {
+    inp.addEventListener('focus', () => { hm.cur = parseInt(inp.dataset.p) - 1; hmRefreshStatus(false); });
+    inp.addEventListener('change', () => {
+      const v = hmParseNum(inp.value);
+      if (inp.value.trim() !== '' && !Number.isFinite(v)){ setPrompt('Valor no válido: ' + inp.value); inp.value = ''; }
+      hmSetValue(parseInt(inp.dataset.idx), v);
+    });
+    inp.addEventListener('keydown', e => {          // Enter → siguiente punto en orden de recorrido
+      if (e.key !== 'Enter') return;
+      e.preventDefault(); inp.dispatchEvent(new Event('change'));
+      const next = tbl.querySelector(`input[data-p="${parseInt(inp.dataset.p) + 1}"]`);
+      if (next){ next.focus(); next.select(); }
+    });
+  });
+  hmRefreshStatus(true);
+}
+// Número escrito a mano: admite coma decimal ("-0,25") y espacios
+function hmParseNum(str){
+  const t = String(str == null ? '' : str).trim().replace(/\s+/g, '').replace(',', '.');
+  if (t === '' || !/^[-+]?\d*\.?\d+$/.test(t)) return NaN;
+  return parseFloat(t);
+}
+function hmSetValue(idx, v){
+  const hm = cncState.heightMap;
+  if (hm.values.length !== hm.nx * hm.ny) hm.values = Array.from({ length: hm.nx * hm.ny }, (_, i) => Number.isFinite(hm.values[i]) ? hm.values[i] : NaN);
+  hm.values[idx] = Number.isFinite(v) ? v : NaN;
+  hmRefreshStatus(true);
+  if (hm.enabled && cncState.operations.length) cncRebuildAndRegen();   // solo afecta al G-code si está activo
+}
+// Actualiza estado, entrada guiada y celdas SIN reconstruir la tabla (no se pierde el foco)
+function hmRefreshStatus(syncGuided){
+  const hm = cncState.heightMap;
+  const order = hmProbeOrder(hm), nPts = order.length;
+  if (!Number.isInteger(hm.cur) || hm.cur < 0 || hm.cur >= nPts) hm.cur = 0;
+  const o = order[hm.cur], q = hmGridPoint(hm, o.i, o.j);
+  document.getElementById('cnc-hm-cur-p').textContent = 'P' + (hm.cur + 1);
+  document.getElementById('cnc-hm-cur-xy').textContent = `X${q.x.toFixed(3)} Y${q.y.toFixed(3)}  (${hm.cur + 1}/${nPts})`;
+  const gv = document.getElementById('cnc-hm-cur-val');
+  if (syncGuided !== false || document.activeElement !== gv){
+    const v = hm.values[o.idx];
+    if (document.activeElement !== gv || syncGuided) gv.value = Number.isFinite(v) ? String(v).replace('.', ',') : '';
+  }
+  document.querySelectorAll('#cnc-hm-table input').forEach(inp => {
+    const v = hm.values[parseInt(inp.dataset.idx)];
+    inp.classList.toggle('empty', !Number.isFinite(v));
+    inp.classList.toggle('cur', parseInt(inp.dataset.p) === hm.cur + 1);
+    if (document.activeElement !== inp) inp.value = Number.isFinite(v) ? v : '';
+  });
   // Información
   const info = document.getElementById('cnc-hm-info');
   const n = hm.nx * hm.ny, got = hm.values.filter(Number.isFinite).length;
@@ -4976,7 +5044,45 @@ document.getElementById('cnc-copy-btn').addEventListener('click', () => {
     hmAfterChange();
     setPrompt(vals.length === n ? `Leídos ${n} valores` : `Leídos ${vals.length} valores, se esperaban ${n}${vals.length > n ? ' (sobran: ignorados)' : ''}`);
   });
-  document.getElementById('cnc-hm-clear').addEventListener('click', () => { hm().values = []; hmAfterChange(); setPrompt('Medidas del mapa borradas'); });
+  document.getElementById('cnc-hm-clear').addEventListener('click', () => { hm().values = []; hm().cur = 0; hmAfterChange(); setPrompt('Medidas del mapa borradas'); });
+  // Entrada guiada punto a punto
+  const gv = document.getElementById('cnc-hm-cur-val');
+  const go = d => {
+    const h = hm(), n = h.nx * h.ny;
+    h.cur = Math.max(0, Math.min(n - 1, (h.cur || 0) + d));
+    hmRefreshStatus(true); gv.focus(); gv.select();
+  };
+  const saveCur = () => {
+    const h = hm(), txt = gv.value;
+    if (txt.trim() === ''){ return true; }                        // vacío: no cambia nada
+    const v = hmParseNum(txt);
+    if (!Number.isFinite(v)){ setPrompt('Valor no válido: ' + txt + ' (ej. -0,25)'); gv.select(); return false; }
+    const o = hmProbeOrder(h)[h.cur || 0];
+    hmSetValue(o.idx, v);
+    return true;
+  };
+  document.getElementById('cnc-hm-next').addEventListener('click', () => {
+    if (!saveCur()) return;
+    const h = hm(), n = h.nx * h.ny;
+    if ((h.cur || 0) >= n - 1){
+      hmRefreshStatus(true);
+      setPrompt(hmReady(h) ? 'Mapa completo: activa "Compensar Z" para aplicarlo' : 'Último punto: faltan medidas (casillas en naranja)');
+      return;
+    }
+    go(1);
+  });
+  document.getElementById('cnc-hm-prev').addEventListener('click', () => { if (saveCur()) go(-1); });
+  gv.addEventListener('keydown', e => {
+    if (e.key === 'Enter'){ e.preventDefault(); document.getElementById('cnc-hm-next').click(); }
+    else if (e.key === 'ArrowUp' && e.altKey){ e.preventDefault(); document.getElementById('cnc-hm-prev').click(); }
+  });
+  document.getElementById('cnc-hm-copy').addEventListener('click', () => {
+    const h = hm(), o = hmProbeOrder(h)[h.cur || 0], q = hmGridPoint(h, o.i, o.j);
+    const cmd = `G0 X${q.x.toFixed(3)} Y${q.y.toFixed(3)}`;
+    const done = () => setPrompt(`Copiado: ${cmd}  (sube antes la Z a altura segura)`);
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(cmd).then(done, () => setPrompt(cmd));
+    else setPrompt(cmd);
+  });
 })();
 document.getElementById('cnc-plate').addEventListener('change', e => {
   cncState.plateFilter = e.target.value || '';
