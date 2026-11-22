@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CAD Pro + CNC · DXF → G-Code · v12.12</title>
+<title>CAD Pro + CNC · DXF → G-Code · v12.13</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -521,6 +521,21 @@ input[type="number"]{font-variant-numeric:tabular-nums}
 .cnc-hm-paste{width:100%;margin-top:6px;background:var(--surface-2);border:1px solid var(--border-light);border-radius:8px;color:var(--text-primary);font-family:var(--font-mono);font-size:10.5px;padding:6px;resize:vertical}
 .cnc-hm-btns{display:flex;gap:6px}
 .cnc-hm-btns .cnc-btn{flex:1}
+.cnc-org{margin:4px 0 2px}
+.cnc-org-ref{display:flex;gap:12px;align-items:center;margin:6px 0 2px}
+.cnc-org-grid{display:grid;grid-template-columns:repeat(3,28px);grid-template-rows:repeat(3,28px);gap:3px;padding:4px;border:1px dashed var(--border-light);border-radius:8px}
+.cnc-org-grid button{border:1px solid var(--border-light);background:var(--bg-panel);color:var(--text-secondary);border-radius:5px;font-size:11px;cursor:pointer;padding:0}
+.cnc-org-grid button:hover{background:var(--bg-hover);color:var(--text-primary)}
+.cnc-org-grid button.active{background:rgba(255,217,61,.18);border-color:#FFD93D;color:#FFD93D}
+.cnc-org-refsel{display:flex;flex-direction:column;gap:6px;font-size:11.5px;color:var(--text-primary)}
+.cnc-org-refsel label{display:flex;gap:6px;align-items:center;cursor:pointer}
+.cnc-org-refsel label.disabled{opacity:.4;cursor:default}
+.cnc-org-refsel input{accent-color:#FFD93D}
+.cnc-org-xy{display:grid;grid-template-columns:1fr 1fr;gap:4px 10px;margin-top:6px}
+.cnc-org-xy .cnc-row input{width:80px}
+.cnc-org-xy .cnc-row label{min-width:0}
+.cnc-org-info{color:#FFD93D;font-style:normal}
+#canvas-container.picking-origin #myCanvas{cursor:crosshair}
 .cnc-hm-manual{margin-top:8px;padding:8px;border:1px solid rgba(61,214,140,.3);border-radius:10px;background:rgba(61,214,140,.05)}
 .cnc-hm-manual-head{display:flex;align-items:center;gap:8px;margin-bottom:6px}
 .cnc-hm-cur-p{font-weight:700;font-size:13px;color:#8FF0C0;font-family:var(--font-mono);min-width:34px}
@@ -556,7 +571,7 @@ input[type="number"]{font-variant-numeric:tabular-nums}
       <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 15V9l4 6V9l4 6"/>
     </svg>
     CAD&nbsp;+&nbsp;CNC
-    <span class="version-badge" id="appVersion">v12.12</span>
+    <span class="version-badge" id="appVersion">v12.13</span>
   </span>
   <div class="separator"></div>
   <button id="qa-new" title="Nuevo (Ctrl+N)"><svg viewBox="0 0 24 24"><path d="M13 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V9z"/><path d="M13 3v6h6"/></svg></button>
@@ -794,7 +809,33 @@ input[type="number"]{font-variant-numeric:tabular-nums}
     </div>
     <div class="cnc-section">
       <h3><svg class="h-ico" viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13l-2 2 2 2M15 13l2 2-2 2"/></svg>Código G</h3>
-      <div class="cnc-row" id="cnc-plate-row" style="display:none" title="Genera el programa solo con las operaciones de esa placa, con X0 Y0 en la esquina inferior izquierda de su contorno"><label>Placa</label><select id="cnc-plate" style="width:190px"></select></div>
+      <div class="cnc-row" id="cnc-plate-row" style="display:none" title="Genera el programa solo con las operaciones de esa placa"><label>Placa</label><select id="cnc-plate" style="width:190px"></select></div>
+      <div class="cnc-org">
+        <div class="cnc-row"><label>Origen X0 Y0</label><select id="cnc-org-mode" style="width:190px">
+          <option value="auto">Automático</option>
+          <option value="ref">Punto de referencia…</option>
+          <option value="custom">Punto libre del dibujo…</option>
+        </select></div>
+        <div id="cnc-org-ref" class="cnc-org-ref" style="display:none">
+          <div class="cnc-org-grid" id="cnc-org-grid">
+            <button data-pos="tl" title="Esquina superior izquierda">◤</button><button data-pos="tc" title="Centro del lado superior">▲</button><button data-pos="tr" title="Esquina superior derecha">◥</button>
+            <button data-pos="ml" title="Centro del lado izquierdo">◀</button><button data-pos="c" title="Centro">●</button><button data-pos="mr" title="Centro del lado derecho">▶</button>
+            <button data-pos="bl" title="Esquina inferior izquierda">◣</button><button data-pos="bc" title="Centro del lado inferior">▼</button><button data-pos="br" title="Esquina inferior derecha">◢</button>
+          </div>
+          <div class="cnc-org-refsel">
+            <label><input type="radio" name="cnc-org-refbox" value="parts" checked> de las piezas</label>
+            <label id="cnc-org-ref-plate-lbl"><input type="radio" name="cnc-org-refbox" value="plate"> de la placa</label>
+          </div>
+        </div>
+        <div id="cnc-org-custom" style="display:none">
+          <div class="cnc-org-xy">
+            <div class="cnc-row"><label>X dibujo</label><input type="number" id="cnc-org-x" step="0.1"></div>
+            <div class="cnc-row"><label>Y dibujo</label><input type="number" id="cnc-org-y" step="0.1"></div>
+          </div>
+          <button class="cnc-btn" id="cnc-org-pick">⌖ Elegir en el dibujo</button>
+        </div>
+        <div class="cnc-hint cnc-org-info" id="cnc-org-info"></div>
+      </div>
       <button class="cnc-btn accent" id="cnc-generate-btn">⚙ Generar / Actualizar</button>
       <div class="cnc-gcode" id="cnc-gcode">
         <div class="cnc-empty-hint">(Sin generar)</div>
@@ -860,7 +901,8 @@ window.dispatchEvent(new Event('clipper-ready'));
 </script>
 <script>
 /* ═══════════════════════════════════════════════════════════════════════
-   CAD Pro + CNC — v12.12
+   CAD Pro + CNC — v12.13
+   v12.13: origen X0 Y0 configurable: automático, 9 puntos de placa/piezas, punto libre o clic en el dibujo
    v12.12: mapa de alturas: entrada manual guiada (Enter = siguiente), coma decimal, copiar G0 del punto
    v12.11: mapa de alturas (Z0 virtual): programa de palpado + compensación bilineal de Z
    v12.10: FIX esquinas achaflanadas: contornos con vértices exactos (CNC, cajeado, offset CAD, export DXF)
@@ -883,8 +925,8 @@ project.selectedColor = new Color(0.31, 0.76, 0.97);
 
 const canvasContainer = document.getElementById('canvas-container');
 
-const APP_VERSION = '12.12';
-const VERSION_NOTES = 'Mapa de alturas: entrada manual guiada punto a punto · Z0 virtual';
+const APP_VERSION = '12.13';
+const VERSION_NOTES = 'Origen X0 Y0 configurable (9 puntos, libre o clic en dibujo) · Mapa de alturas';
 
 const layers = {};
 function safeName(orig){ let n = orig.replace(/[^a-zA-Z0-9_\-]/g,'_'); if (/^\d/.test(n)) n='L_'+n; return n; }
@@ -1113,6 +1155,10 @@ const cncState = {
   tabs: { enabled:false, count:3, width:1.0, height:1.0, seed:12345 },
   finishAllowance: 0.2,
   plateFilter: '',
+  // Origen X0 Y0 del programa: auto (placa → esq. inf. izq.; sin placa → origen del dibujo),
+  // ref (una de 9 posiciones de la placa o de las piezas) o custom (punto libre del dibujo)
+  workOrigin: { mode: 'auto', ref: 'parts', pos: 'bl', x: NaN, y: NaN },
+  pickingOrigin: false,
   // Mapa de alturas (Z0 virtual): alturas medidas de la cara del tablero, relativas a P1
   heightMap: { enabled: false, x0: 0, x1: 100, y0: 0, y1: 100, nx: 3, ny: 3,
                depth: 5, feed: 100, safe: 3, pause: false, values: [] },        // '' = todas (origen del dibujo) · 'Placa_N' = solo esa placa, origen en su esquina   // mm que se dejan en las pasadas de desbaste (la última va a cota)
@@ -3817,32 +3863,117 @@ function cncPlateContext(){
     name, hasOutline: !!ob,
     origin: { x: box.left, y: -box.bottom },
     size: { w: box.width, h: box.height },
+    box: { x0: box.left, y0: -box.bottom, x1: box.right, y1: -box.top },
     inRegion: (x, y) => x >= region.x0 && x <= region.x1 && y >= region.y0 && y <= region.y1
   };
 }
+// Rectángulo (coord. dibujo) de la geometría que se mecaniza: entidades de corte,
+// taladros y cajeados (solo los de la placa elegida, si la hay).
+function cncPartsBox(plate){
+  let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+  const add = (x, y) => { x0 = Math.min(x0, x); y0 = Math.min(y0, y); x1 = Math.max(x1, x); y1 = Math.max(y1, y); };
+  cncState.operations.forEach(op => {
+    if (op.type === 'cut'){
+      for (const id of op.itemIds || []){
+        const it = findPaperItemById(id);
+        if (!it || !it.layer) continue;
+        if (plate && cncPlateOf(it.layer.name) !== plate.name) continue;
+        const b = it.bounds; add(b.left, -b.bottom); add(b.right, -b.top);
+      }
+    } else if (op.type === 'drill'){
+      for (const q of op.points || []) if (!plate || plate.inRegion(q.x, q.y)) add(q.x, q.y);
+    } else if (op.type === 'pocket'){
+      for (const k of op.pockets || []){
+        const bb = bboxFromPoints(k.boundary);
+        if (plate && !plate.inRegion((bb.mnx + bb.mxx) / 2, (bb.mny + bb.mxy) / 2)) continue;
+        add(bb.mnx, bb.mny); add(bb.mxx, bb.mxy);
+      }
+    }
+  });
+  return Number.isFinite(x0) ? { x0, y0, x1, y1 } : null;
+}
+const ORG_POS_NAMES = { tl: 'esquina superior izquierda', tc: 'centro del lado superior', tr: 'esquina superior derecha',
+  ml: 'centro del lado izquierdo', c: 'centro', mr: 'centro del lado derecho',
+  bl: 'esquina inferior izquierda', bc: 'centro del lado inferior', br: 'esquina inferior derecha' };
+// Origen X0 Y0 del programa en coordenadas del dibujo → { x, y, desc }
+function cncWorkOrigin(plate){
+  const wo = cncState.workOrigin;
+  if (wo.mode === 'custom' && Number.isFinite(wo.x) && Number.isFinite(wo.y))
+    return { x: wo.x, y: wo.y, desc: 'punto elegido' };
+  if (wo.mode === 'ref'){
+    let box = null, what = '';
+    if (wo.ref === 'plate' && plate && plate.hasOutline){ box = plate.box; what = 'la placa'; }
+    else { box = cncPartsBox(plate); what = 'las piezas'; }
+    if (box){
+      const p = wo.pos || 'bl';
+      const col = p === 'c' ? 'c' : p[1], row = p === 'c' ? 'm' : p[0];
+      const x = col === 'l' ? box.x0 : (col === 'r' ? box.x1 : (box.x0 + box.x1) / 2);
+      const y = row === 'b' ? box.y0 : (row === 't' ? box.y1 : (box.y0 + box.y1) / 2);
+      return { x, y, desc: `${ORG_POS_NAMES[p]} de ${what}` };
+    }
+  }
+  if (plate) return { x: plate.origin.x, y: plate.origin.y, desc: `esquina inferior izquierda de ${plate.hasOutline ? 'la placa' : 'las piezas (sin contorno de placa)'}` };
+  return { x: 0, y: 0, desc: 'origen del dibujo' };
+}
+// Cambia el origen manteniendo el mapa de alturas en el mismo sitio físico
+function cncChangeOrigin(mutate){
+  const before = cncWorkOrigin(cncPlateContext());
+  mutate();
+  const after = cncWorkOrigin(cncPlateContext());
+  const dx = before.x - after.x, dy = before.y - after.y;
+  const hm = cncState.heightMap;
+  if (hm && (Math.abs(dx) > 1e-9 || Math.abs(dy) > 1e-9)){
+    hm.x0 += dx; hm.x1 += dx; hm.y0 += dy; hm.y1 += dy;
+    try { hmRenderUI(); } catch (e){}
+  }
+  cncRebuildAndRegen();
+  cncRefreshOpsOverlay();
+}
+function cncRefreshOriginUI(org){
+  const wo = cncState.workOrigin;
+  const modeSel = document.getElementById('cnc-org-mode');
+  if (!modeSel) return;
+  modeSel.value = wo.mode;
+  document.getElementById('cnc-org-ref').style.display = wo.mode === 'ref' ? '' : 'none';
+  document.getElementById('cnc-org-custom').style.display = wo.mode === 'custom' ? '' : 'none';
+  document.querySelectorAll('#cnc-org-grid button').forEach(b => b.classList.toggle('active', b.dataset.pos === wo.pos));
+  const plate = cncPlateContext();
+  const plateOk = !!(plate && plate.hasOutline);
+  const lbl = document.getElementById('cnc-org-ref-plate-lbl');
+  lbl.classList.toggle('disabled', !plateOk);
+  lbl.querySelector('input').disabled = !plateOk;
+  document.querySelectorAll('input[name="cnc-org-refbox"]').forEach(r => { r.checked = (r.value === (wo.ref === 'plate' && plateOk ? 'plate' : 'parts')); });
+  const fx = document.getElementById('cnc-org-x'), fy = document.getElementById('cnc-org-y');
+  if (document.activeElement !== fx) fx.value = Number.isFinite(wo.x) ? +wo.x.toFixed(3) : '';
+  if (document.activeElement !== fy) fy.value = Number.isFinite(wo.y) ? +wo.y.toFixed(3) : '';
+  org = org || cncWorkOrigin(plate);
+  document.getElementById('cnc-org-info').textContent = `X0 Y0 = ${org.desc} · dibujo X${org.x.toFixed(3)} Y${org.y.toFixed(3)}`;
+}
 // Operaciones tal y como entran al programa: todas, o solo las de la placa
-// elegida y desplazadas a su origen. Devuelve [{ op, originalIndex, contours }]
-function cncProgramOperations(plate){
+// elegida, y desplazadas al origen de trabajo. Devuelve [{ op, originalIndex, contours }]
+function cncProgramOperations(plate, org){
   const out = [];
+  const ox = org ? org.x : 0, oy = org ? org.y : 0;
+  const shifted = Math.abs(ox) > 1e-12 || Math.abs(oy) > 1e-12;
   cncState.operations.forEach((op, idx) => {
     const all = (op.type === 'cut') ? (cncState.cutContours[idx] || []) : null;
-    if (!plate){ out.push({ op, originalIndex: idx, contours: all }); return; }
-    const ox = plate.origin.x, oy = plate.origin.y;
+    if (!plate && !shifted){ out.push({ op, originalIndex: idx, contours: all }); return; }
     const sh = q => ({ x: q.x - ox, y: q.y - oy });
+    const inPlate = (x, y) => !plate || plate.inRegion(x, y);
     if (op.type === 'cut'){
       const cs = [];
       all.forEach((c, ci) => {
-        if (cncPlateOf(c.srcLayer) !== plate.name) return;
+        if (plate && cncPlateOf(c.srcLayer) !== plate.name) return;
         cs.push(Object.assign({}, c, { tabIndex: ci, points: c.points.map(sh), rough: c.rough ? c.rough.map(sh) : c.rough }));
       });
       if (cs.length) out.push({ op, originalIndex: idx, contours: cs });
     } else if (op.type === 'drill'){
-      const pts = (op.points || []).filter(q => plate.inRegion(q.x, q.y)).map(sh);
+      const pts = (op.points || []).filter(q => inPlate(q.x, q.y)).map(sh);
       if (pts.length) out.push({ op: Object.assign({}, op, { points: pts }), originalIndex: idx, contours: null });
     } else if (op.type === 'pocket'){
       const pk = (op.pockets || []).filter(k => {
         const bb = bboxFromPoints(k.boundary);
-        return plate.inRegion((bb.mnx + bb.mxx) / 2, (bb.mny + bb.mxy) / 2);
+        return inPlate((bb.mnx + bb.mxx) / 2, (bb.mny + bb.mxy) / 2);
       }).map(k => Object.assign({}, k, { boundary: k.boundary.map(sh) }));
       if (pk.length) out.push({ op: Object.assign({}, op, { pockets: pk }), originalIndex: idx, contours: null });
     }
@@ -4106,7 +4237,8 @@ function buildCNCProgram(){
   const blockZ = cncState.blockZ;
   const plate = cncPlateContext();
   if (cncState.plateFilter && !plate) cncState.plateFilter = '';
-  const simOx = plate ? plate.origin.x : 0, simOy = plate ? plate.origin.y : 0;
+  const org = cncWorkOrigin(plate);
+  const simOx = org.x, simOy = org.y;
   const emit = (txt, block) => {
     if (lines.length >= MAX_GCODE_LINES * 1.5) return;
     lines.push(sanitizeComment(txt));
@@ -4142,10 +4274,9 @@ function buildCNCProgram(){
   emit('%', -1);
   emit('O0001 (CNC DXF → G-Code)', -1);
   emit(`(Generado por CAD Pro + CNC v${APP_VERSION})`, -1);
-  if (plate){
-    emit(`(PLACA: ${plate.name} - ${plate.size.w.toFixed(1)} x ${plate.size.h.toFixed(1)} mm)`, -1);
-    emit(`(X0 Y0 = esquina inferior izquierda de ${plate.hasOutline ? 'la placa' : 'las piezas (sin contorno de placa)'}; dibujo X${plate.origin.x.toFixed(3)} Y${plate.origin.y.toFixed(3)})`, -1);
-  }
+  if (plate) emit(`(PLACA: ${plate.name} - ${plate.size.w.toFixed(1)} x ${plate.size.h.toFixed(1)} mm)`, -1);
+  if (plate || cncState.workOrigin.mode !== 'auto')
+    emit(`(X0 Y0 = ${org.desc}; dibujo X${org.x.toFixed(3)} Y${org.y.toFixed(3)})`, -1);
   emit('G21 G90 G17', -1);
   emit(`G0 Z${maxSafe.toFixed(3)}`, -1);
   emit('G0 X0 Y0', -1);
@@ -4153,7 +4284,7 @@ function buildCNCProgram(){
   addMove('rapid', [{x:lastX, y:lastY}, {x:0, y:0}], maxSafe, cncState.rapidXY, -1);
   const toolOrder = [];
   const groups = new Map();
-  const progOps = cncProgramOperations(plate);
+  const progOps = cncProgramOperations(plate, org);
   if (plate && !progOps.length) emit(`(${plate.name}: sin operaciones en esta placa)`, -1);
   progOps.forEach(({ op, originalIndex, contours }) => {
     let tid = op.toolId;
@@ -4393,6 +4524,7 @@ function buildCNCProgram(){
     cncState.gcodeLines.splice(3, 0, ...head);
     cncState.gcodeBlock.splice(3, 0, ...head.map(() => -1));
   }
+  try { cncRefreshOriginUI(org); } catch (e){}
   cncRenderGcodeDisplay();
   cncUpdateSimUI();
 }
@@ -4688,16 +4820,17 @@ function cncRefreshOpsOverlay(){
         cncOpsLayer.addChild(path);
       });
     }
-    // Marca del origen X0 Y0 de la placa elegida
+    // Marca del origen X0 Y0 del programa (placa elegida u origen configurado)
     const plateCtx = cncPlateContext();
-    if (plateCtx){
-      const o = new Point(plateCtx.origin.x, -plateCtx.origin.y), L = 40 / view.zoom;
+    if (plateCtx || cncState.workOrigin.mode !== 'auto'){
+      const orgW = cncWorkOrigin(plateCtx);
+      const o = new Point(orgW.x, -orgW.y), L = 40 / view.zoom;
       const ax = new Path.Line(o, o.add(new Point(L, 0))); ax.strokeColor = new Color('#FF6B6B');
       const ay = new Path.Line(o, o.add(new Point(0, -L))); ay.strokeColor = new Color('#57C46B');
       const oc = new Path.Circle(o, 5 / view.zoom); oc.strokeColor = new Color('#FFD93D'); oc.fillColor = new Color(1, 0.85, 0.24, 0.25);
       [ax, ay, oc].forEach(it => { it.strokeWidth = 2 / view.zoom; cncOpsLayer.addChild(it); });
       const t = new PointText(o.add(new Point(8 / view.zoom, 16 / view.zoom)));
-      t.content = 'X0 Y0 · ' + plateCtx.name; t.fillColor = new Color('#FFD93D'); t.fontSize = 12 / view.zoom; t.fontFamily = 'monospace';
+      t.content = 'X0 Y0' + (plateCtx ? ' · ' + plateCtx.name : ''); t.fillColor = new Color('#FFD93D'); t.fontSize = 12 / view.zoom; t.fontFamily = 'monospace';
       cncOpsLayer.addChild(t);
     }
     if (cncState.selectedGlineIdx >= 0){
@@ -5084,11 +5217,56 @@ document.getElementById('cnc-copy-btn').addEventListener('click', () => {
     else setPrompt(cmd);
   });
 })();
+(function orgBindUI(){
+  const wo = () => cncState.workOrigin;
+  document.getElementById('cnc-org-mode').addEventListener('change', e => {
+    const m = e.target.value;
+    cncChangeOrigin(() => {
+      if (m === 'custom' && !(Number.isFinite(wo().x) && Number.isFinite(wo().y))){
+        const cur = cncWorkOrigin(cncPlateContext()); wo().x = cur.x; wo().y = cur.y;   // empieza donde está, sin saltos
+      }
+      wo().mode = m;
+    });
+    setPrompt('X0 Y0 = ' + cncWorkOrigin(cncPlateContext()).desc);
+  });
+  document.querySelectorAll('#cnc-org-grid button').forEach(b => b.addEventListener('click', () => {
+    cncChangeOrigin(() => { wo().pos = b.dataset.pos; wo().mode = 'ref'; });
+    setPrompt('X0 Y0 = ' + cncWorkOrigin(cncPlateContext()).desc);
+  }));
+  document.querySelectorAll('input[name="cnc-org-refbox"]').forEach(r => r.addEventListener('change', () => {
+    if (r.checked) cncChangeOrigin(() => { wo().ref = r.value; });
+  }));
+  ['cnc-org-x', 'cnc-org-y'].forEach(id => document.getElementById(id).addEventListener('change', () => {
+    const x = parseFloat(document.getElementById('cnc-org-x').value), y = parseFloat(document.getElementById('cnc-org-y').value);
+    if (!Number.isFinite(x) || !Number.isFinite(y)){ setPrompt('Origen: X e Y deben ser números'); cncRefreshOriginUI(); return; }
+    cncChangeOrigin(() => { wo().x = x; wo().y = y; wo().mode = 'custom'; });
+  }));
+  document.getElementById('cnc-org-pick').addEventListener('click', () => {
+    cncState.pickingOrigin = true;
+    canvasContainer.classList.add('picking-origin');
+    setPrompt('Haz clic en el dibujo para fijar X0 Y0 (se ajusta a vértices y centros) · Esc cancela');
+  });
+})();
+// Clic en el lienzo mientras se elige el origen (se ajusta al punto notable más cercano)
+function cncPickOriginAt(rawPt){
+  const tol = 14 / view.zoom;
+  let best = null, bd = tol;
+  const consider = q => { const d = q.getDistance(rawPt); if (d < bd){ bd = d; best = q; } };
+  try { collectSnapCandidates().forEach(c => consider(c.point)); } catch (e){}
+  const ol = layers['Contorno_placas'];                        // capa bloqueada: el imán normal no la usa
+  if (ol) ol.children.forEach(it => { if (it.segments) it.segments.forEach(sg => consider(sg.point)); });
+  const q = best || rawPt;
+  cncState.pickingOrigin = false;
+  canvasContainer.classList.remove('picking-origin');
+  cncChangeOrigin(() => { const w = cncState.workOrigin; w.x = +q.x.toFixed(4); w.y = +(-q.y).toFixed(4); w.mode = 'custom'; });
+  setPrompt(`X0 Y0 fijado en dibujo X${(q.x).toFixed(3)} Y${(-q.y).toFixed(3)}${best ? ' (ajustado a punto notable)' : ''}`);
+}
 document.getElementById('cnc-plate').addEventListener('change', e => {
   cncState.plateFilter = e.target.value || '';
   cncRebuildAndRegen();
   cncRefreshOpsOverlay();
-  setPrompt(cncState.plateFilter ? `Programa de ${cncState.plateFilter}: origen en la esquina inferior izquierda de la placa` : 'Programa de todas las placas, origen del dibujo');
+  const o = cncWorkOrigin(cncPlateContext());
+  setPrompt(`${cncState.plateFilter ? 'Programa de ' + cncState.plateFilter : 'Programa de todas las placas'} · X0 Y0 = ${o.desc}`);
 });
 document.getElementById('cnc-finishAllowance').addEventListener('change', e => {
   const v = parseFloat(e.target.value);
@@ -5142,6 +5320,10 @@ let snapMarker = null;
 let middleClickTimer = null;
 function onMouseDown(event){
   state.lastMousePoint = event.point;
+  if (cncState.pickingOrigin && event.event.button === 0 && !event.event.altKey){
+    cncPickOriginAt(event.point);
+    return;
+  }
   
   if (cncState.mode !== 'off' && event.event.button === 0 && !event.event.altKey){
     // ★ Fix CNC: Iniciar cuadro de selección en lugar de clic directo
@@ -6166,6 +6348,9 @@ document.getElementById('cmd-history-toggle').addEventListener('click', toggleCm
 document.getElementById('cmd-history-close').addEventListener('click', toggleCmdHistory);
 
 window.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && cncState.pickingOrigin){
+    cncState.pickingOrigin = false; canvasContainer.classList.remove('picking-origin'); setPrompt('Elección de origen cancelada');
+  }
   if (e.ctrlKey && e.key === 'z'){ e.preventDefault(); undo(); }
   if (e.ctrlKey && e.key === 'y'){ e.preventDefault(); redo(); }
   if (e.ctrlKey && e.key === 'n'){ e.preventDefault(); document.getElementById('qa-new').click(); }
@@ -6488,6 +6673,7 @@ function initAll(){
   document.getElementById('cnc-rapidZ').value = cncState.rapidZ;
   document.getElementById('cnc-finishAllowance').value = cncState.finishAllowance;
   hmRenderUI();
+  cncRefreshOriginUI();
   document.getElementById('cnc-tabsEnabled').checked = cncState.tabs.enabled;
   document.getElementById('cnc-tabsCount').value = cncState.tabs.count;
   document.getElementById('cnc-tabsWidth').value = cncState.tabs.width;
