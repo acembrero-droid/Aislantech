@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CAD Pro + CNC · DXF → G-Code · v12.16</title>
+<title>CAD Pro + CNC · DXF → G-Code · v12.17</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -590,7 +590,7 @@ input[type="number"]{font-variant-numeric:tabular-nums}
       <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 15V9l4 6V9l4 6"/>
     </svg>
     CAD&nbsp;+&nbsp;CNC
-    <span class="version-badge" id="appVersion">v12.16</span>
+    <span class="version-badge" id="appVersion">v12.17</span>
   </span>
   <div class="separator"></div>
   <button id="qa-new" title="Nuevo (Ctrl+N)"><svg viewBox="0 0 24 24"><path d="M13 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V9z"/><path d="M13 3v6h6"/></svg></button>
@@ -927,7 +927,9 @@ window.dispatchEvent(new Event('clipper-ready'));
 </script>
 <script>
 /* ═══════════════════════════════════════════════════════════════════════
-   CAD Pro + CNC — v12.16
+   CAD Pro + CNC — v12.17
+   v12.17: FIX la zona del mapa de alturas no seguía al cambiar de placa (todo el corte fuera de zona);
+           aviso de cobertura en panel y G-code; cuadrícula P1..Pn dibujada en su sitio real
    v12.16: varias operaciones por tipo (herramienta/profundidad/offset/patillas propias), operación activa,
            orden de mecanizado = orden de la lista (▲▼, duplicar), opción agrupar por herramienta
    v12.15: mapa de alturas con tolerancia configurable (±10 por defecto); palpado Z seguro 12 / búsqueda -10;
@@ -959,8 +961,8 @@ project.selectedColor = new Color(0.31, 0.76, 0.97);
 
 const canvasContainer = document.getElementById('canvas-container');
 
-const APP_VERSION = '12.16';
-const VERSION_NOTES = 'Operaciones múltiples (varias por tipo, herramientas/profundidades distintas) y orden de mecanizado reordenable';
+const APP_VERSION = '12.17';
+const VERSION_NOTES = 'FIX mapa de alturas al cambiar de placa · aviso de cobertura · cuadrícula visible en el dibujo';
 
 const layers = {};
 function safeName(orig){ let n = orig.replace(/[^a-zA-Z0-9_\-]/g,'_'); if (/^\d/.test(n)) n='L_'+n; return n; }
@@ -4159,6 +4161,8 @@ function hmApplyToProgram(lines, blocks, hm){
   const f3 = v => v.toFixed(3);
   const outL = [], outB = [];
   let x = 0, y = 0, z = 0, mode = 0, cyc = null, split = 0, zc = null;   // zc = última Z emitida
+  let cutPts = 0, outPts = 0;                                            // cobertura de la zona medida
+  const countCov = (px, py) => { cutPts++; if (px < hm.x0 - 1 || px > hm.x1 + 1 || py < hm.y0 - 1 || py > hm.y1 + 1) outPts++; };
   // Máxima altura de superficie a lo largo de un tramo XY (muestreo ≤ 1 mm)
   const hMaxAlong = (ax, ay, bx, by) => {
     const L = Math.hypot(bx - ax, by - ay), n = Math.max(1, Math.ceil(L / Math.min(1, segLen)));
@@ -4233,12 +4237,13 @@ function hmApplyToProgram(lines, blocks, hm){
         const t = i / n;
         const px = x + (nx - x) * t, py = y + (ny - y) * t, pz = z + (nz - z) * t;
         push(`${G} X${f3(px)} Y${f3(py)} Z${f3(pz + hmHeight(hm, px, py))}${fStr}${i === n ? cmt : ''}`, blk);
+        countCov(px, py);
       }
       split += n - 1;
     }
     x = nx; y = ny; z = nz;
   }
-  return { lines: outL, blocks: outB, split };
+  return { lines: outL, blocks: outB, split, cutPts, outPts };
 }
 function hmProbeProgram(hm){
   const f3 = v => v.toFixed(3);
@@ -4326,6 +4331,7 @@ function hmSetValue(idx, v){
   if (hm.values.length !== hm.nx * hm.ny) hm.values = Array.from({ length: hm.nx * hm.ny }, (_, i) => Number.isFinite(hm.values[i]) ? hm.values[i] : NaN);
   hm.values[idx] = Number.isFinite(v) ? v : NaN;
   hmRefreshStatus(true);
+  try { cncRefreshOpsOverlay(); } catch (e){}
   if (hm.enabled && cncState.operations.length) cncRebuildAndRegen();   // solo afecta al G-code si está activo
 }
 // Actualiza estado, entrada guiada y celdas SIN reconstruir la tabla (no se pierde el foco)
@@ -4352,7 +4358,7 @@ function hmRefreshStatus(syncGuided){
   const n = hm.nx * hm.ny, got = hm.values.filter(Number.isFinite).length;
   document.getElementById('cnc-hm-section').classList.toggle('hm-on', hm.enabled && hmReady(hm) && hmMaxDev(hm) <= hm.tol);
   const badge = document.getElementById('cnc-hm-badge');
-  badge.textContent = hm.enabled ? (hmReady(hm) ? (hmMaxDev(hm) > hm.tol ? 'FUERA TOL.' : 'ON') : 'INCOMPLETO') : 'OFF';
+  badge.textContent = hm.enabled ? (hmReady(hm) ? (hmMaxDev(hm) > hm.tol ? 'FUERA TOL.' : (cncState.hmCoverage > 0.999 ? 'FUERA ZONA' : 'ON')) : 'INCOMPLETO') : 'OFF';
   const probeWarn = [];
   if (hm.safe <= hm.tol) probeWarn.push(`⚠ Z seguro de palpado (${hm.safe}) ≤ tolerancia (±${hm.tol}): riesgo de choque entre puntos`);
   if (hm.depth < hm.tol) probeWarn.push(`⚠ Prof. de búsqueda (${hm.depth}) < tolerancia (±${hm.tol}): puede no llegar a tocar`);
@@ -4366,11 +4372,17 @@ function hmRefreshStatus(syncGuided){
   t += `\nDesviación máx. respecto a Z0 (P1): ${dev.toFixed(3)} mm · tolerancia ±${hm.tol} mm`;
   if (dev > hm.tol) t += '\n⛔ Supera la tolerancia: el programa NO se compensa (revisa las medidas)';
   else if (dev > 3) t += '\nℹ Desnivel grande: comprueba que el recorrido Z de la máquina lo admite';
+  const cov = cncState.hmCoverage;
+  if (hm.enabled && typeof cov === 'number' && cov > 0){
+    t += cov > 0.999 ? `\n⛔ TODO el corte queda FUERA de la zona medida: no se compensa según la cuadrícula. Pulsa «Ajustar zona al programa» y vuelve a medir.`
+                     : `\n⚠ ${(100 * cov).toFixed(1)}% de los puntos de corte quedan fuera de la zona medida (ahí se usa el valor del borde)`;
+  }
   info.textContent = t + pw;
 }
 function hmMaxDev(hm){ const r = hm.values.map(v => v - hm.values[0]); return Math.max(...r.map(Math.abs)); }
 function hmAfterChange(){
   hmRenderUI();
+  try { cncRefreshOpsOverlay(); } catch (e){}
   if (cncState.operations.length) cncRebuildAndRegen();
 }
 function buildCNCProgram(){
@@ -4687,15 +4699,18 @@ function buildCNCProgram(){
   const hm = cncState.heightMap;
   if (hm && hm.enabled){
     let head;
+    cncState.hmCoverage = null;
     if (hmReady(hm) && hmMaxDev(hm) > hm.tol){
       head = [`(AVISO: desviacion ${hmMaxDev(hm).toFixed(3)} mm supera la tolerancia +-${hm.tol} mm - programa SIN compensar)`];
     } else if (hmReady(hm)){
       const r = hmApplyToProgram(cncState.gcodeLines, cncState.gcodeBlock, hm);
       cncState.gcodeLines = r.lines; cncState.gcodeBlock = r.blocks;
       const rel = hm.values.map(v => v - hm.values[0]);
+      cncState.hmCoverage = r.cutPts ? r.outPts / r.cutPts : 0;
       head = [`(MAPA DE ALTURAS ${hm.nx}x${hm.ny}: Z compensada respecto a P1 X${hm.x0.toFixed(3)} Y${hm.y0.toFixed(3)} - Z0 debe hacerse ahi)`,
               `(desnivel ${(Math.max(...rel) - Math.min(...rel)).toFixed(3)} mm - desviacion max ${hmMaxDev(hm).toFixed(3)} / tolerancia +-${hm.tol} mm - ${r.split} tramos subdivididos)`,
               `(rapidos G0: suben a la altura programada sobre el punto mas alto de su recorrido)`];
+      if (cncState.hmCoverage > 0) head.push(`(AVISO: ${(100 * cncState.hmCoverage).toFixed(1)}% de los puntos de corte quedan FUERA de la zona medida X${hm.x0.toFixed(0)}..${hm.x1.toFixed(0)} Y${hm.y0.toFixed(0)}..${hm.y1.toFixed(0)}: ahi se usa el valor del borde)`);
     } else {
       head = ['(AVISO: mapa de alturas activado pero INCOMPLETO - programa SIN compensar)'];
     }
@@ -4703,6 +4718,7 @@ function buildCNCProgram(){
     cncState.gcodeBlock.splice(3, 0, ...head.map(() => -1));
   }
   try { cncRefreshOriginUI(org); } catch (e){}
+  try { if (cncState.heightMap && cncState.heightMap.enabled) hmRefreshStatus(false); } catch (e){}
   cncRenderGcodeDisplay();
   cncUpdateSimUI();
 }
@@ -4996,6 +5012,26 @@ function cncRefreshOpsOverlay(){
         path.strokeWidth = 2 / view.zoom;
         path.dashArray = [5/view.zoom, 4/view.zoom];
         cncOpsLayer.addChild(path);
+      });
+    }
+    // Mapa de alturas: zona y puntos (en su sitio real: coord. programa + origen)
+    const hmD = cncState.heightMap;
+    if (hmD && (hmD.enabled || hmD.values.some(Number.isFinite))){
+      const o = cncWorkOrigin(cncPlateContext());
+      const W = (x, y) => new Point(x + o.x, -(y + o.y));
+      const zone = new Path.Rectangle(W(hmD.x0, hmD.y1), W(hmD.x1, hmD.y0));
+      zone.strokeColor = new Color('#3DD68C'); zone.strokeWidth = 1.5 / view.zoom; zone.dashArray = [8 / view.zoom, 5 / view.zoom]; zone.opacity = 0.8;
+      cncOpsLayer.addChild(zone);
+      const ready = hmReady(hmD), ref = hmD.values[0];
+      hmProbeOrder(hmD).forEach((q, k) => {
+        const g = hmGridPoint(hmD, q.i, q.j), P = W(g.x, g.y), v = hmD.values[q.idx];
+        const dot = new Path.Circle(P, 4 / view.zoom);
+        dot.fillColor = new Color(Number.isFinite(v) ? '#3DD68C' : '#FFB347'); dot.opacity = 0.9;
+        cncOpsLayer.addChild(dot);
+        const t = new PointText(P.add(new Point(6 / view.zoom, -6 / view.zoom)));
+        t.content = `P${k + 1}` + (Number.isFinite(v) ? ` ${(v - ref) >= 0 ? '+' : ''}${(v - ref).toFixed(2)}` : '');
+        t.fillColor = new Color('#8FF0C0'); t.fontSize = 11 / view.zoom; t.fontFamily = 'monospace';
+        cncOpsLayer.addChild(t);
       });
     }
     // Resaltado de la operación ACTIVA (azul)
@@ -5459,10 +5495,11 @@ document.querySelectorAll('.cnc-op-newbtn').forEach(b => b.addEventListener('cli
 }));
 document.getElementById('cnc-group-tool').addEventListener('change', e => { cncState.groupByTool = e.target.checked; cncRebuildAndRegen(); });
 document.getElementById('cnc-plate').addEventListener('change', e => {
-  cncState.plateFilter = e.target.value || '';
-  cncRebuildAndRegen();
-  cncRefreshOriginUI();
-  cncRefreshOpsOverlay();
+  // El origen del programa cambia con la placa: la zona del mapa de alturas se desplaza
+  // con él para seguir sobre el mismo sitio físico (antes se quedaba con las coordenadas
+  // anteriores y podía caer fuera de la pieza → solo se aplicaba el valor del borde).
+  const v = e.target.value || '';
+  cncChangeOrigin(() => { cncState.plateFilter = v; });
   const o = cncWorkOrigin(cncPlateContext());
   setPrompt(`${cncState.plateFilter ? 'Programa de ' + cncState.plateFilter : 'Programa de todas las placas'} · X0 Y0 = ${o.desc}`);
 });
