@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CAD Pro + CNC · DXF → G-Code · v12.19</title>
+<title>CAD Pro + CNC · DXF → G-Code · v12.20</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -568,14 +568,27 @@ input[type="number"]{font-variant-numeric:tabular-nums}
 .cnc-hm-manual-head .cnc-hm-mini{height:24px;font-size:10px}
 .cnc-hm-table input.cur{border-color:var(--accent-green);box-shadow:0 0 0 2px rgba(61,214,140,.35)}
 #cnc-hm-info{color:#8FF0C0;background:rgba(61,214,140,.06);border-color:rgba(61,214,140,.25)}
-@media (max-width:1400px){ #cnc-panel{width:300px} #properties-panel{width:240px} }
+/* Propiedades dentro de la columna de capas: el lienzo no cambia de tamaño al seleccionar */
+#layer-panel{width:250px}
+#layer-panel #layer-list{flex:0 1 auto;min-height:60px;max-height:45%}
+#layer-panel #properties-panel{width:auto;border-left:none;border-top:1px solid var(--border-color);padding:10px 0 0;margin-top:8px;
+  flex:0 1 auto;max-height:62%;overflow-y:auto;background:transparent}
+#layer-panel #properties-panel h3{margin-bottom:8px;padding-bottom:6px;font-size:10.5px}
+#layer-panel .prop-label{flex:0 0 74px}
+select.prop-value{background:var(--surface-2);color:var(--text-primary);border:1px solid var(--border-light);border-radius:var(--radius-s);padding:4px 7px;font-size:12px;flex:1;min-width:0}
+select.prop-value:focus{outline:none;border-color:rgba(92,200,255,.6)}
+input[type="color"].prop-value{flex:0 0 46px;height:24px;padding:0;border:1px solid var(--border-light);border-radius:5px;background:transparent;cursor:pointer}
+.prop-row input[type="color"].prop-value{margin-left:auto}
+#layer-panel .prop-value .coord-group input{width:62px}
+#layer-panel .prop-value input[type="number"]{width:80px}
+@media (max-width:1400px){ #cnc-panel{width:300px} }
 @media (max-width:1024px){
-  #layer-panel{width:160px} #properties-panel{width:200px} #cnc-panel{width:260px}
+  #layer-panel{width:210px} #cnc-panel{width:260px}
   #ribbon-content{gap:4px 10px;padding:4px 6px}
   .ribbon-btn{min-width:34px;padding:3px 6px} .ribbon-btn svg{width:17px;height:17px}
 }
 @media (max-width:768px){
-  #layer-panel,#properties-panel{display:none!important}
+  #layer-panel{display:none!important}
   #cnc-panel{width:220px}
   #ribbon-tabs button{font-size:10px;padding:3px 10px}
   .ribbon-group label{display:none}
@@ -590,12 +603,13 @@ input[type="number"]{font-variant-numeric:tabular-nums}
       <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 15V9l4 6V9l4 6"/>
     </svg>
     CAD&nbsp;+&nbsp;CNC
-    <span class="version-badge" id="appVersion">v12.19</span>
+    <span class="version-badge" id="appVersion">v12.20</span>
   </span>
   <div class="separator"></div>
   <button id="qa-new" title="Nuevo (Ctrl+N)"><svg viewBox="0 0 24 24"><path d="M13 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V9z"/><path d="M13 3v6h6"/></svg></button>
-  <button id="qa-open" title="Importar DXF (Ctrl+O)"><svg viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></button>
-  <button id="qa-save" title="Exportar DXF (Ctrl+S)"><svg viewBox="0 0 24 24"><path d="M5 3h11l3 3v15H5z"/><path d="M8 3v6h8V3M8 21v-7h8v7"/></svg></button>
+  <button id="qa-open" title="Abrir trabajo (.cadcnc) o importar DXF (Ctrl+O)"><svg viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></button>
+  <button id="qa-save" title="Guardar trabajo (Ctrl+S)"><svg viewBox="0 0 24 24"><path d="M5 3h11l3 3v15H5z"/><path d="M8 3v6h8V3M8 21v-7h8v7"/></svg></button>
+  <input type="file" id="file-input-job" class="file-input-hidden" accept=".cadcnc,.json,.dxf">
   <div class="separator"></div>
   <button id="qa-undo" title="Deshacer (Ctrl+Z)"><svg viewBox="0 0 24 24"><path d="M3 11h11a5 5 0 0 1 0 10h-3"/><path d="M8 6 3 11l5 5"/></svg></button>
   <button id="qa-redo" title="Rehacer (Ctrl+Y)"><svg viewBox="0 0 24 24"><path d="M21 11H10a5 5 0 0 0 0 10h3"/><path d="M16 6l5 5-5 5"/></svg></button>
@@ -667,6 +681,8 @@ input[type="number"]{font-variant-numeric:tabular-nums}
     <div class="ribbon-group" data-tab="insert" style="display:none;">
       <label>Archivo</label>
       <div class="ribbon-group-btns">
+        <button class="ribbon-btn" id="ribbon-job-open" title="Abrir trabajo guardado (.cadcnc)"><svg viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg><span>Abrir trabajo</span><span class="tooltip">Abrir trabajo (Ctrl+O)</span></button>
+        <button class="ribbon-btn" id="ribbon-job-save" title="Guardar trabajo (.cadcnc)"><svg viewBox="0 0 24 24"><path d="M5 3h11l3 3v15H5z"/><path d="M8 3v6h8V3M8 21v-7h8v7"/></svg><span>Guardar trabajo</span><span class="tooltip">Guardar trabajo (Ctrl+S)</span></button>
         <button class="ribbon-btn" id="ribbon-import" title="Importar DXF"><svg viewBox="0 0 24 24"><polygon points="3,3 21,3 21,21 3,21"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg><span>Importar</span><span class="tooltip">Importar DXF</span></button>
         <button class="ribbon-btn" id="ribbon-export" title="Exportar DXF"><svg viewBox="0 0 24 24"><polygon points="3,3 21,3 21,21 3,21"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/><polygon points="8,16 16,16 14,19 10,19" fill="currentColor" stroke="none"/></svg><span>Exportar</span><span class="tooltip">Exportar DXF</span></button>
       </div>
@@ -709,6 +725,10 @@ input[type="number"]{font-variant-numeric:tabular-nums}
   <div id="layer-panel">
     <h3>Capas <button id="add-layer-btn">+</button></h3>
     <ul id="layer-list"></ul>
+    <div id="properties-panel">
+      <h3>Propiedades</h3>
+      <div id="props-content"></div>
+    </div>
   </div>
 
   <div id="canvas-container">
@@ -875,11 +895,6 @@ input[type="number"]{font-variant-numeric:tabular-nums}
     </div>
   </div>
 
-  <div id="properties-panel">
-    <h3>Propiedades</h3>
-    <div id="props-content"></div>
-  </div>
-
   <div id="app-modal-overlay">
     <div id="app-modal-box">
       <h3 id="app-modal-title">Título</h3>
@@ -931,7 +946,9 @@ window.dispatchEvent(new Event('clipper-ready'));
 </script>
 <script>
 /* ═══════════════════════════════════════════════════════════════════════
-   CAD Pro + CNC — v12.19
+   CAD Pro + CNC — v12.20
+   v12.20: guardar/abrir trabajos completos (.cadcnc) + autoguardado y recuperación; identificador estable
+           de entidades (las operaciones sobreviven a deshacer); propiedades bajo las capas (el lienzo no se mueve)
    v12.19: FIX taladros: los G0 entre agujeros cancelaban el ciclo G81/G83 y solo se taladraba el primero;
            taladros con G0/G1 explícitos por defecto (GRBL no admite ciclos); ciclo opcional con G98 y sin G0
    v12.18: cortes compensados como G1 con Z inicial y final (XYZ interpolado), partidos solo al cruzar
@@ -969,8 +986,8 @@ project.selectedColor = new Color(0.31, 0.76, 0.97);
 
 const canvasContainer = document.getElementById('canvas-container');
 
-const APP_VERSION = '12.19';
-const VERSION_NOTES = 'FIX taladros: solo se hacía el primero (G0 cancelaba el ciclo) · taladros G0/G1 por defecto';
+const APP_VERSION = '12.20';
+const VERSION_NOTES = 'Guardar/abrir trabajos (.cadcnc) + autoguardado · Propiedades bajo las capas';
 
 const layers = {};
 function safeName(orig){ let n = orig.replace(/[^a-zA-Z0-9_\-]/g,'_'); if (/^\d/.test(n)) n='L_'+n; return n; }
@@ -1150,15 +1167,41 @@ function reflectMatrix(p1, p2){
   const ty = p1.y - b*p1.x - d*p1.y;
   return new paper.Matrix(a,b,c,d,tx,ty);
 }
+// Identificador ESTABLE de entidad (item.data.uid): se conserva al deshacer/rehacer y al
+// guardar/abrir un trabajo (paper.js reasigna item.id cada vez que reconstruye un objeto).
+let _uidSeq = 0;
+function itemUid(item){
+  if (!item.data) item.data = {};
+  if (!item.data.uid) item.data.uid = 'e' + Date.now().toString(36) + '_' + (++_uidSeq).toString(36) + Math.random().toString(36).slice(2, 6);
+  return item.data.uid;
+}
+// Las copias (COPY, simetría, etc.) NO heredan el identificador del original
+(function patchCloneUid(){
+  const orig = paper.Item.prototype.clone;
+  paper.Item.prototype.clone = function(options){
+    const c = orig.call(this, options);
+    const strip = it => { if (it && it.data && it.data.uid) delete it.data.uid; if (it && it.children) it.children.forEach(strip); };
+    strip(c);
+    return c;
+  };
+})();
 function findPaperItemById(id){
   if (id === null || id === undefined) return null;
+  const byUid = typeof id === 'string';
   for (let lname in layers){
     const layer = layers[lname];
     for (const item of layer.children){
-      if (item.id === id) return item;
+      if (byUid ? (item.data && item.data.uid === id) : item.id === id) return item;
     }
   }
   return null;
+}
+// Importa un objeto paper desde JSON respetando su clase (Path, CompoundPath, …)
+function importItemJSON(json){
+  const tmp = new Path();
+  const res = tmp.importJSON(json);
+  if (res && res !== tmp){ tmp.remove(); return res; }
+  return tmp;
 }
 
 const state = {
@@ -1992,7 +2035,7 @@ function snapshotCurrent(){
       name: layer.data.originalName,
       visible: layer.data.visible, locked: layer.data.locked,
       color: layer.data.color || '#FFFFFF',
-      items: layer.children.map(item => item.exportJSON({ asString: false }))
+      items: layer.children.map(item => item.exportJSON({ asString: false, precision: 15 }))
     };
   }
   return snap;
@@ -2020,8 +2063,7 @@ function restoreState(snap){
     if (data.color) layer.data.color = data.color;
     layer.visible = data.visible;
     data.items.forEach(itemJson => {
-      const item = new Path();
-      item.importJSON(itemJson);
+      const item = importItemJSON(itemJson);
       layer.addChild(item);
     });
   }
@@ -3082,7 +3124,8 @@ function cncAddCutItem(item){
   }
   if (!item.id){ setPrompt('Entidad sin ID válido'); return; }
   const op = cncTargetOp('cut');
-  if (!op.itemIds.includes(item.id)) op.itemIds.push(item.id);
+  const uid = itemUid(item);
+  if (!op.itemIds.includes(uid)) op.itemIds.push(uid);
   cncRebuildAndRegen();
   setPrompt(`Corte añadido (${op.itemIds.length} ítems)`);
 }
@@ -6191,6 +6234,7 @@ function zoomExtents(){
     view.center = allBounds.center;
   } else { view.zoom = 1; view.center = new Point(0, 0); }
   drawGrid(); refreshStrokeWidths(); renderGrips(); view.update();
+  try { cncOverlayOnZoom(); } catch (e){}
 }
 function onMouseWheel(event){
   event.preventDefault();
@@ -6205,7 +6249,7 @@ function onMouseWheel(event){
   view.zoom = newZoom;
   view.center = newCenter;
   drawGrid(); refreshStrokeWidths(); renderGrips(); view.update();
-  if (cncState.mode !== 'off') cncRefreshOpsOverlay();
+  cncOverlayOnZoom();
 }
 function getCurrentDrawingBounds(){
   let allBounds = null;
@@ -6623,7 +6667,17 @@ mouseTool.onMouseUp = onMouseUp;
 mouseTool.onMouseMove = onMouseMove;
 mouseTool.activate();
 view.element.addEventListener('wheel', onMouseWheel, { passive: false });
-view.on('change', () => { drawGrid(); refreshMeasureOverlay(); });
+view.on('change', () => { drawGrid(); refreshMeasureOverlay(); cncOverlayOnZoom(); });
+// Las marcas CNC (trayectorias, origen, cuadrícula del mapa) tienen grosor/tamaño de texto
+// relativos al zoom: se redibujan cuando cambia el zoom en cualquier modo (antes solo en
+// los modos Taladros/Cortes/Cajeados), como mucho una vez por fotograma.
+let _ovZoom = null, _ovRaf = 0;
+function cncOverlayOnZoom(){
+  if (_ovZoom !== null && Math.abs(view.zoom - _ovZoom) < 1e-9) return;
+  if (!cncOpsLayer || !cncOpsLayer.children.length){ _ovZoom = view.zoom; return; }
+  if (_ovRaf) return;
+  _ovRaf = requestAnimationFrame(() => { _ovRaf = 0; _ovZoom = view.zoom; try { cncRefreshOpsOverlay(); } catch (e){} });
+}
 function setOrtho(on){
   state.ortho = on;
   document.getElementById('ortho-toggle').classList.toggle('active', state.ortho);
@@ -6656,10 +6710,20 @@ document.getElementById('grid-toggle').addEventListener('click', function(){
   if (state.gridVisible) drawGrid(); else gridLayer.removeChildren();
 });
 document.getElementById('btn-zoom-extents').addEventListener('click', zoomExtents);
-document.getElementById('btn-zoom-in').addEventListener('click', () => { view.zoom *= 1.2; refreshStrokeWidths(); renderGrips(); view.update(); drawGrid(); });
-document.getElementById('btn-zoom-out').addEventListener('click', () => { view.zoom /= 1.2; refreshStrokeWidths(); renderGrips(); view.update(); drawGrid(); });
+document.getElementById('btn-zoom-in').addEventListener('click', () => { view.zoom *= 1.2; refreshStrokeWidths(); renderGrips(); view.update(); drawGrid(); cncOverlayOnZoom(); });
+document.getElementById('btn-zoom-out').addEventListener('click', () => { view.zoom /= 1.2; refreshStrokeWidths(); renderGrips(); view.update(); drawGrid(); cncOverlayOnZoom(); });
 document.getElementById('ribbon-import').addEventListener('click', () => document.getElementById('file-input-import').click());
-document.getElementById('qa-open').addEventListener('click', () => document.getElementById('file-input-import').click());
+document.getElementById('qa-open').addEventListener('click', () => document.getElementById('file-input-job').click());
+document.getElementById('ribbon-job-open').addEventListener('click', () => document.getElementById('file-input-job').click());
+document.getElementById('ribbon-job-save').addEventListener('click', jobSaveDialog);
+document.getElementById('file-input-job').addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (file){
+    if (/\.dxf$/i.test(file.name)) importDXF(file);       // el mismo botón sirve para importar DXF
+    else jobOpenFile(file);
+  }
+  e.target.value = '';
+});
 document.getElementById('file-input-import').addEventListener('change', e => {
   const file = e.target.files[0];
   if (file){
@@ -6670,7 +6734,7 @@ document.getElementById('file-input-import').addEventListener('change', e => {
   e.target.value = '';
 });
 document.getElementById('ribbon-export').addEventListener('click', exportDXF);
-document.getElementById('qa-save').addEventListener('click', exportDXF);
+document.getElementById('qa-save').addEventListener('click', jobSaveDialog);
 document.getElementById('qa-undo').addEventListener('click', undo);
 document.getElementById('qa-redo').addEventListener('click', redo);
 const cmdInputEl = document.getElementById('cmd-input');
@@ -6691,6 +6755,8 @@ window.addEventListener('keydown', e => {
   if (e.ctrlKey && e.key === 'z'){ e.preventDefault(); undo(); }
   if (e.ctrlKey && e.key === 'y'){ e.preventDefault(); redo(); }
   if (e.ctrlKey && e.key === 'n'){ e.preventDefault(); document.getElementById('qa-new').click(); }
+  if (e.ctrlKey && (e.key === 's' || e.key === 'S')){ e.preventDefault(); jobSaveDialog(); }
+  if (e.ctrlKey && (e.key === 'o' || e.key === 'O')){ e.preventDefault(); document.getElementById('file-input-job').click(); }
   if (e.key === 'F3'){ e.preventDefault(); setOsnap(!state.snapEnabled); }
   if (e.key === 'F4'){ e.preventDefault(); if (state.currentCommand === 'MEASURE') exitMeasureMode(); else startMeasureMode(); }
   if (e.key === 'F8'){ e.preventDefault(); setOrtho(!state.ortho); }
@@ -6811,13 +6877,15 @@ function closeContextMenu(){ document.getElementById('context-menu').style.displ
 function newDrawing(){
   resetStateCmd();
   clearSelection();
+  // La capa por defecto se llama internamente 'L_0' (safeName('0')): antes se buscaba '0',
+  // se borraban TODAS las capas y "Nuevo" fallaba con un error.
   for (let internal in layers){
-    if (internal === '0'){ layers[internal].removeChildren(); continue; }
+    if (layers[internal] === defaultLayer){ layers[internal].removeChildren(); continue; }
     if (CNC_UTILITY_LAYERS.includes(layers[internal])) continue;
     layers[internal].remove();
     delete layers[internal];
   }
-  activeLayer = layers['0'];
+  activeLayer = defaultLayer;
   project.activeLayer = activeLayer;
   activeLayer.visible = true;
   activeLayer.data.visible = true;
@@ -7025,6 +7093,158 @@ window.addEventListener('clipper-ready', async () => {
     console.warn('   → Usará fallback geométrico con miter correcto + self-clean');
   }
 });
+// Vuelca el estado CNC en todos los campos del panel (arranque y al abrir un trabajo)
+function cncSyncFields(){
+  cncUpdateToolList();
+  cncUpdateOpList();
+  cncUpdateTabsInfo();
+  document.getElementById('cnc-spindlePause').value = cncState.spindlePause;
+  document.getElementById('cnc-rapidXY').value = cncState.rapidXY;
+  document.getElementById('cnc-rapidZ').value = cncState.rapidZ;
+  document.getElementById('cnc-finishAllowance').value = cncState.finishAllowance;
+  document.getElementById('cnc-drillMode').value = cncState.drillMode;
+  document.getElementById('cnc-group-tool').checked = !!cncState.groupByTool;
+  hmRenderUI();
+  cncRefreshOriginUI();
+  document.getElementById('cnc-tabsEnabled').checked = cncState.tabs.enabled;
+  document.getElementById('cnc-tabsCount').value = cncState.tabs.count;
+  document.getElementById('cnc-tabsWidth').value = cncState.tabs.width;
+  document.getElementById('cnc-tabsHeight').value = cncState.tabs.height;
+}
+/* ── Trabajos: guardar y abrir (.cadcnc = JSON) ───────────────────────── */
+const JOB_FORMAT = 'cad-cnc-job';
+let jobName = 'trabajo';
+const nanToNull = v => (typeof v === 'number' && !Number.isFinite(v)) ? null : v;
+function jobSerialize(){
+  const layersOut = [];
+  for (const k in layers){
+    const l = layers[k];
+    if (CNC_UTILITY_LAYERS.includes(l)) continue;
+    l.children.forEach(it => itemUid(it));             // toda entidad lleva identificador estable
+    layersOut.push({ name: k, visible: l.data.visible !== false, locked: !!l.data.locked, color: l.data.color || '#FFFFFF',
+                     items: l.children.map(it => it.exportJSON({ asString: false, precision: 15 })) });   // sin redondeo: se reabre idéntico
+  }
+  const hm = cncState.heightMap, wo = cncState.workOrigin;
+  return {
+    format: JOB_FORMAT, version: 1, app: APP_VERSION, name: jobName, saved: new Date().toISOString(),
+    activeLayer: activeLayer ? activeLayer.name : '0',
+    view: { x: view.center.x, y: view.center.y, zoom: view.zoom },
+    layers: layersOut,
+    cnc: {
+      tools: JSON.parse(JSON.stringify(cncState.tools)), activeToolId: cncState.activeToolId,
+      operations: JSON.parse(JSON.stringify(cncState.operations)), activeOp: cncState.activeOp,
+      tabs: Object.assign({}, cncState.tabs), finishAllowance: cncState.finishAllowance,
+      spindlePause: cncState.spindlePause, rapidXY: cncState.rapidXY, rapidZ: cncState.rapidZ,
+      drillMode: cncState.drillMode, groupByTool: !!cncState.groupByTool, plateFilter: cncState.plateFilter,
+      workOrigin: { mode: wo.mode, ref: wo.ref, pos: wo.pos, x: nanToNull(wo.x), y: nanToNull(wo.y) },
+      heightMap: Object.assign({}, hm, { values: hm.values.map(nanToNull) })
+    }
+  };
+}
+function jobApply(job){
+  if (!job || job.format !== JOB_FORMAT || !Array.isArray(job.layers)) throw new Error('El archivo no es un trabajo de CAD Pro + CNC');
+  newDrawing();
+  let nItems = 0;
+  for (const L of job.layers){
+    const internal = L.name || '0';
+    const layer = layers[internal] || createLayer(internal, L.color || '#FFFFFF');
+    layer.data.visible = L.visible !== false; layer.visible = layer.data.visible;
+    layer.data.locked = !!L.locked; layer.data.color = L.color || '#FFFFFF';
+    for (const js of (L.items || [])){
+      try { const it = importItemJSON(js); layer.addChild(it); nItems++; } catch (e){ console.warn('[trabajo] entidad no válida', e); }
+    }
+  }
+  if (job.activeLayer && layers[job.activeLayer]){ activeLayer = layers[job.activeLayer]; project.activeLayer = activeLayer; }
+  const c = job.cnc || {};
+  if (Array.isArray(c.tools) && c.tools.length){ cncState.tools = c.tools; cncState.activeToolId = c.activeToolId && c.tools.some(t => t.id === c.activeToolId) ? c.activeToolId : c.tools[0].id; }
+  cncState.operations = Array.isArray(c.operations) ? c.operations : [];
+  cncState.activeOp = Number.isInteger(c.activeOp) ? c.activeOp : cncState.operations.length - 1;
+  if (c.tabs) cncState.tabs = Object.assign({}, cncState.tabs, c.tabs);
+  for (const k of ['finishAllowance', 'spindlePause', 'rapidXY', 'rapidZ']) if (typeof c[k] === 'number') cncState[k] = c[k];
+  cncState.drillMode = c.drillMode === 'cycle' ? 'cycle' : 'explicit';
+  cncState.groupByTool = !!c.groupByTool;
+  cncState.plateFilter = typeof c.plateFilter === 'string' ? c.plateFilter : '';
+  if (c.workOrigin){ const w = c.workOrigin; cncState.workOrigin = { mode: w.mode || 'auto', ref: w.ref || 'parts', pos: w.pos || 'bl', x: w.x == null ? NaN : w.x, y: w.y == null ? NaN : w.y }; }
+  if (c.heightMap){ cncState.heightMap = Object.assign({}, cncState.heightMap, c.heightMap, { values: (c.heightMap.values || []).map(v => v == null ? NaN : v) }); }
+  jobName = job.name || jobName;
+  invalidateSnapCache(); renderLayerList();
+  cncLoadToolIntoFields(getCNCActiveTool() || cncState.tools[0]);
+  cncSyncFields();
+  cncRebuildAndRegen();
+  cncRefreshPlateSelect();
+  if (job.view && Number.isFinite(job.view.zoom)){ view.zoom = job.view.zoom; view.center = new Point(job.view.x, job.view.y); }
+  else zoomExtents();
+  drawGrid(); refreshStrokeWidths(); renderGrips(); updateProperties(); view.update();
+  cncRefreshOpsOverlay();
+  return nItems;
+}
+function jobDownload(name){
+  jobName = (name || jobName || 'trabajo').replace(/[\\/:*?"<>|]+/g, '_').trim() || 'trabajo';
+  const data = JSON.stringify(jobSerialize());
+  const b = new Blob([data], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(b);
+  a.download = jobName + '.cadcnc';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  setPrompt(`Trabajo guardado: ${jobName}.cadcnc`);
+}
+function jobSaveDialog(){
+  showModal({
+    title: 'Guardar trabajo',
+    body: `Se guarda <b>todo</b>: dibujo y capas, herramientas, operaciones y su orden, patillas, mapa de alturas, origen y placa.<br>
+           <label style="display:block;margin-top:10px">Nombre del trabajo<br>
+           <input id="job-name-input" type="text" value="${escapeHtml(jobName)}" style="width:100%;margin-top:4px;padding:6px 8px;border-radius:6px;border:1px solid var(--border-light);background:var(--surface-2);color:var(--text-primary)"></label>`,
+    buttons: [{ label: 'Cancelar' }, { label: 'Guardar', primary: true, onClick: () => jobDownload(document.getElementById('job-name-input').value) }]
+  });
+  setTimeout(() => { const i = document.getElementById('job-name-input'); if (i){ i.focus(); i.select(); i.onkeydown = e => { if (e.key === 'Enter'){ closeModal(); jobDownload(i.value); } }; } }, 30);
+}
+function jobOpenFile(file){
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const job = JSON.parse(ev.target.result);
+      const n = jobApply(job);
+      jobName = (job.name || file.name.replace(/\.(cadcnc|json)$/i, ''));
+      setPrompt(`Trabajo abierto: ${file.name} · ${n} entidades · ${cncState.operations.length} operaciones`);
+      autosaveNow();
+    } catch (err){
+      console.error(err);
+      showModal({ title: 'No se pudo abrir', body: escapeHtml(err.message || String(err)), buttons: [{ label: 'OK', primary: true }] });
+    }
+  };
+  reader.readAsText(file);
+}
+/* Guardado automático en el navegador (por si se cierra la pestaña) */
+const AUTOSAVE_KEY = 'cadcnc.autosave.v1';
+let _autosaveLast = '';
+function autosaveNow(){
+  try {
+    const job = jobSerialize();
+    const n = job.layers.reduce((t, l) => t + l.items.length, 0);
+    if (!n && !job.cnc.operations.length){ return; }
+    const str = JSON.stringify(job);
+    if (str === _autosaveLast) return;
+    localStorage.setItem(AUTOSAVE_KEY, str);
+    _autosaveLast = str;
+  } catch (e){ /* almacenamiento no disponible o lleno: se ignora */ }
+}
+function autosaveOffer(){
+  let str = null;
+  try { str = localStorage.getItem(AUTOSAVE_KEY); } catch (e){}
+  if (!str) return;
+  let job; try { job = JSON.parse(str); } catch (e){ return; }
+  const n = (job.layers || []).reduce((t, l) => t + (l.items || []).length, 0);
+  const when = job.saved ? new Date(job.saved).toLocaleString() : '';
+  showModal({
+    title: 'Recuperar trabajo',
+    body: `Hay un trabajo guardado automáticamente${when ? ' el <b>' + escapeHtml(when) + '</b>' : ''}: <b>${escapeHtml(job.name || 'trabajo')}</b> · ${n} entidades · ${(job.cnc && job.cnc.operations || []).length} operaciones.<br>¿Quieres recuperarlo?`,
+    buttons: [
+      { label: 'Descartar', onClick: () => { try { localStorage.removeItem(AUTOSAVE_KEY); } catch (e){} } },
+      { label: 'Recuperar', primary: true, onClick: () => { try { jobApply(job); setPrompt('Trabajo recuperado'); } catch (e){ setPrompt('No se pudo recuperar: ' + e.message); } } }
+    ]
+  });
+}
 function initAll(){
   syncViewSize();
   renderLayerList();
@@ -7035,24 +7255,14 @@ function initAll(){
   cncState.tools = [createCNCTool(1)];
   cncState.activeToolId = cncState.tools[0].id;
   cncLoadToolIntoFields(cncState.tools[0]);
-  cncUpdateToolList();
-  cncUpdateOpList();
-  cncUpdateTabsInfo();
-  document.getElementById('cnc-spindlePause').value = cncState.spindlePause;
-  document.getElementById('cnc-rapidXY').value = cncState.rapidXY;
-  document.getElementById('cnc-rapidZ').value = cncState.rapidZ;
-  document.getElementById('cnc-finishAllowance').value = cncState.finishAllowance;
-  document.getElementById('cnc-drillMode').value = cncState.drillMode;
-  hmRenderUI();
-  cncRefreshOriginUI();
-  document.getElementById('cnc-tabsEnabled').checked = cncState.tabs.enabled;
-  document.getElementById('cnc-tabsCount').value = cncState.tabs.count;
-  document.getElementById('cnc-tabsWidth').value = cncState.tabs.width;
-  document.getElementById('cnc-tabsHeight').value = cncState.tabs.height;
+  cncSyncFields();
   document.getElementById('cnc-sim-speed-val').textContent = '1.0x';
 
   document.getElementById('appVersion').textContent = 'v' + APP_VERSION;
   setPrompt(`v${APP_VERSION} · ${VERSION_NOTES}`);
+  setTimeout(autosaveOffer, 400);
+  setInterval(autosaveNow, 5000);
+  window.addEventListener('beforeunload', autosaveNow);
   console.log(`═══════════════════════════════════════════════════════════════════`);
   console.log(`  CAD Pro + CNC v${APP_VERSION}`);
   console.log(`  ${VERSION_NOTES}`);
