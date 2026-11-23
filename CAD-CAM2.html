@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CAD Pro + CNC · DXF → G-Code · v12.18</title>
+<title>CAD Pro + CNC · DXF → G-Code · v12.19</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -590,7 +590,7 @@ input[type="number"]{font-variant-numeric:tabular-nums}
       <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 15V9l4 6V9l4 6"/>
     </svg>
     CAD&nbsp;+&nbsp;CNC
-    <span class="version-badge" id="appVersion">v12.18</span>
+    <span class="version-badge" id="appVersion">v12.19</span>
   </span>
   <div class="separator"></div>
   <button id="qa-new" title="Nuevo (Ctrl+N)"><svg viewBox="0 0 24 24"><path d="M13 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V9z"/><path d="M13 3v6h6"/></svg></button>
@@ -775,6 +775,10 @@ input[type="number"]{font-variant-numeric:tabular-nums}
       <div class="cnc-row"><label>Pausa mandrino</label><input type="number" id="cnc-spindlePause" step="0.5" min="0" max="120"></div>
       <div class="cnc-row"><label>Rapid XY</label><input type="number" id="cnc-rapidXY" step="100" min="100"></div>
       <div class="cnc-row"><label>Rapid Z</label><input type="number" id="cnc-rapidZ" step="100" min="100"></div>
+      <div class="cnc-row" title="GRBL no admite ciclos G81/G83: usa movimientos G0/G1"><label>Taladros</label><select id="cnc-drillMode" style="width:170px">
+        <option value="explicit">G0/G1 (cualquier máquina)</option>
+        <option value="cycle">Ciclo G81/G83</option>
+      </select></div>
     </div>
     <div class="cnc-section cnc-hm-panel" id="cnc-hm-section">
       <h3><svg class="h-ico" viewBox="0 0 24 24"><path d="M3 17l5-4 4 3 4-6 5 4"/><path d="M3 21h18"/><circle cx="8" cy="13" r="1"/><circle cx="16" cy="10" r="1"/></svg>Mapa de alturas · Z0 virtual <span class="mini" id="cnc-hm-badge">OFF</span></h3>
@@ -927,7 +931,9 @@ window.dispatchEvent(new Event('clipper-ready'));
 </script>
 <script>
 /* ═══════════════════════════════════════════════════════════════════════
-   CAD Pro + CNC — v12.18
+   CAD Pro + CNC — v12.19
+   v12.19: FIX taladros: los G0 entre agujeros cancelaban el ciclo G81/G83 y solo se taladraba el primero;
+           taladros con G0/G1 explícitos por defecto (GRBL no admite ciclos); ciclo opcional con G98 y sin G0
    v12.18: cortes compensados como G1 con Z inicial y final (XYZ interpolado), partidos solo al cruzar
            la cuadrícula (desviación ≤ 0,005 mm); simulación muestra la Z real con mapa
    v12.17: FIX la zona del mapa de alturas no seguía al cambiar de placa (todo el corte fuera de zona);
@@ -963,8 +969,8 @@ project.selectedColor = new Color(0.31, 0.76, 0.97);
 
 const canvasContainer = document.getElementById('canvas-container');
 
-const APP_VERSION = '12.18';
-const VERSION_NOTES = 'Cortes con Z variable continua: G1 con Z inicial/final, partidos solo en la cuadrícula';
+const APP_VERSION = '12.19';
+const VERSION_NOTES = 'FIX taladros: solo se hacía el primero (G0 cancelaba el ciclo) · taladros G0/G1 por defecto';
 
 const layers = {};
 function safeName(orig){ let n = orig.replace(/[^a-zA-Z0-9_\-]/g,'_'); if (/^\d/.test(n)) n='L_'+n; return n; }
@@ -1193,6 +1199,7 @@ const cncState = {
   tabs: { enabled:false, count:3, width:1.0, height:1.0, seed:12345 },
   finishAllowance: 0.2,
   plateFilter: '',
+  drillMode: 'explicit',  // 'explicit' = G0/G1 (cualquier controladora, GRBL incluido) · 'cycle' = G81/G83
   activeOp: -1,           // índice de la operación activa (destino de los clics en el dibujo)
   groupByTool: false,     // false = orden de la lista · true = agrupar por herramienta (comportamiento antiguo)
   // Origen X0 Y0 del programa: auto (placa → esq. inf. izq.; sin placa → origen del dibujo),
@@ -4553,29 +4560,49 @@ function buildCNCProgram(){
       if (op.type === 'drill'){
         if (!op.points.length){ emit('', -1); continue; }
         const usePeck = passes > 1;
-        emit(`G0 Z${tool.safe.toFixed(3)}`, -1);
+        const f3d = v => v.toFixed(3);
+        emit(`G0 Z${f3d(tool.safe)}`, -1);
         if (Math.abs(lastZ - tool.safe) > 0.01) addMove('rapid', [{x:lastX, y:lastY}], tool.safe, cncState.rapidZ, -1);
+        const cycle = cncState.drillMode === 'cycle';
+        if (cycle) emit('G98  (ciclo: volver a la Z inicial entre agujeros)', -1);
         for (let pi = 0; pi < op.points.length; pi++){
           const p = op.points[pi];
           blockId++;
-          emit(`G0 X${p.x.toFixed(3)} Y${p.y.toFixed(3)}`, blockId);
+          if (cycle){
+            // Ciclo fijo bien formado: SIN movimientos G0 entre agujeros (un G0 cancela el ciclo
+            // y los agujeros siguientes no se taladraban). Con G98 vuelve a Z seguro entre agujeros.
+            if (pi === 0){
+              emit(`G0 X${f3d(p.x)} Y${f3d(p.y)}`, blockId);
+              if (usePeck) emit(`G83 X${f3d(p.x)} Y${f3d(p.y)} Z-${f3d(opDepth)} R${f3d(tool.retract)} Q${f3d(step)} F${tool.feedZ}`, blockId);
+              else emit(`G81 X${f3d(p.x)} Y${f3d(p.y)} Z-${f3d(opDepth)} R${f3d(tool.retract)} F${tool.feedZ}`, blockId);
+            } else emit(`X${f3d(p.x)} Y${f3d(p.y)}`, blockId);
+          } else {
+            // Movimientos explícitos: válido en cualquier controladora (GRBL no admite G81/G83)
+            emit(`G0 X${f3d(p.x)} Y${f3d(p.y)}`, blockId);
+            emit(`G0 Z${f3d(tool.retract)}`, blockId);
+            for (let k = 0; k < passes; k++){
+              const z = -Math.min((k + 1) * step, opDepth);
+              if (k > 0){
+                const prev = -Math.min(k * step, opDepth);
+                emit(`G0 Z${f3d(Math.min(tool.retract, prev + 0.5))}`, blockId);      // vuelve rápido cerca del fondo anterior
+              }
+              emit(`G1 Z${f3d(z)} F${tool.feedZ}`, blockId);
+              if (usePeck && k < passes - 1) emit(`G0 Z${f3d(tool.retract)}  (picoteo: sacar viruta)`, blockId);
+            }
+            emit(`G0 Z${f3d(tool.retract)}`, blockId);
+            emit(`G0 Z${f3d(tool.safe)}`, blockId);
+          }
           addMove('rapid', [{x:lastX, y:lastY}, {x:p.x, y:p.y}], tool.safe, cncState.rapidXY, blockId);
-          emit(`G0 Z${tool.retract.toFixed(3)}`, blockId);
           addMove('rapid', [{x:p.x, y:p.y}], tool.retract, cncState.rapidZ, blockId);
-          if (pi === 0){
-            if (usePeck) emit(`G83 X${p.x.toFixed(3)} Y${p.y.toFixed(3)} Z-${opDepth.toFixed(3)} R${tool.retract.toFixed(3)} Q${step.toFixed(3)} F${tool.feedZ}`, blockId);
-            else emit(`G81 X${p.x.toFixed(3)} Y${p.y.toFixed(3)} Z-${opDepth.toFixed(3)} R${tool.retract.toFixed(3)} F${tool.feedZ}`, blockId);
-          } else { emit(`X${p.x.toFixed(3)} Y${p.y.toFixed(3)}`, blockId); }
           for (let k = 0; k < passes; k++){
             const z = -Math.min((k+1)*step, opDepth);
             addMove('cut', [{x:p.x, y:p.y}], z, tool.feedZ, blockId);
             addMove('rapid', [{x:p.x, y:p.y}], tool.retract, cncState.rapidZ, blockId);
           }
-          emit(`G0 Z${tool.safe.toFixed(3)}`, blockId);
           addMove('rapid', [{x:p.x, y:p.y}], tool.safe, cncState.rapidZ, blockId);
         }
-        emit('G80', -1);
-        emit(`G0 Z${tool.safe.toFixed(3)}`, -1);
+        if (cycle) emit('G80', -1);
+        emit(`G0 Z${f3d(tool.safe)}`, -1);
       } else if (op.type === 'cut'){
         const contoursArr = contours;
         if (!contoursArr || !contoursArr.length){ emit('(sin contorno resuelto)', -1); emit('', -1); continue; }
@@ -5550,6 +5577,7 @@ document.querySelectorAll('.cnc-op-newbtn').forEach(b => b.addEventListener('cli
   setPrompt(`Nueva operación ${cncState.operations.length} (${OP_TYPE_ES[type]}) activa: haz clic en el dibujo para añadir ${type === 'cut' ? 'contornos' : type === 'drill' ? 'taladros' : 'cajeados'}`);
 }));
 document.getElementById('cnc-group-tool').addEventListener('change', e => { cncState.groupByTool = e.target.checked; cncRebuildAndRegen(); });
+document.getElementById('cnc-drillMode').addEventListener('change', e => { cncState.drillMode = e.target.value === 'cycle' ? 'cycle' : 'explicit'; cncRebuildAndRegen(); });
 document.getElementById('cnc-plate').addEventListener('change', e => {
   // El origen del programa cambia con la placa: la zona del mapa de alturas se desplaza
   // con él para seguir sobre el mismo sitio físico (antes se quedaba con las coordenadas
@@ -7014,6 +7042,7 @@ function initAll(){
   document.getElementById('cnc-rapidXY').value = cncState.rapidXY;
   document.getElementById('cnc-rapidZ').value = cncState.rapidZ;
   document.getElementById('cnc-finishAllowance').value = cncState.finishAllowance;
+  document.getElementById('cnc-drillMode').value = cncState.drillMode;
   hmRenderUI();
   cncRefreshOriginUI();
   document.getElementById('cnc-tabsEnabled').checked = cncState.tabs.enabled;
