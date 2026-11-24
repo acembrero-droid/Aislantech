@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CAD Pro + CNC · DXF → G-Code · v12.21</title>
+<title>CAD Pro + CNC · DXF → G-Code · v12.22</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -608,6 +608,34 @@ input[type="color"].prop-value{flex:0 0 46px;height:24px;padding:0;border:1px so
   #ribbon-tabs button{font-size:10px;padding:3px 10px}
   .ribbon-group label{display:none}
 }
+
+/* v12.22 · panel CNC por pasos */
+.cnc-guide{background:linear-gradient(180deg,rgba(77,163,255,.10),rgba(77,163,255,.03));border:1px solid rgba(77,163,255,.35);border-radius:8px;padding:8px;display:flex;flex-direction:column;gap:3px}
+.cnc-guide-title{font-size:11px;font-weight:600;color:var(--text-primary);margin-bottom:2px}
+.cnc-guide-step{display:flex;align-items:center;gap:8px;background:none;border:0;border-radius:5px;padding:4px 6px;color:var(--text-secondary);font:inherit;font-size:11px;text-align:left;cursor:pointer}
+.cnc-guide-step:hover{background:rgba(255,255,255,.05)}
+.cnc-guide-step .n{min-width:22px;height:18px;border-radius:9px;background:rgba(255,255,255,.08);color:var(--text-secondary);font-size:10px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;padding:0 4px}
+.cnc-guide-step .t{flex:1}
+.cnc-guide-step .s{font-size:10px;font-family:var(--font-mono);color:var(--text-dim)}
+.cnc-guide-step.done .n{background:#2e9e5b;color:#fff}
+.cnc-guide-step.done .s{color:#5fd08d}
+.cnc-guide-step.todo .n{background:#d18a1c;color:#fff}
+.cnc-guide-step.todo .t{color:var(--text-primary);font-weight:600}
+.cnc-guide-next{font-size:11px;color:#ffc067;padding:3px 6px 0;line-height:1.35}
+.cnc-guide-next:empty{display:none}
+.cnc-step{min-width:18px;height:18px;border-radius:9px;background:var(--accent-blue,#4da3ff);color:#fff;font-size:10px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}
+.cnc-opt{font-style:normal;font-weight:400;font-size:10px;color:var(--text-dim)}
+#cnc-panel h3.cnc-collapse-h{cursor:pointer;user-select:none;position:relative;padding-right:18px}
+#cnc-panel h3.cnc-collapse-h::after{content:'';position:absolute;right:3px;top:50%;width:6px;height:6px;border-right:1.5px solid var(--text-dim);border-bottom:1.5px solid var(--text-dim);transform:translateY(-70%) rotate(45deg);transition:transform .15s}
+#cnc-panel .cnc-section.collapsed h3.cnc-collapse-h::after{transform:translateY(-50%) rotate(-45deg)}
+#cnc-panel .cnc-section.collapsed > :not(h3){display:none !important}
+#cnc-panel .cnc-section.collapsed h3{margin-bottom:0}
+#cnc-panel .cnc-section.flash{box-shadow:0 0 0 2px rgba(77,163,255,.7);transition:box-shadow .2s}
+.cnc-adv-label{font-size:10px;text-transform:uppercase;letter-spacing:.6px;color:var(--text-dim);padding:6px 2px 0;border-top:1px dashed var(--border-color)}
+details.cnc-more{margin:4px 0}
+details.cnc-more > summary{cursor:pointer;font-size:11px;color:var(--text-secondary);padding:3px 0;list-style:none}
+details.cnc-more > summary::before{content:'▸ '}
+details.cnc-more[open] > summary::before{content:'▾ '}
 </style>
 </head>
 <body>
@@ -649,6 +677,8 @@ input[type="color"].prop-value{flex:0 0 46px;height:24px;padding:0;border:1px so
         <button class="ribbon-btn" data-cmd="CIRCLE" title="Círculo"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="0.8" fill="currentColor" stroke="none"/><line x1="12" y1="3.5" x2="12" y2="5.5" stroke-width="1.2"/></svg><span>Círculo</span><span class="tooltip">CIRCLE (C)</span></button>
         <button class="ribbon-btn" data-cmd="RECTANG" title="Rectángulo"><svg viewBox="0 0 24 24"><rect x="3.5" y="5.5" width="17" height="13" rx="0.5"/></svg><span>Rectángulo</span><span class="tooltip">RECTANG (REC)</span></button>
         <button class="ribbon-btn" data-cmd="ARC" title="Arco"><svg viewBox="0 0 24 24"><path d="M4 17 A 13 13 0 0 1 20 17" fill="none"/><circle cx="4" cy="17" r="1.2" fill="currentColor" stroke="none"/><circle cx="20" cy="17" r="1.2" fill="currentColor" stroke="none"/></svg><span>Arco</span><span class="tooltip">ARC (A)</span></button>
+        <button class="ribbon-btn" data-cmd="PLINE" title="Polilínea"><svg viewBox="0 0 24 24"><polyline points="3,19 8,7 14,15 21,5" fill="none"/><circle cx="3" cy="19" r="1.2" fill="currentColor" stroke="none"/><circle cx="21" cy="5" r="1.2" fill="currentColor" stroke="none"/></svg><span>Polilínea</span><span class="tooltip">PLINE (PL)</span></button>
+        <button class="ribbon-btn" data-cmd="POLYGON" title="Polígono"><svg viewBox="0 0 24 24"><polygon points="12,3 20,8 20,16 12,21 4,16 4,8" fill="none"/></svg><span>Polígono</span><span class="tooltip">POLYGON (POL)</span></button>
       </div>
     </div>
     <div class="ribbon-group" data-tab="home">
@@ -670,6 +700,7 @@ input[type="color"].prop-value{flex:0 0 46px;height:24px;padding:0;border:1px so
             <button data-cmd="JOIN"><svg viewBox="0 0 24 24"><path d="M3 8h6"/><path d="M9 8a5 5 0 0 1 5 5v0a5 5 0 0 0 5 5h2"/></svg>Unir <span class="fk">J</span></button>
             <button data-cmd="CHAMFER"><svg viewBox="0 0 24 24"><polyline points="3,18 3,3 18,3"/><line x1="3" y1="3" x2="8.5" y2="8.5" stroke-dasharray="2 2"/></svg>Chaflán <span class="fk">CHA</span></button>
             <button data-cmd="FILLET"><svg viewBox="0 0 24 24"><path d="M3 18 L3 12 Q3 3 12 3 L18 3"/></svg>Redondear <span class="fk">F</span></button>
+            <button data-cmd="EXPLODE"><svg viewBox="0 0 24 24"><rect x="7" y="7" width="10" height="10" stroke-dasharray="2 2"/><path d="M4 4l3 3M20 4l-3 3M4 20l3-3M20 20l-3-3"/></svg>Descomponer <span class="fk">X</span></button>
           </div>
         </div>
       </div>
@@ -754,8 +785,16 @@ input[type="color"].prop-value{flex:0 0 46px;height:24px;padding:0;border:1px so
   </div>
 
   <div id="cnc-panel">
-    <div class="cnc-section">
-      <h3><svg class="h-ico" viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.2L3 17.8V21h3.2l6.3-6.3a4 4 0 0 0 5.2-5.4l-2.6 2.6-2.5-.6-.6-2.5z"/></svg>Herramientas <span class="mini" id="cnc-tool-count">0</span></h3>
+    <div class="cnc-guide" id="cnc-guide">
+      <div class="cnc-guide-title">Pasos</div>
+      <button class="cnc-guide-step" data-go="tools"><span class="n">1</span><span class="t">Herramienta</span><span class="s" id="cnc-g-tools">—</span></button>
+      <button class="cnc-guide-step" data-go="ops"><span class="n">2</span><span class="t">Operaciones con elementos</span><span class="s" id="cnc-g-ops">—</span></button>
+      <button class="cnc-guide-step" data-go="origin"><span class="n">3–4</span><span class="t">Patillas · placa y origen</span><span class="s" id="cnc-g-org">—</span></button>
+      <button class="cnc-guide-step" data-go="gcode"><span class="n">5</span><span class="t">Generar y descargar</span><span class="s" id="cnc-g-gen">—</span></button>
+      <div class="cnc-guide-next" id="cnc-guide-next"></div>
+    </div>
+    <div data-sec="tools" class="cnc-section">
+      <h3 class="cnc-collapse-h"><span class="cnc-step">1</span><svg class="h-ico" viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.2L3 17.8V21h3.2l6.3-6.3a4 4 0 0 0 5.2-5.4l-2.6 2.6-2.5-.6-.6-2.5z"/></svg>Herramientas <span class="mini" id="cnc-tool-count">0</span></h3>
       <div class="cnc-tool-list" id="cnc-tool-list">
         <div class="cnc-empty-hint">Sin herramientas.</div>
       </div>
@@ -776,8 +815,8 @@ input[type="color"].prop-value{flex:0 0 46px;height:24px;padding:0;border:1px so
         <div class="cnc-row"><label>Mandrino</label><select id="cnc-tSpindleDir"><option value="M3">M3 Horario</option><option value="M4">M4 Antihorario</option></select></div>
       </div>
     </div>
-    <div class="cnc-section">
-      <h3><svg class="h-ico" viewBox="0 0 24 24"><path d="M9 5h10M9 12h10M9 19h10"/><circle cx="4.5" cy="5" r="1"/><circle cx="4.5" cy="12" r="1"/><circle cx="4.5" cy="19" r="1"/></svg>Operaciones <span class="mini" id="cnc-op-count">0</span></h3>
+    <div data-sec="ops" class="cnc-section">
+      <h3 class="cnc-collapse-h"><span class="cnc-step">2</span><svg class="h-ico" viewBox="0 0 24 24"><path d="M9 5h10M9 12h10M9 19h10"/><circle cx="4.5" cy="5" r="1"/><circle cx="4.5" cy="12" r="1"/><circle cx="4.5" cy="19" r="1"/></svg>Operaciones <span class="mini" id="cnc-op-count">0</span></h3>
       <div class="cnc-op-new">
         <button class="cnc-op-newbtn cut" data-new="cut" title="Nueva operación de corte (queda activa)">+ Corte</button>
         <button class="cnc-op-newbtn drill" data-new="drill" title="Nueva operación de taladro (queda activa)">+ Taladro</button>
@@ -786,14 +825,17 @@ input[type="color"].prop-value{flex:0 0 46px;height:24px;padding:0;border:1px so
       <div class="cnc-op-list" id="cnc-op-list">
         <div class="cnc-empty-hint">Sin operaciones</div>
       </div>
-      <div class="cnc-hint">El orden de la lista es el <b>orden de mecanizado</b> (▲▼). La operación resaltada es la <b>activa</b>: un clic en el dibujo <b>añade</b>; un clic sobre algo que ya está, lo <b>quita</b> (Shift + ventana quita varios). “▸ elementos” muestra y permite quitar cada uno. Naranja = <b>profundidad</b> mm · Azul = <b>ajuste fino</b>.</div>
-      <label class="cnc-hm-check" title="Ignora el orden de la lista y agrupa las operaciones por herramienta (menos cambios de herramienta)"><input type="checkbox" id="cnc-group-tool"> Agrupar por herramienta</label>
-      <div class="cnc-row" title="Material que dejan las pasadas de desbaste en cortes Interior/Exterior con más de una pasada. La última pasada va a cota de dibujo. 0 = desactivado."><label>Sobreespesor desbaste</label><input type="number" id="cnc-finishAllowance" step="0.05" min="0" max="5"></div>
-      <div class="cnc-hint">Las pasadas previas se separan este valor de la pieza; la última ajusta al dibujo. Solo cortes I / E.</div>
+      <div class="cnc-hint">Pulsa <b>+ Corte</b>, <b>+ Taladro</b> o <b>+ Cajeado</b> y haz clic en el dibujo para añadir elementos a la operación activa (otro clic lo quita). La lista va en <b>orden de mecanizado</b> (▲▼).</div>
+      <details class="cnc-more"><summary>Más ayuda y opciones</summary>
+        <div class="cnc-hint">La operación resaltada es la <b>activa</b>. Shift + ventana quita varios elementos. “▸ elementos” muestra y permite quitar cada uno. Naranja = <b>profundidad</b> mm · Azul = <b>ajuste fino</b>.</div>
+        <label class="cnc-hm-check" title="Ignora el orden de la lista y agrupa las operaciones por herramienta (menos cambios de herramienta)"><input type="checkbox" id="cnc-group-tool"> Agrupar por herramienta</label>
+        <div class="cnc-row" title="Material que dejan las pasadas de desbaste en cortes Interior/Exterior con más de una pasada. La última pasada va a cota de dibujo. 0 = desactivado."><label>Sobreespesor desbaste</label><input type="number" id="cnc-finishAllowance" step="0.05" min="0" max="5"></div>
+        <div class="cnc-hint">Las pasadas previas se separan este valor de la pieza; la última ajusta al dibujo. Solo cortes I / E.</div>
+      </details>
       <button class="cnc-btn" id="cnc-undo-op">↩ Deshacer último elemento (op. activa)</button>
     </div>
-    <div class="cnc-section cnc-tabs-panel" id="cnc-tabs-section">
-      <h3><svg class="h-ico" viewBox="0 0 24 24"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg>Patillas <span class="mini" id="cnc-tabs-badge">0</span></h3>
+    <div data-sec="tabs" class="cnc-section cnc-tabs-panel" id="cnc-tabs-section">
+      <h3 class="cnc-collapse-h"><span class="cnc-step">3</span><svg class="h-ico" viewBox="0 0 24 24"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg>Patillas <em class="cnc-opt">opcional</em> <span class="mini" id="cnc-tabs-badge">0</span></h3>
       <label class="cnc-tabs-toggle-row" id="cnc-tabs-toggle-row">
         <input type="checkbox" id="cnc-tabsEnabled">
         <span class="toggle-label">Pestañas de sujeción</span>
@@ -805,8 +847,68 @@ input[type="color"].prop-value{flex:0 0 46px;height:24px;padding:0;border:1px so
       <button class="cnc-btn" id="cnc-shuffle-tabs">🎲 Reubicar patillas</button>
       <div class="cnc-tabs-info" id="cnc-tabs-info">Sin operaciones de corte</div>
     </div>
-    <div class="cnc-section">
-      <h3><svg class="h-ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M2 12h3M19 12h3M4.9 19.1 7 17M17 7l2.1-2.1"/></svg>Máquina</h3>
+    <div data-sec="origin" class="cnc-section">
+      <h3 class="cnc-collapse-h"><span class="cnc-step">4</span><svg class="h-ico" viewBox="0 0 24 24"><path d="M4 20V4M4 20h16"/><circle cx="4" cy="20" r="2"/></svg>Placa y origen X0 Y0</h3>
+      <div class="cnc-hint">Dónde estará el cero de la máquina respecto al dibujo. “Automático” = esquina inferior izquierda de las piezas.</div>
+      <div class="cnc-row" id="cnc-plate-row" style="display:none" title="Genera el programa solo con las operaciones de esa placa"><label>Placa</label><select id="cnc-plate" style="width:190px"></select></div>
+      <div class="cnc-org">
+        <div class="cnc-row"><label>Origen X0 Y0</label><select id="cnc-org-mode" style="width:190px">
+          <option value="auto">Automático</option>
+          <option value="ref">Punto de referencia…</option>
+          <option value="custom">Punto libre del dibujo…</option>
+        </select></div>
+        <div id="cnc-org-ref" class="cnc-org-ref" style="display:none">
+          <div class="cnc-org-grid" id="cnc-org-grid">
+            <button data-pos="tl" title="Esquina superior izquierda">◤</button><button data-pos="tc" title="Centro del lado superior">▲</button><button data-pos="tr" title="Esquina superior derecha">◥</button>
+            <button data-pos="ml" title="Centro del lado izquierdo">◀</button><button data-pos="c" title="Centro">●</button><button data-pos="mr" title="Centro del lado derecho">▶</button>
+            <button data-pos="bl" title="Esquina inferior izquierda">◣</button><button data-pos="bc" title="Centro del lado inferior">▼</button><button data-pos="br" title="Esquina inferior derecha">◢</button>
+          </div>
+          <div class="cnc-org-refsel">
+            <label><input type="radio" name="cnc-org-refbox" value="parts" checked> de las piezas</label>
+            <label id="cnc-org-ref-plate-lbl"><input type="radio" name="cnc-org-refbox" value="plate"> de la placa</label>
+          </div>
+        </div>
+        <div id="cnc-org-custom" style="display:none">
+          <div class="cnc-org-xy">
+            <div class="cnc-row"><label>X dibujo</label><input type="number" id="cnc-org-x" step="0.1"></div>
+            <div class="cnc-row"><label>Y dibujo</label><input type="number" id="cnc-org-y" step="0.1"></div>
+          </div>
+          <button class="cnc-btn" id="cnc-org-pick">⌖ Elegir en el dibujo</button>
+        </div>
+        <div class="cnc-hint cnc-org-info" id="cnc-org-info"></div>
+      </div>
+    </div>
+    <div data-sec="gcode" class="cnc-section">
+      <h3 class="cnc-collapse-h"><span class="cnc-step">5</span><svg class="h-ico" viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13l-2 2 2 2M15 13l2 2-2 2"/></svg>Generar código G</h3>
+      <button class="cnc-btn accent" id="cnc-generate-btn">⚙ Generar / Actualizar</button>
+      <div class="cnc-gcode" id="cnc-gcode">
+        <div class="cnc-empty-hint">(Sin generar)</div>
+      </div>
+      <button class="cnc-btn" id="cnc-download-btn">💾 Descargar .nc</button>
+      <button class="cnc-btn" id="cnc-copy-btn">📋 Copiar</button>
+    </div>
+    <div data-sec="sim" class="cnc-section cnc-sim-panel">
+      <h3 class="cnc-collapse-h"><span class="cnc-step">6</span><svg class="h-ico" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m10 9 5 3-5 3z"/></svg>Simulación</h3>
+      <div class="cnc-sim-btn-row">
+        <button class="cnc-sim-btn play" id="cnc-play-btn">▶ PLAY</button>
+        <button class="cnc-sim-btn" id="cnc-reset-btn" style="flex:0 0 auto;">⏮</button>
+        <button class="cnc-sim-btn" id="cnc-end-btn" style="flex:0 0 auto;">⏭</button>
+      </div>
+      <div class="cnc-sim-info"><span id="cnc-sim-op-info">Sin trayectoria</span><span><b id="cnc-sim-time">00:00:00</b></span></div>
+      <input type="range" class="cnc-sim-slider" id="cnc-sim-progress" min="0" max="1000" value="0">
+      <div class="cnc-speed-row"><span>🐢</span><input type="range" id="cnc-sim-speed" min="1" max="100" value="10"><span>🐇</span><span id="cnc-sim-speed-val">1.0x</span></div>
+      <div class="cnc-hint">Velocidad 1.0x = tiempo real · <span id="cnc-sim-total">Total: 00:00:00</span></div>
+      <div class="cnc-legend">
+        <span><span class="cb cut"></span> Corte</span>
+        <span><span class="cb rapid"></span> Rápido</span>
+        <span><span class="cb tab"></span> Patilla</span>
+        <span><span class="cb hilite"></span> Seleccionado</span>
+        <span><span class="cb tool"></span> Herramienta</span>
+      </div>
+    </div>
+    <div class="cnc-adv-label">Ajustes avanzados</div>
+    <div data-sec="machine" class="cnc-section">
+      <h3 class="cnc-collapse-h"><svg class="h-ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M2 12h3M19 12h3M4.9 19.1 7 17M17 7l2.1-2.1"/></svg>Máquina</h3>
       <div class="cnc-row"><label>Pausa mandrino</label><input type="number" id="cnc-spindlePause" step="0.5" min="0" max="120"></div>
       <div class="cnc-row"><label>Rapid XY</label><input type="number" id="cnc-rapidXY" step="100" min="100"></div>
       <div class="cnc-row"><label>Rapid Z</label><input type="number" id="cnc-rapidZ" step="100" min="100"></div>
@@ -815,8 +917,8 @@ input[type="color"].prop-value{flex:0 0 46px;height:24px;padding:0;border:1px so
         <option value="cycle">Ciclo G81/G83</option>
       </select></div>
     </div>
-    <div class="cnc-section cnc-hm-panel" id="cnc-hm-section">
-      <h3><svg class="h-ico" viewBox="0 0 24 24"><path d="M3 17l5-4 4 3 4-6 5 4"/><path d="M3 21h18"/><circle cx="8" cy="13" r="1"/><circle cx="16" cy="10" r="1"/></svg>Mapa de alturas · Z0 virtual <span class="mini" id="cnc-hm-badge">OFF</span></h3>
+    <div data-sec="hm" class="cnc-section cnc-hm-panel" id="cnc-hm-section">
+      <h3 class="cnc-collapse-h"><svg class="h-ico" viewBox="0 0 24 24"><path d="M3 17l5-4 4 3 4-6 5 4"/><path d="M3 21h18"/><circle cx="8" cy="13" r="1"/><circle cx="16" cy="10" r="1"/></svg>Mapa de alturas · Z0 virtual <span class="mini" id="cnc-hm-badge">OFF</span></h3>
       <label class="cnc-hm-toggle"><input type="checkbox" id="cnc-hm-enabled"> <span>Compensar Z del programa con el mapa</span></label>
       <div class="cnc-hint">Las alturas son relativas a <b>P1</b> (esquina X mín · Y mín): haz el Z0 de trabajo sobre la cara del tablero en P1.</div>
       <div class="cnc-hm-grid2">
@@ -852,61 +954,6 @@ input[type="color"].prop-value{flex:0 0 46px;height:24px;padding:0;border:1px so
       <textarea id="cnc-hm-paste" class="cnc-hm-paste" rows="3" placeholder="Pega aquí la consola: [PRB:x,y,z:1] (GRBL), x,y,z (Mach3), x y z … (LinuxCNC) o un valor por línea, en el orden P1, P2…"></textarea>
       <div class="cnc-hm-btns"><button class="cnc-btn" id="cnc-hm-read">Leer valores pegados</button><button class="cnc-btn" id="cnc-hm-clear">Borrar medidas</button></div>
       <div class="cnc-tabs-info" id="cnc-hm-info">Sin medidas</div>
-    </div>
-    <div class="cnc-section cnc-sim-panel">
-      <h3><svg class="h-ico" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m10 9 5 3-5 3z"/></svg>Simulación</h3>
-      <div class="cnc-sim-btn-row">
-        <button class="cnc-sim-btn play" id="cnc-play-btn">▶ PLAY</button>
-        <button class="cnc-sim-btn" id="cnc-reset-btn" style="flex:0 0 auto;">⏮</button>
-        <button class="cnc-sim-btn" id="cnc-end-btn" style="flex:0 0 auto;">⏭</button>
-      </div>
-      <div class="cnc-sim-info"><span id="cnc-sim-op-info">Sin trayectoria</span><span><b id="cnc-sim-time">00:00:00</b></span></div>
-      <input type="range" class="cnc-sim-slider" id="cnc-sim-progress" min="0" max="1000" value="0">
-      <div class="cnc-speed-row"><span>🐢</span><input type="range" id="cnc-sim-speed" min="1" max="100" value="10"><span>🐇</span><span id="cnc-sim-speed-val">1.0x</span></div>
-      <div class="cnc-hint">Velocidad 1.0x = tiempo real · <span id="cnc-sim-total">Total: 00:00:00</span></div>
-      <div class="cnc-legend">
-        <span><span class="cb cut"></span> Corte</span>
-        <span><span class="cb rapid"></span> Rápido</span>
-        <span><span class="cb tab"></span> Patilla</span>
-        <span><span class="cb hilite"></span> Seleccionado</span>
-        <span><span class="cb tool"></span> Herramienta</span>
-      </div>
-    </div>
-    <div class="cnc-section">
-      <h3><svg class="h-ico" viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13l-2 2 2 2M15 13l2 2-2 2"/></svg>Código G</h3>
-      <div class="cnc-row" id="cnc-plate-row" style="display:none" title="Genera el programa solo con las operaciones de esa placa"><label>Placa</label><select id="cnc-plate" style="width:190px"></select></div>
-      <div class="cnc-org">
-        <div class="cnc-row"><label>Origen X0 Y0</label><select id="cnc-org-mode" style="width:190px">
-          <option value="auto">Automático</option>
-          <option value="ref">Punto de referencia…</option>
-          <option value="custom">Punto libre del dibujo…</option>
-        </select></div>
-        <div id="cnc-org-ref" class="cnc-org-ref" style="display:none">
-          <div class="cnc-org-grid" id="cnc-org-grid">
-            <button data-pos="tl" title="Esquina superior izquierda">◤</button><button data-pos="tc" title="Centro del lado superior">▲</button><button data-pos="tr" title="Esquina superior derecha">◥</button>
-            <button data-pos="ml" title="Centro del lado izquierdo">◀</button><button data-pos="c" title="Centro">●</button><button data-pos="mr" title="Centro del lado derecho">▶</button>
-            <button data-pos="bl" title="Esquina inferior izquierda">◣</button><button data-pos="bc" title="Centro del lado inferior">▼</button><button data-pos="br" title="Esquina inferior derecha">◢</button>
-          </div>
-          <div class="cnc-org-refsel">
-            <label><input type="radio" name="cnc-org-refbox" value="parts" checked> de las piezas</label>
-            <label id="cnc-org-ref-plate-lbl"><input type="radio" name="cnc-org-refbox" value="plate"> de la placa</label>
-          </div>
-        </div>
-        <div id="cnc-org-custom" style="display:none">
-          <div class="cnc-org-xy">
-            <div class="cnc-row"><label>X dibujo</label><input type="number" id="cnc-org-x" step="0.1"></div>
-            <div class="cnc-row"><label>Y dibujo</label><input type="number" id="cnc-org-y" step="0.1"></div>
-          </div>
-          <button class="cnc-btn" id="cnc-org-pick">⌖ Elegir en el dibujo</button>
-        </div>
-        <div class="cnc-hint cnc-org-info" id="cnc-org-info"></div>
-      </div>
-      <button class="cnc-btn accent" id="cnc-generate-btn">⚙ Generar / Actualizar</button>
-      <div class="cnc-gcode" id="cnc-gcode">
-        <div class="cnc-empty-hint">(Sin generar)</div>
-      </div>
-      <button class="cnc-btn" id="cnc-download-btn">💾 Descargar .nc</button>
-      <button class="cnc-btn" id="cnc-copy-btn">📋 Copiar</button>
     </div>
   </div>
 
@@ -1003,8 +1050,8 @@ project.selectedColor = new Color(0.31, 0.76, 0.97);
 
 const canvasContainer = document.getElementById('canvas-container');
 
-const APP_VERSION = '12.21';
-const VERSION_NOTES = 'Elementos de cada operación: ver, quitar y añadir · Guardar/abrir trabajos';
+const APP_VERSION = '12.22';
+const VERSION_NOTES = 'PLINE, POLYGON y EXPLODE · Empalme/chaflán en polilíneas · Panel CNC por pasos';
 
 const layers = {};
 function safeName(orig){ let n = orig.replace(/[^a-zA-Z0-9_\-]/g,'_'); if (/^\d/.test(n)) n='L_'+n; return n; }
@@ -1683,6 +1730,11 @@ function proceedModifyCommand(cmd){
       setPrompt('Objetos borrados');
       if (cncState.mode !== 'off') cncRefreshOpsOverlay();
       break;
+    case 'EXPLODE':
+      explodeSelected();
+      state.currentCommand = null;
+      renderGrips();
+      break;
     case 'JOIN':
       joinSelected();
       state.currentCommand = null;
@@ -1849,7 +1901,7 @@ function resolvePoint(raw, base, cmd, excludeItems){
     if (guides){ if (guides.v) pt = new Point(guides.v.x, pt.y); if (guides.h) pt = new Point(pt.x, guides.h.y); }
   }
   state.trackGuides = guides;
-  const orthoCmds = ['LINE','MOVE','COPY','ARC','ROTATE','SCALE','MIRROR'];
+  const orthoCmds = ['LINE','PLINE','MOVE','COPY','ARC','ROTATE','SCALE','MIRROR'];
   const orthoActive = state.shiftKeyDown ? !state.ortho : state.ortho;
   const axisLockedByTracking = guides && (guides.v || guides.h);
   if (base && orthoCmds.includes(cmd) && !axisLockedByTracking){
@@ -1925,53 +1977,231 @@ function parseDynamicInput(input, lastPoint){
    ═══════════════════════════════════════════════════════════════════════ */
 const cmdInputElement = document.getElementById('cmd-input');
 cmdInputElement.addEventListener('keydown', e => {
-  if (e.key === 'Enter') {
-    const input = e.target.value.trim();
-    if (state.waitingForNumber) {
-      const val = parseFloat(input);
-      if (!isNaN(val)) {
-        state.offsetDistance = val;
-        state.waitingForNumber = false;
-        state.step = 2;
-        setPrompt(`OFFSET: Distancia ${val}. Selecciona objeto`);
-        e.target.value = '';
-        e.target.blur();
-        return;
-      }
-    }
-    if (!input) {
-      if (state.pendingCommand) { finalizePendingSelection(); return; }
-      if (state.currentCommand && state.expectingPoint) { return; }
-      return;
-    }
-    handleCommandInput(input);
-  } else if (e.key === 'Escape') {
-    resetStateCmd();
+  // Como en AutoCAD: Intro y ESPACIO validan lo escrito
+  if (e.key === 'Enter' || e.key === ' '){
+    e.preventDefault();
+    const v = e.target.value; e.target.value = '';
+    cmdSubmit(v);
+  } else if (e.key === 'Escape'){
+    if (state.currentCommand === 'PLINE' && state.collectedPoints.length >= 2) plineFinish(false);   // como AutoCAD: ESC conserva lo dibujado
+    else resetStateCmd();
     e.target.blur();
   }
 });
 
-function handleCommandInput(input) {
-  if (!input && !state.currentCommand) return;
-  if (!state.currentCommand) {
-    if (state.selectedItems.length > 0) {
-      const cmd = input.toUpperCase();
-      executeCommand(cmd);
-    }
-  } else if (state.expectingPoint) {
-    const pt = parseDynamicInput(input, state.dynamicLastPoint);
-    if (pt) { handlePointInput(pt); }
-    else { setPrompt('Entrada no válida'); }
-  } else if (state.currentCommand === 'CHAMFER' && state.step === 1) {
-    state.chamferDist1 = parseFloat(input) || 0;
-    state.chamferDist2 = state.chamferDist1;
-    state.step = 3;
-    setPrompt('CHAMFER: haz clic en el primer objeto');
-  } else if (state.currentCommand === 'FILLET' && state.step === 1) {
-    state.filletRadius = parseFloat(input) || 0;
-    state.step = 2;
-    setPrompt('FILLET: haz clic en el primer objeto');
+/* ── Línea de comandos (comportamiento tipo AutoCAD) ─────────────────────
+   · Sin comando activo: lo escrito es un comando o alias (L, C, REC, M…).
+     Intro/Espacio vacío repite el último comando.
+   · Con comando activo: coordenadas (x,y · @dx,dy · @d<ang · distancia),
+     números (radio, ángulo, factor, distancias) u opciones (C, U, D…).
+     Intro/Espacio vacío termina el comando (o la selección pendiente).    */
+function cmdSubmit(raw){
+  const input = String(raw || '').trim();
+  const up = input.toUpperCase();
+  const cmd = state.currentCommand;
+  // Selección pendiente (MOVE, COPY, ERASE…): Intro termina la selección
+  if (state.pendingCommand){
+    if (!input){ finalizePendingSelection(); return; }
   }
+  // Sin comando: ejecutar o repetir
+  if (!cmd){
+    if (!input){ if (state.lastCommand) executeCommand(state.lastCommand); return; }
+    if (up === 'U'){ undo(); return; }
+    executeCommand(up);
+    return;
+  }
+  // OFFSET: distancia
+  if (state.waitingForNumber){
+    const v = parseFloat(input.replace(',', '.'));
+    if (input && Number.isFinite(v) && v > 0){
+      state.offsetDistance = v; state.waitingForNumber = false; state.step = 2;
+      setPrompt(`OFFSET: Distancia ${v}. Selecciona objeto`);
+      return;
+    }
+    if (!input){ resetStateCmd(); setPrompt('Comando:'); return; }
+    setPrompt('OFFSET: escribe una distancia positiva'); return;
+  }
+  // CHAMFER / FILLET: primer dato (Intro = 0)
+  if (cmd === 'CHAMFER' && state.step === 1){
+    const v = input ? parseFloat(input.replace(',', '.')) : (state.lastChamferDist || 0);
+    if (!Number.isFinite(v) || v < 0){ setPrompt('CHAMFER: escribe una distancia ≥ 0'); return; }
+    state.chamferDist1 = state.chamferDist2 = state.lastChamferDist = v;
+    state.step = 3; setPrompt(`CHAMFER (${state.chamferDist1}): haz clic en el primer objeto`); return;
+  }
+  if (cmd === 'FILLET' && state.step === 1){
+    const v = input ? parseFloat(input.replace(',', '.')) : (state.lastFilletRadius || 0);
+    if (!Number.isFinite(v) || v < 0){ setPrompt('FILLET: escribe un radio ≥ 0'); return; }
+    state.filletRadius = state.lastFilletRadius = v;
+    state.step = 2; setPrompt(`FILLET (R${state.filletRadius}): haz clic en el primer objeto`); return;
+  }
+  // POLYGON: número de lados (Intro = el último usado)
+  if (cmd === 'POLYGON' && state.step === 1){
+    const n = input ? parseInt(input, 10) : state.polySides;
+    if (!Number.isFinite(n) || n < 3 || n > 1024){ setPrompt('POLYGON: entre 3 y 1024 lados'); return; }
+    state.polySides = n; state.step = 2; state.expectingPoint = true; state.dynamicLastPoint = null;
+    setPrompt(`POLYGON (${n} lados): Centro`); return;
+  }
+  // PLINE: Intro termina creando la polilínea abierta
+  if (cmd === 'PLINE' && !input){ plineFinish(false); return; }
+  // Intro vacío: terminar el comando en curso
+  if (!input){ endCurrentCommand(); return; }
+  if (state.expectingPoint){
+    // Opciones de cada comando
+    if (cmd === 'LINE' && up === 'C'){ lineClose(); return; }
+    if (cmd === 'LINE' && up === 'U'){ lineUndoSegment(); return; }
+    if (cmd === 'PLINE' && up === 'C'){ plineFinish(true); return; }
+    if (cmd === 'PLINE' && up === 'U'){ plineUndoPoint(); return; }
+    if (cmd === 'POLYGON' && state.step === 3 && (up === 'I' || up === 'C')){
+      state.polyCirc = up === 'C';
+      setPrompt(`POLYGON: Radio ${state.polyCirc ? 'circunscrito (al lado)' : 'inscrito (al vértice)'}`); return;
+    }
+    if (cmd === 'CIRCLE' && state.step === 2 && up === 'D'){ state.circleDiameterMode = true; setPrompt('CIRCLE: Diámetro'); return; }
+    if (cmd === 'CIRCLE' && state.step === 2 && up === 'R'){ state.circleDiameterMode = false; setPrompt('CIRCLE: Radio'); return; }
+    // Como en AutoCAD, la coma separa coordenadas: "60,30" es un punto, no 60.30 (decimal con punto)
+    const num = /^-?(?:\d+(?:\.\d*)?|\.\d+)$/.test(input) ? parseFloat(input) : NaN;
+    // Valores exactos (no una distancia en la dirección del ratón)
+    if (Number.isFinite(num) && cmd === 'CIRCLE' && state.step === 2){
+      if (num <= 0){ setPrompt('CIRCLE: el valor debe ser positivo'); return; }
+      handlePointInput(state.collectedPoints[0].add(new Point(num, 0))); return;
+    }
+    if (Number.isFinite(num) && cmd === 'ROTATE' && state.step === 2){ rotateSelectionBy(num); return; }
+    if (Number.isFinite(num) && cmd === 'POLYGON' && state.step === 3){
+      if (num <= 0){ setPrompt('POLYGON: el radio debe ser positivo'); return; }
+      polygonCreate(num, null); return;
+    }
+    if (Number.isFinite(num) && cmd === 'SCALE' && state.step === 2){
+      if (num <= 0){ setPrompt('SCALE: el factor debe ser positivo'); return; }
+      scaleSelectionBy(num); return;
+    }
+    const pt = parseDynamicInput(input, state.dynamicLastPoint);
+    if (pt){ handlePointInput(pt); }
+    else { setPrompt(`Entrada no válida: ${input}`); }
+    return;
+  }
+  // Comando activo que no espera punto: permitir lanzar otro comando escribiéndolo
+  executeCommand(up);
+}
+// Intro con el comando a medias: termina como en AutoCAD
+function endCurrentCommand(){
+  const cmd = state.currentCommand;
+  const msg = cmd === 'LINE' ? `${state.lineSegmentPaths.length} segmento(s)` : cmd === 'COPY' ? 'Copia terminada' : 'Comando terminado';
+  resetStateCmd(); previewLayer.removeChildren();
+  setPrompt(`${msg} · Comando:`);
+  if (cncState.mode !== 'off') cncRefreshOpsOverlay();
+}
+function lineClose(){
+  const pts = state.collectedPoints;
+  if (pts.length < 3){ setPrompt('LINE: hacen falta al menos 2 segmentos para cerrar'); return; }
+  handlePointInput(pts[0]);
+  endCurrentCommand(); setPrompt('Contorno cerrado · Comando:');
+}
+function lineUndoSegment(){
+  const segs = state.lineSegmentPaths;
+  if (!segs.length){
+    if (state.collectedPoints.length){ state.collectedPoints.pop(); state.dynamicLastPoint = null; setPrompt('LINE: Primer punto'); }
+    return;
+  }
+  segs.pop().remove();
+  state.collectedPoints.pop();
+  state.dynamicLastPoint = state.collectedPoints[state.collectedPoints.length - 1] || null;
+  invalidateSnapCache();
+  setPrompt(`LINE: segmento deshecho · Siguiente punto (${segs.length} segmento(s))`);
+}
+// ---- PLINE: polilínea única (abierta o cerrada) ----
+function plineFinish(close){
+  const pts = state.collectedPoints;
+  if (close && pts.length < 3){ setPrompt('PLINE: hacen falta al menos 3 puntos para cerrar'); return; }
+  if (pts.length < 2){ endCurrentCommand(); return; }
+  saveState();
+  const path = new Path({ segments: pts.map(p => p.clone()), closed: !!close });
+  path.strokeColor = 'white'; path.strokeWidth = currentStrokeWidth();
+  tagShape(path, 'polyline');
+  activeLayer.addChild(path);
+  const n = pts.length - (close ? 0 : 1);
+  resetStateCmd(); invalidateSnapCache();
+  setPrompt(`Polilínea ${close ? 'cerrada' : 'abierta'} (${n} tramos) · Comando:`);
+  if (cncState.mode !== 'off') cncRefreshOpsOverlay();
+}
+function plineUndoPoint(){
+  const pts = state.collectedPoints;
+  if (!pts.length) return;
+  pts.pop();
+  state.dynamicLastPoint = pts[pts.length - 1] || null;
+  previewLayer.removeChildren();
+  setPrompt(pts.length ? `PLINE: punto deshecho · Siguiente punto (${pts.length} punto(s))` : 'PLINE: Punto inicial');
+}
+// ---- POLYGON: n lados, inscrito (radio al vértice) o circunscrito (radio al centro del lado) ----
+function polygonPoints(c, n, r, circ, vertexDir){
+  const R = circ ? r / Math.cos(Math.PI / n) : r;
+  // Dirección: hacia el punto indicado (vértice o centro de lado); si es un radio escrito, lado inferior horizontal
+  let a0;
+  if (vertexDir) a0 = Math.atan2(vertexDir.y, vertexDir.x) + (circ ? Math.PI / n : 0);
+  else a0 = Math.PI / 2 + Math.PI / n;               // en coordenadas paper (Y abajo): lado inferior horizontal
+  const out = [];
+  for (let k = 0; k < n; k++){ const a = a0 + 2 * Math.PI * k / n; out.push(new Point(c.x + R * Math.cos(a), c.y + R * Math.sin(a))); }
+  return out;
+}
+function polygonCreate(r, dir){
+  const c = state.collectedPoints[0];
+  saveState();
+  const path = new Path({ segments: polygonPoints(c, state.polySides, r, state.polyCirc, dir), closed: true });
+  path.strokeColor = 'white'; path.strokeWidth = currentStrokeWidth();
+  tagShape(path, 'polyline');
+  activeLayer.addChild(path);
+  const n = state.polySides;
+  resetStateCmd(); invalidateSnapCache();
+  setPrompt(`Polígono de ${n} lados creado · Comando:`);
+  if (cncState.mode !== 'off') cncRefreshOpsOverlay();
+}
+// ---- EXPLODE: polilíneas → líneas y arcos sueltos ----
+function explodeSelected(){
+  const src = state.selectedItems.slice();
+  let made = 0, skipped = 0;
+  const targets = [];
+  src.forEach(it => {
+    if (it instanceof paper.CompoundPath){ targets.push(it); return; }
+    if (it instanceof Path && !isCircleItem(it) && it.curves.length > 1) targets.push(it);
+    else skipped++;
+  });
+  if (!targets.length){ clearSelection(); setPrompt('EXPLODE: nada que descomponer (líneas, arcos y círculos ya son simples)'); return; }
+  saveState();
+  const pieces = [];
+  targets.forEach(it => {
+    const layer = it.layer || activeLayer, col = it.strokeColor, w = it.strokeWidth;
+    if (it instanceof paper.CompoundPath){
+      it.children.slice().forEach(ch => { const c = ch.clone({ insert: false }); c.strokeColor = col; c.strokeWidth = w; c.fillColor = null; tagShape(c, ch.data && ch.data.shapeType || 'polyline'); layer.addChild(c); pieces.push(c); made++; });
+    } else {
+      it.curves.forEach(cv => {
+        let np;
+        if (cv.isStraight()){ np = new Path.Line(cv.point1, cv.point2); tagShape(np, 'line'); }
+        else { np = new Path({ segments: [new paper.Segment(cv.point1, null, cv.handle1), new paper.Segment(cv.point2, cv.handle2, null)] }); tagShape(np, 'arc'); }
+        np.strokeColor = col; np.strokeWidth = w;
+        layer.addChild(np); pieces.push(np); made++;
+      });
+    }
+    it.remove();
+  });
+  clearSelection(); invalidateSnapCache();
+  setPrompt(`EXPLODE: ${targets.length} objeto(s) → ${made} entidades${skipped ? ` (${skipped} ya eran simples)` : ''}`);
+  if (cncState.mode !== 'off') cncRefreshOpsOverlay();
+}
+function rotateSelectionBy(deg){
+  saveState();
+  state.selectedItems.forEach(i => i.rotate(-deg, state.basePoint));     // ángulo positivo = antihorario (como AutoCAD)
+  resetStateCmd(); invalidateSnapCache();
+  setPrompt(`Rotado ${deg}° (antihorario)`);
+  if (cncState.mode !== 'off') cncRefreshOpsOverlay();
+}
+function scaleSelectionBy(f){
+  saveState();
+  state.selectedItems.forEach(i => { i.scale(f, state.basePoint); if (isCircleItem(i) && i.data.radius) i.data.radius *= f; });
+  resetStateCmd(); invalidateSnapCache();
+  setPrompt(`Escalado x${f}`);
+  if (cncState.mode !== 'off') cncRefreshOpsOverlay();
+}
+function handleCommandInput(input) {
+  if (input === undefined || input === null) return;
+  cmdSubmit(input);
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
@@ -1988,10 +2218,13 @@ function executeCommand(cmd){
     'TR':'TRIM','TRIM':'TRIM','EX':'EXTEND','EXTEND':'EXTEND',
     'J':'JOIN','JOIN':'JOIN','MI':'MIRROR','MIRROR':'MIRROR',
     'CHA':'CHAMFER','CHAMFER':'CHAMFER','F':'FILLET','FILLET':'FILLET',
-    'UNDO':'UNDO','REDO':'REDO'
+    'UNDO':'UNDO','REDO':'REDO',
+    'CP':'COPY','DEL':'ERASE','RE':'RECTANG','REG':'RECTANG','RECTANGLE':'RECTANG','PO':'OFFSET','SCA':'SCALE',
+    'ME':'MEASURE','DI':'MEASURE','DIST':'MEASURE','MEASURE':'MEASURE','ZE':'ZOOMEXT','ZOOM':'ZOOMEXT','Z':'ZOOMEXT',
+    'PL':'PLINE','PLINE':'PLINE','POL':'POLYGON','POLYGON':'POLYGON','X':'EXPLODE','EXPLODE':'EXPLODE'
   };
   const fullCmd = cmdMap[cmd.toUpperCase()] || cmd.toUpperCase();
-  const repeatableCmds = ['LINE','CIRCLE','RECTANG','ARC','MOVE','COPY','ROTATE','SCALE','OFFSET','TRIM','EXTEND','JOIN','ERASE','MIRROR','CHAMFER','FILLET'];
+  const repeatableCmds = ['LINE','CIRCLE','RECTANG','ARC','MOVE','COPY','ROTATE','SCALE','OFFSET','TRIM','EXTEND','JOIN','ERASE','MIRROR','CHAMFER','FILLET','PLINE','POLYGON','EXPLODE'];
   if (repeatableCmds.includes(fullCmd)) state.lastCommand = fullCmd;
   switch (fullCmd){
     case 'LINE': startCommand('LINE', 'LINE: Primer punto'); break;
@@ -2023,18 +2256,29 @@ function executeCommand(cmd){
       resetStateCmd(); clearSelection();
       state.currentCommand = 'CHAMFER'; state.step = 1;
       state.chamferDist1 = 0; state.chamferDist2 = 0;
-      setPrompt('CHAMFER: distancia 1 (Enter = 0)');
+      setPrompt(`CHAMFER: distancia <${state.lastChamferDist || 0}>`);
       document.getElementById('cmd-input').focus();
       break;
     case 'FILLET':
       resetStateCmd(); clearSelection();
       state.currentCommand = 'FILLET'; state.step = 1; state.filletRadius = 0;
-      setPrompt('FILLET: radio de redondeo (Enter = 0)');
+      setPrompt(`FILLET: radio <${state.lastFilletRadius || 0}>`);
       document.getElementById('cmd-input').focus();
       break;
     case 'UNDO': undo(); break;
     case 'REDO': redo(); break;
-    default: setPrompt('Comando desconocido');
+    case 'MEASURE': startMeasureMode(); break;
+    case 'ZOOMEXT': zoomExtents(); setPrompt('Zoom extensión'); break;
+    case 'PLINE': startCommand('PLINE', 'PLINE: Punto inicial'); break;
+    case 'POLYGON':
+      resetStateCmd(); clearSelection();
+      state.currentCommand = 'POLYGON'; state.step = 1; state.expectingPoint = false;
+      state.polySides = state.polySides || 6; state.polyCirc = false;
+      setPrompt(`POLYGON: Número de lados <${state.polySides}>`);
+      document.getElementById('cmd-input').focus();
+      break;
+    case 'EXPLODE': beginModifyCommand('EXPLODE', 'EXPLODE'); break;
+    default: setPrompt(`Comando desconocido: ${cmd}`);
   }
 }
 function startCommand(cmd, prompt){
@@ -2217,6 +2461,21 @@ function handlePointInput(point){
       newClones.forEach(c => addToSelection(c));
       state.dynamicLastPoint = state.basePoint;
       setPrompt('COPY: Otro punto destino (Enter/ESC terminar)');
+    }
+  } else if (cmd === 'PLINE'){
+    const pts = state.collectedPoints;
+    if (pts.length && pts[pts.length - 1].getDistance(point) < 1e-9){ setPrompt('PLINE: punto repetido, ignorado'); return; }
+    pts.push(point);
+    state.expectingPoint = true; state.dynamicLastPoint = point;
+    setPrompt(pts.length < 2 ? 'PLINE: Siguiente punto' : `PLINE: Siguiente punto (Enter terminar · C cerrar · U deshacer) · ${pts.length - 1} tramo(s)`);
+  } else if (cmd === 'POLYGON'){
+    if (state.step === 2){
+      state.collectedPoints = [point]; state.step = 3; state.expectingPoint = true; state.dynamicLastPoint = point;
+      setPrompt(`POLYGON: Radio ${state.polyCirc ? 'circunscrito' : 'inscrito'} (clic o valor · I inscrito / C circunscrito)`);
+    } else {
+      const c = state.collectedPoints[0], d = point.subtract(c);
+      if (d.length < 1e-9){ setPrompt('POLYGON: radio nulo'); return; }
+      polygonCreate(d.length, d);
     }
   } else if (cmd === 'ROTATE'){
     if (state.step === 1){
@@ -2557,12 +2816,69 @@ function extendObject(item, boundaries, clickPoint){
   if (d1 < d2) item.segments[0].point = best; else item.segments[1].point = best;
   setPrompt('Línea extendida');
 }
+// FILLET/CHAMFER entre dos tramos contiguos de la MISMA polilínea (abierta o cerrada), como AutoCAD
+function pathCornerOp(item, c1, c2, kind){
+  const loc1 = item.getNearestLocation(c1), loc2 = item.getNearestLocation(c2);
+  if (!loc1 || !loc2) return 'no se encontró el tramo';
+  const nc = item.curves.length, i = loc1.curve.index, j = loc2.curve.index;
+  let v;
+  if (j === i + 1 || (item.closed && i === nc - 1 && j === 0)) v = loc2.curve.segment1.index;
+  else if (i === j + 1 || (item.closed && j === nc - 1 && i === 0)) v = loc1.curve.segment1.index;
+  else return 'selecciona dos tramos contiguos';
+  if (!item.curves[i].isStraight() || !item.curves[j].isStraight()) return 'solo entre tramos rectos';
+  const n = item.segments.length;
+  const V = item.segments[v].point.clone(), A = item.segments[(v - 1 + n) % n].point, B = item.segments[(v + 1) % n].point;
+  const la = A.getDistance(V), lb = B.getDistance(V);
+  if (la < 1e-6 || lb < 1e-6) return 'tramo sin longitud';
+  const u1 = A.subtract(V).normalize(), u2 = B.subtract(V).normalize();
+  const ang = Math.acos(Math.max(-1, Math.min(1, u1.dot(u2))));
+  if (ang < 0.001 || ang > Math.PI - 0.001) return 'tramos alineados';
+  let newSegs;
+  if (kind === 'FILLET'){
+    const r = state.filletRadius || 0;
+    if (r <= 0.001) return 'con R=0 la esquina ya está unida';
+    const td = r / Math.tan(ang / 2);
+    if (td > la + 1e-6 || td > lb + 1e-6) return 'radio demasiado grande para estos tramos';
+    const t1 = V.add(u1.multiply(Math.min(td, la))), t2 = V.add(u2.multiply(Math.min(td, lb)));
+    const center = V.add(u1.add(u2).normalize().multiply(r / Math.sin(ang / 2)));
+    const mid = center.add(V.subtract(center).normalize().multiply(r));
+    const arc = new Path.Arc({ from: t1, through: mid, to: t2, insert: false });
+    newSegs = arc.segments.map(sg => sg.clone());
+  } else {
+    const d1 = state.chamferDist1 || 0, d2 = state.chamferDist2 || 0;
+    if (d1 <= 0.001 && d2 <= 0.001) return 'con distancia 0 la esquina ya está unida';
+    if (d1 > la + 1e-6 || d2 > lb + 1e-6) return 'distancia mayor que el tramo';
+    newSegs = [new paper.Segment(V.add(u1.multiply(Math.min(d1, la)))), new paper.Segment(V.add(u2.multiply(Math.min(d2, lb))))];
+  }
+  saveState();
+  item.removeSegment(v);
+  item.insertSegments(v, newSegs);
+  // Fusionar vértices duplicados (radio/distancia igual a la longitud del tramo)
+  for (let k = item.segments.length - 1; k >= 0 && item.segments.length > 2; k--){
+    const a = item.segments[k], b = item.segments[(k + 1) % item.segments.length];
+    if (!item.closed && k === item.segments.length - 1) continue;
+    if (a !== b && a.point.getDistance(b.point) < 1e-6){ a.handleOut = b.handleOut; b.remove(); }
+  }
+  const hasCurves = item.curves.some(cv => !cv.isStraight());
+  tagShape(item, hasCurves ? 'arc' : 'polyline');
+  const msg = kind === 'FILLET' ? `Redondeado (R=${state.filletRadius})` : `Chaflán aplicado (d1=${state.chamferDist1}, d2=${state.chamferDist2})`;
+  invalidateSnapCache(); resetStateCmd();
+  setPrompt(msg);
+  if (cncState.mode !== 'off') cncRefreshOpsOverlay();
+  return null;
+}
 function handleChamferClick(event){
   const hit = hitTestContent(event.point);
   if (!hit || !hit.item){ setPrompt('CHAMFER: no se encontró objeto'); return; }
   const item = hit.item;
   const s = getSegmentForFillet(item, event.point);
-  if (!s){ setPrompt('CHAMFER: usa líneas o polilíneas abiertas'); return; }
+  const multi = item instanceof Path && !isCircleItem(item) && item.curves.length > 1;
+  if (!s && !(multi && (state.step === 3 || (state.chamferLine1 && item === state.chamferLine1.entity)))){ setPrompt('CHAMFER: usa líneas o polilíneas'); return; }
+  if (state.step === 4 && state.chamferLine1 && item === state.chamferLine1.entity && multi){
+    const msg = pathCornerOp(item, state.chamferClick1, event.point, 'CHAMFER');
+    if (msg){ setPrompt('CHAMFER: ' + msg); return; }
+    return;
+  }
   if (state.step === 3){
     state.chamferLine1 = { entity:item, seg:s }; state.chamferClick1 = event.point.clone();
     state.step = 4; setPrompt('CHAMFER: haz clic en el segundo objeto'); return;
@@ -2605,7 +2921,13 @@ function handleFilletClick(event){
   if (!hit || !hit.item){ setPrompt('FILLET: no se encontró objeto'); return; }
   const item = hit.item;
   const s = getSegmentForFillet(item, event.point);
-  if (!s){ setPrompt('FILLET: usa líneas o polilíneas abiertas'); return; }
+  const multi = item instanceof Path && !isCircleItem(item) && item.curves.length > 1;
+  if (!s && !(multi && (state.step === 2 || (state.filletLine1 && item === state.filletLine1.entity)))){ setPrompt('FILLET: usa líneas o polilíneas'); return; }
+  if (state.step === 3 && state.filletLine1 && item === state.filletLine1.entity && multi){
+    const msg = pathCornerOp(item, state.filletClick1, event.point, 'FILLET');
+    if (msg){ setPrompt('FILLET: ' + msg); return; }
+    return;
+  }
   if (state.step === 2){
     state.filletLine1 = { entity:item, seg:s }; state.filletClick1 = event.point.clone();
     state.step = 3; setPrompt('FILLET: haz clic en el segundo objeto'); return;
@@ -6175,7 +6497,18 @@ function updateDynamicPreview(event){
     const dx = cursor.x - base.x, dy = cursor.y - base.y;
     const dist = Math.sqrt(dx*dx + dy*dy);
     const angle = Math.atan2(dy, dx) * 180 / Math.PI;
-    if (state.currentCommand === 'LINE'){
+    if (state.currentCommand === 'PLINE'){
+      const pl = new Path({ segments: state.collectedPoints.concat([cursor]) });
+      pl.strokeColor = new Color(0, 0.75, 1, 0.6); pl.strokeWidth = 1 / view.zoom; pl.dashArray = [4, 4];
+      previewLayer.addChild(pl);
+    } else if (state.currentCommand === 'POLYGON' && state.step === 3){
+      const d = cursor.subtract(base);
+      if (d.length > 1e-9){
+        const pg = new Path({ segments: polygonPoints(base, state.polySides, d.length, state.polyCirc, d), closed: true });
+        pg.strokeColor = new Color(0, 0.75, 1, 0.6); pg.strokeWidth = 1 / view.zoom; pg.dashArray = [4, 4];
+        previewLayer.addChild(pg);
+      }
+    } else if (state.currentCommand === 'LINE'){
       const line = new Path.Line(base, cursor);
       line.strokeColor = new Color(0, 0.75, 1, 0.6);
       line.strokeWidth = 1 / view.zoom;
@@ -6869,7 +7202,8 @@ window.addEventListener('keydown', e => {
   if (e.key === 'F10'){ e.preventDefault(); setPolar(!state.polar); }
   if (e.key === 'F7'){ e.preventDefault(); document.getElementById('grid-toggle').click(); }
   if (e.key === 'F2'){ e.preventDefault(); toggleCmdHistory(); }
-  if ((e.key === 'Delete' || e.key === 'Del') && state.selectedItems.length){
+  const typingNow = document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA' || document.activeElement.tagName === 'SELECT');
+  if ((e.key === 'Delete' || e.key === 'Del') && state.selectedItems.length && !typingNow){
     saveState();
     state.selectedItems.forEach(i => i.remove());
     clearSelection();
@@ -6879,6 +7213,7 @@ window.addEventListener('keydown', e => {
     if (cncState.mode !== 'off') cncRefreshOpsOverlay();
   }
   if (e.key === 'Escape'){
+    if (state.currentCommand === 'PLINE' && state.collectedPoints.length >= 2){ plineFinish(false); e.preventDefault(); return; }
     if (state.currentCommand === 'MEASURE'){
       exitMeasureMode();
       e.preventDefault(); return;
@@ -6900,10 +7235,11 @@ window.addEventListener('keydown', e => {
   const alreadyTyping = active && active !== document.body &&
     (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.isContentEditable);
   if (!alreadyTyping && !e.ctrlKey && !e.metaKey && !e.altKey){
-    if ((e.key === 'Enter' || e.key === ' ') && !state.currentCommand){
-      if (state.lastCommand){ e.preventDefault(); executeCommand(state.lastCommand); }
-    } else if ((e.key === 'Enter' || e.key === ' ') && state.pendingCommand){
-      e.preventDefault(); finalizePendingSelection();
+    if (e.key === 'Enter' || e.key === ' '){
+      // Intro/Espacio con el foco en el dibujo = validar la línea de comandos (repite, termina…)
+      if (state.currentCommand !== 'MEASURE' && !document.getElementById('app-modal-overlay').classList.contains('open')){
+        e.preventDefault(); const v = cmdInputEl.value; cmdInputEl.value = ''; cmdSubmit(v);
+      }
     } else if (/^[a-zA-Z0-9@.,\-<]$/.test(e.key)){
       e.preventDefault();
       cmdInputEl.focus();
@@ -7377,6 +7713,79 @@ function initAll(){
 }
 initAll();
 
+
+/* ═══ v12.22 · Panel CNC por pasos: secciones plegables + guía ═══ */
+(function(){
+  const KEY = 'cadcnc.cncCollapsed.v1';
+  const DEFAULT_COLLAPSED = { machine: true, hm: true };
+  let saved = null;
+  try { saved = JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (e){ saved = null; }
+  const stateC = Object.assign({}, DEFAULT_COLLAPSED, saved || {});
+  const secs = () => Array.from(document.querySelectorAll('#cnc-panel .cnc-section[data-sec]'));
+  function persist(){ try { localStorage.setItem(KEY, JSON.stringify(stateC)); } catch (e){} }
+  function setCollapsed(sec, c){
+    sec.classList.toggle('collapsed', !!c);
+    stateC[sec.dataset.sec] = !!c; persist();
+  }
+  secs().forEach(sec => {
+    if (stateC[sec.dataset.sec]) sec.classList.add('collapsed');
+    const h = sec.querySelector(':scope > h3');
+    if (!h) return;
+    h.title = 'Clic para plegar / desplegar';
+    h.addEventListener('click', e => {
+      if (e.target.closest('input,button,select,label')) return;
+      setCollapsed(sec, !sec.classList.contains('collapsed'));
+    });
+  });
+  window.cncOpenSection = function(key){
+    const sec = document.querySelector(`#cnc-panel .cnc-section[data-sec="${key}"]`);
+    if (!sec) return;
+    if (sec.classList.contains('collapsed')) setCollapsed(sec, false);
+    sec.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    sec.classList.add('flash'); setTimeout(() => sec.classList.remove('flash'), 700);
+  };
+  document.querySelectorAll('#cnc-guide .cnc-guide-step').forEach(b => b.addEventListener('click', () => cncOpenSection(b.dataset.go)));
+
+  function opCount(op){
+    const arr = op.type === 'cut' ? op.itemIds : op.type === 'drill' ? op.points : op.pockets;
+    return arr ? arr.length : 0;
+  }
+  function mark(id, ok, txt, todo){
+    const el = document.getElementById(id); if (!el) return;
+    el.textContent = txt;
+    const b = el.closest('.cnc-guide-step');
+    b.classList.toggle('done', !!ok); b.classList.toggle('todo', !ok && !!todo);
+  }
+  window.cncGuideUpdate = function(){
+    if (!document.getElementById('cnc-guide')) return;
+    const tools = cncState.tools.length, ops = cncState.operations;
+    const counts = ops.map(opCount), total = counts.reduce((a, b) => a + b, 0);
+    const emptyIdx = counts.map((c, i) => c ? -1 : i).filter(i => i >= 0);
+    const lines = (cncState.gcodeLines || []).length;
+    let next = '', todo = null;
+    if (!tools){ next = 'Añade una herramienta (paso 1).'; todo = 'tools'; }
+    else if (!ops.length){ next = 'Crea una operación: + Corte, + Taladro o + Cajeado (paso 2).'; todo = 'ops'; }
+    else if (!total){ next = 'Haz clic en el dibujo para añadir elementos a la operación activa.'; todo = 'ops'; }
+    else if (!lines){ next = 'Pulsa ⚙ Generar en el paso 5.'; todo = 'gcode'; }
+    if (!next && emptyIdx.length) next = `Aviso: la operación ${emptyIdx.map(i => i + 1).join(', ')} no tiene elementos y no se mecaniza.`;
+    mark('cnc-g-tools', tools > 0, tools ? `${tools} ✓` : 'falta', todo === 'tools');
+    mark('cnc-g-ops', total > 0, ops.length ? `${ops.length} op · ${total} el.` : 'falta', todo === 'ops');
+    const om = document.getElementById('cnc-org-mode');
+    const orgTxt = om ? om.options[om.selectedIndex].text.replace('…', '') : '';
+    const pl = document.getElementById('cnc-plate'), plRow = document.getElementById('cnc-plate-row');
+    const plTxt = (plRow && plRow.style.display !== 'none' && pl && pl.selectedIndex >= 0) ? ' · ' + pl.options[pl.selectedIndex].text : '';
+    mark('cnc-g-org', true, (orgTxt + plTxt).slice(0, 30), false);
+    mark('cnc-g-gen', lines > 0, lines ? `${lines} líneas` : '—', todo === 'gcode');
+    document.getElementById('cnc-guide-next').textContent = next;
+  };
+  // Se actualiza solo cuando cambian contadores, código o el origen
+  const mo = new MutationObserver(() => { clearTimeout(window.__cncGuideT); window.__cncGuideT = setTimeout(cncGuideUpdate, 30); });
+  ['cnc-tool-count', 'cnc-op-count', 'cnc-gcode', 'cnc-op-list', 'cnc-org-info', 'cnc-plate'].forEach(id => {
+    const el = document.getElementById(id); if (el) mo.observe(el, { childList: true, subtree: true, characterData: true, attributes: true });
+  });
+  ['cnc-org-mode', 'cnc-plate'].forEach(id => { const el = document.getElementById(id); if (el) el.addEventListener('change', () => setTimeout(cncGuideUpdate, 0)); });
+  cncGuideUpdate();
+})();
 </script>
 </body>
 </html>
