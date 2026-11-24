@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CAD Pro + CNC · DXF → G-Code · v12.20</title>
+<title>CAD Pro + CNC · DXF → G-Code · v12.21</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -540,6 +540,21 @@ input[type="number"]{font-variant-numeric:tabular-nums}
 .cnc-op-item .op-line2 select.op-tool{max-width:none;width:52px}
 .cnc-op-item .op-tabs{display:flex;align-items:center;gap:3px;font-size:10px;color:var(--accent-pink);margin-left:auto;cursor:pointer}
 .cnc-op-item .op-tabs input{accent-color:var(--accent-pink);width:13px;height:13px}
+.cnc-op-item .op-ents-head{display:flex;align-items:center;gap:6px}
+.cnc-op-item .op-ents-toggle{background:none;border:none;color:var(--text-secondary);font-size:10.5px;cursor:pointer;padding:2px 0}
+.cnc-op-item .op-ents-toggle:hover{color:var(--text-primary)}
+.cnc-op-item .op-ents-bad{color:#FFB347}
+.cnc-op-item .op-ents-add{margin-left:auto;background:none;border:1px solid var(--border-light);color:var(--text-secondary);font-size:9.5px;border-radius:5px;padding:2px 6px;cursor:pointer}
+.cnc-op-item .op-ents-add:hover{color:#5CC8FF;border-color:rgba(92,200,255,.5)}
+.cnc-op-item .op-ents{display:flex;flex-direction:column;gap:2px;max-height:180px;overflow-y:auto;padding:4px;background:var(--bg-panel);border-radius:6px;border:1px solid var(--border-color)}
+.cnc-op-item .op-ent{display:flex;align-items:center;gap:6px;font-size:10.5px;padding:3px 4px;border-radius:4px;color:var(--text-primary);cursor:default}
+.cnc-op-item .op-ent:hover{background:rgba(255,79,216,.12)}
+.cnc-op-item .op-ent.bad{color:#FFB347}
+.cnc-op-item .op-ent.empty{color:var(--text-dim);font-style:italic}
+.cnc-op-item .op-ent-n{font-family:var(--font-mono);color:var(--text-dim);min-width:16px;text-align:right}
+.cnc-op-item .op-ent-txt{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:var(--font-mono)}
+.cnc-op-item .op-ent-del{background:none;border:none;color:var(--text-secondary);cursor:pointer;font-size:13px;line-height:1;padding:0 4px;border-radius:4px}
+.cnc-op-item .op-ent-del:hover{color:var(--accent-red);background:rgba(255,107,107,.15)}
 .cnc-org{margin:4px 0 2px}
 .cnc-org-ref{display:flex;gap:12px;align-items:center;margin:6px 0 2px}
 .cnc-org-grid{display:grid;grid-template-columns:repeat(3,28px);grid-template-rows:repeat(3,28px);gap:3px;padding:4px;border:1px dashed var(--border-light);border-radius:8px}
@@ -603,7 +618,7 @@ input[type="color"].prop-value{flex:0 0 46px;height:24px;padding:0;border:1px so
       <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 15V9l4 6V9l4 6"/>
     </svg>
     CAD&nbsp;+&nbsp;CNC
-    <span class="version-badge" id="appVersion">v12.20</span>
+    <span class="version-badge" id="appVersion">v12.21</span>
   </span>
   <div class="separator"></div>
   <button id="qa-new" title="Nuevo (Ctrl+N)"><svg viewBox="0 0 24 24"><path d="M13 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V9z"/><path d="M13 3v6h6"/></svg></button>
@@ -771,7 +786,7 @@ input[type="color"].prop-value{flex:0 0 46px;height:24px;padding:0;border:1px so
       <div class="cnc-op-list" id="cnc-op-list">
         <div class="cnc-empty-hint">Sin operaciones</div>
       </div>
-      <div class="cnc-hint">El orden de la lista es el <b>orden de mecanizado</b> (▲▼). La operación resaltada es la <b>activa</b>: recibe los clics del dibujo. Naranja = <b>profundidad</b> mm · Azul = <b>ajuste fino</b>.</div>
+      <div class="cnc-hint">El orden de la lista es el <b>orden de mecanizado</b> (▲▼). La operación resaltada es la <b>activa</b>: un clic en el dibujo <b>añade</b>; un clic sobre algo que ya está, lo <b>quita</b> (Shift + ventana quita varios). “▸ elementos” muestra y permite quitar cada uno. Naranja = <b>profundidad</b> mm · Azul = <b>ajuste fino</b>.</div>
       <label class="cnc-hm-check" title="Ignora el orden de la lista y agrupa las operaciones por herramienta (menos cambios de herramienta)"><input type="checkbox" id="cnc-group-tool"> Agrupar por herramienta</label>
       <div class="cnc-row" title="Material que dejan las pasadas de desbaste en cortes Interior/Exterior con más de una pasada. La última pasada va a cota de dibujo. 0 = desactivado."><label>Sobreespesor desbaste</label><input type="number" id="cnc-finishAllowance" step="0.05" min="0" max="5"></div>
       <div class="cnc-hint">Las pasadas previas se separan este valor de la pieza; la última ajusta al dibujo. Solo cortes I / E.</div>
@@ -946,7 +961,9 @@ window.dispatchEvent(new Event('clipper-ready'));
 </script>
 <script>
 /* ═══════════════════════════════════════════════════════════════════════
-   CAD Pro + CNC — v12.20
+   CAD Pro + CNC — v12.21
+   v12.21: lista de elementos por operación (ver/quitar/resaltar), clic sobre un elemento ya incluido lo quita,
+           Shift+ventana quita varios cortes
    v12.20: guardar/abrir trabajos completos (.cadcnc) + autoguardado y recuperación; identificador estable
            de entidades (las operaciones sobreviven a deshacer); propiedades bajo las capas (el lienzo no se mueve)
    v12.19: FIX taladros: los G0 entre agujeros cancelaban el ciclo G81/G83 y solo se taladraba el primero;
@@ -986,8 +1003,8 @@ project.selectedColor = new Color(0.31, 0.76, 0.97);
 
 const canvasContainer = document.getElementById('canvas-container');
 
-const APP_VERSION = '12.20';
-const VERSION_NOTES = 'Guardar/abrir trabajos (.cadcnc) + autoguardado · Propiedades bajo las capas';
+const APP_VERSION = '12.21';
+const VERSION_NOTES = 'Elementos de cada operación: ver, quitar y añadir · Guardar/abrir trabajos';
 
 const layers = {};
 function safeName(orig){ let n = orig.replace(/[^a-zA-Z0-9_\-]/g,'_'); if (/^\d/.test(n)) n='L_'+n; return n; }
@@ -3111,12 +3128,21 @@ function cncAddDrillPoint(wx, wy){
   let px = wx, py = wy;
   if (bestCircle){ px = bestCircle.x; py = bestCircle.y; }
   const op = cncTargetOp('drill');
-  if (op.points.some(p => Math.hypot(p.x - px, p.y - py) < 0.3)){ setPrompt('Ya existe un taladro ahí'); return; }
+  // Clic sobre un taladro que ya está en la operación → se quita
+  const tolRm = Math.max(0.3, 8 / view.zoom);
+  let near = -1, nd = Infinity;
+  op.points.forEach((q, k) => { const d = Math.min(Math.hypot(q.x - wx, q.y - wy), Math.hypot(q.x - px, q.y - py)); if (d < nd){ nd = d; near = k; } });
+  if (near >= 0 && nd < tolRm){
+    op.points.splice(near, 1);
+    cncRebuildAndRegen();
+    setPrompt(`Taladro QUITADO de la operación ${cncState.operations.indexOf(op) + 1} (${op.points.length}) · clic otra vez para volver a añadirlo`);
+    return;
+  }
   op.points.push({ x: px, y: py });
   cncRebuildAndRegen();
   setPrompt(`Taladro añadido (${op.points.length})`);
 }
-function cncAddCutItem(item){
+function cncAddCutItem(item, opts){
   if (!cncState.tools.length){ setPrompt('Añade primero una herramienta'); return; }
   if (!item){ setPrompt('Entidad no válida'); return; }
   if (!(item instanceof Path) && !(item instanceof paper.CompoundPath)){
@@ -3125,7 +3151,14 @@ function cncAddCutItem(item){
   if (!item.id){ setPrompt('Entidad sin ID válido'); return; }
   const op = cncTargetOp('cut');
   const uid = itemUid(item);
-  if (!op.itemIds.includes(uid)) op.itemIds.push(uid);
+  const at = op.itemIds.indexOf(uid);
+  if (at >= 0 && opts && opts.toggle){
+    op.itemIds.splice(at, 1);
+    cncRebuildAndRegen();
+    setPrompt(`Entidad QUITADA de la operación ${cncState.operations.indexOf(op) + 1} (${op.itemIds.length} ítems) · clic otra vez para volver a añadirla`);
+    return;
+  }
+  if (at < 0) op.itemIds.push(uid);
   cncRebuildAndRegen();
   setPrompt(`Corte añadido (${op.itemIds.length} ítems)`);
 }
@@ -3139,6 +3172,15 @@ function cncAddPocketBoundary(boundaryPts, wx, wy){
   }
   if (dedup.length < 3){ setPrompt('Contorno inválido'); return; }
   const op = cncTargetOp('pocket');
+  // Clic dentro de un cajeado que ya está en la operación → se quita
+  const bbN = bboxFromPoints(dedup), aN = Math.abs(signedArea(dedup));
+  const same = op.pockets.findIndex(k => { const b = bboxFromPoints(k.boundary); return Math.abs(b.mnx - bbN.mnx) < 0.05 && Math.abs(b.mny - bbN.mny) < 0.05 && Math.abs(b.mxx - bbN.mxx) < 0.05 && Math.abs(b.mxy - bbN.mxy) < 0.05 && Math.abs(Math.abs(signedArea(k.boundary)) - aN) < Math.max(0.5, aN * 0.002); });
+  if (same >= 0){
+    op.pockets.splice(same, 1);
+    cncRebuildAndRegen();
+    setPrompt(`Cajeado QUITADO de la operación ${cncState.operations.indexOf(op) + 1} (${op.pockets.length}) · clic otra vez para volver a añadirlo`);
+    return;
+  }
   op.pockets.push({ boundary: dedup });
   cncRebuildAndRegen();
   setPrompt(`Cajeado añadido (${op.pockets.length})`);
@@ -3161,6 +3203,29 @@ function cncUndoOp(){
   else if (op.type === 'pocket' && op.pockets.length > 1) op.pockets.pop();
   else cncRemoveOp(i);
   cncRebuildAndRegen();
+}
+// Descripción de cada elemento de una operación (para la lista desplegable)
+function cncOpEntries(op){
+  const f1 = v => (Math.abs(v) >= 100 ? v.toFixed(0) : v.toFixed(1));
+  if (op.type === 'cut') return (op.itemIds || []).map(id => {
+    const it = findPaperItemById(id);
+    if (!it) return { txt: '⚠ entidad no encontrada (borrada del dibujo)', bad: true };
+    const tipo = isCircleItem(it) ? 'Círculo' : isLineItem(it) ? 'Línea' : isArcItem(it) ? 'Arco' : (it.closed ? 'Contorno' : 'Polilínea');
+    const b = it.bounds, dim = isCircleItem(it) ? `Ø${f1(getCircleRadius(it) * 2)}` : `${f1(b.width)}×${f1(b.height)}`;
+    return { txt: `${tipo} ${dim} · ${it.layer ? it.layer.name : '?'}` };
+  });
+  if (op.type === 'drill') return (op.points || []).map(q => ({ txt: `Taladro X${q.x.toFixed(2)} Y${q.y.toFixed(2)}` }));
+  if (op.type === 'pocket') return (op.pockets || []).map((k, i) => { const b = bboxFromPoints(k.boundary); return { txt: `Cajeado ${f1(b.w)}×${f1(b.h)} en X${b.mnx.toFixed(1)} Y${b.mny.toFixed(1)}` }; });
+  return [];
+}
+function cncRemoveOpEntry(i, k){
+  const op = cncState.operations[i]; if (!op) return;
+  const arr = op.type === 'cut' ? op.itemIds : op.type === 'drill' ? op.points : op.pockets;
+  if (!arr || k < 0 || k >= arr.length) return;
+  arr.splice(k, 1);
+  cncState.hoverEnt = null;
+  cncRebuildAndRegen();
+  setPrompt(`Elemento quitado de la operación ${i + 1} (${arr.length} quedan)`);
 }
 function cncUpdateOpList(){
   const list = document.getElementById('cnc-op-list');
@@ -3209,6 +3274,17 @@ function cncUpdateOpList(){
         ${depthInp}
         ${tabsChk}
       </div>
+      ${(() => {
+        const ents = cncOpEntries(op), bad = ents.filter(e => e.bad).length;
+        const noun = op.type === 'cut' ? 'entidades' : op.type === 'drill' ? 'taladros' : 'cajeados';
+        let h = `<div class="op-ents-head"><button class="op-ents-toggle" data-i="${i}" title="Ver / ocultar los elementos de esta operación">${op.uiOpen ? '▾' : '▸'} ${ents.length} ${noun}${bad ? ` · <span class="op-ents-bad">⚠ ${bad}</span>` : ''}</button>
+          <button class="op-ents-add" data-i="${i}" title="Activa esta operación: los clics en el dibujo añaden (o quitan si ya están)">+ Añadir / quitar en el dibujo</button></div>`;
+        if (op.uiOpen){
+          h += '<div class="op-ents">' + (ents.length ? ents.map((e, k) => `<div class="op-ent${e.bad ? ' bad' : ''}" data-i="${i}" data-k="${k}"><span class="op-ent-n">${k + 1}</span><span class="op-ent-txt">${escapeHtml(e.txt)}</span><button class="op-ent-del" data-i="${i}" data-k="${k}" title="Quitar de la operación">×</button></div>`).join('')
+               : '<div class="op-ent empty">Vacía: activa la operación y haz clic en el dibujo</div>') + '</div>';
+        }
+        return h;
+      })()}
     </div>`;
   }).join('');
   list.querySelectorAll('.cnc-op-item').forEach(row => row.addEventListener('click', e => {
@@ -3218,6 +3294,18 @@ function cncUpdateOpList(){
     cncUpdateOpList(); cncRefreshOpsOverlay();
     setPrompt(`Operación ${cncState.activeOp + 1} (${OP_TYPE_ES[op.type]}) activa: los clics en modo ${op.type === 'cut' ? 'Cortes' : op.type === 'drill' ? 'Taladros' : 'Cajeados'} se añaden a ella`);
   }));
+  list.querySelectorAll('.op-ents-toggle').forEach(b => b.addEventListener('click', e => { e.stopPropagation(); const op = cncState.operations[parseInt(b.dataset.i)]; op.uiOpen = !op.uiOpen; cncUpdateOpList(); }));
+  list.querySelectorAll('.op-ents-add').forEach(b => b.addEventListener('click', e => {
+    e.stopPropagation(); const i = parseInt(b.dataset.i), op = cncState.operations[i];
+    cncState.activeOp = i; cncSetMode(op.type); cncUpdateOpList(); cncRefreshOpsOverlay();
+    setPrompt(`Operación ${i + 1} activa · clic en el dibujo: añade; clic sobre un elemento que ya está: lo quita${op.type === 'cut' ? ' · Shift + ventana: quita varios' : ''}`);
+  }));
+  list.querySelectorAll('.op-ent-del').forEach(b => b.addEventListener('click', e => { e.stopPropagation(); cncRemoveOpEntry(parseInt(b.dataset.i), parseInt(b.dataset.k)); }));
+  list.querySelectorAll('.op-ent[data-k]').forEach(row => {
+    row.addEventListener('mouseenter', () => { cncState.hoverEnt = { i: parseInt(row.dataset.i), k: parseInt(row.dataset.k) }; cncRefreshOpsOverlay(); });
+    row.addEventListener('mouseleave', () => { cncState.hoverEnt = null; cncRefreshOpsOverlay(); });
+    row.addEventListener('click', e => e.stopPropagation());
+  });
   list.querySelectorAll('.op-up').forEach(b => b.addEventListener('click', e => { e.stopPropagation(); cncMoveOp(parseInt(b.dataset.i), -1); }));
   list.querySelectorAll('.op-down').forEach(b => b.addEventListener('click', e => { e.stopPropagation(); cncMoveOp(parseInt(b.dataset.i), +1); }));
   list.querySelectorAll('.op-dup').forEach(b => b.addEventListener('click', e => { e.stopPropagation(); cncDuplicateOp(parseInt(b.dataset.i)); }));
@@ -5160,6 +5248,14 @@ function cncRefreshOpsOverlay(){
         cncOpsLayer.addChild(t);
       });
     }
+    // Elemento de operación bajo el ratón en la lista (magenta)
+    const he = cncState.hoverEnt, hop = he && cncState.operations[he.i];
+    if (hop){
+      const mg = new Color('#FF4FD8');
+      if (hop.type === 'cut'){ const it = findPaperItemById(hop.itemIds[he.k]); if (it){ const c = it.clone({ insert: false }); c.strokeColor = mg; c.strokeWidth = 6 / view.zoom; c.fillColor = null; c.opacity = 0.9; c.dashArray = null; cncOpsLayer.addChild(c); } }
+      if (hop.type === 'drill'){ const q = hop.points[he.k]; if (q){ const c = new Path.Circle(new Point(q.x, -q.y), 12 / view.zoom); c.strokeColor = mg; c.strokeWidth = 3 / view.zoom; cncOpsLayer.addChild(c); } }
+      if (hop.type === 'pocket'){ const k = hop.pockets[he.k]; if (k && k.boundary.length > 2){ const pa = new Path(); pa.moveTo(new Point(k.boundary[0].x, -k.boundary[0].y)); for (let j = 1; j < k.boundary.length; j++) pa.lineTo(new Point(k.boundary[j].x, -k.boundary[j].y)); pa.closePath(); pa.strokeColor = mg; pa.strokeWidth = 5 / view.zoom; pa.fillColor = new Color(1, 0.31, 0.85, 0.12); cncOpsLayer.addChild(pa); } }
+    }
     // Resaltado de la operación ACTIVA (azul)
     const aop = cncState.operations[cncState.activeOp];
     if (aop){
@@ -5320,7 +5416,7 @@ function cncHandleClick(event){
         const closest = findClosestItemByDistance(wx, wy, 25/view.zoom);
         if (closest) hit = { item: closest };
       }
-      if (hit && hit.item) cncAddCutItem(hit.item);
+      if (hit && hit.item) cncAddCutItem(hit.item, { toggle: true });
       else setPrompt('Clic sobre una entidad');
     } else if (cncState.mode === 'pocket'){
       const found = cncFindClosedEntityAt(wx, wy);
@@ -5943,9 +6039,19 @@ function onMouseUp(event){
 
       if (cncState.mode === 'cut' && state.selectedItems.length > 0) {
         const count = state.selectedItems.length;
-        state.selectedItems.forEach(item => cncAddCutItem(item));
-        clearSelection();
-        setPrompt(`Añadidos ${count} ítems al corte`);
+        if (isShift){
+          // Shift + ventana: QUITA de la operación activa las entidades abarcadas
+          const op = cncTargetOp('cut');
+          const uids = new Set(state.selectedItems.map(it => it.data && it.data.uid).filter(Boolean));
+          const before = op.itemIds.length;
+          op.itemIds = op.itemIds.filter(id => !uids.has(id));
+          clearSelection(); cncRebuildAndRegen();
+          setPrompt(`Quitados ${before - op.itemIds.length} ítems de la operación ${cncState.operations.indexOf(op) + 1}`);
+        } else {
+          state.selectedItems.forEach(item => cncAddCutItem(item));
+          clearSelection();
+          setPrompt(`Añadidos ${count} ítems al corte`);
+        }
       } else {
         if (state.pendingCommand) setPrompt(`${state.pendingCommand}: ${state.selectedItems.length} encontrado(s)`);
         else setPrompt(`Seleccionados: ${state.selectedItems.length}`);
@@ -7132,7 +7238,7 @@ function jobSerialize(){
     layers: layersOut,
     cnc: {
       tools: JSON.parse(JSON.stringify(cncState.tools)), activeToolId: cncState.activeToolId,
-      operations: JSON.parse(JSON.stringify(cncState.operations)), activeOp: cncState.activeOp,
+      operations: JSON.parse(JSON.stringify(cncState.operations)).map(o => { delete o.uiOpen; return o; }), activeOp: cncState.activeOp,
       tabs: Object.assign({}, cncState.tabs), finishAllowance: cncState.finishAllowance,
       spindlePause: cncState.spindlePause, rapidXY: cncState.rapidXY, rapidZ: cncState.rapidZ,
       drillMode: cncState.drillMode, groupByTool: !!cncState.groupByTool, plateFilter: cncState.plateFilter,
