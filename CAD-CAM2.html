@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CAD Pro + CNC · DXF → G-Code · v12.22</title>
+<title>CAD Pro + CNC · DXF → G-Code · v12.23</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -636,6 +636,55 @@ details.cnc-more{margin:4px 0}
 details.cnc-more > summary{cursor:pointer;font-size:11px;color:var(--text-secondary);padding:3px 0;list-style:none}
 details.cnc-more > summary::before{content:'▸ '}
 details.cnc-more[open] > summary::before{content:'▾ '}
+
+/* v12.23 · Panel CNC en modo claro */
+#cnc-panel.cnc-light{--bg-panel:#F3F5F8;--surface-1:#FFFFFF;--surface-2:#F4F6F9;--bg-main:#FFFFFF;--bg-button:#FFFFFF;--bg-hover:#E8EEF6;
+  --text-primary:#1C2430;--text-secondary:#4A5566;--text-dim:#768194;--border-color:#DDE2E9;--border-light:#C9D1DC;
+  --accent-blue:#1667C0;--accent-amber:#C27400;--accent-green:#16884C;--accent-pink:#B42A8F;--accent-red:#C93333;
+  --ring:0 0 0 3px rgba(22,103,192,.16);background:var(--bg-panel);color:var(--text-primary);border-left-color:#C9D1DC;color-scheme:light}
+#cnc-panel.cnc-light .cnc-section{box-shadow:0 1px 2px rgba(20,30,50,.06)}
+#cnc-panel.cnc-light h3 .mini{background:rgba(20,30,50,.07)}
+#cnc-panel.cnc-light .cnc-row input:hover,#cnc-panel.cnc-light .cnc-row select:hover{border-color:#9AA6B6}
+#cnc-panel.cnc-light .cnc-row input:focus,#cnc-panel.cnc-light .cnc-row select:focus{color:var(--text-primary)}
+#cnc-panel.cnc-light .cnc-btn.accent,#cnc-panel.cnc-light .cnc-btn.accent:hover{color:#fff}
+#cnc-panel.cnc-light .cnc-tool-item .tnum{color:#fff}
+#cnc-panel.cnc-light .cnc-tool-item.active{background:rgba(22,103,192,.07);border-color:rgba(22,103,192,.5)}
+#cnc-panel.cnc-light .cnc-op-badge.drill{background:rgba(201,51,51,.12);color:#B42A2A}
+#cnc-panel.cnc-light .cnc-op-badge.cut{background:rgba(194,116,0,.13);color:#A35F00}
+#cnc-panel.cnc-light .cnc-op-badge.pocket{background:rgba(22,136,76,.12);color:#137442}
+#cnc-panel.cnc-light .cnc-op-item input.depth{color:#A35F00}
+#cnc-panel.cnc-light .cnc-op-newbtn.cut{color:#A35F00;border-color:rgba(194,116,0,.45)}
+#cnc-panel.cnc-light .cnc-op-newbtn.drill{color:#B42A2A;border-color:rgba(201,51,51,.4)}
+#cnc-panel.cnc-light .cnc-op-newbtn.pocket{color:#137442;border-color:rgba(22,136,76,.4)}
+#cnc-panel.cnc-light .cnc-op-item.active{border-color:#1667C0;box-shadow:0 0 0 2px rgba(22,103,192,.16);background:rgba(22,103,192,.05)}
+#cnc-panel.cnc-light .cnc-op-item.active .op-num,#cnc-panel.cnc-light .cnc-op-item .op-ents-add:hover{color:#1667C0}
+#cnc-panel.cnc-light .cnc-op-item .op-ents-bad,#cnc-panel.cnc-light .cnc-op-item .op-ent.bad{color:#A35F00}
+#cnc-panel.cnc-light .cnc-op-item .op-ent:hover{background:rgba(180,42,143,.08)}
+#cnc-panel.cnc-light .cnc-tabs-toggle-row .toggle-label,#cnc-panel.cnc-light .cnc-tabs-toggle-row .toggle-state,#cnc-panel.cnc-light .cnc-tabs-info,#cnc-panel.cnc-light .cnc-section.cnc-tabs-panel.active-tabs h3{color:#A0257F}
+#cnc-panel.cnc-light .cnc-tabs-toggle-row.active .toggle-state{color:#fff}
+#cnc-panel.cnc-light .cnc-section.cnc-tabs-panel.active-tabs{background:linear-gradient(180deg,rgba(180,42,143,.06),rgba(180,42,143,0) 60%),#fff}
+#cnc-panel.cnc-light .cnc-sim-btn.play{background:rgba(22,136,76,.10);border-color:rgba(22,136,76,.45);color:#137442}
+#cnc-panel.cnc-light .cnc-sim-btn.playing{background:rgba(201,51,51,.10);border-color:rgba(201,51,51,.45);color:#B42A2A}
+#cnc-panel.cnc-light .cnc-gcode{background:#FAFBFD;color:#2A3442;border-color:#DDE2E9}
+#cnc-panel.cnc-light .cnc-gline.active{background:#DDF3E6;color:#0E6B38;border-left-color:#16884C}
+#cnc-panel.cnc-light .cnc-gline.selected{background:#F9E1F2;color:#A0257F;border-left-color:#B42A8F}
+#cnc-panel.cnc-light .cnc-gline.active.selected{background:#DDF3E6;color:#0E6B38;border-left-color:#B42A8F}
+#cnc-panel.cnc-light .cnc-org-grid button.active{background:rgba(184,134,11,.14);border-color:#B8860B;color:#7D5A00}
+#cnc-panel.cnc-light .cnc-org-refsel input{accent-color:#B8860B}
+#cnc-panel.cnc-light .cnc-org-info{color:#7D5A00}
+#cnc-panel.cnc-light .cnc-hm-cur-p,#cnc-panel.cnc-light .cnc-hm-mini.accent,#cnc-panel.cnc-light #cnc-hm-info{color:#137442}
+#cnc-panel.cnc-light .cnc-guide{background:linear-gradient(180deg,rgba(22,103,192,.07),rgba(22,103,192,.02));border-color:rgba(22,103,192,.3)}
+#cnc-panel.cnc-light .cnc-guide-step:hover{background:rgba(20,30,50,.05)}
+#cnc-panel.cnc-light .cnc-guide-step .n{background:rgba(20,30,50,.08)}
+#cnc-panel.cnc-light .cnc-guide-step.done .n{background:#16884C}
+#cnc-panel.cnc-light .cnc-guide-step.done .s{color:#137442}
+#cnc-panel.cnc-light .cnc-guide-step.todo .n{background:#C27400}
+#cnc-panel.cnc-light .cnc-guide-next{color:#9A5800}
+#cnc-panel.cnc-light .cnc-step{background:#1667C0}
+#cnc-panel.cnc-light ::-webkit-scrollbar-track{background:#EEF1F5}
+#cnc-panel.cnc-light ::-webkit-scrollbar-thumb{background:#C3CBD6}
+.cnc-theme-btn{margin-left:auto;float:right;background:none;border:1px solid var(--border-light);border-radius:999px;color:var(--text-secondary);font:inherit;font-size:10px;padding:1px 8px;cursor:pointer}
+.cnc-theme-btn:hover{color:var(--text-primary);background:var(--bg-hover)}
 </style>
 </head>
 <body>
@@ -784,9 +833,9 @@ details.cnc-more[open] > summary::before{content:'▾ '}
     <div class="measure-info" id="measureInfo"></div>
   </div>
 
-  <div id="cnc-panel">
+  <div id="cnc-panel" class="cnc-light">
     <div class="cnc-guide" id="cnc-guide">
-      <div class="cnc-guide-title">Pasos</div>
+      <div class="cnc-guide-title">Pasos <button class="cnc-theme-btn" id="cnc-theme-btn" title="Cambiar el panel CNC entre claro y oscuro">☾ Oscuro</button></div>
       <button class="cnc-guide-step" data-go="tools"><span class="n">1</span><span class="t">Herramienta</span><span class="s" id="cnc-g-tools">—</span></button>
       <button class="cnc-guide-step" data-go="ops"><span class="n">2</span><span class="t">Operaciones con elementos</span><span class="s" id="cnc-g-ops">—</span></button>
       <button class="cnc-guide-step" data-go="origin"><span class="n">3–4</span><span class="t">Patillas · placa y origen</span><span class="s" id="cnc-g-org">—</span></button>
@@ -1050,8 +1099,8 @@ project.selectedColor = new Color(0.31, 0.76, 0.97);
 
 const canvasContainer = document.getElementById('canvas-container');
 
-const APP_VERSION = '12.22';
-const VERSION_NOTES = 'PLINE, POLYGON y EXPLODE · Empalme/chaflán en polilíneas · Panel CNC por pasos';
+const APP_VERSION = '12.23';
+const VERSION_NOTES = 'OFFSET multiobjeto · Selección por ventana/captura como AutoCAD · Panel CNC claro';
 
 const layers = {};
 function safeName(orig){ let n = orig.replace(/[^a-zA-Z0-9_\-]/g,'_'); if (/^\d/.test(n)) n='L_'+n; return n; }
@@ -1605,7 +1654,7 @@ function resetStateCmd(){
   state.currentCommand = null; state.step = 0; state.collectedPoints = [];
   state.basePoint = null; state.expectingPoint = false; state.dynamicLastPoint = null;
   state.originalPositions = []; state.isDragging = false; state.hasMoved = false;
-  state.selecting = false; state.trimBoundary = null; state.extendBoundary = null;
+  state.selecting = false; state.windowPending = false; state.trimBoundary = null; state.extendBoundary = null;
   state.waitingForNumber = false; state.offsetDistance = 0;
   if (state.offsetTarget) highlightOffsetTarget(state.offsetTarget, false);
   state.offsetTarget = null; state.pendingCommand = null; state.copySourceItems = [];
@@ -1614,7 +1663,7 @@ function resetStateCmd(){
   state.filletRadius = 0; state.filletLine1 = null; state.filletClick1 = null;
   state.measureStart = null;
   releaseTrackPoints();
-  if (state.selectionRect){ state.selectionRect.remove(); state.selectionRect = null; }
+  state.selectionRect = null; state.selectStartPoint = null;
   guideLayer.removeChildren(); selectionLayer.removeChildren(); previewLayer.removeChildren();
   const dt = document.getElementById('dynamic-tooltip');
   if (dt) dt.style.display = 'none';
@@ -1708,8 +1757,8 @@ function finalizePendingSelection(){
   if (!cmd) return false;
   state.pendingCommand = null;
   if (!state.selectedItems.length){
-    setPrompt('0 objetos seleccionados. Comando cancelado.');
-    state.currentCommand = null;
+    resetStateCmd();
+    setPrompt(cmd === 'OFFSET' ? 'OFFSET terminado · Comando:' : '0 objetos seleccionados. Comando cancelado.');
     return true;
   }
   proceedModifyCommand(cmd);
@@ -1729,6 +1778,13 @@ function proceedModifyCommand(cmd){
       state.currentCommand = null;
       setPrompt('Objetos borrados');
       if (cncState.mode !== 'off') cncRefreshOpsOverlay();
+      break;
+    case 'OFFSET':
+      state.currentCommand = 'OFFSET'; state.pendingCommand = null;
+      { const bad = state.selectedItems.filter(it => !isOffsettable(it)); bad.forEach(it => removeFromSelection(it, true)); }
+      if (!state.selectedItems.length){ offsetGoSelect('OFFSET: ningún objeto válido'); break; }
+      state.step = 3; state.expectingPoint = false;
+      setPrompt(`OFFSET ${state.offsetDistance}: ${state.selectedItems.length} objeto(s) · clic en el lado (E exterior · I interior · Intro otra selección)`);
       break;
     case 'EXPLODE':
       explodeSelected();
@@ -2012,14 +2068,21 @@ function cmdSubmit(raw){
   }
   // OFFSET: distancia
   if (state.waitingForNumber){
-    const v = parseFloat(input.replace(',', '.'));
-    if (input && Number.isFinite(v) && v > 0){
-      state.offsetDistance = v; state.waitingForNumber = false; state.step = 2;
-      setPrompt(`OFFSET: Distancia ${v}. Selecciona objeto`);
+    const v = input ? parseFloat(input.replace(',', '.')) : (state.lastOffsetDist || NaN);
+    if (Number.isFinite(v) && v > 0){
+      state.offsetDistance = state.lastOffsetDist = v; state.waitingForNumber = false;
+      offsetGoSelect();
       return;
     }
     if (!input){ resetStateCmd(); setPrompt('Comando:'); return; }
     setPrompt('OFFSET: escribe una distancia positiva'); return;
+  }
+  // OFFSET: selección (Intro termina la selección; sin objetos, termina el comando)
+  if (cmd === 'OFFSET' && state.step === 2 && !input){ endCurrentCommand(); return; }
+  if (cmd === 'OFFSET' && state.step === 3){
+    if (up === 'E' || up === 'I'){ offsetApply(null, up === 'E' ? 'out' : 'in'); return; }
+    if (!input){ clearSelection(); offsetGoSelect(); return; }
+    setPrompt('OFFSET: clic en el lado, E = exterior, I = interior'); return;
   }
   // CHAMFER / FILLET: primer dato (Intro = 0)
   if (cmd === 'CHAMFER' && state.step === 1){
@@ -2236,13 +2299,17 @@ function executeCommand(cmd){
     case 'ROTATE': beginModifyCommand('ROTATE', 'ROTATE'); break;
     case 'SCALE': beginModifyCommand('SCALE', 'SCALE'); break;
     case 'MIRROR': beginModifyCommand('MIRROR', 'MIRROR'); break;
-    case 'OFFSET':
-      clearSelection();
+    case 'OFFSET': {
+      // Preselección válida: se usa directamente (multiobjeto)
+      const pre = state.selectedItems.filter(isOffsettable);
+      resetStateCmd(); clearSelection();
+      pre.forEach(it => addToSelection(it, true)); renderGrips();
       state.currentCommand = 'OFFSET'; state.step = 1; state.waitingForNumber = true;
       state.offsetTarget = null;
-      setPrompt('OFFSET: Distancia (número+Enter)');
+      setPrompt(`OFFSET: Distancia <${state.lastOffsetDist || '?'}>${pre.length ? ` · ${pre.length} objeto(s) preseleccionado(s)` : ''}`);
       document.getElementById('cmd-input').focus();
       break;
+    }
     case 'TRIM':
       state.trimBoundary = state.selectedItems.length > 0 ? state.selectedItems.slice() : null;
       clearSelection();
@@ -3163,7 +3230,7 @@ function offsetOpenPathSimple(pts, delta){
 }
 
 // 4. Comando CAD Offset
-function offsetPolyline(item, dist, clickPt){
+function offsetPolyline(item, dist, clickPt, forcedSide){
   const isClosed = item.closed;
   let pts = [];
   const L = item.length;
@@ -3176,7 +3243,7 @@ function offsetPolyline(item, dist, clickPt){
 
   let side = 1;
   if (isClosed) {
-    side = item.contains(clickPt) ? -1 : 1;
+    side = forcedSide || (item.contains(clickPt) ? -1 : 1);
     if (signedArea(pts) < 0) pts.reverse();
   } else {
     let bestD = Infinity, bestSide = 1;
@@ -3215,63 +3282,110 @@ function highlightOffsetTarget(item, on){
   if (on){ item.shadowColor = new Color('#E8A33D'); item.shadowBlur = 10; item.shadowOffset = new Point(0,0); }
   else if (!state.selectedItems.includes(item)){ item.shadowColor = null; }
 }
-function handleOffsetSelectClick(event){
-  const hit = hitTestContent(event.point);
-  if (!hit || !hit.item){ setPrompt('No se encontró objeto'); return; }
-  const item = hit.item;
-  if (!isLineItem(item) && !isCircleItem(item) && !isPolylineItem(item)){
-    setPrompt('Offset: líneas, círculos, rectángulos o polilíneas'); return;
-  }
-  state.offsetTarget = item;
-  highlightOffsetTarget(item, true);
-  state.step = 3;
-  setPrompt(`OFFSET: Distancia ${state.offsetDistance}. Especifica el lado`);
+function isOffsettable(it){
+  if (!it || !(it instanceof Path)) return false;
+  if (isLineItem(it) || isCircleItem(it)) return true;
+  return it.segments && it.segments.length >= 2 && it.length > 1e-6;
 }
-function handleOffsetSideClick(event){
-  const item = state.offsetTarget;
-  const pt = event.point;
-  const dist = state.offsetDistance;
-  if (!item || dist <= 0){ resetOffsetToSelect(); return; }
-  saveState();
+// Paso 2: elegir objetos (clic, ventana o captura; Intro termina)
+function offsetGoSelect(msg){
+  state.currentCommand = 'OFFSET'; state.step = 2; state.pendingCommand = 'OFFSET'; state.expectingPoint = false;
+  previewLayer.removeChildren();
+  if (state.selectedItems.length){ proceedModifyCommand('OFFSET'); return; }
+  setPrompt((msg ? msg + ' · ' : '') + `OFFSET ${state.offsetDistance}: selecciona objetos (clic / ventana) y clic en el lado · Intro termina`);
+}
+// Equidistante ABIERTA a un solo lado (inglete en los vértices; bisel si el pico es excesivo)
+function offsetOpenPolyline(item, dist, refPt){
+  const P = pathToExactPoints(item, 0.2, false).map(q => new Point(q.x, q.y));
+  if (P.length < 2) return null;
+  // Lado: el del punto respecto al tramo más cercano
+  let best = Infinity, sideSign = 1;
+  for (let i = 0; i < P.length - 1; i++){
+    const a = P[i], b = P[i + 1], ab = b.subtract(a), L2 = ab.dot(ab) || 1;
+    const t = Math.max(0, Math.min(1, refPt.subtract(a).dot(ab) / L2));
+    const q = a.add(ab.multiply(t)), d = q.getDistance(refPt);
+    if (d < best){ best = d; const n = new Point(-ab.y, ab.x); sideSign = refPt.subtract(q).dot(n) >= 0 ? 1 : -1; }
+  }
+  const segs = [];
+  for (let i = 0; i < P.length - 1; i++){
+    const a = P[i], b = P[i + 1], ab = b.subtract(a);
+    if (ab.length < 1e-9) continue;
+    const n = new Point(-ab.y, ab.x).normalize(dist * sideSign);
+    segs.push({ a: a.add(n), b: b.add(n), v: P[i + 1] });
+  }
+  if (!segs.length) return null;
+  const out = [segs[0].a];
+  for (let k = 1; k < segs.length; k++){
+    const s1 = segs[k - 1], s2 = segs[k];
+    const d1 = s1.b.subtract(s1.a), d2 = s2.b.subtract(s2.a);
+    const den = d1.x * d2.y - d1.y * d2.x;
+    if (Math.abs(den) < 1e-12 * d1.length * d2.length){ out.push(s1.b); continue; }
+    const t = ((s2.a.x - s1.a.x) * d2.y - (s2.a.y - s1.a.y) * d2.x) / den;
+    const X = s1.a.add(d1.multiply(t));
+    if (X.getDistance(s1.v) > 4 * dist){ out.push(s1.b, s2.a); } else out.push(X);
+  }
+  out.push(segs[segs.length - 1].b);
+  return new Path({ segments: out, insert: false });
+}
+// Calcula la equidistante de UN objeto. closedMode: 'out' | 'in' | null (= según el punto)
+function offsetCompute(item, dist, pt, closedMode){
   if (isLineItem(item)){
     const p1 = item.segments[0].point, p2 = item.segments[1].point;
-    const dir = p2.subtract(p1).normalize();
-    const normal = dir.rotate(90).multiply(dist);
-    const mid = p1.add(p2).divide(2);
-    const side = pt.subtract(mid).dot(normal) > 0 ? 1 : -1;
+    const normal = p2.subtract(p1).normalize().rotate(90).multiply(dist);
+    const side = pt.subtract(p1.add(p2).divide(2)).dot(normal) > 0 ? 1 : -1;
     const off = normal.multiply(side);
-    const newLine = new Path.Line(p1.add(off), p2.add(off));
-    newLine.strokeColor = item.strokeColor || 'white';
-    newLine.strokeWidth = currentStrokeWidth();
-    tagShape(newLine, 'line');
-    activeLayer.addChild(newLine);
-  } else if (isCircleItem(item)){
-    const r0 = getCircleRadius(item);
-    const inside = pt.getDistance(item.position) < r0;
-    const newRadius = inside ? r0 - dist : r0 + dist;
-    if (newRadius <= 0){ setPrompt('Radio ≤ 0'); return; }
-    const newCircle = new Path.Circle(item.position, newRadius);
-    newCircle.strokeColor = item.strokeColor || 'white';
-    newCircle.strokeWidth = currentStrokeWidth();
-    tagShape(newCircle, 'circle');
-    newCircle.data.radius = newRadius;
-    activeLayer.addChild(newCircle);
-  } else if (isPolylineItem(item)){
-    const newPoly = offsetPolyline(item, dist, pt);
-    if (!newPoly){ setPrompt('No se pudo calcular offset'); return; }
-    newPoly.strokeColor = item.strokeColor || 'white';
-    newPoly.strokeWidth = currentStrokeWidth();
-    tagShape(newPoly, 'polyline');
-    activeLayer.addChild(newPoly);
+    return tagShape(new Path.Line({ from: p1.add(off), to: p2.add(off), insert: false }), 'line');
   }
-  resetOffsetToSelect(`Offset creado (${dist}). Selecciona otro o Enter/ESC`);
+  if (isCircleItem(item)){
+    const r0 = getCircleRadius(item);
+    const inside = closedMode ? closedMode === 'in' : pt.getDistance(item.position) < r0;
+    const r = inside ? r0 - dist : r0 + dist;
+    if (r <= 1e-6) return null;
+    const c = new Path.Circle({ center: item.position, radius: r, insert: false });
+    tagShape(c, 'circle'); c.data.radius = r; return c;
+  }
+  if (item.closed){
+    const inside = closedMode ? closedMode === 'in' : item.contains(pt);
+    const np = offsetPolyline(item, dist, null, inside ? -1 : 1);
+    if (np){ np.remove(); tagShape(np, 'polyline'); }
+    return np;
+  }
+  const np = offsetOpenPolyline(item, dist, pt);
+  if (np) tagShape(np, np.segments.length === 2 ? 'line' : 'polyline');
+  return np;
 }
-function resetOffsetToSelect(message){
-  highlightOffsetTarget(state.offsetTarget, false);
-  state.offsetTarget = null; state.step = 2;
-  previewLayer.removeChildren();
-  setPrompt(message || `OFFSET: Distancia ${state.offsetDistance}. Selecciona objeto`);
+// Lado común: el objeto más cercano al punto decide exterior/interior para todos los cerrados;
+// los abiertos se desplazan hacia el lado del punto.
+function offsetModeFromPoint(items, pt){
+  let ref = null, best = Infinity;
+  items.forEach(it => { const q = it.getNearestPoint(pt); const d = q ? q.getDistance(pt) : Infinity; if (d < best){ best = d; ref = it; } });
+  if (!ref) return null;
+  if (isCircleItem(ref)) return pt.getDistance(ref.position) < getCircleRadius(ref) ? 'in' : 'out';
+  if (ref.closed) return ref.contains(pt) ? 'in' : 'out';
+  return null;
 }
+function offsetApply(pt, forcedMode){
+  const items = state.selectedItems.filter(isOffsettable);
+  const dist = state.offsetDistance;
+  if (!items.length || !(dist > 0)){ offsetGoSelect(); return; }
+  const refPt = pt || items[0].bounds.center;
+  const mode = forcedMode || offsetModeFromPoint(items, refPt);
+  saveState();
+  let made = 0, failed = 0;
+  items.forEach(it => {
+    let np = null;
+    try { np = offsetCompute(it, dist, refPt, mode); } catch (e){ np = null; }
+    if (!np){ failed++; return; }
+    np.strokeColor = it.strokeColor || 'white'; np.strokeWidth = currentStrokeWidth(); np.fillColor = null;
+    (it.layer || activeLayer).addChild(np); made++;
+  });
+  clearSelection(); invalidateSnapCache(); previewLayer.removeChildren();
+  if (cncState.mode !== 'off') cncRefreshOpsOverlay();
+  const how = mode ? (mode === 'in' ? ' hacia el interior' : ' hacia el exterior') : '';
+  offsetGoSelect(`✓ ${made} equidistante(s) a ${dist}${how}${failed ? ` · ${failed} sin resultado (radio/tamaño insuficiente)` : ''}`);
+}
+function handleOffsetSideClick(event){ offsetApply(event.point, null); }
+function resetOffsetToSelect(message){ offsetGoSelect(message); }
 
 /* ═══════════════════════════════════════════════════════════════════════
    CNC Y HERRAMIENTAS
@@ -6107,6 +6221,13 @@ function onMouseDown(event){
     return;
   }
   
+  if (state.windowPending && event.event.button === 0 && !event.event.altKey){
+    // Segundo clic de la ventana clic-clic (AutoCAD)
+    state.swallowMouse = true;
+    finishWindowSelection(new Rectangle(state.selectStartPoint, event.point), event.point.x > state.selectStartPoint.x, event.event.shiftKey);
+    if (!state.pendingCommand) updateProperties();
+    return;
+  }
   if (cncState.mode !== 'off' && event.event.button === 0 && !event.event.altKey){
     // ★ Fix CNC: Iniciar cuadro de selección en lugar de clic directo
     state.selecting = true;
@@ -6171,7 +6292,6 @@ function onMouseDown(event){
   if (state.currentCommand === 'FILLET' && (state.step === 2 || state.step === 3)){
     handleFilletClick(event); return;
   }
-  if (state.currentCommand === 'OFFSET' && state.step === 2){ handleOffsetSelectClick(event); return; }
   if (state.currentCommand === 'OFFSET' && state.step === 3){ handleOffsetSideClick(event); return; }
 
   const hit = hitTestContent(event.point);
@@ -6184,13 +6304,11 @@ function onMouseDown(event){
       return;
     }
     if (event.event.shiftKey && !state.currentCommand){
+      // Como AutoCAD: Shift + clic QUITA de la selección
       if (state.selectedItems.includes(item)){
         removeFromSelection(item);
         setPrompt(`Quitado · ${state.selectedItems.length} objeto(s)`);
-      } else {
-        addToSelection(item);
-        setPrompt(`Añadido · ${state.selectedItems.length} objeto(s)`);
-      }
+      } else setPrompt(`Shift + clic quita objetos de la selección (${state.selectedItems.length})`);
       refreshSelectionHighlight();
       return;
     }
@@ -6199,14 +6317,15 @@ function onMouseDown(event){
       state.originalPositions = state.selectedItems.map(it => it.position.clone());
       state.hasMoved = false; state.dynamicLastPoint = event.point;
     } else {
-      setSingleSelection(item);
+      // Como AutoCAD: cada clic AÑADE a la selección (ESC la vacía)
+      addToSelection(item);
       state.isDragging = true; state.dragStartPoint = event.point;
-      state.originalPositions = [item.position.clone()];
+      state.originalPositions = state.selectedItems.map(it => it.position.clone());
       state.hasMoved = false; state.dynamicLastPoint = event.point;
     }
     setPrompt(`Seleccionados: ${state.selectedItems.length}`);
   } else {
-    if (!state.pendingCommand && !event.event.shiftKey) clearSelection();
+    // Clic en vacío: empieza una ventana (no vacía la selección, como AutoCAD; ESC la vacía)
     state.selecting = true; state.selectStartPoint = event.point;
     state.selectMode = 'window';
     state.selectionRect = new Rectangle(event.point, event.point);
@@ -6343,21 +6462,58 @@ function onMouseUp(event){
         return;
       }
 
-      if (!state.pendingCommand && !isShift) clearSelection();
-      const isWindow = state.selectMode === 'window';
-      for (let internal in layers){
-        const layer = layers[internal];
-        if (!layer.data.visible || layer.data.locked) continue;
-        if (CNC_UTILITY_LAYERS.includes(layer)) continue;
-        layer.children.forEach(item => {
-          if (item.bounds){
-            if (isWindow){ if (rect.contains(item.bounds)) addToSelection(item, true); }
-            else { if (rect.intersects(item.bounds)) addToSelection(item, true); }
-          }
-        });
+      // ── CAD (estilo AutoCAD) ──
+      const pxDrag = view.projectToView(state.selectStartPoint).getDistance(view.projectToView(event.point));
+      if (pxDrag <= 4 && cncState.mode === 'off'){
+        // Clic sin arrastrar en vacío
+        if (state.pendingCommand === 'OFFSET' && state.selectedItems.length){
+          // OFFSET: con objetos ya elegidos, un clic en vacío es el punto del lado
+          selectionLayer.removeChildren(); state.selectionRect = null;
+          const sp = state.selectStartPoint; state.selectStartPoint = null;
+          finalizePendingSelection(); handleOffsetSideClick({ point: sp });
+          return;
+        }
+        // Ventana clic-clic: el rectángulo sigue al cursor hasta el segundo clic
+        state.windowPending = true;
+        state.selectionRect = new Rectangle(state.selectStartPoint, event.point);
+        drawSelectionRect();
+        setPrompt('Esquina opuesta (→ ventana: dentro · ← captura: toca) · ESC cancela');
+        return;
       }
-      selectionLayer.removeChildren();
-      state.selectionRect = null; state.selectStartPoint = null;
+      finishWindowSelection(new Rectangle(state.selectStartPoint, event.point), event.point.x > state.selectStartPoint.x, isShift);
+    }
+  }
+}
+// Ventana (izq→dcha: objetos ENTEROS dentro) o captura (dcha→izq: objetos que la TOCAN o están dentro), como AutoCAD.
+// Selección acumulativa: Shift + ventana QUITA de la selección. (En CNC: Shift + ventana quita de la operación.)
+function itemCrossesRect(item, rect){
+  if (!item.bounds || !rect.intersects(item.bounds)) return false;
+  if (rect.contains(item.bounds)) return true;
+  if (item.segments && item.segments.some(sg => rect.contains(sg.point))) return true;
+  const rp = new Path.Rectangle({ rectangle: rect, insert: false });
+  let hit = false;
+  try { hit = item.getIntersections(rp).length > 0; } catch (e){ hit = true; }
+  if (!hit && item.children){ hit = item.children.some(ch => itemCrossesRect(ch, rect)); }
+  return hit;
+}
+function finishWindowSelection(rect, isWindow, isShift){
+  state.windowPending = false; state.selecting = false;
+  if (cncState.mode !== 'off') clearSelection();          // CNC: la ventana define qué se añade/quita de la operación
+  const cadRemove = isShift && cncState.mode === 'off';
+  const found = [];
+  for (let internal in layers){
+    const layer = layers[internal];
+    if (!layer.data.visible || layer.data.locked) continue;
+    if (CNC_UTILITY_LAYERS.includes(layer)) continue;
+    layer.children.forEach(item => {
+      if (!item.bounds) return;
+      if (isWindow ? rect.contains(item.bounds) : itemCrossesRect(item, rect)) found.push(item);
+    });
+  }
+  if (cadRemove) found.forEach(it => removeFromSelection(it, true));
+  else found.forEach(it => addToSelection(it, true));
+  selectionLayer.removeChildren();
+  state.selectionRect = null; state.selectStartPoint = null;
 
       if (cncState.mode === 'cut' && state.selectedItems.length > 0) {
         const count = state.selectedItems.length;
@@ -6376,13 +6532,16 @@ function onMouseUp(event){
         }
       } else {
         if (state.pendingCommand) setPrompt(`${state.pendingCommand}: ${state.selectedItems.length} encontrado(s)`);
-        else setPrompt(`Seleccionados: ${state.selectedItems.length}`);
+        else setPrompt(`${cadRemove ? 'Quitados ' + found.length + ' · ' : ''}Seleccionados: ${state.selectedItems.length}`);
       }
-      updateProperties(); renderGrips(); refreshSelectionHighlight();
-    }
-  }
+  updateProperties(); renderGrips(); refreshSelectionHighlight();
 }
 function onMouseMove(event){
+  if (state.windowPending && state.selectStartPoint){
+    state.selectionRect = new Rectangle(state.selectStartPoint, event.point);
+    state.selectMode = (event.point.x > state.selectStartPoint.x) ? 'window' : 'crossing';
+    drawSelectionRect();
+  }
   state.lastMousePoint = event.point;
   state.lastClientX = event.event.clientX;
   state.lastClientY = event.event.clientY;
@@ -6461,35 +6620,20 @@ function onMouseMove(event){
 function updateDynamicPreview(event){
   previewLayer.removeChildren();
   const pt = event.point;
-  if (state.currentCommand === 'OFFSET' && state.step === 3 && state.offsetTarget){
-    const item = state.offsetTarget;
-    const dist = state.offsetDistance;
-    let preview = null;
-    if (isLineItem(item)){
-      const p1 = item.segments[0].point, p2 = item.segments[1].point;
-      const dir = p2.subtract(p1).normalize();
-      const normal = dir.rotate(90).multiply(dist);
-      const mid = p1.add(p2).divide(2);
-      const side = pt.subtract(mid).dot(normal) > 0 ? 1 : -1;
-      const off = normal.multiply(side);
-      preview = new Path.Line(p1.add(off), p2.add(off));
-    } else if (isCircleItem(item)){
-      const r0 = getCircleRadius(item);
-      const inside = pt.getDistance(item.position) < r0;
-      const newRadius = inside ? r0 - dist : r0 + dist;
-      if (newRadius > 0) preview = new Path.Circle(item.position, newRadius);
-    } else if (isPolylineItem(item)){
-      preview = offsetPolyline(item, dist, pt);
-    }
-    if (preview){
-      preview.strokeColor = new Color('#E8A33D');
-      preview.strokeWidth = 1.2 / view.zoom;
-      preview.dashArray = [5, 4];
-      preview.fillColor = null;
+  if (state.currentCommand === 'OFFSET' && state.step === 3 && state.selectedItems.length){
+    const items = state.selectedItems.filter(isOffsettable).slice(0, 60);     // vista previa limitada por rendimiento
+    const mode = offsetModeFromPoint(items, pt);
+    items.forEach(it => {
+      let preview = null;
+      try { preview = offsetCompute(it, state.offsetDistance, pt, mode); } catch (e){ preview = null; }
+      if (!preview) return;
+      preview.strokeColor = new Color('#E8A33D'); preview.strokeWidth = 1.2 / view.zoom;
+      preview.dashArray = [5 / view.zoom, 4 / view.zoom]; preview.fillColor = null;
       previewLayer.addChild(preview);
-    }
+    });
     return;
   }
+
   if (state.currentCommand && state.expectingPoint && state.dynamicLastPoint){
     const base = state.dynamicLastPoint;
     const moveExclude = ((state.currentCommand === 'MOVE' || state.currentCommand === 'COPY') && state.step >= 2) ? state.selectedItems : null;
@@ -6595,12 +6739,14 @@ function updateCoords(pt){
 }
 function drawSelectionRect(){
   selectionLayer.removeChildren();
-  if (state.selectionRect && state.selecting){
+  if (state.selectionRect && (state.selecting || state.windowPending)){
+    // AutoCAD: ventana = azul con borde continuo · captura = verde con borde discontinuo
     const path = new Path.Rectangle(state.selectionRect);
     const isWindow = state.selectMode === 'window';
-    path.fillColor = isWindow ? new Color(0, 0, 1, 0.1) : new Color(0, 1, 0, 0.1);
-    path.strokeColor = isWindow ? 'blue' : 'green';
+    path.fillColor = isWindow ? new Color(0.25, 0.45, 1, 0.14) : new Color(0.2, 0.85, 0.3, 0.14);
+    path.strokeColor = isWindow ? new Color(0.35, 0.6, 1) : new Color(0.3, 0.9, 0.4);
     path.strokeWidth = 1 / view.zoom;
+    if (!isWindow) path.dashArray = [6 / view.zoom, 4 / view.zoom];
     selectionLayer.addChild(path);
   }
 }
@@ -7213,6 +7359,10 @@ window.addEventListener('keydown', e => {
     if (cncState.mode !== 'off') cncRefreshOpsOverlay();
   }
   if (e.key === 'Escape'){
+    if (state.windowPending){
+      state.windowPending = false; state.selecting = false; state.selectionRect = null; state.selectStartPoint = null;
+      selectionLayer.removeChildren(); setPrompt('Ventana cancelada'); e.preventDefault(); return;
+    }
     if (state.currentCommand === 'PLINE' && state.collectedPoints.length >= 2){ plineFinish(false); e.preventDefault(); return; }
     if (state.currentCommand === 'MEASURE'){
       exitMeasureMode();
@@ -7785,6 +7935,16 @@ initAll();
   });
   ['cnc-org-mode', 'cnc-plate'].forEach(id => { const el = document.getElementById(id); if (el) el.addEventListener('change', () => setTimeout(cncGuideUpdate, 0)); });
   cncGuideUpdate();
+})();
+
+/* v12.23 · Panel CNC claro (por defecto) / oscuro, recordado en este navegador */
+(function(){
+  const KEY = 'cadcnc.cncTheme.v1', panel = document.getElementById('cnc-panel'), btn = document.getElementById('cnc-theme-btn');
+  if (!panel || !btn) return;
+  function apply(light){ panel.classList.toggle('cnc-light', light); btn.textContent = light ? '☾ Oscuro' : '☀ Claro'; }
+  let light = true; try { light = localStorage.getItem(KEY) !== 'dark'; } catch (e){}
+  apply(light);
+  btn.addEventListener('click', e => { e.stopPropagation(); light = !panel.classList.contains('cnc-light'); apply(light); try { localStorage.setItem(KEY, light ? 'light' : 'dark'); } catch (e){} });
 })();
 </script>
 </body>
