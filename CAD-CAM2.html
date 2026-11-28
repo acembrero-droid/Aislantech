@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CAD Pro + CNC · DXF → G-Code · v12.23</title>
+<title>CAD Pro + CNC · DXF → G-Code · v12.24</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -685,6 +685,10 @@ details.cnc-more[open] > summary::before{content:'▾ '}
 #cnc-panel.cnc-light ::-webkit-scrollbar-thumb{background:#C3CBD6}
 .cnc-theme-btn{margin-left:auto;float:right;background:none;border:1px solid var(--border-light);border-radius:999px;color:var(--text-secondary);font:inherit;font-size:10px;padding:1px 8px;cursor:pointer}
 .cnc-theme-btn:hover{color:var(--text-primary);background:var(--bg-hover)}
+
+.cnc-bl{margin-top:10px;padding-top:8px;border-top:1px dashed var(--border-light)}
+.cnc-bl-title{font-size:11px;font-weight:600;color:var(--text-primary);margin-bottom:4px}
+#cnc-bl-info{color:var(--accent-amber);background:rgba(194,116,0,.07);border-color:rgba(194,116,0,.3)}
 </style>
 </head>
 <body>
@@ -965,6 +969,15 @@ details.cnc-more[open] > summary::before{content:'▾ '}
         <option value="explicit">G0/G1 (cualquier máquina)</option>
         <option value="cycle">Ciclo G81/G83</option>
       </select></div>
+      <div class="cnc-bl" id="cnc-bl-box">
+        <div class="cnc-bl-title">Compensación de holgura (backlash)</div>
+        <div class="cnc-row" title="Lo que se pierde cada vez que el eje cambia de sentido (mm). 0 = sin compensar."><label>Holgura X mm</label><input type="number" id="cnc-blX" step="0.05" min="0" max="5"></div>
+        <div class="cnc-row" title="Sentido del último movimiento con el que te acercaste al hacer el cero X (o al homing)"><label>Cero X con</label><select id="cnc-blRefX" style="width:150px"><option value="1">movimiento +X</option><option value="-1">movimiento −X</option></select></div>
+        <div class="cnc-row" title="Lo que se pierde cada vez que el eje cambia de sentido (mm). 0 = sin compensar."><label>Holgura Y mm</label><input type="number" id="cnc-blY" step="0.05" min="0" max="5"></div>
+        <div class="cnc-row" title="Sentido del último movimiento con el que te acercaste al hacer el cero Y"><label>Cero Y con</label><select id="cnc-blRefY" style="width:150px"><option value="1">movimiento +Y</option><option value="-1">movimiento −Y</option></select></div>
+        <div class="cnc-hint">En cada cambio de sentido se añade un pequeño movimiento que recoge la holgura antes de seguir cortando. Haz siempre el cero acercándote en el sentido indicado. Es un parche: lo correcto es ajustar husillo/tuerca o correas.</div>
+        <div class="cnc-tabs-info" id="cnc-bl-info" style="display:none"></div>
+      </div>
     </div>
     <div data-sec="hm" class="cnc-section cnc-hm-panel" id="cnc-hm-section">
       <h3 class="cnc-collapse-h"><svg class="h-ico" viewBox="0 0 24 24"><path d="M3 17l5-4 4 3 4-6 5 4"/><path d="M3 21h18"/><circle cx="8" cy="13" r="1"/><circle cx="16" cy="10" r="1"/></svg>Mapa de alturas · Z0 virtual <span class="mini" id="cnc-hm-badge">OFF</span></h3>
@@ -1099,8 +1112,8 @@ project.selectedColor = new Color(0.31, 0.76, 0.97);
 
 const canvasContainer = document.getElementById('canvas-container');
 
-const APP_VERSION = '12.23';
-const VERSION_NOTES = 'OFFSET multiobjeto · Selección por ventana/captura como AutoCAD · Panel CNC claro';
+const APP_VERSION = '12.24';
+const VERSION_NOTES = 'Compensación de holgura (backlash) en X/Y';
 
 const layers = {};
 function safeName(orig){ let n = orig.replace(/[^a-zA-Z0-9_\-]/g,'_'); if (/^\d/.test(n)) n='L_'+n; return n; }
@@ -1355,6 +1368,7 @@ const cncState = {
   tabs: { enabled:false, count:3, width:1.0, height:1.0, seed:12345 },
   finishAllowance: 0.2,
   plateFilter: '',
+  backlash: { x: 0, y: 0, refX: 1, refY: 1 },   // compensación de holgura por inversión de sentido (mm)
   drillMode: 'explicit',  // 'explicit' = G0/G1 (cualquier controladora, GRBL incluido) · 'cycle' = G81/G83
   activeOp: -1,           // índice de la operación activa (destino de los clics en el dibujo)
   groupByTool: false,     // false = orden de la lista · true = agrupar por herramienta (comportamiento antiguo)
@@ -4731,6 +4745,90 @@ function hmHeight(hm, x, y){
   return (v(i0, j0) * (1 - tx) + v(i0 + 1, j0) * tx) * (1 - ty) + (v(i0, j0 + 1) * (1 - tx) + v(i0 + 1, j0 + 1) * tx) * ty;
 }
 // Aplica el mapa a un programa ya generado. Devuelve { lines, blocks, split }.
+/* ═══ Compensación de holgura (backlash) ═══
+   Modelo: el cero se hizo acercándose en el sentido ref (±1); en ese sentido el carro está donde manda el motor.
+   Tras invertir, el carro se queda atrás 'b' mm → al mover en sentido contrario a ref se manda X − ref·b.
+   En cada inversión se inserta un tramo SOLO de ese eje (el carro no se mueve, solo recoge la holgura) para que
+   el siguiente corte no salga deformado; en rápidos y en ciclos de taladro basta con desplazar la cota. */
+function blApplyToProgram(lines, blocks, bl){
+  const axes = [{ l: 'X', b: +bl.x || 0, ref: bl.refX < 0 ? -1 : 1 }, { l: 'Y', b: +bl.y || 0, ref: bl.refY < 0 ? -1 : 1 }].filter(a => a.b > 0);
+  const st = {}; axes.forEach(a => st[a.l] = { pos: null, dir: a.ref, off: 0 });
+  const offFor = (a, dir) => dir === a.ref ? 0 : -a.ref * a.b;
+  const outL = [], outB = [];
+  let mode = 0, cyc = false, revX = 0, revY = 0;
+  const wordRe = /([A-Za-z])\s*([-+]?\d*\.?\d+)/g;
+  const f3 = v => v.toFixed(3);
+  for (let k = 0; k < lines.length; k++){
+    const line = lines[k], blk = blocks[k];
+    const ci = line.indexOf('(');
+    const code = ci >= 0 ? line.slice(0, ci) : line;
+    const cmt = ci >= 0 ? line.slice(ci) : '';
+    const words = []; let m; wordRe.lastIndex = 0;
+    while ((m = wordRe.exec(code))) words.push({ l: m[1].toUpperCase(), v: parseFloat(m[2]) });
+    const gs = words.filter(w => w.l === 'G').map(w => w.v);
+    for (const g of gs){
+      if (g === 0 || g === 1){ mode = g; cyc = false; }
+      else if (g === 80){ cyc = false; }
+      else if (g === 81 || g === 82 || g === 83 || g === 73){ cyc = true; }
+    }
+    const touched = axes.filter(a => words.some(w => w.l === a.l));
+    // Cambio de herramienta o movimientos en coordenadas máquina: la posición/holgura deja de ser conocida
+    const lostRef = words.some(w => w.l === 'M' && w.v === 6) || gs.some(g => g === 28 || g === 30 || g === 53 || g === 92 || g === 10);
+    if (!touched.length || lostRef){
+      outL.push(line); outB.push(blk);
+      if (lostRef) axes.forEach(a => { st[a.l].pos = null; });
+      continue;
+    }
+    // Primera cota (o tras perder la referencia) en rápido: aproximación por el lado del cero → holgura conocida
+    const fresh = touched.filter(a => st[a.l].pos == null);
+    if (fresh.length && mode === 0 && !cyc){
+      const parts = fresh.map(a => `${a.l}${f3(words.find(w => w.l === a.l).v - a.ref * (a.b + 1))}`);
+      outL.push(`G0 ${parts.join(' ')}  (aproximacion: recoge holgura)`); outB.push(blk);
+    }
+    fresh.forEach(a => { st[a.l].dir = a.ref; st[a.l].off = 0; });
+    // ¿Inversión de sentido en algún eje?
+    const takeUp = [];
+    for (const a of touched){
+      const S = st[a.l], v = words.find(w => w.l === a.l).v;
+      if (S.pos != null && Math.abs(v - S.pos) > 1e-6){
+        const dir = v > S.pos ? 1 : -1;
+        if (dir !== S.dir){
+          const nOff = offFor(a, dir);
+          takeUp.push({ a, S, nOff });
+          if (a.l === 'X') revX++; else revY++;
+          S.dir = dir;
+        }
+      }
+    }
+    // En corte (G1, sin ciclo): tramo de recogida en el mismo punto antes del movimiento
+    if (takeUp.length && mode === 1 && !cyc){
+      const parts = takeUp.map(t => `${t.a.l}${f3(t.S.pos + t.nOff)}`);
+      outL.push(`G1 ${parts.join(' ')}  (recoge holgura)`); outB.push(blk);
+    }
+    takeUp.forEach(t => { t.S.off = t.nOff; });
+    // Reescribe las cotas con el desplazamiento vigente
+    let out = code.replace(/([XY])\s*([-+]?\d*\.?\d+)/gi, (all, l, num) => {
+      const S = st[l.toUpperCase()]; if (!S) return all;
+      return l.toUpperCase() + f3(parseFloat(num) + S.off);
+    });
+    touched.forEach(a => { st[a.l].pos = words.find(w => w.l === a.l).v; });
+    outL.push(out.replace(/\s+$/, '') + (cmt ? (out.trim() ? '  ' : '') + cmt : '')); outB.push(blk);
+  }
+  return { lines: outL, blocks: outB, revX, revY };
+}
+function cncBlRefreshInfo(){
+  const el = document.getElementById('cnc-bl-info'); if (!el) return;
+  const bl = cncState.backlash, r = cncState.blStats;
+  if (!bl || !(bl.x > 0 || bl.y > 0)){ el.style.display = 'none'; return; }
+  el.style.display = '';
+  el.textContent = r ? `Activa · ${r.revX} inversiones en X, ${r.revY} en Y compensadas en el último programa` : 'Activa: se aplicará al generar el programa';
+}
+function blSave(){ try { localStorage.setItem('cadcnc.backlash.v1', JSON.stringify(cncState.backlash)); } catch (e){} }
+function blSyncFields(){
+  const bl = cncState.backlash;
+  const set = (id, v) => { const e = document.getElementById(id); if (e) e.value = v; };
+  set('cnc-blX', bl.x); set('cnc-blY', bl.y); set('cnc-blRefX', String(bl.refX < 0 ? -1 : 1)); set('cnc-blRefY', String(bl.refY < 0 ? -1 : 1));
+}
 function hmApplyToProgram(lines, blocks, hm){
   const cellMin = Math.min((hm.x1 - hm.x0) / (hm.nx - 1), (hm.y1 - hm.y0) / (hm.ny - 1));
   const segLen = Math.max(0.5, Math.min(10, cellMin / 4));     // (solo para muestrear rápidos)
@@ -5351,6 +5449,18 @@ function buildCNCProgram(){
     cncState.gcodeLines.splice(3, 0, ...head);
     cncState.gcodeBlock.splice(3, 0, ...head.map(() => -1));
   }
+  // ★ Holgura (backlash): último paso, sobre el programa ya compensado en Z
+  cncState.blStats = null;
+  const bl = cncState.backlash;
+  if (bl && (bl.x > 0 || bl.y > 0)){
+    const r = blApplyToProgram(cncState.gcodeLines, cncState.gcodeBlock, bl);
+    cncState.gcodeLines = r.lines; cncState.gcodeBlock = r.blocks; cncState.blStats = r;
+    const head = [`(HOLGURA: X ${bl.x.toFixed(3)} mm cero con ${bl.refX > 0 ? '+X' : '-X'} / Y ${bl.y.toFixed(3)} mm cero con ${bl.refY > 0 ? '+Y' : '-Y'} - ${r.revX} inversiones X, ${r.revY} inversiones Y)`,
+                  `(en cada inversion de sentido se recoge la holgura con un movimiento corto antes de seguir; las coordenadas X/Y del programa van desplazadas en consecuencia)`];
+    cncState.gcodeLines.splice(3, 0, ...head);
+    cncState.gcodeBlock.splice(3, 0, ...head.map(() => -1));
+  }
+  try { cncBlRefreshInfo(); } catch (e){}
   try { cncRefreshOriginUI(org); } catch (e){}
   try { if (cncState.heightMap && cncState.heightMap.enabled) hmRefreshStatus(false); } catch (e){}
   cncRenderGcodeDisplay();
@@ -6152,6 +6262,13 @@ document.querySelectorAll('.cnc-op-newbtn').forEach(b => b.addEventListener('cli
   setPrompt(`Nueva operación ${cncState.operations.length} (${OP_TYPE_ES[type]}) activa: haz clic en el dibujo para añadir ${type === 'cut' ? 'contornos' : type === 'drill' ? 'taladros' : 'cajeados'}`);
 }));
 document.getElementById('cnc-group-tool').addEventListener('change', e => { cncState.groupByTool = e.target.checked; cncRebuildAndRegen(); });
+(function(){
+  try { const sv = JSON.parse(localStorage.getItem('cadcnc.backlash.v1') || 'null'); if (sv) cncState.backlash = Object.assign({ x: 0, y: 0, refX: 1, refY: 1 }, sv); } catch (e){}
+  const num = v => { const n = parseFloat(String(v).replace(',', '.')); return Number.isFinite(n) ? Math.max(0, Math.min(5, n)) : 0; };
+  [['cnc-blX', 'x'], ['cnc-blY', 'y']].forEach(([id, k]) => document.getElementById(id).addEventListener('change', e => { cncState.backlash[k] = num(e.target.value); e.target.value = cncState.backlash[k]; blSave(); cncRebuildAndRegen(); }));
+  [['cnc-blRefX', 'refX'], ['cnc-blRefY', 'refY']].forEach(([id, k]) => document.getElementById(id).addEventListener('change', e => { cncState.backlash[k] = e.target.value === '-1' ? -1 : 1; blSave(); cncRebuildAndRegen(); }));
+  blSyncFields();
+})();
 document.getElementById('cnc-drillMode').addEventListener('change', e => { cncState.drillMode = e.target.value === 'cycle' ? 'cycle' : 'explicit'; cncRebuildAndRegen(); });
 document.getElementById('cnc-plate').addEventListener('change', e => {
   // El origen del programa cambia con la placa: la zona del mapa de alturas se desplaza
@@ -7695,6 +7812,7 @@ function cncSyncFields(){
   document.getElementById('cnc-rapidZ').value = cncState.rapidZ;
   document.getElementById('cnc-finishAllowance').value = cncState.finishAllowance;
   document.getElementById('cnc-drillMode').value = cncState.drillMode;
+  blSyncFields();
   document.getElementById('cnc-group-tool').checked = !!cncState.groupByTool;
   hmRenderUI();
   cncRefreshOriginUI();
@@ -7728,6 +7846,7 @@ function jobSerialize(){
       tabs: Object.assign({}, cncState.tabs), finishAllowance: cncState.finishAllowance,
       spindlePause: cncState.spindlePause, rapidXY: cncState.rapidXY, rapidZ: cncState.rapidZ,
       drillMode: cncState.drillMode, groupByTool: !!cncState.groupByTool, plateFilter: cncState.plateFilter,
+      backlash: Object.assign({}, cncState.backlash),
       workOrigin: { mode: wo.mode, ref: wo.ref, pos: wo.pos, x: nanToNull(wo.x), y: nanToNull(wo.y) },
       heightMap: Object.assign({}, hm, { values: hm.values.map(nanToNull) })
     }
@@ -7754,6 +7873,7 @@ function jobApply(job){
   if (c.tabs) cncState.tabs = Object.assign({}, cncState.tabs, c.tabs);
   for (const k of ['finishAllowance', 'spindlePause', 'rapidXY', 'rapidZ']) if (typeof c[k] === 'number') cncState[k] = c[k];
   cncState.drillMode = c.drillMode === 'cycle' ? 'cycle' : 'explicit';
+  if (c.backlash && typeof c.backlash === 'object'){ cncState.backlash = Object.assign({ x: 0, y: 0, refX: 1, refY: 1 }, c.backlash); blSave(); }
   cncState.groupByTool = !!c.groupByTool;
   cncState.plateFilter = typeof c.plateFilter === 'string' ? c.plateFilter : '';
   if (c.workOrigin){ const w = c.workOrigin; cncState.workOrigin = { mode: w.mode || 'auto', ref: w.ref || 'parts', pos: w.pos || 'bl', x: w.x == null ? NaN : w.x, y: w.y == null ? NaN : w.y }; }
