@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CAD Pro + CNC · DXF → G-Code · v12.24</title>
+<title>CAD Pro + CNC · DXF → G-Code · v12.25</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -1112,8 +1112,8 @@ project.selectedColor = new Color(0.31, 0.76, 0.97);
 
 const canvasContainer = document.getElementById('canvas-container');
 
-const APP_VERSION = '12.24';
-const VERSION_NOTES = 'Compensación de holgura (backlash) en X/Y';
+const APP_VERSION = '12.25';
+const VERSION_NOTES = 'Holgura: ignora microretrocesos < 0.01 mm (sin recogidas de más)';
 
 const layers = {};
 function safeName(orig){ let n = orig.replace(/[^a-zA-Z0-9_\-]/g,'_'); if (/^\d/.test(n)) n='L_'+n; return n; }
@@ -4752,7 +4752,11 @@ function hmHeight(hm, x, y){
    el siguiente corte no salga deformado; en rápidos y en ciclos de taladro basta con desplazar la cota. */
 function blApplyToProgram(lines, blocks, bl){
   const axes = [{ l: 'X', b: +bl.x || 0, ref: bl.refX < 0 ? -1 : 1 }, { l: 'Y', b: +bl.y || 0, ref: bl.refY < 0 ? -1 : 1 }].filter(a => a.b > 0);
-  const st = {}; axes.forEach(a => st[a.l] = { pos: null, dir: a.ref, off: 0 });
+  const st = {}; axes.forEach(a => st[a.l] = { pos: null, dir: a.ref, off: 0, peak: null });
+  // Histéresis: los contornos calculados traen retrocesos de ~0.001 mm (redondeo) que NO son inversiones reales.
+  // Solo hay inversión cuando la cota retrocede más de REV_EPS respecto al extremo alcanzado en el sentido actual
+  // (error máximo admitido por no compensar esos microretrocesos: REV_EPS).
+  const REV_EPS = 0.01;
   const offFor = (a, dir) => dir === a.ref ? 0 : -a.ref * a.b;
   const outL = [], outB = [];
   let mode = 0, cyc = false, revX = 0, revY = 0;
@@ -4776,7 +4780,7 @@ function blApplyToProgram(lines, blocks, bl){
     const lostRef = words.some(w => w.l === 'M' && w.v === 6) || gs.some(g => g === 28 || g === 30 || g === 53 || g === 92 || g === 10);
     if (!touched.length || lostRef){
       outL.push(line); outB.push(blk);
-      if (lostRef) axes.forEach(a => { st[a.l].pos = null; });
+      if (lostRef) axes.forEach(a => { st[a.l].pos = null; st[a.l].peak = null; });
       continue;
     }
     // Primera cota (o tras perder la referencia) en rápido: aproximación por el lado del cero → holgura conocida
@@ -4785,19 +4789,19 @@ function blApplyToProgram(lines, blocks, bl){
       const parts = fresh.map(a => `${a.l}${f3(words.find(w => w.l === a.l).v - a.ref * (a.b + 1))}`);
       outL.push(`G0 ${parts.join(' ')}  (aproximacion: recoge holgura)`); outB.push(blk);
     }
-    fresh.forEach(a => { st[a.l].dir = a.ref; st[a.l].off = 0; });
+    fresh.forEach(a => { st[a.l].dir = a.ref; st[a.l].off = 0; st[a.l].peak = words.find(w => w.l === a.l).v; });
     // ¿Inversión de sentido en algún eje?
     const takeUp = [];
     for (const a of touched){
       const S = st[a.l], v = words.find(w => w.l === a.l).v;
-      if (S.pos != null && Math.abs(v - S.pos) > 1e-6){
-        const dir = v > S.pos ? 1 : -1;
-        if (dir !== S.dir){
-          const nOff = offFor(a, dir);
-          takeUp.push({ a, S, nOff });
-          if (a.l === 'X') revX++; else revY++;
-          S.dir = dir;
-        }
+      if (S.pos == null) continue;
+      if (S.peak == null) S.peak = S.pos;
+      if ((v - S.peak) * S.dir > 0) S.peak = v;                       // sigue en el mismo sentido
+      else if ((S.peak - v) * S.dir > REV_EPS){                        // retrocede de verdad → inversión
+        const dir = -S.dir, nOff = offFor(a, dir);
+        takeUp.push({ a, S, nOff });
+        if (a.l === 'X') revX++; else revY++;
+        S.dir = dir; S.peak = v;
       }
     }
     // En corte (G1, sin ciclo): tramo de recogida en el mismo punto antes del movimiento
